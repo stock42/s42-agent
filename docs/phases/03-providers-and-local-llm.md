@@ -25,11 +25,11 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
   soportar primer evento lento e inactividad configurable sin bloquear la TUI.
 - [x] F03-07. Mostrar datos de uso reportados y su ausencia, conservar texto parcial
   y selecciones en sesión; no persistir claves ni cabeceras de autenticación.
-- [ ] F03-08. Probar endpoints fixture independientes para dos proveedores, con
+- [x] F03-08. Probar endpoints fixture independientes para dos proveedores, con
   defaults distintos, errores HTTP y streams truncados.
 - [ ] F03-09. Validar streaming/cancelación con `llama-server` y un GGUF real. Anotar
   versiones, modelo, template y contexto; documentar cómo iniciar el servidor.
-- [ ] F03-10. Repetir el flujo desde el entrypoint Bun. Registrar evidencia, actualizar
+- [x] F03-10. Repetir el flujo desde el entrypoint Bun. Registrar evidencia, actualizar
   CHANGELOG y hacer el commit de cada tarea completada.
 
 ## Escenarios de aceptación
@@ -54,6 +54,8 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
 | Tarea/caso | Comando, fixture o captura | Resultado y proveedor/modelo |
 | --- | --- | --- |
 | Transporte fixture | `bun run typecheck`; `bun test tests/llm.test.ts tests/storage.test.ts` | 7 casos: SSE, deltas, calls intercaladas, credencial por endpoint y desconexión parcial. |
+| Dos proveedores / errores | `bun test tests/llm.test.ts` | Endpoints independientes con el mismo model ID y keys diferentes; HTTP 401/404/429/503, idle y cancelación parcial. |
+| TUI fuente | `bun test tests/app-terminal.test.ts` | Host/puerto/key configurados desde Models; clave en memoria y fuera de config/sesión. |
 | Servidor real | Endpoint default no disponible | El usuario pidió configuración inicial en Models; no se eligió un modelo ni se descargó uno. |
 
 ## Cierre

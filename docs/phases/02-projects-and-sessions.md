@@ -1,6 +1,6 @@
 # Fase 02 — Configuración, proyectos y sesiones
 
-Estado: **En curso**. Dependencias: [00](00-tui-viability.md),
+Estado: **Completada**. Dependencias: [00](00-tui-viability.md),
 [01](01-terminal-ui.md). Requisitos: R06, R12.
 Contratos: SPECS §6, §7 y §11.
 
@@ -25,13 +25,13 @@ mediante archivos locales legibles y recuperables.
   incompleta, con errores explícitos en líneas completas corruptas.
 - [x] F02-07. Representar herramientas iniciadas sin resultado como interrumpidas,
   sin reejecutarlas al reabrir. Preparar el contrato que usará la fase 04.
-- [ ] F02-08. Detectar intento de abrir una misma sesión para escritura desde dos
+- [x] F02-08. Detectar intento de abrir una misma sesión para escritura desde dos
   instancias. Probar también recuperación después de un cierre inesperado.
 - [x] F02-09. Persistir borrador al cambiar sesión/proyecto y cerrar normalmente.
   Prohibir cambio de proyecto en turno activo, conservando el borrador actual.
-- [ ] F02-10. Cargar instrucciones AGENTS aplicables sin mezclar proyectos y sin
+- [x] F02-10. Cargar instrucciones AGENTS aplicables sin mezclar proyectos y sin
   inventar políticas Git para las carpetas registradas.
-- [ ] F02-11. Validar config, sesiones y proyectos desde el entrypoint Bun. Registrar
+- [x] F02-11. Validar config, sesiones y proyectos desde el entrypoint Bun. Registrar
   evidencia, actualizar CHANGELOG y hacer el commit de cada tarea completada.
 
 ## Escenarios de aceptación
@@ -57,7 +57,8 @@ mediante archivos locales legibles y recuperables.
 | Tarea/caso | Fixture, comando o captura | Resultado y archivos afectados |
 | --- | --- | --- |
 | Config/proyectos/sesiones | `bun run typecheck`; `bun test tests/storage.test.ts tests/workspace.test.ts` | 13 casos correctos: normalización, JSON inválido, append, lock, recuperación, separación y aviso Models. |
-| Pendiente | AGENTS por subcarpeta; lock tras muerte de otro proceso; recorrido integrado | Se completa junto al ciclo de coding. |
+| Recuperación / AGENTS | `bun test tests/storage.test.ts tests/agent.test.ts` | Segundo proceso obtiene lock; apertura concurrente rechazada y reapertura tras matarlo. Instrucciones raíz/subcarpeta y separación entre proyectos verificadas. |
+| Entry point | `bun test tests/app-terminal.test.ts` | Configuración, sesión y borrador reabiertos desde index.ts en PTY. |
 
 ## Cierre
 

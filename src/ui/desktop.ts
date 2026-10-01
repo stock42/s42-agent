@@ -18,6 +18,7 @@ export class Desktop {
   onBeforeExit?: () => Promise<void>;
   onShortcut?: (event: InputEvent) => boolean;
   onControlInput?: (event: InputEvent) => boolean;
+  footer?: () => string;
   onResize?: (width: number, height: number) => void;
   floatingArea?: Rect;
   private capture?: Capture;
@@ -188,7 +189,7 @@ export class Desktop {
     canvas.fill({ x: 0, y: footer, width: this.width, height: 1 }, theme.footer);
     const hints = this.menu.opened >= 0 ? "←/→ Menú  ↑/↓ Opción  Enter Elegir  Esc Cerrar  ^Q Salir"
       : this.modal ? "Tab Foco  Enter Aceptar  Esc Cerrar  ^Q Salir"
-      : this.active?.fixed ? "Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir"
+      : this.active?.fixed ? this.footer?.() ?? "Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir"
       : "Esc Menú  Tab Foco  ^N Ventana  ^W Cerrar  ^Q Salir";
     canvas.text(1, footer, hints, theme.footer, this.width - 2);
     return canvas;

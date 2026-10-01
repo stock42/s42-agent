@@ -19,6 +19,7 @@ export class TextArea extends Component {
   private rows?: Row[];
   private rowWidth = 0;
   private viewHeight = 0;
+  private undo: { value: string; cursor: number }[] = [];
   onSubmit?: () => void;
   readOnly = false;
   placeholder = "";
@@ -38,6 +39,7 @@ export class TextArea extends Component {
   }
 
   setValue(value: string, position: "start" | "end" = "end"): void {
+    this.undo = [];
     this.chars = graphemes(normalize(value)); this.cursor = position === "start" ? 0 : this.chars.length;
     this.anchor = undefined; this.top = 0; this.rows = undefined; this.reveal = true; this.following = true; this.column = undefined;
   }
@@ -88,10 +90,48 @@ export class TextArea extends Component {
   }
 
   private replace(text: string): void {
+    this.undo.push({ value: this.value, cursor: this.cursor }); if (this.undo.length > 100) this.undo.shift();
     const [start, end] = this.selection ?? [this.cursor, this.cursor];
     const added = graphemes(normalize(text));
     this.chars.splice(start, end - start, ...added); this.cursor = start + added.length;
     this.anchor = undefined; this.rows = undefined; this.reveal = true; this.following = true; this.column = undefined;
+  }
+
+  vim(key: string): boolean {
+    if (this.readOnly) {
+      const rows = this.layout(); this.viewport(rows);
+      if (key === "gg" || key === "G") this.top = key === "gg" ? 0 : Math.max(0, rows.length - this.bounds.height);
+      else if (["j", "k", "ctrl+d", "ctrl+u"].includes(key)) this.top = Math.max(0, Math.min(rows.length - this.bounds.height,
+        this.top + (["j", "ctrl+d"].includes(key) ? 1 : -1) * (key.startsWith("ctrl") ? Math.max(1, this.bounds.height >> 1) : 1)));
+      else return false;
+      this.following = key === "G"; if (this.following) this.cursor = this.chars.length; this.reveal = false; return true;
+    }
+    const moves: Record<string, string> = { h: "left", j: "down", k: "up", l: "right" };
+    if (moves[key]) return this.handle({ type: "key", key: moves[key]! });
+    let start = this.cursor, end = this.cursor;
+    while (start > 0 && this.chars[start - 1] !== "\n") start--;
+    while (end < this.chars.length && this.chars[end] !== "\n") end++;
+    this.anchor = undefined;
+    if (key === "0" || key === "I") this.cursor = start;
+    else if (key === "$" || key === "A") this.cursor = end;
+    else if (key === "a") this.cursor = Math.min(end, this.cursor + 1);
+    else if (key === "w") {
+      const whitespace = (i: number) => /\s/.test(this.chars[i] ?? " ");
+      while (this.cursor < this.chars.length && !whitespace(this.cursor)) this.cursor++;
+      while (this.cursor < this.chars.length && whitespace(this.cursor)) this.cursor++;
+    } else if (key === "b") {
+      if (this.cursor) this.cursor--;
+      while (this.cursor > 0 && /\s/.test(this.chars[this.cursor]!)) this.cursor--;
+      while (this.cursor > 0 && !/\s/.test(this.chars[this.cursor-1]!)) this.cursor--;
+    } else if (key === "x") { if (this.chars[this.cursor] && this.chars[this.cursor] !== "\n") { this.anchor = this.cursor + 1; this.replace(""); } }
+    else if (key === "dd") {
+      this.cursor = start; this.anchor = end < this.chars.length ? end + 1 : end;
+      if (start === end && start > 0) this.cursor--;
+      this.replace("");
+    } else if (key === "u") {
+      const previous = this.undo.pop(); if (previous) { this.chars = graphemes(previous.value); this.cursor = previous.cursor; this.rows = undefined; }
+    } else if (key !== "i") return false;
+    this.reveal = true; this.following = true; this.column = undefined; return true;
   }
 
   draw(canvas: Canvas, bounds: Rect, focused: boolean): void {

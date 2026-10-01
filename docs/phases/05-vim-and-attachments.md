@@ -1,6 +1,6 @@
 # Fase 05 — Vim, drag & drop y adjuntos
 
-Estado: **Pendiente**. Dependencias: [01](01-terminal-ui.md),
+Estado: **En curso**. Dependencias: [01](01-terminal-ui.md),
 [02](02-projects-and-sessions.md), [03](03-providers-and-local-llm.md),
 [04](04-agent-loop-and-tools.md). Requisitos: R07, R08.
 Contratos: SPECS §5 y §10.
@@ -12,27 +12,27 @@ al terminal en adjuntos verificables, con alternativas de teclado.
 
 ## Tareas
 
-- [ ] F05-01. Implementar INSERT/NORMAL con foco explícito, movimientos, edición
+- [x] F05-01. Implementar INSERT/NORMAL con foco explícito, movimientos, edición
   y undo del borrador conforme al mapa de SPECS; arrancar en INSERT.
-- [ ] F05-02. Conectar acciones globales y leader con selectores de proyectos,
+- [x] F05-02. Conectar acciones globales y leader con selectores de proyectos,
   modelos, proveedores, sesiones, adjuntos y ayuda; permitir desactivar Vim.
-- [ ] F05-03. Validar bindings configurables por contexto y documentar los que el
+- [x] F05-03. Validar bindings configurables por contexto y documentar los que el
   terminal no distingue. Shift+Enter para nueva línea; Ctrl+J como alternativa
   de compatibilidad. Menús, controles
   y diálogos tienen prioridad sobre Vim; mouse y teclado siguen siendo operables.
-- [ ] F05-04. Implementar parser de rutas pegadas: POSIX, espacios/comillas,
+- [x] F05-04. Implementar parser de rutas pegadas: POSIX, espacios/comillas,
   Windows/UNC, Unicode, `file://` y múltiples archivos; sin evaluar como shell.
-- [ ] F05-05. Integrar drop mediante bracketed paste en ambos modos y fallback
+- [x] F05-05. Integrar drop mediante bracketed paste en ambos modos y fallback
   sin marcadores en INSERT. No enviar inferencia por drop/paste.
-- [ ] F05-06. Crear `/attach`, `/detach` y gestión con Ctrl+F, mostrando lista,
+- [x] F05-06. Crear `/attach`, `/detach` y gestión con Ctrl+F, mostrando lista,
   tamaño, ruta y errores en el mismo borrador.
-- [ ] F05-07. Preparar texto UTF-8 e imágenes de modelos con capacidad explícita;
+- [x] F05-07. Preparar texto UTF-8 e imágenes de modelos con capacidad explícita;
   validar límites y rechazar modalidades sin soporte con mensaje accionable.
-- [ ] F05-08. Revalidar archivos antes del envío y persistir el contenido enviado
+- [x] F05-08. Revalidar archivos antes del envío y persistir el contenido enviado
   con la sesión; reabrir sin sustituirlo por una nueva versión del archivo original.
 - [ ] F05-09. Probar automáticamente secuencias de paste y manualmente drag &
   drop desde el SO. Registrar formatos observados por terminal y plataforma.
-- [ ] F05-10. Repetir atajos y adjuntos desde el entrypoint Bun; registrar evidencia,
+- [x] F05-10. Repetir atajos y adjuntos desde el entrypoint Bun; registrar evidencia,
   actualizar CHANGELOG y hacer el commit de cada tarea completada.
 
 ## Escenarios de aceptación
@@ -62,7 +62,9 @@ al terminal en adjuntos verificables, con alternativas de teclado.
 
 | Tarea/caso | Secuencia, captura o fixture | Resultado, SO y terminal/versión |
 | --- | --- | --- |
-| — | — | Pendiente; no ejecutado. |
+| Vim / adjuntos | `bun run typecheck`; `bun test tests/attachments-vim.test.ts` | 5 casos: edición/undo por grafema, read-only, prioridad modal, paste NORMAL, rutas POSIX/Windows/UNC/file URL, cambio previo al envío y snapshot conservado. |
+| Entry point | `bun test tests/app-terminal.test.ts` | Models configurado por teclado; Shift+Enter, tools, cancelación parcial y reapertura en PTY. |
+| Drop manual | Pendiente | Parser y paste simulados no demuestran drag & drop físico desde el SO ni compatibilidad en Windows/macOS. |
 
 ## Cierre
 

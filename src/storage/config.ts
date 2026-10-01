@@ -2,6 +2,7 @@ import { access, mkdir, realpath, rename, stat, unlink } from "node:fs/promises"
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { homedir } from "node:os";
 import type { Selection } from "../agent/messages.ts";
+import { bindings, type Bindings } from "../ui/bindings.ts";
 
 export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string }
 export interface Model { id: string; name: string; contextWindow: number; maxOutputTokens: number; capabilities: { tools: boolean; images: boolean } }
@@ -9,7 +10,7 @@ export interface Provider { id: string; name: string; kind: "llama.cpp" | "opena
 export interface Config {
   version: 1; projects: Project[]; providers: Provider[];
   defaults: Selection & { projectId?: string }; lastProjectId?: string;
-  ui: { vimMode: boolean; color: "auto" | "never" };
+  ui: { vimMode: boolean; color: "auto" | "never"; bindings?: Bindings };
   limits: { maxSteps: number; shellTimeoutMs: number; firstEventMs: number; idleMs: number };
 }
 
@@ -48,7 +49,8 @@ export function validateConfig(value: unknown): Config {
   }
   if (!unique(c.projects.map(p => p.id)) || !unique(c.projects.map(p => p.path)) || !unique(c.providers.map(p => p.id))) throw new Error("IDs o carpetas duplicados en config");
   c.limits ??= defaultConfig().limits;
-  if (!Object.values(c.limits).every(positive)) throw new Error("Límites inválidos en config");
+  if (![c.limits.maxSteps, c.limits.shellTimeoutMs, c.limits.firstEventMs, c.limits.idleMs].every(positive)) throw new Error("Límites inválidos en config");
+  bindings(c.ui.bindings);
   return c;
 }
 

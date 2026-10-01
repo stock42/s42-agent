@@ -173,3 +173,20 @@ cierre de cada tarea e incluirlo en su commit.
 - Typecheck y 10 casos de tools/persistencia pasan. Fixture HTTP lee, edita y
   verifica un archivo con Bun; no constituye prueba con un modelo real.
 - Pull previo falló por ausencia de upstream. Commit local; sin builds de binarios.
+
+### Agregado — Vim, adjuntos y configuración inicial completa
+
+- INSERT/NORMAL, movimientos/edición/undo del prompt, navegación read-only, leader,
+  bindings validados y opción para desactivar Vim; menús y modales conservan prioridad.
+- Adjuntos por rutas pegadas, `/attach` y Ctrl+F: POSIX/Windows/UNC/file URLs,
+  texto UTF-8 e imágenes según capacidad, límites y revalidación antes del envío.
+  El historial conserva el contenido enviado, incluso si el original desaparece.
+- Models configura host/puerto/modelo/API key; proveedor editable, eliminación y
+  defaults global/por proyecto. API key ingresada vive en memoria; puede persistirse
+  el nombre de una variable de entorno. Aviso permanente en chat si falta modelo.
+- Formularios compactos, ayudas por modo y resultados de tools legibles. El prompt
+  conserva adjuntos y Shift+Enter visibles en 60×16. Descubrimiento cancelable.
+- Typecheck y suite completa: 60 casos pasan; comprobaciones pertinentes pasan
+  tras los últimos ajustes. PTY configura Models, lee/edita/verifica, cancela y
+  reabre borrador. Endpoints fixture independientes y HTTP/idle probados.
+- Pull previo sin upstream. Sin prueba de modelo real, drop físico ni nuevos builds.

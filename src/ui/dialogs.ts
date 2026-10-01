@@ -9,7 +9,8 @@ export interface Field { label: string; value: string }
 export function form(desktop: Desktop, title: string, fields: Field[], save: (values: string[]) => Promise<void>): void {
   if (desktop.modal) return;
   const area = desktop.floatingArea ?? { y: 1, height: desktop.height - 2 };
-  const window = new Window(`form-${crypto.randomUUID()}`, title, { x: Math.max(0, (desktop.width - 58) >> 1), y: area.y, width: 58, height: Math.min(13, area.height) });
+  const height = Math.min(10,area.height);
+  const window = new Window(`form-${crypto.randomUUID()}`, title, { x: Math.max(0, (desktop.width - 58) >> 1), y: area.y + Math.max(0,(area.height-height)>>1), width: 58, height });
   window.modal = true; let page = 0, error = "", saving = false;
   const inputs = fields.map((field, index) => new Input(`field-${index}`, { x: 20, y: 0, width: 32, height: 1 }, field.value));
   const pages = Math.ceil(fields.length / 3);
@@ -37,11 +38,13 @@ export function form(desktop: Desktop, title: string, fields: Field[], save: (va
 export function choose<T>(desktop: Desktop, title: string, entries: { label: string; value: T }[], select: (value: T) => void): void {
   if (desktop.modal) return;
   const area = desktop.floatingArea ?? { y: 1, height: desktop.height - 2 };
-  const window = new Window(`choose-${crypto.randomUUID()}`, title, { x: Math.max(0, (desktop.width - 58) >> 1), y: area.y, width: 58, height: Math.min(13, area.height) });
+  const height = Math.min(13,area.height);
+  const window = new Window(`choose-${crypto.randomUUID()}`, title, { x: Math.max(0, (desktop.width - 58) >> 1), y: area.y + Math.max(0,(area.height-height)>>1), width: 58, height });
   window.modal = true;
   const list = new SelectList("entries", { x: 0, y: 0, width: 56, height: 8 }, entries.map(e => e.label));
   const activate = () => { const entry = entries[list.selected]; if (entry) { desktop.close(window); select(entry.value); } };
-  const original = list.handle.bind(list); list.handle = event => event.type === "key" && event.key === "enter" ? (activate(), true) : original(event);
+  const original = list.handle.bind(list); list.handle = event => event.type === "key" && event.key === "enter" ? (activate(), true)
+    : original(event.type === "key" && (event.text === "j" || event.text === "k") ? {type:"key",key:event.text === "j" ? "down" : "up"} : event);
   const accept = new Button("select", { x: 1, y: 0, width: 15, height: 1 }, "Elegir", activate);
   window.controls.push(list, accept);
   window.onLayout = client => { list.bounds.width = client.width; list.bounds.height = Math.max(3, client.height - 1); accept.bounds.y = client.height - 1; };

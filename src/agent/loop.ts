@@ -15,7 +15,9 @@ export async function runTurn(options: { project: Project; session: Session; pro
     signal.throwIfAborted(); options.onState("Conectando…");
     const tools = model.capabilities.tools ? toolDefinitions : undefined;
     const messages = [system, ...session.state.messages];
-    const approximateTokens = Math.ceil(Buffer.byteLength(JSON.stringify({ messages, tools })) / 4);
+    let images = 0;
+    const estimated = messages.map(m => ({...m, content:Array.isArray(m.content)?m.content.map(p=>p.type==='image_url'?(images++,{type:'image_url',image_url:{url:'[image]'}}):p):m.content}));
+    const approximateTokens = Math.ceil(Buffer.byteLength(JSON.stringify({ messages:estimated, tools })) / 4) + images * 1024;
     if (approximateTokens + model.maxOutputTokens > model.contextWindow) throw new Error(`Contexto estimado excedido (${approximateTokens} tokens aprox.). Usá /new.`);
     options.onState("Respondiendo…");
     const result = await complete({ ...options, messages, tools, firstEventMs: options.limits.firstEventMs, idleMs: options.limits.idleMs });

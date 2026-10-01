@@ -25,3 +25,12 @@ test("stream truncado preserva parcial y errores HTTP no inventan respuesta", as
   catch(e) { expect(e).toBeInstanceOf(CompletionError); expect((e as CompletionError).partial.content).toBe('parcial'); expect((e as Error).message).toContain('sin completar'); }
   finally {server.stop(true);}
 });
+test('dos endpoints con mismo modelo conservan keys; errores HTTP e idle/cancel parcial',async()=>{
+  const seen:string[]=[];const fixtures=['A','B'].map(name=>Bun.serve({port:0,fetch(req){seen.push(`${name}:${req.headers.get('authorization')}`);return new Response(`data: {"choices":[{"delta":{"content":"${name}"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n`);}}));
+  const options={model,messages:[],signal:new AbortController().signal,firstEventMs:1000,idleMs:1000,onDelta:()=>{}};
+  try{for(const [i,server] of fixtures.entries()) {const provider:Provider={id:String(i),name:String(i),kind:'llama.cpp',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[model]};expect((await complete({...options,provider,key:`key-${i}`})).message.content).toBe(i?'B':'A');}expect(seen).toEqual(['A:Bearer key-0','B:Bearer key-1']);}finally{fixtures.forEach(s=>s.stop(true));}
+  for(const status of [401,404,429,503]){const server=Bun.serve({port:0,fetch(){return new Response('',{status});}});try{await expect(complete({...options,provider:{id:'err',name:'err',kind:'llama.cpp',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[model]}})).rejects.toThrow(`HTTP ${status}`);}finally{server.stop(true);}}
+  const server=Bun.serve({port:0,fetch(){return new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"parcial"}}]}\n\n'));}}));}});
+  const provider:Provider={id:'idle',name:'Idle',kind:'llama.cpp',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[model]};
+  try{await expect(complete({...options,provider,idleMs:15})).rejects.toThrow('sin actividad');const controller=new AbortController();const promise=complete({...options,provider,signal:controller.signal,onDelta:()=>controller.abort(new Error('Cancelación fixture'))});await expect(promise).rejects.toThrow('Cancelación fixture');}finally{server.stop(true);}
+});
