@@ -1,0 +1,47 @@
+# Fases de desarrollo de s42-agent
+
+Fuente de requisitos: [SPECS.md](../SPECS.md). Fecha: 2026-10-01.
+
+Estado actual: especificaciones y planificación creadas. Ninguna fase de
+implementación está completada. Los checks pendientes representan trabajo futuro.
+
+| Fase | Archivo | Depende de | Resultado | Requisitos |
+| --- | --- | --- | --- | --- |
+| 00 | [Base Bun y ejecutable](00-bun-foundation.md) | Specs | CLI mínima compilada y ejecutada. | R01, R02, R13, R14 |
+| 01 | [TUI](01-terminal-ui.md) | 00 | Conversación fixture, editor, color y terminal restaurado. | R03, R04, R05 |
+| 02 | [Proyectos y sesiones](02-projects-and-sessions.md) | 00, 01 | Configuración durable y separación por proyecto. | R06, R12 |
+| 03 | [Proveedores y llama.cpp](03-providers-and-local-llm.md) | 01, 02 | Streaming local y selección de proveedor/modelo. | R09, R10 |
+| 04 | [Ciclo de coding](04-agent-loop-and-tools.md) | 02, 03 | Leer, editar y verificar un proyecto mediante tools. | R04, R11 |
+| 05 | [Vim y adjuntos](05-vim-and-attachments.md) | 01, 02, 03, 04 | Operación con teclado y archivos arrastrados. | R07, R08 |
+| 06 | [Validación y distribución](06-quality-and-binaries.md) | 00–05 | Evidencia integral, mediciones y binarios comprobados. | R01–R14 |
+
+## Cómo ejecutar las fases
+
+1. Leer el `AGENTS.md` del repositorio y hacer `git pull` antes de cada tarea.
+2. Elegir la próxima tarea cuyas dependencias estén completas; implementar solo
+   su alcance y preservar trabajo ajeno.
+3. Registrar evidencia de los escenarios relevantes; un test omitido no pasa.
+4. Actualizar los checks y la evidencia de la fase, junto con `CHANGELOG.md`.
+5. Hacer el commit de los archivos de esa tarea después de validar el diff.
+
+Las fases describen responsabilidades, no siete cambios gigantes. Dividirlas en
+tareas pequeñas que dejen una versión ejecutable. Cada fase vuelve a compilar el
+binario: la distribución no se descubre al final.
+
+No incorporar propuestas pendientes de SPECS §15 a estas tareas sin aprobación
+explícita. No agregar proveedores nativos, sandbox, plugins o un backend como
+condición artificial para completar el MVP.
+
+## Evidencia y estados
+
+Usar `Pendiente`, `En curso`, `Bloqueada` o `Completada`, con el motivo concreto
+si una tarea está bloqueada. Cada archivo tiene una tabla para los comandos,
+artefactos y resultados reales. No completar checks por haber escrito el plan.
+
+Para builds externos distinguir `compilado` de `ejecutado en destino`; para LLM
+distinguir fixture de modelo real; para drag & drop distinguir rutas simuladas
+de un drop desde el sistema operativo.
+
+Un build, benchmark o caso manual fallido debe quedar visible junto con su
+corrección o limitación. No cambiar los objetivos de rendimiento para declarar
+éxito sin documentar la decisión.
