@@ -33,6 +33,8 @@ mediante archivos locales legibles y recuperables.
   inventar políticas Git para las carpetas registradas.
 - [x] F02-11. Validar config, sesiones y proyectos desde el entrypoint Bun. Registrar
   evidencia, actualizar CHANGELOG y hacer el commit de cada tarea completada.
+- [x] F02-12. Mantener Projects con solo Name y Folder; elegir carpeta mediante
+  explorador libre y conservar formulario/borrador al abrir/cerrar previews.
 
 ## Escenarios de aceptación
 
@@ -59,6 +61,7 @@ mediante archivos locales legibles y recuperables.
 | Config/proyectos/sesiones | `bun run typecheck`; `bun test tests/storage.test.ts tests/workspace.test.ts` | 13 casos correctos: normalización, JSON inválido, append, lock, recuperación, separación y aviso Models. |
 | Recuperación / AGENTS | `bun test tests/storage.test.ts tests/agent.test.ts` | Segundo proceso obtiene lock; apertura concurrente rechazada y reapertura tras matarlo. Instrucciones raíz/subcarpeta y separación entre proyectos verificadas. |
 | Entry point | `bun test tests/app-terminal.test.ts` | Configuración, sesión y borrador reabiertos desde index.ts en PTY. |
+| Projects / folder picker | `bun test tests/explorer.test.ts tests/app-terminal.test.ts` | Name/Folder por teclado y mouse inyectado, folder externo, preview anidado, alta/reapertura y carpeta inválida conservando config previa. [QA](../qa/explorer-and-reasoning.md). |
 
 ## Cierre
 

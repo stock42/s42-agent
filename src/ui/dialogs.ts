@@ -6,8 +6,8 @@ import type { Desktop } from "./desktop.ts";
 import { theme } from "./theme.ts";
 import { TextArea } from "./components/text-area.ts";
 
-export function info(desktop: Desktop, title: string, lines: string[]): void {
-  if(desktop.modal)return;
+export function info(desktop: Desktop, title: string, lines: string[], parent?: Window): void {
+  if(desktop.modal && desktop.modal!==parent)return;
   const area=desktop.floatingArea ?? {y:1,height:desktop.height-2},height=Math.min(13,area.height);
   const window=new Window(`info-${crypto.randomUUID()}`,title,{x:Math.max(0,(desktop.width-58)>>1),y:area.y+Math.max(0,(area.height-height)>>1),width:58,height});window.modal=true;
   const text=new TextArea("info",{x:1,y:0,width:54,height:8});text.readOnly=true;text.setValue(lines.join("\n"),"start");
@@ -18,7 +18,7 @@ export function info(desktop: Desktop, title: string, lines: string[]): void {
   desktop.add(window);
 }
 
-export interface Field { label: string; value: string }
+export interface Field { label: string; value: string; browse?: (value: string, select: (value: string) => void, parent: Window) => void }
 export function form(desktop: Desktop, title: string, fields: Field[], save: (values: string[]) => Promise<void>): void {
   if (desktop.modal) return;
   const area = desktop.floatingArea ?? { y: 1, height: desktop.height - 2 };
@@ -27,16 +27,22 @@ export function form(desktop: Desktop, title: string, fields: Field[], save: (va
   window.modal = true; let page = 0, error = "", saving = false;
   const inputs = fields.map((field, index) => new Input(`field-${index}`, { x: 20, y: 0, width: 32, height: 1 }, field.value));
   const pages = Math.ceil(fields.length / 3);
-  const refresh = () => { window.controls.splice(0, window.controls.length, ...inputs.slice(page * 3, page * 3 + 3), previous, next, accept); window.focusedId = window.controls[0]?.id; desktop.invalidate(); };
+  const refresh = () => { window.controls.splice(0, window.controls.length, ...inputs.slice(page * 3, page * 3 + 3),
+    ...(fields.slice(page*3,page*3+3).some(f=>f.browse)?[browse]:[]), ...(pages>1?[previous,next]:[]), accept); window.focusedId = window.controls[0]?.id; desktop.invalidate(); };
   const previous = new Button("previous", { x: 1, y: 0, width: 12, height: 1 }, "Anterior", () => { if (page) { page--; refresh(); } });
   const next = new Button("next", { x: 14, y: 0, width: 13, height: 1 }, "Siguiente", () => { if (page + 1 < pages) { page++; refresh(); } });
+  const browse = new Button("browse", {x:1,y:0,width:15,height:1}, "Explorar", () => {
+    const index=fields.findIndex((field,index)=>Math.floor(index/3)===page && field.browse);
+    if(index<0)return;
+    fields[index]!.browse!(inputs[index]!.value,value=>{inputs[index]!.setValue(value);window.focusedId=inputs[index]!.id;desktop.invalidate();},window);
+  });
   const accept = new Button("save", { x: 36, y: 0, width: 16, height: 1 }, "Guardar", () => {
     if (saving) return; saving = true; accept.disabled = true; error = "Guardando…"; desktop.invalidate();
     void save(inputs.map(input => input.value)).then(() => desktop.close(window), e => { error = (e as Error).message; }).finally(() => { saving = false; accept.disabled = false; desktop.invalidate(); });
   });
   window.onLayout = client => {
     inputs.forEach((input, index) => { input.bounds.y = 1 + index % 3; input.bounds.width = Math.max(1, client.width - 21); });
-    for (const button of [previous, next, accept]) button.bounds.y = client.height - 1;
+    for (const button of [previous, next, browse, accept]) button.bounds.y = client.height - 1;
     accept.bounds.x = client.width - accept.bounds.width - 1;
     previous.disabled = page === 0; next.disabled = page + 1 === pages;
   };

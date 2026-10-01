@@ -5,6 +5,25 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Explorador, Projects y eventos en el chat
+
+- Componente FileExplorer: navegación fuera del proyecto mediante padre, raíz o
+  ruta escrita; carpetas/archivos/ocultos/enlaces, teclado Vim acotado, rueda y
+  doble clic. Preview UTF-8 en solo lectura hasta 64 KiB, aviso de binario y
+  regreso al listado. Adjuntar prepara archivos externos sin enviar el prompt.
+- Menú Projects con solo Name/Folder, Explorar y Guardar; picker anidado conserva
+  formulario/borrador. Ctrl+E, leader+e, /files y acceso desde Archivo.
+- Reasoning recibido en reasoning_content/reasoning mostrado progresivamente
+  y persistido, incluso ante cancelación/desconexión. Nombre/argumentos de calls
+  visibles durante recepción, ejecución y resultados con nombre/exit/duración;
+  las calls incompletas no se ejecutan. Render incremental y chat read-only.
+- Typecheck correcto; suite completa 71 casos, 675 assertions, 13 archivos.
+  Tras ajustes visuales finales, 10 casos pertinentes y typecheck pasan. QA desde
+  index.ts en PTY/tmux; prompt visible en 60×16. Sin modelo real ni binarios.
+- README, specs, AGENTS y fases actualizados. Evidencia en
+  docs/qa/explorer-and-reasoning.md y capturas. git pull falló por main sin
+  upstream; commit local, sin push. Archivos preexistentes del usuario preservados.
+
 ### Agregado
 
 - `docs/SPECS.md`: alcance del harness TypeScript/Bun, TUI en color, proyectos,

@@ -15,7 +15,7 @@ otra TUI.
 
 - [x] F01-01. Reutilizar `index.ts` como entrypoint del harness, terminal, renderer,
   input, foco y componentes de fase 00; conservar la demo como prueba de controles.
-- [x] F01-02. Componer menús Archivo/Proyectos/Models/Ventanas/Ayuda y la ventana
+- [x] F01-02. Componer menús Archivo/Projects/Models/Ventanas/Ayuda y la ventana
   principal, con contexto del proyecto/modelo/sesión y barra inferior de atajos.
 - [x] F01-03. Crear editor multilínea INSERT con cursor, borrado, Enter, Shift+Enter y pegado
   multilínea; evitar envíos producidos por caracteres dentro de un paste.
@@ -34,6 +34,8 @@ otra TUI.
   controlado; conservar el estado anterior del terminal.
 - [x] F01-10. Repetir el flujo TUI desde Bun y revisar su experiencia. Registrar evidencia,
   actualizar CHANGELOG y hacer el commit de cada tarea completada.
+- [x] F01-11. Integrar explorador fuera del proyecto, padre/raíz/ruta escrita,
+  preview de solo lectura y picker modal con prompt visible en 60×16.
 
 ## Escenarios de aceptación
 
@@ -66,6 +68,7 @@ real complementa los tests de secuencias ANSI.
 | Shift+Enter | [QA del teclado](../qa/shift-enter.md), [capturas](../qa/shift-enter-captures.txt) | Nueva línea sin envío y Enter para enviar. CSI-u/modifyOtherKeys fragmentados, atajos y cleanup conservados. |
 | Fuente Bun | `bun run typecheck`, `bun test` | 40 casos: input limpio, edición, envío, foco, scroll, restricciones de paneles, teclado extendido, color, monocromo y cleanup. Sin build de binarios. |
 | Agente fuente | `bun test tests/app-terminal.test.ts tests/llm.test.ts` | Models y contexto de sesión, streaming, cancelación y recuperación fixture. Markdown básico con callbacks Bun. Mouse físico y modelo real pendientes. |
+| Explorador y eventos | [QA actual](../qa/explorer-and-reasoning.md) | Carpeta hermana, raíz, preview, modales anidados, 60×16 y chat progresivo desde index.ts/PTY/tmux. |
 
 ## Cierre
 

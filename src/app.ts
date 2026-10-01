@@ -1,7 +1,7 @@
 import { basename, dirname, resolve, sep } from "node:path";
 import { ConfigStore, normalizeFolder, storagePaths, type Project, type Provider, type Model } from "./storage/config.ts";
 import { Session, listSessions } from "./storage/sessions.ts";
-import type { Message, Selection } from "./agent/messages.ts";
+import type { Message, Selection, ToolCall } from "./agent/messages.ts";
 import { createWorkspaceView } from "./ui/workspace.ts";
 import { choose, form, info } from "./ui/dialogs.ts";
 import { createDemoPanels } from "./ui/demo.ts";
@@ -13,6 +13,7 @@ import { contentWithAttachments, hasImages, parsePaths, pastedPaths, snapshot, v
 import { bindings, type Action } from "./ui/bindings.ts";
 import type { InputEvent } from "./ui/types.ts";
 import { readdir } from "node:fs/promises";
+import { FileExplorer } from "./ui/components/file-explorer.ts";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
 export class App {
@@ -57,11 +58,12 @@ export class App {
     const demo = createDemoPanels(this.desktop);
     this.desktop.menu.menus.splice(0, this.desktop.menu.menus.length,
       { label: "Archivo", items: [
+        { label: "Explorador de archivos", run: () => this.explore() },
         { label: "Nueva sesión", run: () => this.run(() => this.newSession()) },
         { label: "Sesiones", shortcut: "Ctrl+R", run: () => this.sessions() },
         { label: "Salir", shortcut: "Ctrl+Q", run: () => this.desktop.onExit() },
       ] },
-      { label: "Proyectos", hotkey: "p", items: [
+      { label: "Projects", hotkey: "p", items: [
         { label: "Elegir proyecto", shortcut: "Ctrl+P", run: () => this.projects() },
         { label: "Agregar proyecto", run: () => this.projectForm() },
         { label: "Editar proyecto", run: () => this.projectForm(this.project) },
@@ -89,7 +91,7 @@ export class App {
       ] },
       { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", run: () => this.desktop.onHelp() }, {label:"Activar / desactivar Vim",run:()=>this.run(async()=>{ const next=structuredClone(this.store.value); next.ui.vimMode=!next.ui.vimMode; await this.store.save(next); this.mode="INSERT"; this.pending="";this.status=`Vim ${next.ui.vimMode ? "activado" : "desactivado"}`; })}] },
     );
-    const actionLabels:Record<Action,string>={projects:"Elegir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",help:"Atajos y mouse"};
+    const actionLabels:Record<Action,string>={projects:"Elegir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",explorer:"Explorador de archivos",help:"Atajos y mouse"};
     for(const menu of this.desktop.menu.menus) for(const item of menu.items) {
       const action=(Object.keys(actionLabels) as Action[]).find(action=>actionLabels[action]===item.label);if(action)item.shortcut=this.bindingLabel(action);
     }
@@ -97,7 +99,7 @@ export class App {
       "Enter enviar · Shift+Enter nueva línea", ...Object.entries(bindings(this.store.value.ui.bindings).global).map(([action,key])=>`${key}: ${action}`), "Ctrl+C: cancelar turno · Ctrl+Q: salir",
       "Esc: INSERT → NORMAL → menú; modal: cerrar", "NORMAL: h/j/k/l w/b 0/$ · i/a/I/A · x dd u", "Conversación: j/k Ctrl+D/U gg/G; solo lectura",
       ...Object.entries(bindings(this.store.value.ui.bindings).normal).map(([action,key])=>`${key}: ${action}`), "Ctrl+N: cambiar panel",
-      "Comandos: /help /projects /models /providers", "/sessions /new /attach ruta /detach /quit",
+      "Comandos: /help /projects /models /providers", "/sessions /files /new /attach ruta /detach /quit",
     ]);
     this.desktop.onShortcut = event => {
       if (event.type !== "key") return false;
@@ -109,7 +111,7 @@ export class App {
         this.desktop.focus(this.desktop.active === promptWindow ? this.view.editorWindow : promptWindow); promptWindow.focusedId = prompt.id; this.pending = ""; return true;
       }
       if(event.key==="tab" && this.desktop.active===promptWindow && promptWindow.focusedId===prompt.id && this.mode==="INSERT") {
-        const text=prompt.value, commands=["/help","/projects","/providers","/models","/sessions","/new","/attach","/detach","/quit"];
+        const text=prompt.value, commands=["/help","/projects","/providers","/models","/sessions","/files","/new","/attach","/detach","/quit"];
         if(/^\/[a-z]*$/.test(text)) {const matches=commands.filter(c=>c.startsWith(text));if(matches.length){prompt.setValue(matches[0]!);return true;}}
         if(text.startsWith("/attach ")) {this.run(async()=>{const raw=text.slice(8),path=resolve(this.project?.path??this.cwd,raw);const entries=await readdir(dirname(path),{withFileTypes:true});const prefix=basename(path);const candidates=entries.filter(e=>e.name.startsWith(prefix));
           if(candidates.length===1) prompt.setValue(`/attach ${JSON.stringify((raw.slice(0,raw.length-prefix.length)+candidates[0]!.name)+(candidates[0]!.isDirectory()?sep:""))}`);
@@ -167,10 +169,14 @@ export class App {
     this.status="Listo";this.showHistory(); this.showContext(); this.desktop.focus(this.view.promptWindow); this.desktop.invalidate();
   }
   async newSession(): Promise<void> { this.requireIdle(); if (!this.project) { this.projectForm(); return; } await this.switchProject(this.project, crypto.randomUUID()); }
-  projects(): void { choose(this.desktop, "Proyectos", this.store.value.projects.map(value => ({ label: `${value.name} · ${value.path}`, value })), p => this.run(() => this.switchProject(p))); }
+  projects(): void { choose(this.desktop, "Projects", this.store.value.projects.map(value => ({ label: `${value.name} · ${value.path}`, value })), p => this.run(() => this.switchProject(p))); }
   projectForm(project?: Project): void {
     if (this.busy) { this.status = "Cancelá el turno antes de editar proyectos"; return; }
-    form(this.desktop, project ? "Editar proyecto" : "Agregar proyecto", [{ label: "Nombre", value: project?.name ?? basename(this.cwd) }, { label: "Carpeta", value: project?.path ?? this.cwd }], ([name, path]) => this.change(async () => {
+    form(this.desktop, project ? "Projects · editar" : "Projects · nuevo", [{ label: "Name", value: project?.name ?? basename(this.cwd) }, {
+      label: "Folder", value: project?.path ?? this.cwd, browse: (value,select,parent) => {
+        const explorer=new FileExplorer(this.desktop,this.cwd,{parent,initialPath:value,pickFolder:select}); this.run(()=>explorer.show());
+      },
+    }], ([name, path]) => this.change(async () => {
       const saved = await this.store.project(name!, path!, this.cwd, project?.id);
       await this.switchProject(saved);
     }));
@@ -191,12 +197,13 @@ export class App {
   showContext(): void {
     let selected = "No hay modelo configurado. Abrí Models → Configurar modelo.";
     try { const { provider, model } = this.current(); selected = `${provider.name} · ${model.id}${model.capabilities.tools ? "" : " · sin tools"}`; } catch {}
-    this.view.response.placeholder = `${this.project?.path ?? "Registrá un proyecto en Proyectos → Agregar proyecto."}\n\n${selected}`;
+    this.view.response.placeholder = `${this.project?.path ?? "Registrá un proyecto en Projects → Agregar proyecto."}\n\n${selected}`;
     if (!this.session?.state.messages.length && this.status === "Listo") this.status = selected;
     this.desktop.invalidate();
   }
   showHistory(reset = true): void {
     const messages = this.session?.state.messages ?? [];
+    const names = new Map(messages.flatMap(m => m.tool_calls?.map(call => [call.id, call.function.name] as const) ?? []));
     const text = messages.map(m => {
       let cached = this.rendered.get(m); if (cached !== undefined) return cached;
       let content = typeof m.content === "string" ? m.content : m.content?.map(part => part.type === "text" ? part.text : "[Imagen adjunta guardada en la sesión]").join("\n");
@@ -206,7 +213,11 @@ export class App {
           content=`${result.failed?"Error":"OK"}${result.exitCode!==undefined?" · exit "+result.exitCode:""} · ${result.durationMs} ms\n${output}`;
         }
       }catch{}
-      cached = `${m.role === "user" ? "Vos" : m.role === "assistant" ? "Agente" : "Herramienta"}:\n${m.role === "assistant" ? markdownText(content ?? "") : content ?? ""}${m.tool_calls ? "\n" + m.tool_calls.map(c => `${c.function.name} ${c.function.arguments}`).join("\n") : ""}`;
+      const reasoning=m.reasoning_content ?? m.reasoning;
+      const label=m.role === "user" ? "Vos" : m.role === "assistant" ? "Agente" : `Herramienta · ${names.get(m.tool_call_id ?? "") ?? m.tool_call_id ?? "resultado"}`;
+      const sections=[reasoning ? "Razonamiento:\n"+reasoning : "", m.role === "assistant" ? markdownText(content ?? "") : content ?? "",
+        m.tool_calls?.map(c => `Tool call · ${c.function.name}\n${c.function.arguments}`).join("\n\n") ?? ""].filter(Boolean);
+      cached = `${label}:\n${sections.join("\n\n")}`;
       this.rendered.set(m, cached); return cached;
     }).join("\n\n") + (this.session?.state.notices.length ? "\n\n" + this.session.state.notices.join("\n") : "");
     if (reset) this.view.response.setValue(text, "end"); else this.view.response.update(text);
@@ -273,7 +284,11 @@ export class App {
     } finally {this.busy=false;this.controller=undefined;this.view.send.label="Enviar";this.desktop.invalidate();}
   }
   private action(action: Action): void {
-    ({projects:()=>this.projects(),models:()=>this.models(),providers:()=>this.providers(),sessions:()=>this.sessions(),attachments:()=>this.attachmentMenu(),help:()=>this.desktop.onHelp()})[action]();
+    ({projects:()=>this.projects(),models:()=>this.models(),providers:()=>this.providers(),sessions:()=>this.sessions(),attachments:()=>this.attachmentMenu(),explorer:()=>this.explore(),help:()=>this.desktop.onHelp()})[action]();
+  }
+  explore(): void {
+    if(this.desktop.modal)return;
+    const explorer=new FileExplorer(this.desktop,this.project?.path ?? this.cwd,{attach:path=>this.change(()=>this.attach([path]))});this.run(()=>explorer.show());
   }
   private bindingLabel(action:Action):string{return bindings(this.store.value.ui.bindings).global[action]!.replace(/^(ctrl|alt)\+([a-z])$/,(_match,mod,key)=>(mod==="ctrl"?"Ctrl":"Alt")+"+"+key.toUpperCase());}
   private input(event: InputEvent): boolean {
@@ -295,7 +310,7 @@ export class App {
       this.pending=""; const action=Object.entries(bindings(this.store.value.ui.bindings).normal).find(([,binding])=>binding===`leader+${key}`)?.[0] as Action|undefined;
       if (action) this.action(action); return true;
     }
-    if (key === " ") { this.pending="leader"; this.status="Leader: p proyecto · m modelo · s sesión · f adjunto · ? ayuda"; return true; }
+    if (key === " ") { this.pending="leader"; this.status="Leader: p proyecto · m modelo · s sesión · e archivos · f adjunto · ? ayuda"; return true; }
     const prior=this.pending; this.pending="";
     if (control === this.view.response) {
       if (prior==='g' && key==='g') return this.view.response.vim('gg');
@@ -337,7 +352,7 @@ export class App {
     const dropped=this.project && await pastedPaths(text,this.project.path);
     if(dropped) {this.requireIdle();await this.attach(dropped);this.view.prompt.setValue("");await this.saveDraft();return;}
     if (text.startsWith("/")) {
-      const commands: Record<string, () => void> = { "/projects": () => this.projects(), "/models": () => this.models(), "/providers": () => this.providers(), "/sessions": () => this.sessions(), "/new": () => this.run(() => this.newSession()), "/help": () => this.desktop.onHelp(), "/attach":()=>this.attachmentMenu(), "/detach":()=>this.detach(), "/quit": () => this.desktop.onExit() };
+      const commands: Record<string, () => void> = { "/projects": () => this.projects(), "/models": () => this.models(), "/providers": () => this.providers(), "/sessions": () => this.sessions(), "/files":()=>this.explore(), "/new": () => this.run(() => this.newSession()), "/help": () => this.desktop.onHelp(), "/attach":()=>this.attachmentMenu(), "/detach":()=>this.detach(), "/quit": () => this.desktop.onExit() };
       const action = commands[text.trim()]; if (!action) throw new Error("Comando desconocido. /help"); this.view.prompt.setValue(""); action(); return;
     }
     this.requireIdle(); if (!text.trim() && !this.attachments.length) return;
@@ -356,15 +371,31 @@ export class App {
     this.turn = (async () => {
       try {
         await this.message({ role: "user", content }); await this.saveDraft(); this.showHistory(false);
-        this.view.response.append("\n\nAgente:\n");
+        let section="";
+        const calls=new Map<number,ToolCall>();
+        const resetLive=()=>{section="";calls.clear();};
+        const appendLive=(id:string,label:string,delta:string)=>{
+          if(section!==id){this.view.response.append(`\n\n${label}\n`);section=id;}
+          this.view.response.append(delta);this.desktop.invalidate();
+        };
         const result = await runTurn({ project: this.project!, session, provider, model, key, signal: this.controller!.signal, limits: this.store.value.limits,
-          onState: state => { this.status = state; this.desktop.invalidate(); },
-          onMessage: () => { this.showHistory(false); this.view.response.append("\n\nAgente:\n"); this.desktop.invalidate(); },
-          onDelta: delta => { this.status = "Respondiendo…"; this.view.response.append(delta); this.desktop.invalidate(); } });
+          onState: state => { if(state==="Conectando…")resetLive();this.status = state; this.desktop.invalidate(); },
+          onMessage: () => { this.showHistory(false);resetLive();this.desktop.invalidate(); },
+          onReasoning: delta => { this.status="Razonando…";appendLive("reasoning","Razonamiento:",delta); },
+          onToolCall: (index,call) => {
+            this.status="Recibiendo herramientas…";const previous=calls.get(index);calls.set(index,call);
+            const id=`call-${index}-${call.function.name}`;
+            appendLive(id,`Tool call · ${call.function.name || "recibiendo…"}${previous ? " · continuación" : ""}`,
+              call.function.arguments.slice(previous?.function.arguments.length ?? 0));
+          },
+          onToolStart: call => { appendLive(`running-${call.id}`,`Herramienta · ${call.function.name} · ejecutando…`,""); },
+          onDelta: delta => { this.status = "Respondiendo…";appendLive("answer","Agente:",delta); } });
         this.status = result.usage !== undefined ? `Listo · ${result.usage} tokens` : "Listo · uso no reportado";
         await session.append({ type: "turn", state: "completed", detail: this.status });
       } catch (e) {
-        if (e instanceof CompletionError && e.partial.content) await this.message({ role: "assistant", content: e.partial.content });
+        if (e instanceof CompletionError && (e.partial.content || e.partial.reasoning_content || e.partial.reasoning)) {
+          const {tool_calls: _incomplete, ...partial}=e.partial; await this.message(partial);
+        }
         this.status = (e as Error).message; session.state.notices.push(this.status);
         await session.append({ type: "turn", state: this.controller!.signal.aborted ? "cancelled" : "failed", detail: this.status });
       } finally { this.busy = false; this.controller = undefined; this.view.send.label = "Enviar"; this.showHistory(false); this.desktop.invalidate(); }

@@ -13,7 +13,8 @@ bun install --frozen-lockfile
 bun run dev
 ```
 
-En el primer inicio, registrar el nombre y la carpeta del proyecto. Abrir
+En el primer inicio, **Projects** pide solamente **Name** y **Folder**. El botón
+**Explorar** permite elegir la carpeta navegando el filesystem. Abrir
 **Models → Configurar modelo**: sin un modelo seleccionado, la ventana de chat
 muestra **No hay modelo configurado** y no envía requests.
 
@@ -50,7 +51,7 @@ Este ejemplo no implica una prueba realizada con ese modelo.
 
 ## Trabajo y atajos
 
-El menú Proyectos administra nombre/carpeta. Archivo crea y reabre sesiones por
+El menú Projects administra nombre/carpeta. Archivo crea y reabre sesiones por
 proyecto; conserva borradores y el contenido enviado. Ventanas → Componentes
 mantiene el laboratorio QBasic. `--demo` abre la demo sin persistencia ni proveedor.
 
@@ -61,6 +62,7 @@ mantiene el laboratorio QBasic. `--demo` abre la demo sin persistencia ni provee
 | Cancelar turno / descubrimiento | Ctrl+C o Cancelar; conserva efectos ya realizados |
 | Elegir proyecto / modelo / proveedor / sesión | Ctrl+P / Ctrl+O / Ctrl+B / Ctrl+R |
 | Adjuntos | Ctrl+F o Ventanas → Adjuntos |
+| Explorador de archivos | Ctrl+E o Archivo → Explorador de archivos |
 | Cambiar panel | Ctrl+N o clic; Tab en NORMAL cambia prompt/conversación |
 | Foco de controles | Tab / Shift+Tab o clic |
 | Menú | Escape desde NORMAL; desde INSERT pasa primero a NORMAL; Alt+A/P/M/V/Y o clic |
@@ -72,10 +74,10 @@ mantiene el laboratorio QBasic. `--demo` abre la demo sin persistencia ni provee
 
 Vim arranca en **INSERT**. En NORMAL, el prompt admite `h/j/k/l`, `w/b`, `0/$`,
 `i/a/I/A`, `x`, `dd` y `u`. En la conversación: `j/k`, Ctrl+D/U, `gg/G`.
-Espacio seguido de `p/m/s/f/?` abre proyectos/modelos/sesiones/adjuntos/ayuda.
+Espacio seguido de `p/m/s/e/f/?` abre proyectos/modelos/sesiones/explorador/adjuntos/ayuda.
 Ayuda permite activar/desactivar Vim; `ui.vimMode` también puede configurarse en JSON.
 
-Comandos: `/help`, `/projects`, `/providers`, `/models`, `/sessions`, `/new`,
+Comandos: `/help`, `/projects`, `/providers`, `/models`, `/sessions`, `/files`, `/new`,
 `/attach ruta`, `/detach`, `/quit`. Tab completa comandos y una ruta de `/attach`
 con candidato único. Los comandos de la aplicación no se envían al modelo.
 No se asignan acciones a F1–F12.
@@ -94,7 +96,30 @@ Bindings opcionales, asociados a acciones conocidas, con colisiones rechazadas:
 ```
 
 Las acciones configurables son `projects`, `models`, `providers`, `sessions`,
-`attachments` y `help`. Los atajos de lifecycle/foco/edición permanecen reservados.
+`attachments`, `explorer` y `help`. Los atajos de lifecycle/foco/edición permanecen reservados.
+
+## Explorador y chat
+
+El explorador parte del proyecto y permite salir de él: **Subir**, **Raíz** o una
+ruta escrita en el input y **Ir**. Muestra carpetas, archivos, ocultos y enlaces.
+Enter/doble clic abre una carpeta o una vista previa de texto en solo lectura;
+flecha izquierda/Backspace sube, `h/j/k/l` navega y la rueda desplaza el listado.
+La vista previa se limita a 64 KiB; los binarios muestran su tipo sin interpretarse
+como texto. **Adjuntar** prepara un archivo, incluso fuera del proyecto, sin enviar
+el prompt ni cambiar la carpeta de trabajo. En Projects, **Elegir folder** devuelve
+la carpeta visitada y conserva el nombre escrito en el formulario.
+
+El chat muestra **Razonamiento** cuando el proveedor lo envía en
+`reasoning_content` o `reasoning`. Los argumentos de **Tool call** aparecen durante
+su recepción; luego se muestra la herramienta ejecutándose y su resultado, error,
+duración y exit code disponible. Solo se ejecutan llamadas completas. La respuesta
+y el razonamiento recibido se guardan con la sesión, también ante cancelación o
+desconexión; una llamada incompleta no se ejecuta ni se registra como ejecutable.
+
+El servidor debe exponer ese razonamiento: [llama.cpp](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)
+documenta `reasoning_content`, y [vLLM](https://docs.vllm.ai/en/latest/features/reasoning_outputs/)
+documenta `reasoning`. No se genera un razonamiento ficticio cuando no viene en
+el stream. [QA del explorador/chat](docs/qa/explorer-and-reasoning.md).
 
 ## Adjuntos
 

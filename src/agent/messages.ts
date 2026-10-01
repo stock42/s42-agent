@@ -3,6 +3,8 @@ export type ContentPart = { type: "text"; text: string } | { type: "image_url"; 
 export interface Message {
   role: "system" | "user" | "assistant" | "tool";
   content: string | ContentPart[] | null;
+  reasoning_content?: string;
+  reasoning?: string;
   tool_calls?: ToolCall[];
   tool_call_id?: string;
 }

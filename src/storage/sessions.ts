@@ -20,7 +20,8 @@ function parseEvent(value: unknown, projectId: string): SessionEvent {
     case "session": if (typeof e.title === "string") return e; break;
     case "selection": if (e.selection && typeof e.selection.providerId === "string" && (e.selection.modelId === undefined || typeof e.selection.modelId === "string")) return e; break;
     case "draft": if (typeof e.text === "string" && Array.isArray(e.attachments) && e.attachments.every(p => typeof p === "string")) return e; break;
-    case "message": if (e.message && ["user", "assistant", "tool"].includes(e.message.role) && (e.message.content === null || typeof e.message.content === "string" || Array.isArray(e.message.content))) return e; break;
+    case "message": if (e.message && ["user", "assistant", "tool"].includes(e.message.role) && (e.message.content === null || typeof e.message.content === "string" || Array.isArray(e.message.content))
+      && (e.message.reasoning_content===undefined || typeof e.message.reasoning_content==="string") && (e.message.reasoning===undefined || typeof e.message.reasoning==="string")) return e; break;
     case "tool-start": if ([e.callId, e.name, e.arguments].every(v => typeof v === "string")) return e; break;
     case "tool-result": if (typeof e.callId === "string" && typeof e.output === "string" && typeof e.failed === "boolean") return e; break;
     case "turn": if (["completed", "cancelled", "failed"].includes(e.state) && typeof e.detail === "string") return e;

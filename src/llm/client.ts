@@ -33,14 +33,14 @@ export async function discoverModels(provider: Provider, key?: string, signal?: 
 }
 
 export async function complete(options: { provider: Provider; model: Model; messages: Message[]; tools?: ToolDefinition[]; key?: string; signal: AbortSignal;
-  firstEventMs: number; idleMs: number; onDelta: (text: string) => void }): Promise<Completion> {
+  firstEventMs: number; idleMs: number; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void }): Promise<Completion> {
   const controller = new AbortController(), relay = () => controller.abort(options.signal.reason);
   if (options.signal.aborted) relay(); else options.signal.addEventListener("abort", relay, { once: true });
   let timer: ReturnType<typeof setTimeout>, reader: { cancel(): Promise<void> } | undefined;
   const arm = (ms: number, detail: string) => { clearTimeout(timer); timer = setTimeout(() => controller.abort(new Error(detail)), ms); };
-  let text = "", done = false, received = false, finishReason: string | undefined, usage: Completion["usage"];
+  let text = "", reasoning = "", reasoningField: "reasoning_content" | "reasoning" = "reasoning_content", done = false, received = false, finishReason: string | undefined, usage: Completion["usage"];
   const calls = new Map<number, ToolCall>();
-  const partial = (): Message => ({ role: "assistant", content: text || null, ...(calls.size ? { tool_calls: [...calls.entries()].sort(([a], [b]) => a - b).map(([, c]) => c) } : {}) });
+  const partial = (): Message => ({ role: "assistant", content: text || null, ...(reasoning ? {[reasoningField]:reasoning} : {}), ...(calls.size ? { tool_calls: [...calls.entries()].sort(([a], [b]) => a - b).map(([, c]) => c) } : {}) });
   try {
     arm(options.firstEventMs, "Timeout esperando el primer evento del modelo");
     const response = await fetch(`${options.provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
@@ -60,6 +60,8 @@ export async function complete(options: { provider: Provider; model: Model; mess
       const choice = packet.choices?.[0]; if (!choice) return;
       if (choice.finish_reason) finishReason = choice.finish_reason;
       const delta = choice.delta;
+      const thought = delta?.reasoning_content || delta?.reasoning;
+      if (typeof thought === "string") { reasoningField=delta.reasoning_content ? "reasoning_content" : "reasoning"; reasoning+=thought; options.onReasoning?.(thought); }
       if (typeof delta?.content === "string") { text += delta.content; options.onDelta(delta.content); }
       for (const call of delta?.tool_calls ?? []) {
         if (!Number.isSafeInteger(call.index) || call.index < 0) throw new Error("Índice de tool call inválido");
@@ -68,6 +70,7 @@ export async function complete(options: { provider: Provider; model: Model; mess
         if (call.function?.name) existing.function.name += call.function.name;
         if (typeof call.function?.arguments === "string") existing.function.arguments += call.function.arguments;
         calls.set(call.index, existing);
+        options.onToolCall?.(call.index, {...existing,function:{...existing.function}});
       }
     });
     const streamReader = response.body.getReader(); reader = streamReader;

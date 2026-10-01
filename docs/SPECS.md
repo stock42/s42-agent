@@ -3,7 +3,9 @@
 Fecha: 2026-10-01. Estado: harness QBasic desde `index.ts`, con respuesta en solo
 lectura y prompt fijo. Proyectos/sesiones, Models, streaming, coding, Vim y
 adjuntos implementados y comprobados con fixtures/PTY. Inferencia real, mouse/drop
-físicos y distribución siguen pendientes. [QA del agente](qa/agent-mvp.md).
+físicos y distribución siguen pendientes. Explorador libre, Projects Name/Folder
+y reasoning/tool calls visibles implementados. [QA actual](qa/explorer-and-reasoning.md),
+[QA del agente](qa/agent-mvp.md).
 [Apariencia actual](qa/qbasic-style.md), [layout/edición](qa/workspace.md),
 [demo inicial](qa/tui-demo.md).
 
@@ -139,7 +141,7 @@ src/
     theme.ts               paleta QBasic
     desktop.ts             foco, capas y captura
     demo.ts                composición de la demo inicial
-    components/            window, button, input, select-list, menu
+    components/            window, button, input, text-area, select-list, menu, file-explorer
   agent/                   loop, mensajes, tools y adjuntos
   llm/                     Chat Completions y SSE
   storage/                 configuración, proyectos y sesiones
@@ -193,6 +195,7 @@ funciones del IDE QBasic ni incorporar un segundo tema tipo Pi.
 | `Input` | Campo editable con cursor, foco, teclado y paste. |
 | `TextArea` | Edición multilínea, selección por grafemas, wrap, scroll y envío explícito del prompt. |
 | `SelectList` | Lista con selección por clic/flechas y scroll con rueda/teclado. |
+| `FileExplorer` | Navegación libre de carpetas, ruta editable, preview read-only y selección de archivo/folder. |
 
 Un componente conserva estado mínimo y expone un contrato tipado para dibujar,
 recibir eventos y manejar su foco. `Dialog` puede reutilizar `Window`; no crear
@@ -222,7 +225,7 @@ Con esa evidencia se determina la viabilidad antes de integrar el agente.
 
 Una pantalla alternativa organizada como escritorio TUI:
 
-1. Menú superior: Archivo, Proyectos, **Models**, Ventanas y Ayuda, con desplegables.
+1. Menú superior: Archivo, **Projects**, **Models**, Ventanas y Ayuda, con desplegables.
 2. Editor central con el **nombre del proyecto centrado en su marco superior**,
    como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
    allí en solo lectura, con selección y scroll; no abrir una ventana de chat independiente.
@@ -252,6 +255,27 @@ no elimina una sesión ni borra datos. Las acciones de cancelar o salir deben se
 El estado de cada herramienta muestra su nombre, argumentos relevantes,
 resultado, código de salida y duración. No llamar «completada» a una herramienta
 fallida ni a un turno cancelado.
+
+El razonamiento enviado por el proveedor aparece progresivamente en el chat,
+separado de la respuesta. Las tool calls muestran nombre y argumentos durante
+la recepción, ejecución y resultado. Los deltas se agregan sin volver a parsear
+el historial completo; al finalizar se conserva el mensaje canónico en la sesión.
+Si el proveedor no expone razonamiento, no inventarlo.
+
+### Explorador de archivos
+
+Archivo → Explorador de archivos, Ctrl+E o `/files`. Parte de la carpeta del
+proyecto, pero permite navegar fuera de ella con padre, raíz o ruta escrita.
+Lista un nivel por vez, incluyendo archivos ocultos y enlaces; Enter/doble clic
+abre carpetas o una vista previa de archivo. Preview UTF-8 en solo lectura hasta
+64 KiB con recorte explícito, o aviso de binario; Escape vuelve al listado.
+Flechas/j/k seleccionan, derecha/l/Enter abre, izquierda/h/Backspace sube y la
+rueda desplaza. Adjuntar prepara el archivo elegido sin inferencia ni cambio de
+proyecto. Rutas inválidas/ilegibles se muestran en el explorador y permiten volver
+a navegar. El prompt sigue visible, también en 60×16.
+
+Projects reutiliza el explorador como picker: Elegir folder devuelve la carpeta
+visitada al formulario sin perder Name ni el borrador de la conversación.
 
 ### Renderizado
 
@@ -348,6 +372,7 @@ Al salir, restaurar la pila Kitty y el valor inicial de modifyOtherKeys.
 | Global | Ctrl+B | Seleccionar/configurar proveedor. |
 | Global | Ctrl+R | Seleccionar una sesión del proyecto activo. |
 | Global | Ctrl+F | Agregar o quitar adjuntos por ruta. |
+| Global | Ctrl+E | Abrir explorador de archivos y carpetas, incluyendo fuera del proyecto. |
 | INSERT | Escape | Entrar a NORMAL cuando Vim está habilitado. |
 | INSERT | Enter | Enviar el borrador; si acaba de reconocer rutas sin marcadores, primero adjuntarlas. |
 | INSERT | Shift+Enter | Insertar salto de línea; Ctrl+J como alternativa de compatibilidad. |
@@ -359,7 +384,7 @@ Al salir, restaurar la pila Kitty y el valor inicial de modifyOtherKeys.
 | NORMAL | Tab | Cambiar foco entre editor y conversación. |
 | NORMAL, conversación | j / k / Ctrl+D / Ctrl+U | Desplazar una línea o media pantalla. |
 | NORMAL, conversación | gg / G | Ir al inicio/final. |
-| NORMAL | Espacio, p / m / s / f / ? | Proyectos / modelos / sesiones / adjuntos / ayuda. |
+| NORMAL | Espacio, p / m / s / e / f / ? | Proyectos / modelos / sesiones / explorador / adjuntos / ayuda. |
 | Selector | j / k o flechas, Enter, Escape | Navegar, elegir, cerrar. |
 | Conversación | PageUp / PageDown | Desplazar sin modificar el borrador. |
 
@@ -372,13 +397,14 @@ se asocian a acciones conocidas y se valida que no colisionen en el mismo modo.
 No depender de Ctrl+M, que muchos terminales transmiten igual que Enter.
 
 Comandos de la aplicación: `/help`, `/projects`, `/providers`, `/models`,
-`/sessions`, `/new`, `/attach`, `/detach`, `/quit`. Sus nombres no se envían al
+`/sessions`, `/files`, `/new`, `/attach`, `/detach`, `/quit`. Sus nombres no se envían al
 modelo cuando se usan como comandos de la TUI.
 
 ## 6. Proyectos
 
 Cada proyecto tiene `id` estable, `name` y `path` absoluto. Nombre y carpeta se
-configuran desde la TUI; no requieren editar código.
+configuran desde **Projects**, con solo **Name** y **Folder**; el ID se genera
+internamente. Folder admite escritura o selección mediante Explorar.
 
 - Registrar una carpeta existente y legible; expandir `~` y rutas relativas al
   directorio desde el que se inició la aplicación.
@@ -490,8 +516,13 @@ manualmente. El default de proveedor es `llama.cpp` aun antes de elegir modelo.
 - Parser SSE incremental con CRLF/LF, líneas y JSON divididos entre chunks,
   múltiples eventos por chunk, UTF-8 incremental, eventos vacíos y `[DONE]`.
 - Reconstruir tool calls por índice/ID y acumular argumentos hasta su cierre.
+- Leer deltas `reasoning_content` (llama.cpp) o `reasoning` (vLLM), mostrarlos y
+  conservar el campo recibido con el mensaje y el historial enviado al proveedor.
+  [Servidor llama.cpp](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md),
+  [Reasoning de vLLM](https://docs.vllm.ai/en/latest/features/reasoning_outputs/).
 - Nunca ejecutar argumentos parciales ni JSON inválido.
-- Conservar texto parcial y distinguir cancelación, desconexión y fin correcto.
+- Conservar texto/razonamiento parcial y distinguir cancelación, desconexión y fin
+  correcto. No persistir llamadas incompletas como llamadas ejecutables.
 - Timeouts iniciales: conexión/primer evento hasta 120 s e inactividad del stream
   hasta 120 s, configurables para equipos locales lentos. No limitar por defecto
   la duración total mientras el servidor siga emitiendo datos.

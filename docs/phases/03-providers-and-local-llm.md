@@ -31,6 +31,8 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
   versiones, modelo, template y contexto; documentar cómo iniciar el servidor.
 - [x] F03-10. Repetir el flujo desde el entrypoint Bun. Registrar evidencia, actualizar
   CHANGELOG y hacer el commit de cada tarea completada.
+- [x] F03-11. Recibir reasoning_content/reasoning progresivo, exponer snapshots
+  de tool calls parciales y conservar razonamiento en desconexión/cancelación.
 
 ## Escenarios de aceptación
 
@@ -57,6 +59,7 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
 | Dos proveedores / errores | `bun test tests/llm.test.ts` | Endpoints independientes con el mismo model ID y keys diferentes; HTTP 401/404/429/503, idle y cancelación parcial. |
 | TUI fuente | `bun test tests/app-terminal.test.ts` | Host/puerto/key configurados desde Models; clave en memoria y fuera de config/sesión. |
 | Servidor real | Endpoint default no disponible | El usuario pidió configuración inicial en Models; no se eligió un modelo ni se descargó uno. |
+| Reasoning / calls progresivas | `bun test tests/reasoning.test.ts` | Ambos campos con UTF-8 fragmentado, snapshots independientes, cancelación/reapertura y reasoning conservado en el request siguiente. [QA](../qa/explorer-and-reasoning.md). |
 
 ## Cierre
 

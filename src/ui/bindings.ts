@@ -1,9 +1,9 @@
-export const actions = ['projects','models','providers','sessions','attachments','help'] as const;
+export const actions = ['projects','models','providers','sessions','attachments','explorer','help'] as const;
 export type Action = typeof actions[number];
 export type Bindings = Partial<Record<'global'|'normal',Partial<Record<Action,string>>>>;
 export const defaultBindings: Record<'global'|'normal',Partial<Record<Action,string>>> = {
-  global:{projects:'ctrl+p',models:'ctrl+o',providers:'ctrl+b',sessions:'ctrl+r',attachments:'ctrl+f',help:'alt+y'},
-  normal:{projects:'leader+p',models:'leader+m',sessions:'leader+s',attachments:'leader+f',help:'leader+?'},
+  global:{projects:'ctrl+p',models:'ctrl+o',providers:'ctrl+b',sessions:'ctrl+r',attachments:'ctrl+f',explorer:'ctrl+e',help:'alt+y'},
+  normal:{projects:'leader+p',models:'leader+m',sessions:'leader+s',attachments:'leader+f',explorer:'leader+e',help:'leader+?'},
 };
 export function bindings(config: Bindings = {}) {
   const resolved = {global:{...defaultBindings.global,...config.global},normal:{...defaultBindings.normal,...config.normal}};

@@ -13,6 +13,10 @@ export class Input extends Component {
     super(id, bounds); this.cursor = graphemes(value).length;
   }
 
+  setValue(value: string): void {
+    this.value = value; this.cursor = graphemes(value).length; this.start = 0; this.anchor = undefined; this.dragging = false;
+  }
+
   private visible(): string[] {
     const chars = graphemes(this.value);
     this.cursor = Math.min(this.cursor, chars.length);

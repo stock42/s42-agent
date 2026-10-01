@@ -8,6 +8,17 @@ export class SelectList extends Component {
   private top = 0;
   constructor(id: string, bounds: Rect, readonly items: string[], private onChange: (item: string) => void = () => {}) { super(id, bounds); }
 
+  setItems(items: string[], selected = 0): void {
+    this.items.splice(0, this.items.length, ...items);
+    this.selected = Math.max(0, Math.min(items.length - 1, selected));
+    this.top = Math.max(0, this.selected - Math.max(1, this.bounds.height - 2) + 1);
+  }
+
+  indexAt(x: number, y: number): number | undefined {
+    const index=this.top+y-1;
+    return x>0 && x<this.bounds.width-1 && y>0 && y<this.bounds.height-1 && index<this.items.length ? index : undefined;
+  }
+
   draw(canvas: Canvas, bounds: Rect, focused: boolean): void {
     this.top = Math.min(this.top, Math.max(0, this.items.length - (bounds.height - 2)));
     canvas.fill(bounds, theme.window); canvas.box(bounds, focused ? theme.selected : theme.window);
@@ -32,8 +43,8 @@ export class SelectList extends Component {
     let next = this.selected;
     if (event.type === "mouse" && event.action === "press" && event.x > 0 && event.x < this.bounds.width - 1
       && event.y > 0 && event.y < this.bounds.height - 1) {
-      next = this.top + event.y - 1;
-      if (next >= this.items.length) return false;
+      const index=this.indexAt(event.x,event.y); if(index===undefined)return false;
+      next = index;
     }
     else if (event.type === "key" && event.key === "up") next--;
     else if (event.type === "key" && event.key === "down") next++;

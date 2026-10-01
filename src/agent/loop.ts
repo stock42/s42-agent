@@ -1,11 +1,12 @@
-import type { Message } from "./messages.ts";
+import type { Message, ToolCall } from "./messages.ts";
 import type { Model, Project, Provider, Config } from "../storage/config.ts";
 import type { Session } from "../storage/sessions.ts";
 import { complete } from "../llm/client.ts";
 import { execute, instructions, toolDefinitions } from "./tools.ts";
 
 export async function runTurn(options: { project: Project; session: Session; provider: Provider; model: Model; key?: string; signal: AbortSignal;
-  limits: Config["limits"]; onDelta: (text: string) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number }> {
+  limits: Config["limits"]; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
+  onToolStart?: (call: ToolCall) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number }> {
   const { session, project, signal, model } = options;
   const save = async (message: Message) => { await session.append({ type: "message", message }); session.state.messages.push(message); options.onMessage(); };
   const guidance = await instructions(project.path);
@@ -33,6 +34,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
       else {
         await session.append({ type: "tool-start", callId: call.id, name: call.function.name, arguments: call.function.arguments });
         options.onState(`Ejecutando ${call.function.name}…`);
+        options.onToolStart?.(call);
         const tool = await execute(call.function.name, call.function.arguments, project.path, signal, options.limits.shellTimeoutMs);
         failed = tool.failed; output = JSON.stringify(tool);
         if (signal.aborted) aborted = new Error("Turno cancelado; los efectos ya realizados se conservan");

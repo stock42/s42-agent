@@ -33,3 +33,38 @@ test('entrypoint real: Models primer uso, host/puerto/key, coding, cancelación 
     await until(()=>text.includes('borrador conservado'));expect(text).toContain('Resultado verificado: 4');write('\x11');expect(await child.exited).toBe(0);
   }catch(e){throw new Error((e as Error).message+' · salida reciente: '+text.slice(-3500).replace(/\x1b\[[0-?]*[ -/]*[@-~]/g,''));}finally{child.kill();terminal.close();server.stop(true);await rm(root,{recursive:true,force:true});}
 },15000);
+
+test('entrypoint: Projects Name/Folder, picker, explorador externo, reasoning y tool call visibles',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'s42-explorer-pty-')),project=join(root,'proyecto'),config=join(root,'config.json');
+  const {mkdir}=await import('node:fs/promises');await mkdir(project);await Bun.write(join(root,'externo.ts'),'export const externo = 42;');
+  let text='',requests=0;
+  const server=Bun.serve({port:0,async fetch(req){await req.json();requests++;
+    if(requests===1)return new Response(new ReadableStream({async start(c){
+      const packet=(delta:unknown,finish_reason?:string)=>new TextEncoder().encode(`data: ${JSON.stringify({choices:[{delta,finish_reason}]})}\n\n`);
+      c.enqueue(packet({reasoning_content:'Inspecciono el proyecto'}));await Bun.sleep(60);
+      c.enqueue(packet({tool_calls:[{index:0,id:'call',function:{name:'list',arguments:'{"path":"."}'}}]}));await Bun.sleep(60);
+      c.enqueue(packet({},'tool_calls'));c.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));c.close();
+    }}));
+    return new Response(`data: ${JSON.stringify({choices:[{delta:{reasoning:'Ya revisé las entradas',content:'Resultado fixture visible'},finish_reason:'stop'}]})}\n\ndata: [DONE]\n\n`);
+  }});
+  const {defaultConfig}=await import('../src/storage/config.ts'),initial=defaultConfig();
+  initial.providers=[{id:'fixture',name:'Fixture',kind:'openai-compatible',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[{id:'fixture',name:'Fixture',contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}}]}];initial.defaults={providerId:'fixture',modelId:'fixture'};await Bun.write(config,JSON.stringify(initial));
+  const terminal=new Bun.Terminal({cols:80,rows:24,data:(_,data)=>{text+=new TextDecoder().decode(data);}});
+  const child=Bun.spawn([process.execPath,index,'--config',config,'--no-color'],{cwd:project,env:{...process.env,TERM:'xterm-256color'},terminal});
+  const write=(s:string)=>terminal.write(s),paste=(s:string)=>write(`\x01\x1b[200~${s}\x1b[201~`);
+  try {
+    await until(()=>text.includes('Projects · nuevo'));expect(text).toContain('Name');expect(text).toContain('Folder');
+    paste('Proyecto PTY');write('\t');paste(root);write('\t\r');await until(()=>text.includes('Elegir folder'));await until(()=>text.includes('externo.ts'));
+    text='';write('\t\t\t\t\r');await until(()=>text.includes('< Guardar >'));
+    // The folder picker restores focus to Folder in the underlying form.
+    write('\t\t\r');await until(()=>text.includes('Fixture · fixture'));
+    expect((await Bun.file(config).json()).projects[0].name).toBe('Proyecto PTY');
+    text='';terminal.resize(60,16);child.kill('SIGWINCH');await until(()=>text.includes('Prompt'));
+    write('\x05');await until(()=>text.includes('Explorador de archivos'));write('\x1b[F');await until(()=>text.includes('externo.ts'));expect(text).toContain('Prompt');
+    text='';write('\x1b');await until(()=>text.includes('Fixture · fixture'));
+    text='';terminal.resize(80,24);child.kill('SIGWINCH');await until(()=>text.includes('Prompt'));
+    write('mostrar eventos\r');await until(()=>text.includes('Resultado fixture visible'));expect(text).toContain('Razonamiento:');expect(text).toContain('Tool call · list');expect(text).toContain('Herramienta · list');expect(requests).toBe(2);
+    write('\x11');expect(await child.exited).toBe(0);expect(text).toContain('\x1b[?1049l');
+  } catch(e){throw new Error((e as Error).message+' · '+text.slice(-3000).replace(/\x1b\[[0-?]*[ -/]*[@-~]/g,''));}
+  finally {child.kill();terminal.close();server.stop(true);await rm(root,{recursive:true,force:true});}
+},15000);

@@ -34,6 +34,8 @@ al terminal en adjuntos verificables, con alternativas de teclado.
   drop desde el SO. Registrar formatos observados por terminal y plataforma.
 - [x] F05-10. Repetir atajos y adjuntos desde el entrypoint Bun; registrar evidencia,
   actualizar CHANGELOG y hacer el commit de cada tarea completada.
+- [x] F05-11. Conectar Ctrl+E, leader+e y /files al explorador; adjuntar un archivo
+  fuera de la carpeta del proyecto sin enviar ni reemplazar el prompt.
 
 ## Escenarios de aceptación
 
@@ -65,6 +67,7 @@ al terminal en adjuntos verificables, con alternativas de teclado.
 | Vim / adjuntos | `bun run typecheck`; `bun test tests/attachments-vim.test.ts` | 5 casos: edición/undo por grafema, read-only, prioridad modal, paste NORMAL, rutas POSIX/Windows/UNC/file URL, cambio previo al envío y snapshot conservado. |
 | Entry point | `bun test tests/app-terminal.test.ts` | Models configurado por teclado; Shift+Enter, tools, cancelación parcial y reapertura en PTY. |
 | Drop manual | Pendiente | Parser y paste simulados no demuestran drag & drop físico desde el SO ni compatibilidad en Windows/macOS. |
+| Archivo externo | `bun test tests/explorer.test.ts` | Ctrl+E y Adjuntar conservan proyecto/borrador y preparan el archivo seleccionado fuera del proyecto. |
 
 ## Cierre
 

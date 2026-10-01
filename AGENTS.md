@@ -33,12 +33,16 @@ modelo y API key (en memoria o nombre de variable). Sin modelo elegido, el chat
 lo indica y no envía requests. `--demo` conserva el laboratorio sin persistencia.
 Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
 read/list/search/write/edit/shell, Vim acotado y adjuntos por rutas ya implementados.
+**Projects** pide solo **Name/Folder**, con selector de carpeta. **Ctrl+E** abre el
+explorador: padre, raíz o ruta libre, preview de solo lectura y adjuntos fuera del
+proyecto. El chat muestra reasoning emitido por el proveedor, argumentos de tool
+calls en recepción, inicio y resultados; conserva reasoning al cancelar/reabrir.
 Módulos: `src/app.ts`, `src/ui/`, `src/agent/`, `src/llm/` y `src/storage/`.
 Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
 Fase 02 completada. Fases 00/01/03/04/05 en curso por validaciones externas
 pendientes; fase 06 integra QA fuente y documentación, con distribución diferida.
-Evidencia actual: [agente MVP](docs/qa/agent-mvp.md), [apariencia QBasic](docs/qa/qbasic-style.md),
+Evidencia actual: [explorador/chat](docs/qa/explorer-and-reasoning.md), [agente MVP](docs/qa/agent-mvp.md), [apariencia QBasic](docs/qa/qbasic-style.md),
 [layout](docs/qa/workspace.md) y [Shift+Enter](docs/qa/shift-enter.md).
 Fixtures y eventos inyectados no prueban inferencia real, mouse físico ni drop
 real. Linux es el entorno de QA; Windows aún necesita terminación de procesos
@@ -71,6 +75,11 @@ hijos. No afirmar compatibilidad con otros SO por usar APIs multiplataforma.
 - Enter envía el prompt; Shift+Enter es el atajo principal para nueva línea.
   Ctrl+J se conserva como alternativa de compatibilidad si el terminal no
   distingue Shift+Enter. Mostrar Shift+Enter en la UI y la ayuda.
+- Mantener Projects con Name y Folder como únicos datos solicitados. El explorador
+  permite navegar fuera del proyecto; explorar/adjuntar no cambia el cwd de tools.
+- Mostrar en el chat el reasoning realmente recibido (`reasoning_content` o
+  `reasoning`), las llamadas mientras llegan, su ejecución y resultados. No
+  inventar razonamiento para proveedores que no lo exponen.
 
 ## Regla Git obligatoria
 
