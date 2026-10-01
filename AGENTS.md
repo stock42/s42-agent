@@ -96,8 +96,13 @@ catálogo al agregar mensajes UI. [Fase13](docs/phases/13-language-and-reasoning
 Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
 Menús de producto: Archivo, Projects, Models, Promptings, Tools, Vista y Ayuda.
-**Ayuda → About** muestra Powered by César Casas., MIT., S42 Agent. y Version
-tomada de package.json. El buscador consulta directamente **https://skills.sh**
+**Ayuda → About** presenta capacidades, estilo QBasic, modelos locales/remotos,
+MCP/skills, proyectos/promptings y binarios Bun para Windows/Linux/macOS.
+Conserva Powered by César Casas., MIT., S42 Agent. y Version de package.json;
+incluye https://www.linkedin.com/in/cesarcasas/. `src/ui/about.ts`: modal bilingüe
+con cabecera de color, lectura/scroll y cierre; se adapta al área del editor y
+mantiene el prompt visible desde 60×16. [QA](docs/qa/about.md).
+El buscador consulta directamente **https://skills.sh**
 mediante `/api/search`, sin proveedor LLM; búsqueda/resultados muestran ese origen.
 El laboratorio y sus menús de prueba solo aparecen con `--demo`.
 Una pestaña por proyecto; cada una conserva sesión, modelo, borrador, adjuntos,

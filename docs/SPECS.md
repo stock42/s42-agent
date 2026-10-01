@@ -1178,9 +1178,15 @@ siguiente cuando su respuesta indica que queda trabajo. Los prompts de control
 son temporales: no se guardan como mensajes escritos por el usuario. Sus notices
 y los mensajes reales sí se guardan. Continuar no implica repetir acciones previas.
 
-Ayuda → About muestra exactamente `Powered by César Casas.`, `MIT.`,
-`S42 Agent.` y `Version: <package.json.version>`. Reutiliza el modal de información,
-con lectura/scroll/cierre y prompt fijo visible incluso en 60×16.
+Ayuda → About presenta los poderes del agente: tools nativas de archivos,
+búsqueda, comandos y HTTP; proyectos en pestañas, promptings con metavariables,
+MCP y skills. Explica su escritorio estilo QBasic con mouse/atajos Vim, elección
+local con llama.cpp o proveedores compatibles, streaming y razonamiento opcional.
+Incluye portabilidad mediante binarios Bun independientes para Windows/Linux/macOS,
+`Powered by César Casas.`, `MIT.`, `S42 Agent.`, `Version: <package.json.version>` y
+https://www.linkedin.com/in/cesarcasas/. Modal propio bilingüe con cabecera de color,
+lectura/scroll/cierre y prompt fijo visible incluso en 60×16. La descripción de
+targets no reemplaza la validación del runtime de cada SO.
 
 El buscador consulta directamente `https://skills.sh/api/search?q=...&limit=20`,
 con fetch Bun. Muestra origen `https://skills.sh` en búsqueda/resultados y el

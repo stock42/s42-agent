@@ -256,8 +256,12 @@ El cambio se aplica a todas las pestañas, incluso durante un turno. Las prefere
 restauran al iniciar; las configuraciones anteriores usan español y razonamiento on.
 En inglés, el menú se llama **View** y la opción **Show reasoning: on/off**.
 
-**Ayuda → About** muestra `Powered by César Casas.`, `MIT.`, `S42 Agent.` y
-`Version: 0.1.0`. La versión se toma de package.json, como `--version`.
+**Ayuda → About** presenta el espíritu QBasic del agente, sus herramientas de
+coding, proyectos en pestañas, promptings, MCP, skills y elección de modelos.
+Incluye la portabilidad con Bun a Windows, Linux y macOS, autoría, licencia MIT y
+el [LinkedIn de César Casas](https://www.linkedin.com/in/cesarcasas/).
+`Version` se toma de package.json, como `--version`. Disponible en español e
+inglés, con scroll, cierre por teclado/mouse y prompt fijo visible.
 
 Comandos: `/help`, `/projects`, `/models`, `/providers`, `/sessions`, `/files`,
 `/new`, `/promptings`, `/mcp`, `/skills`, `/skill nombre pedido`, `/attach ruta`,

@@ -5,6 +5,19 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Mejorado — About con identidad y capacidades
+
+- Ayuda → About presenta el espíritu QBasic, tools de archivos/búsqueda/comandos/
+  HTTP, proyectos en pestañas, promptings con metavariables, MCP, skills y elección
+  de modelos locales/remotos. Incluye portabilidad Bun a Windows/Linux/macOS,
+  Powered by César Casas., MIT., versión real del paquete y LinkedIn del autor.
+- Modal en español/inglés con cabecera de color, área de solo lectura y scroll,
+  cierre por teclado/mouse y tamaño adaptable sin tapar el prompt fijo.
+- Typecheck y 36 tests relevantes correctos (5 archivos, 725 assertions).
+  Siete capturas de index.ts/tmux en 120×40, 100×30 y 60×16: lectura, scroll,
+  inglés y reapertura sin color. README/specs/AGENTS/QA actualizados.
+  Sin builds ni push; pull fallido por main sin upstream.
+
 ### Agregado — Idioma y razonamiento en Vista
 
 - Vista → Language cambia español/inglés en vivo: menús, botones, formularios,
