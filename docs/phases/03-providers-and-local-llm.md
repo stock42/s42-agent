@@ -1,6 +1,6 @@
 # Fase 03 — Proveedores, modelos y streaming con llama.cpp
 
-Estado: **Pendiente**. Dependencias: [01](01-terminal-ui.md),
+Estado: **En curso**. Dependencias: [01](01-terminal-ui.md),
 [02](02-projects-and-sessions.md). Requisitos: R09, R10.
 Contratos: SPECS §7 y §8.
 
@@ -11,19 +11,19 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
 
 ## Tareas
 
-- [ ] F03-01. Crear el proveedor inicial `llama.cpp` en
+- [x] F03-01. Crear el proveedor inicial `llama.cpp` en
   `http://127.0.0.1:8080/v1`, sin inventar un modelo ni exigir una clave cloud.
-- [ ] F03-02. Implementar formularios/listados de proveedores y modelos, elección
+- [x] F03-02. Implementar formularios/listados de proveedores y modelos, elección
   actual, defaults y capacidades explícitas. Reutilizar los selectores de fase 01.
-- [ ] F03-03. Implementar descubrimiento `/models` opcional y registro manual
+- [x] F03-03. Implementar descubrimiento `/models` opcional y registro manual
   cuando no esté disponible; no inferir herramientas/visión del nombre del modelo.
-- [ ] F03-04. Construir requests Chat Completions con `fetch`, baseUrl normalizado,
+- [x] F03-04. Construir requests Chat Completions con `fetch`, baseUrl normalizado,
   credenciales desde la variable configurada y un `AbortController` por turno.
-- [ ] F03-05. Implementar SSE incremental, deltas de texto y reconstrucción de tool
+- [x] F03-05. Implementar SSE incremental, deltas de texto y reconstrucción de tool
   calls, incluyendo argumentos parciales. Todavía no ejecutar herramientas.
-- [ ] F03-06. Resolver estados de conexión, streaming, fin, cancelación y error;
+- [x] F03-06. Resolver estados de conexión, streaming, fin, cancelación y error;
   soportar primer evento lento e inactividad configurable sin bloquear la TUI.
-- [ ] F03-07. Mostrar datos de uso reportados y su ausencia, conservar texto parcial
+- [x] F03-07. Mostrar datos de uso reportados y su ausencia, conservar texto parcial
   y selecciones en sesión; no persistir claves ni cabeceras de autenticación.
 - [ ] F03-08. Probar endpoints fixture independientes para dos proveedores, con
   defaults distintos, errores HTTP y streams truncados.
@@ -53,7 +53,8 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
 
 | Tarea/caso | Comando, fixture o captura | Resultado y proveedor/modelo |
 | --- | --- | --- |
-| — | — | Pendiente; no ejecutado. |
+| Transporte fixture | `bun run typecheck`; `bun test tests/llm.test.ts tests/storage.test.ts` | 7 casos: SSE, deltas, calls intercaladas, credencial por endpoint y desconexión parcial. |
+| Servidor real | Endpoint default no disponible | El usuario pidió configuración inicial en Models; no se eligió un modelo ni se descargó uno. |
 
 ## Cierre
 

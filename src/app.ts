@@ -1,11 +1,13 @@
 import { basename } from "node:path";
 import { ConfigStore, normalizeFolder, storagePaths, type Project, type Provider, type Model } from "./storage/config.ts";
 import { Session, listSessions } from "./storage/sessions.ts";
-import type { Selection } from "./agent/messages.ts";
+import type { Message, Selection } from "./agent/messages.ts";
 import { createWorkspaceView } from "./ui/workspace.ts";
 import { choose, form } from "./ui/dialogs.ts";
 import { createDemoPanels } from "./ui/demo.ts";
 import { theme } from "./ui/theme.ts";
+import { complete, CompletionError, credential, discoverModels } from "./llm/client.ts";
+import { markdownText } from "./ui/markdown.ts";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
 export class App {
@@ -18,6 +20,9 @@ export class App {
   busy = false;
   readonly keys = new Map<string, string>();
   private operations: Promise<unknown> = Promise.resolve();
+  private turn?: Promise<void>;
+  private controller?: AbortController;
+  private rendered = new WeakMap<Message, string>();
   private constructor(readonly store: ConfigStore, readonly sessionsPath: string, readonly cwd: string) {
     const { prompt, send, promptWindow } = this.view;
     this.view.editorWindow.onLayout = client => { this.view.response.bounds.y = 1; this.view.response.bounds.height = Math.max(1, client.height - 1); this.view.response.bounds.width = Math.max(1, client.width - 2); };
@@ -26,7 +31,7 @@ export class App {
       try { const { provider, model } = this.current(); context = `${provider.name} · ${model.id} · ${this.session?.state.id.slice(0, 8) ?? ""}`; } catch {}
       canvas.text(client.x + 1, client.y, context, theme.window, client.width - 2);
     };
-    prompt.onSubmit = () => this.run(() => this.submit()); send.onClick = () => this.run(() => this.submit());
+    prompt.onSubmit = () => this.run(() => this.submit()); send.onClick = () => this.busy ? this.cancel() : this.run(() => this.submit());
     promptWindow.onDraw = (canvas, client) => canvas.text(client.x + 1, client.y + client.height - 1,
       `${this.status} · Shift+Enter: línea`, { fg: 7, bg: 4 }, client.width - 2);
     const demo = createDemoPanels(this.desktop);
@@ -49,6 +54,7 @@ export class App {
         { label: "Quitar modelo", run: () => this.removeModel() },
         { label: "Proveedores", shortcut: "Ctrl+B", run: () => this.providers() },
         { label: "Nuevo proveedor", run: () => this.modelForm(true, true) },
+        { label: "Descubrir /models", run: () => this.run(() => this.discover()) },
         { label: "Guardar default", run: () => this.run(() => this.saveDefault()) },
       ] },
       { label: "Ventanas", items: [
@@ -62,10 +68,11 @@ export class App {
     );
     this.desktop.onShortcut = event => {
       if (event.type !== "key" || this.desktop.modal) return false;
+      if (event.key === "ctrl+c" && this.busy) { this.cancel(); return true; }
       const actions: Record<string, () => void> = { "ctrl+p": () => this.projects(), "ctrl+o": () => this.models(), "ctrl+b": () => this.providers(), "ctrl+r": () => this.sessions() };
       const action = actions[event.key]; if (!action) return false; this.desktop.menu.close(); action(); return true;
     };
-    this.desktop.onBeforeExit = async () => { await this.operations; await this.saveDraft(); await this.session?.close(); };
+    this.desktop.onBeforeExit = async () => { this.cancel(); await this.operations; await this.turn; await this.saveDraft(); await this.session?.close(); };
   }
   static async open(options: AppOptions = {}): Promise<App> {
     const paths = storagePaths(options.config), store = await ConfigStore.load(paths.config), app = new App(store, paths.sessions, process.cwd());
@@ -131,9 +138,15 @@ export class App {
     if (!this.session?.state.messages.length) this.status = selected;
     this.desktop.invalidate();
   }
-  showHistory(): void {
+  showHistory(reset = true): void {
     const messages = this.session?.state.messages ?? [];
-    this.view.response.setValue(messages.map(m => `${m.role === "user" ? "Vos" : m.role === "assistant" ? "Agente" : "Herramienta"}:\n${typeof m.content === "string" ? m.content : JSON.stringify(m.content)}${m.tool_calls ? "\n" + m.tool_calls.map(c => `${c.function.name} ${c.function.arguments}`).join("\n") : ""}`).join("\n\n") + (this.session?.state.notices.length ? "\n\n" + this.session.state.notices.join("\n") : ""), "start");
+    const text = messages.map(m => {
+      let cached = this.rendered.get(m); if (cached !== undefined) return cached;
+      const content = typeof m.content === "string" ? m.content : JSON.stringify(m.content);
+      cached = `${m.role === "user" ? "Vos" : m.role === "assistant" ? "Agente" : "Herramienta"}:\n${m.role === "assistant" ? markdownText(content ?? "") : content ?? ""}${m.tool_calls ? "\n" + m.tool_calls.map(c => `${c.function.name} ${c.function.arguments}`).join("\n") : ""}`;
+      this.rendered.set(m, cached); return cached;
+    }).join("\n\n") + (this.session?.state.notices.length ? "\n\n" + this.session.state.notices.join("\n") : "");
+    if (reset) this.view.response.setValue(text, "start"); else this.view.response.update(text);
   }
   async selectModel(selection: Selection): Promise<void> { this.requireIdle(); const old = this.selection; this.selection = selection;
     try { this.current(); await this.session?.append({ type: "selection", selection }); if (this.session) this.session.state.selection = selection; }
@@ -169,6 +182,16 @@ export class App {
     this.requireIdle(); const next = structuredClone(this.store.value); next.providers.find(p => p.id === s.p)!.models = next.providers.find(p => p.id === s.p)!.models.filter(m => m.id !== s.m); await this.store.save(next); this.showContext();
   })); }
   async saveDefault(): Promise<void> { this.requireIdle(); this.current(); const next = structuredClone(this.store.value); next.defaults = { ...this.selection, projectId: this.project?.id }; await this.store.save(next); this.status = "Default guardado"; this.desktop.invalidate(); }
+  async discover(): Promise<void> {
+    this.requireIdle(); const provider = this.store.value.providers.find(p => p.id === this.selection.providerId); if (!provider) throw new Error("Elegí un proveedor");
+    this.status = "Consultando /models…"; this.desktop.invalidate();
+    const ids = await discoverModels(provider, credential(provider, this.keys.get(provider.id)));
+    const next = structuredClone(this.store.value), configured = next.providers.find(p => p.id === provider.id)!;
+    for (const id of ids) if (!configured.models.some(m => m.id === id)) configured.models.push({ id, name: id, contextWindow: 8192, maxOutputTokens: 2048, capabilities: { tools: false, images: false } });
+    await this.store.save(next); this.status = "IDs descubiertos; configurá contexto y capacidades en Models"; this.models(); this.desktop.invalidate();
+  }
+  cancel(): void { this.controller?.abort(new Error("Turno cancelado; los efectos ya realizados se conservan")); }
+  private async message(message: Message): Promise<void> { await this.session!.append({ type: "message", message }); this.session!.state.messages.push(message); }
   async submit(): Promise<void> {
     const text = this.view.prompt.value;
     if (text.startsWith("/")) {
@@ -177,6 +200,27 @@ export class App {
     }
     this.requireIdle(); if (!text.trim()) return;
     if (!this.project || !this.session) throw new Error("Registrá o elegí un proyecto antes de enviar");
-    this.current(); throw new Error("Proveedor listo; transporte LLM en implementación");
+    const { provider, model } = this.current(), session = this.session;
+    const key = credential(provider, this.keys.get(provider.id));
+    this.busy = true; this.controller = new AbortController(); this.view.send.label = "Cancelar";
+    this.view.prompt.setValue(""); this.status = "Conectando…"; this.desktop.invalidate();
+    this.turn = (async () => {
+      try {
+        await this.message({ role: "user", content: text }); this.showHistory(false);
+        this.view.response.append("\n\nAgente:\n");
+        const result = await complete({ provider, model, messages: session.state.messages, key, signal: this.controller!.signal,
+          ...{ firstEventMs: this.store.value.limits.firstEventMs, idleMs: this.store.value.limits.idleMs },
+          onDelta: delta => { this.status = "Respondiendo…"; this.view.response.append(delta); this.desktop.invalidate(); } });
+        await this.message(result.message);
+        this.status = result.usage?.total_tokens !== undefined ? `Listo · ${result.usage.total_tokens} tokens` : "Listo · uso no reportado";
+        await session.append({ type: "turn", state: "completed", detail: this.status });
+      } catch (e) {
+        if (e instanceof CompletionError && e.partial.content) await this.message({ role: "assistant", content: e.partial.content });
+        this.status = (e as Error).message; session.state.notices.push(this.status);
+        await session.append({ type: "turn", state: this.controller!.signal.aborted ? "cancelled" : "failed", detail: this.status });
+      } finally { this.busy = false; this.controller = undefined; this.view.send.label = "Enviar"; this.showHistory(false); this.desktop.invalidate(); }
+    })();
+    // Keep configuration/input responsive while the request runs.
+    void this.turn.catch(e => { this.status = `No se pudo guardar el turno: ${(e as Error).message}`; this.desktop.invalidate(); });
   }
 }

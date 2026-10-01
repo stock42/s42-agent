@@ -27,6 +27,16 @@ export class TextArea extends Component {
 
   get value(): string { return this.chars.join(""); }
 
+  append(text: string): void {
+    this.chars.push(...graphemes(normalize(text))); this.rows = undefined;
+    if (this.following) { this.cursor = this.chars.length; this.reveal = true; }
+  }
+  update(value: string): void {
+    this.chars = graphemes(normalize(value)); this.rows = undefined;
+    this.cursor = this.following ? this.chars.length : Math.min(this.cursor, this.chars.length);
+    if (this.following) this.reveal = true;
+  }
+
   setValue(value: string, position: "start" | "end" = "end"): void {
     this.chars = graphemes(normalize(value)); this.cursor = position === "start" ? 0 : this.chars.length;
     this.anchor = undefined; this.top = 0; this.rows = undefined; this.reveal = true; this.following = true; this.column = undefined;

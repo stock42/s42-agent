@@ -149,3 +149,15 @@ cierre de cada tarea e incluirlo en su commit.
 - Typecheck y 13 casos de storage/workspace correctos. Fase 02 En curso;
   transporte y tools continúan en las fases siguientes. No hay inferencia real aún.
 - `git pull` intentado sin upstream; commit local, sin build ni nuevas dependencias.
+
+### Agregado — Streaming local y lectura de respuestas
+
+- Cliente Chat Completions, descubrimiento `/models`, SSE incremental, deltas,
+  tool calls intercaladas, timeout inicial/idle y cancelación HTTP.
+- Enviar/Cancelar en Prompt, Ctrl+C cancela un turno activo; cierre guarda la
+  sesión. Respuestas parciales y estado final conservados, sin reintentos automáticos.
+- Markdown básico con callbacks Bun y caché por mensaje finalizado; append de
+  deltas sin resetear el viewport elegido. El renderer conserva 30 frames/s e idle.
+- Typecheck y 7 casos de transporte/storage correctos. Validación de proveedor
+  real pendiente: usuario configura host/modelo en Models. No se descargaron modelos.
+- `git pull` intentado sin upstream; commit local, sin build de binarios.
