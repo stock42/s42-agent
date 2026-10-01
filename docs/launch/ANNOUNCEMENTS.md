@@ -21,7 +21,8 @@ licencia MIT.
 Incluye:
 
 - Proyectos en pestañas que pueden trabajar en paralelo.
-- Explorador de archivos y colores para HTML, CSS, JavaScript y TypeScript.
+- Explorador de archivos, números de línea y colores para HTML, CSS, JavaScript y TypeScript.
+- WebServer del proyecto para abrir y probar HTML/CSS/JS en el navegador.
 - llama.cpp por defecto, DeepSeek y proveedores compatibles configurables.
 - 12 tools nativas para archivos, búsqueda, HTTP, comandos, Markdown,
   WebSocket y scraping.
@@ -31,9 +32,10 @@ Incluye:
 - SQLite para configuración e historial.
 - CLI para ejecutar el mismo agente sin cargar la TUI.
 
-Esta primera versión es una preview desde código fuente. Ya tiene validación
-local en Linux y pruebas con un modelo real; las pruebas de runtime en otros
-sistemas siguen abiertas.
+Esta primera versión es una preview con código fuente e instaladores de un
+comando. Incluye binarios x64 y ARM64 para Windows, Linux y macOS: Linux x64
+ya tiene validación local y pruebas con un modelo real; la ejecución en los
+otros destinos sigue pendiente.
 
 Building with Codex & GPT-6.1 Sol.
 
@@ -45,7 +47,7 @@ https://github.com/stock42/s42-agent
 
 #S42Agent #Bun #OpenSource #LocalLLM #CodingAgent
 
-Imagen recomendada: [01 · Superagente QBasic](../../assets/banners/s42-agent-launch-2026-10-01/01-superagente-qbasic.png).
+Imagen recomendada: [01 · Alma de QBasic](../../assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png).
 También se puede adjuntar el carrusel completo en el orden indicado más abajo.
 
 ## LinkedIn · English
@@ -59,14 +61,16 @@ if that's how you want to work.
 Built with TypeScript and Bun. Open source. MIT licensed.
 
 S42 Agent includes concurrent project tabs, a file explorer, HTML/CSS/JS/TS
-syntax colors, llama.cpp and DeepSeek presets, twelve native tools, MCP,
+syntax colors and line numbers, a project WebServer for browser previews,
+llama.cpp and DeepSeek presets, twelve native tools, MCP,
 internal/external skills and a skills.sh finder.
 
 It also has reusable prompts with {{variables}}, Spanish/English, six themes,
 native SQLite persistence and a headless CLI using the same agent loop.
 
-This first release is a source preview, with local Linux validation and
-real-model testing. Runtime validation on other platforms is still pending.
+This first preview includes source, one-command installers and x64/ARM64
+binaries for Windows, Linux and macOS. Linux x64 has local runtime validation
+and real-model testing; execution on the other targets remains pending.
 
 Building with Codex & GPT-6.1 Sol.
 
@@ -78,17 +82,17 @@ https://github.com/stock42/s42-agent
 
 #S42Agent #Bun #OpenSource #LocalLLM #CodingAgent
 
-Las imágenes actuales están en español. Para esta publicación se puede usar
-la portada en español como pieza visual; no se generó una campaña gráfica en inglés.
+Recommended image: [01 · QBasic soul](../../assets/banners/s42-agent-real-tui-2026-10-01/en/01-qbasic-soul.png).
+The English campaign has five matching images and captions linked below.
 
 ## Anuncio corto · Español
 
-S42 Agent: coding con alma de QBasic. TUI con ventanas, mouse y proyectos en pestañas. llama.cpp, 12 tools, MCP, skills y CLI. Español/inglés, seis temas. Bun + MIT. Primera preview desde código fuente.
+S42 Agent: coding con alma de QBasic. Ventanas, mouse, proyectos en pestañas y WebServer. llama.cpp, 12 tools, MCP, skills y CLI. Dos idiomas, seis temas. Bun + MIT. Preview con fuente y binarios.
 https://github.com/stock42/s42-agent
 
 ## Anuncio corto · English
 
-S42 Agent: a coding agent with the soul of QBasic. Terminal windows, mouse, project tabs, local LLMs, 12 native tools, MCP, skills and a headless CLI. Built with Bun. MIT. First source preview.
+S42 Agent: coding with the soul of QBasic. Windows, mouse, project tabs and web previews. Local LLMs, 12 tools, MCP, skills and CLI. Two languages, six themes. Bun + MIT. Source and binary preview.
 https://github.com/stock42/s42-agent
 
 ## Publicación dedicada al benchmark · Español
@@ -113,23 +117,26 @@ El método y el registro están en docs/qa/final-validation.md y su JSON enlazad
 Código y documentación:
 https://github.com/stock42/s42-agent
 
-Imagen: [05 · Benchmark](../../assets/banners/s42-agent-launch-2026-10-01/05-benchmark.png).
+Imagen: [05 · Benchmark](../../assets/banners/s42-agent-real-tui-2026-10-01/es/05-benchmark.png).
 
 ## Orden del carrusel y pies de imagen
 
-1. [01 · Un superagente. Con alma de QBasic.](../../assets/banners/s42-agent-launch-2026-10-01/01-superagente-qbasic.png)
+1. [01 · El futuro del coding. Con alma de QBasic.](../../assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png)
    — Ventanas, mouse, menús y atajos Vim en una TUI escrita con Bun.
-2. [02 · Tus proyectos. Sin perder el hilo.](../../assets/banners/s42-agent-launch-2026-10-01/02-proyectos-y-archivos.png)
-   — Pestañas de proyectos/archivos, explorador y búsqueda fuera del proyecto.
-3. [03 · Tu idioma. Tu estilo.](../../assets/banners/s42-agent-launch-2026-10-01/03-idiomas-y-temas.png)
+2. [02 · De la idea al navegador.](../../assets/banners/s42-agent-real-tui-2026-10-01/es/02-proyectos-y-web.png)
+   — Pestañas, archivos y WebServer para probar tu proyecto en el navegador.
+3. [03 · Tu idioma. Tu estilo.](../../assets/banners/s42-agent-real-tui-2026-10-01/es/03-idiomas-y-temas.png)
    — Español/inglés y seis temas; Enter envía, Shift+Enter agrega una línea.
-4. [04 · Tu modelo. Poder para construir.](../../assets/banners/s42-agent-launch-2026-10-01/04-modelos-y-herramientas.png)
+4. [04 · Elegí tu modelo. Dale herramientas.](../../assets/banners/s42-agent-real-tui-2026-10-01/es/04-modelos-y-herramientas.png)
    — llama.cpp, DeepSeek, tools, MCP, skills, metavariables y CLI.
-5. [05 · Rápido. Y con números.](../../assets/banners/s42-agent-launch-2026-10-01/05-benchmark.png)
+5. [05 · Rápido. Y con números.](../../assets/banners/s42-agent-real-tui-2026-10-01/es/05-benchmark.png)
    — Benchmark histórico con versión, host y método visibles.
 
-PNG de 1254 × 1254 px. Las interfaces son ilustraciones comerciales de
-funcionalidades existentes. [Textos, prompts y fuente de las cifras](../../assets/banners/s42-agent-launch-2026-10-01/README.md).
+English carousel: [images 01→05 and captions](../../assets/banners/s42-agent-real-tui-2026-10-01/en/README.md).
+
+PNG de 1254 × 1254 px. Son composiciones comerciales generadas con referencias
+de la TUI real; los originales están en [screenshots](../../screenshots/README.md).
+[Textos, prompts y procedencia](../../assets/banners/s42-agent-real-tui-2026-10-01/README.md).
 
 ## Datos para GitHub
 

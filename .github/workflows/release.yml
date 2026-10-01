@@ -1,0 +1,49 @@
+name: Prepare draft release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: s42-agent-draft-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - name: Install Linux keyring test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends dbus gnome-keyring libsecret-1-0
+      - name: Test with an isolated Secret Service
+        run: |
+          S42_RELEASE_KEYRING_ROOT="$(mktemp -d "$RUNNER_TEMP/s42-keyring.XXXXXX")"
+          export XDG_DATA_HOME="$S42_RELEASE_KEYRING_ROOT/data"
+          export GNOME_KEYRING_CONTROL="$S42_RELEASE_KEYRING_ROOT/control"
+          mkdir -p "$XDG_DATA_HOME" "$GNOME_KEYRING_CONTROL"
+          dbus-run-session -- bash -euo pipefail -c '
+            eval "$(printf "%s" "s42-ci-fixture" | gnome-keyring-daemon --unlock --components=secrets --control-directory="$GNOME_KEYRING_CONTROL")"
+            export GNOME_KEYRING_CONTROL
+            bun test
+          '
+      - name: Compile all six platforms
+        run: bun run build:targets
+      - name: Exercise Linux x64 outside the checkout
+        run: bun run smoke:binary dist/s42-agent-0.1.0-linux-x64
+      - name: Package the checked executables
+        run: bun run scripts/build-release.ts --package-only
+      - name: Verify assets and create a draft prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bun run scripts/release-draft.ts --create

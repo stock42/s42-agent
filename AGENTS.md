@@ -279,6 +279,16 @@ README EN/ES documentan un comando por SO, instalación de Bun, clonación y bui
 fixtures HTTP, sin Bun/Node en PATH; otros cinco destinos solo compilados.
 PowerShell parseado en Linux; runtime Windows/macOS/ARM64 aún pendiente.
 
+Cierre de publicación: .github/workflows/release.yml es manual (workflow_dispatch,
+main), verifica fuente con llavero aislado, genera seis targets, smoke Linux y
+prepara draft/prerelease con once assets. No ejecutarlo sin pedido de subir la
+release. scripts/release-draft.ts por defecto solo verifica el dist local y muestra
+el plan; --create usa gh con target HEAD exacto, notas y assets, sin publicar el
+borrador. No hace push ni cambia visibilidad. docs/launch/ANNOUNCEMENTS.md enlaza
+la campaña actual ES/EN y describe fuente/binarios/WebServer. Notas de release
+usan URLs absolutas a v0.1.0 para funcionar fuera del árbol Git.
+[QA de cierre](docs/qa/release-preparation.md).
+
 ## Preferencias globales del usuario
 
 - Nunca crear archivos `.env.local`. Respetar el mecanismo de configuración

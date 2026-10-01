@@ -22,6 +22,9 @@
     "notes": "docs/releases/v0.1.0.md",
     "distribution": "source-and-six-binaries-prepared",
     "assetsManifest": "docs/qa/release-files.json",
+    "workflow": ".github/workflows/release.yml",
+    "localCheck": "bun run scripts/release-draft.ts",
+    "draft": true,
     "published": false
   }
 }

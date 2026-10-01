@@ -5,6 +5,21 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Preparado — Flujo final de publicación de v0.1.0
+
+- Workflow manual Prepare draft release: tipos/tests con llavero temporal,
+  seis compilados, smoke Linux x64 y empaquetado antes de crear draft/prerelease.
+  GITHUB_TOKEN, target SHA exacto y once assets; sin trigger de push/PR.
+- release-draft.ts valida versión, nombres/targets, tamaños/hashes/checksums,
+  copias de instaladores/licencia y notas antes de mostrar el plan local.
+  --create llama GitHub CLI para subir un borrador; no ejecutado contra GitHub.
+- Notas de release con URLs absolutas al tag; anuncios ES/EN actualizados a la
+  campaña final, números de línea, WebServer y preview con fuente/binarios.
+  Metadata, AGENTS y guía de publicación completados.
+- Typecheck y cuatro pruebas del plan correctos; integridad de seis compilados
+  comprobada. Sin cambios de runtime, rebuild innecesario o benchmark nuevo.
+  Pull correcto; edición ajena de final-validation.md conservada.
+
 ### Agregado — Instaladores y compilados para Windows, Linux y macOS
 
 - README inglés/español con selector de idioma, imágenes nuevas de campaña,

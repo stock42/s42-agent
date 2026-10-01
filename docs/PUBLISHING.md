@@ -22,6 +22,8 @@ npm y no determina la visibilidad del repositorio.
 | Instaladores de un comando | [Linux/macOS](../install.sh) / [Windows](../install.ps1) |
 | Lista de assets para la release | [release-files.json](qa/release-files.json) |
 | Compilados e instalación | [distribution.md](qa/distribution.md) |
+| Workflow manual de release con tests/build/smoke | [release.yml](../.github/workflows/release.yml) |
+| Chequeo local de assets y creación optativa de borrador | [release-draft.ts](../scripts/release-draft.ts) |
 | Vista previa social para GitHub | [social-preview.jpg](../assets/github/social-preview.jpg) |
 | Validación de esta preparación | [publication-readiness.md](qa/publication-readiness.md) |
 
@@ -49,6 +51,48 @@ La imagen es una ilustración comercial de la TUI, no una captura de inferencia.
 
 ## Publicación del código y prerelease
 
+### Camino recomendado: workflow manual
+
+Los seis compilados actuales ya están preparados en dist/. El chequeo local
+no requiere GitHub CLI, credenciales ni conexión a GitHub:
+
+```bash
+bun run scripts/release-draft.ts
+```
+
+Comprueba nombres/targets, versión, tamaños, hashes, SHASUMS256.txt, copias de
+instaladores/licencia y enlaces absolutos de las notas. Imprime el plan exacto
+de once assets. No ejecuta push, crea tags ni sube archivos.
+
+Cuando se publique el código en main:
+
+1. Subir main y esperar la CI del SHA enviado.
+2. Abrir **Actions → Prepare draft release → Run workflow**, seleccionando main.
+3. El workflow instala Bun 1.4.2, verifica tipos, ejecuta la suite con llavero
+   aislado, recompila los seis destinos y prueba el Linux x64 en TUI fuera del
+   checkout. Empaqueta/verifica la entrega y crea una **draft prerelease** con
+   los once assets y las notas; fija el commit del run como target del tag.
+4. Revisar el borrador en **Releases** y publicarlo como **pre-release** cuando
+   el repositorio esté público y su metadata/portada estén cargadas.
+5. Comprobar las URLs y los comandos de instalación sin autenticación antes
+   de enviar los anuncios.
+
+Solo workflow_dispatch inicia este flujo; los pushes y PR no crean releases.
+Usa GITHUB_TOKEN con contents: write, sin un token personal adicional. No cambia
+visibilidad, metadata o portada del repositorio ni publica anuncios.
+Una release v0.1.0 existente hace fallar la creación; no se reemplaza.
+El workflow debe estar en la rama default para que aparezca Run workflow.
+[Documentación oficial](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
+
+Alternativa con GitHub CLI instalado y autenticado, **cuando se haya autorizado
+subir el borrador**: `bun run scripts/release-draft.ts --create`. Verifica los
+assets locales y llama gh release create con draft/prerelease, target HEAD
+exacto y notes-file. El commit tiene que estar subido antes de ejecutarlo.
+El paquete all-platforms.tar.gz se puede agregar al borrador como asset opcional.
+[Opciones de gh release create](https://cli.github.com/manual/gh_release_create).
+
+### Publicación manual sin workflow
+
 Al ejecutar la publicación aprobada:
 
 1. Revisar el commit local y confirmar que se suben solo los cambios de la tarea.
@@ -71,6 +115,9 @@ Al ejecutar la publicación aprobada:
 6. Verificar repo, raw main/install.sh, raw main/install.ps1 y assets de v0.1.0
    sin autenticación. Clonar y repetir el inicio rápido; comprobar la descarga
    de un comando del README antes de enviar el anuncio.
+
+La [QA de cierre](qa/release-preparation.md) registra el chequeo del flujo local;
+no equivale a una ejecución remota de Actions ni una release existente.
 
 La autenticación de origin está en .git/config y se conserva como pidió el usuario.
 No forma parte del código, assets ni archivos de publicación. La revisión de
