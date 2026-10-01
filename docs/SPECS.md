@@ -66,6 +66,9 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R24 | Recursos y tokens visibles | CPU/RAM/disco/VRAM usado/libre y entrada/salida por turno/pestaña, con N/D explícito cuando faltan datos. |
 | R25 | Idioma de la UI | Vista → Language: español/inglés en vivo y persistente, en todos los textos del harness y pestañas. |
 | R26 | Visibilidad del razonamiento | Vista → Ver razonamiento on/off: historial y streaming, conservando sesión, respuesta y tools. |
+| R27 | Identidad y skills internas | Prompt inicial breve; src/agent/skills con estructura de proyectos, debugging y PDF; internal_skill descubre/carga instrucciones bajo demanda. |
+| R28 | Markdown HTML nativo | Bun.markdown.html desde texto/archivo, fragmento/documento y salida HTML opcional; no requiere una dependencia Markdown. |
+| R29 | WebSocket nativo | Cliente ws/wss para pruebas, headers/subprotocolos, mensajes, timeout/cancelación y cierre por call, visible en chat. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
@@ -158,6 +161,9 @@ src/
     components/            window, button, input, text-area, select-list, menu, tab-bar, file-explorer
   agent/                   loop, mensajes, adjuntos y acumulación de uso
     tools/                 read, write, edit, list, find, search, fetch, shell; registro y helpers comunes
+                           internal_skill, markdown_html, websocket
+    skills/                software-project, debug-and-verify, create-pdf; SKILL.md incluidos como texto
+    prompt.ts              identidad, procedimiento breve y catálogo progresivo
   system/                  medición de CPU/RAM/disco/VRAM
   llm/                     Chat Completions y SSE
   storage/                 configuración, proyectos y sesiones
@@ -731,6 +737,9 @@ reemplaza el borrador, historial o estado del proyecto visible.
 | `edit` | path, texto anterior y nuevo | Reemplazo exacto único; cero o varias coincidencias devuelven error. |
 | `fetch` | url, method/headers/body/bodyType/timeoutMs opcionales | HTTP GET/POST/PUT/PATCH/DELETE/HEAD/etc; JSON, forms URL-encoded/multipart o texto. |
 | `shell` | comando y timeout opcional | Ejecutar mediante `Bun.spawn` con cwd explícito, stdout/stderr y exit code. |
+| `internal_skill` | name opcional | Lista/carga guías internas sin ejecutar scripts; nombres/descripciones en el prompt inicial. |
+| `markdown_html` | markdown o path; outputPath/standalone/title opcionales | Conversión Bun nativa a fragmento/documento HTML; archivo completo o preview UTF-8 acotado. |
+| `websocket` | url; headers/protocols/messages/receiveCount/timeoutMs opcionales | Prueba ws/wss con una conexión por call, recepción texto/base64 y cierre al terminar. |
 
 `list/search` usan recorrido incremental con exclusiones iniciales de `.git`,
 `node_modules`, `dist` y `out`. No depender de `rg` instalado para el funcionamiento
@@ -746,6 +755,20 @@ fetch usa Web APIs incluidas en Bun para HTTP/S, métodos/headers y cuerpos JSON
 URLSearchParams, FormData o texto. Timeout 30 s/default; HTTP no-2xx conserva
 status/body y failed, sin retry. Hasta 64 KiB de body; el sobre JSON añade
 headers/escaping y permanece parseable. Multipart admite campos string.
+WebSocket admite cualquier host ws/wss, headers y subprotocolos; espera 1 mensaje
+por defecto (máximo 100), timeout 10 s y 64 KiB de payload recibido. Devuelve
+parciales de timeout/cancelación/cierre temprano y no conserva sockets entre calls.
+markdown_html lee hasta 1 MiB UTF-8 o texto directo; convierte con Bun.markdown.html.
+Sin archivo, preview hasta 64 KiB con truncated; guardando, HTML completo. No
+sanitiza HTML ni imprime PDF. Las salidas JSON mantienen un sobre parseable.
+
+Identidad/procedimiento en `src/agent/prompt.ts`, con el catálogo de
+`src/agent/skills/{software-project,debug-and-verify,create-pdf}/SKILL.md` como
+nombre/descripción. internal_skill carga el cuerpo relevante al historial. Guías
+incluidas mediante imports de texto; no necesitan registro externo ni ejecutan
+scripts al cargar. create-pdf compone Markdown/HTML y un renderizador instalado
+mediante shell. AGENTS.md y el contexto del proyecto prevalecen. Skills externas
+conservan su tool skill, scopes y CRUD. [Investigación](AGENT-INTELLIGENCE.md).
 
 `shell` usa el shell del usuario o el shell de la plataforma, registrado como
 argumentos explícitos a `Bun.spawn`; no construir un comando envolvente mediante

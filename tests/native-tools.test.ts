@@ -17,7 +17,7 @@ test("find busca nombre/glob fuera del proyecto, respeta límites, omisiones y c
     expect((await run({path:outside,pattern:"*.ts",limit:1})).truncated).toBe(true);
     for(const args of [{pattern:""},{pattern:"a",extra:1},{pattern:"a",limit:0},{pattern:"a",includeIgnored:"yes"},{pattern:"a",path:join(root,"ausente")},{pattern:"a",toString:"x"}])expect((await run(args)).failed).toBe(true);
     const abort=new AbortController();abort.abort(new Error("cancelled"));expect((await run({path:outside,pattern:"*.ts"},abort.signal)).failed).toBe(true);
-    expect(toolDefinitions.map(tool=>tool.function.name)).toEqual(["read","write","edit","list","find","search","fetch","shell"]);
+    expect(toolDefinitions.map(tool=>tool.function.name)).toEqual(["read","write","edit","list","find","search","fetch","shell","internal_skill","markdown_html","websocket"]);
   } finally {await rm(root,{recursive:true,force:true});}
 });
 

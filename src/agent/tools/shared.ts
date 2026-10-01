@@ -18,12 +18,13 @@ export function validate(tool: NativeTool, raw: string): Record<string, unknown>
   if (!args || Array.isArray(args) || typeof args !== "object") throw new Error("Argumentos deben ser un objeto JSON");
   for (const field of schema.required as string[]) if (!(field in args)) throw new Error(`Falta ${field}`);
   for (const [field, value] of Object.entries(args)) {
-    const properties = schema.properties as Record<string, { type?: string; enum?: unknown[]; additionalProperties?: { type: string } }>;
+    const properties = schema.properties as Record<string, { type?: string; enum?: unknown[]; items?: { type: string }; additionalProperties?: { type: string } }>;
     const property = Object.hasOwn(properties, field) ? properties[field] : undefined;
     if (!property || property.type === "string" && typeof value !== "string"
       || property.type === "integer" && (!Number.isSafeInteger(value) || Number(value) < 1)
       || property.type === "boolean" && typeof value !== "boolean"
       || property.type === "object" && (!value || typeof value !== "object" || Array.isArray(value))
+      || property.type === "array" && (!Array.isArray(value) || property.items?.type === "string" && value.some(v => typeof v !== "string"))
       || property.enum && !property.enum.includes(value)) throw new Error(`Argumento inválido: ${field}`);
     if (property.additionalProperties?.type === "string" && Object.values(value as object).some(v => typeof v !== "string")) throw new Error(`Argumento inválido: ${field}`);
   }

@@ -45,6 +45,19 @@ Tools nativas en **src/agent/tools/**, un módulo por herramienta y catálogo
 `fetch` usa HTTP nativo con métodos/headers y bodies JSON, form URL-encoded,
 multipart de campos string o texto; timeout/cancelación y status/body de errores.
 Contratos y límites en [docs/TOOLS.md](docs/TOOLS.md).
+Identidad/procedimiento en `src/agent/prompt.ts`. Internas en `src/agent/skills/`:
+software-project, debug-and-verify y create-pdf, con SKILL.md importados como
+texto para no depender del checkout. System prompt incluye solo metadatos;
+`internal_skill` lista/carga instrucciones, sin ejecutar scripts. Skills externas
+conservan `skill`, `/skill` y config. Preferir instrucciones del proyecto a guías
+genéricas. `markdown_html` usa Bun.markdown.html con texto/archivo y salida HTML
+opcional; PDF requiere un renderizador instalado, no es una API nativa de Bun.
+`websocket` usa el cliente Bun ws/wss, headers/subprotocolos, mensajes de texto,
+recepción texto/base64, 64 KiB, timeout/cancelación y cierre al terminar cada call.
+Las tres aparecen en Tools → Nativas con descripciones ES/EN y en el chat.
+[Papers y decisiones](docs/AGENT-INTELLIGENCE.md), [fase 14](docs/phases/14-internal-skills-and-tools.md).
+No afirmar mejoras porcentuales del modelo por pruebas funcionales; distinguir
+prompt/skills orientativas de memoria episódica, autoaprendizaje o evals A/B.
 El explorador aprovecha todo el editor, incluye Buscar por nombre/glob desde
 la ruta superior, resultados con ubicación, Cancelar, preview y adjuntos;
 no sigue enlaces en búsquedas, cuenta carpetas inaccesibles y limita a 1000.
@@ -123,7 +136,7 @@ CI fuente Linux con Bun 1.4.2. `package.json` conserva `private: true` porque no
 se publica un paquete npm. [Publicación](docs/PUBLISHING.md): no cambiar visibilidad,
 hacer push ni crear releases sin pedido explícito.
 
-Fases 02/03/07/08/09/10/11/12/13 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09/10/11/12/13/14 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.

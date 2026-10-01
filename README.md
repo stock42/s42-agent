@@ -160,6 +160,9 @@ versión actualizada antes de volver a enviar. El historial conserva lo enviado.
 
 Las herramientas nativas son **read/write/edit/list/find/search/fetch/shell**,
 con un archivo por tool en `src/agent/tools/` y un catálogo en **Tools → Nativas**.
+Incluye también `internal_skill`, `markdown_html` y `websocket`: guías internas
+bajo demanda, conversión Markdown→HTML y pruebas ws/wss con headers, mensajes,
+timeout y cancelación.
 `find` busca nombres/globs; `search` busca contenido. `fetch` hace HTTP con
 método, headers y body JSON, form URL-encoded, multipart o texto. Edit exige
 una coincidencia exacta única; shell devuelve stdout/stderr, duración y exit code.
@@ -209,6 +212,15 @@ negociación de protocolo; sampling, elicitation, OAuth y resources/prompts no e
 implementados. [Contrato y QA](docs/qa/mcp-and-skills.md).
 
 ### Skills
+
+El agente incluye `software-project`, `debug-and-verify` y `create-pdf` en
+`src/agent/skills/`. El prompt inicial presenta solo sus nombres/descripciones;
+el modelo usa `internal_skill` para cargar una cuando resulta relevante.
+No ejecutan scripts al cargar. PDF combina HTML nativo de Bun con un
+renderizador instalado (por ejemplo Chrome/Chromium); Bun no imprime PDF por sí
+solo. [Papers, decisiones y mejoras propuestas](docs/AGENT-INTELLIGENCE.md).
+
+Estas guías internas conviven con las skills externas configurables:
 
 **Tools → Skills** o **Alt+S** registra carpetas/SKILL.md globales o por proyecto,
 permite leerlas, activarlas/desactivarlas y quitar el registro. El modelo recibe
@@ -334,6 +346,7 @@ mouse/drop físicos y runtime macOS/Windows/arm64 siguen pendientes.
 
 [QA de pestañas/menús](docs/qa/project-tabs.md), [QA integral](docs/qa/final-validation.md),
 [recuperación/About/skills.sh](docs/qa/staged-recovery.md),
+[skills internas/Markdown/WebSocket](docs/qa/internal-skills.md),
 [fases](docs/phases/README.md), [CHANGELOG](CHANGELOG.md).
 
 Para contribuir: [CONTRIBUTING.md](CONTRIBUTING.md). Preparación de publicación:

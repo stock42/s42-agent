@@ -5,6 +5,30 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Identidad, skills internas y tools Markdown/WebSocket
+
+- Investigación de ocho papers primarios sobre agentes, interfaz de tools,
+  feedback y skills. docs/AGENT-INTELLIGENCE.md distingue evidencia, decisiones
+  aplicadas y propuestas futuras; no afirma mejoras de inteligencia sin eval A/B.
+- Prompt inicial propio en src/agent/prompt.ts, con identidad S42 y etapas
+  verificables. src/agent/skills contiene software-project, debug-and-verify y
+  create-pdf, incluidos como texto; el modelo ve metadatos y usa internal_skill
+  para cargar instrucciones. Resultado Markdown legible en chat, sin ejecutar
+  scripts; skills externas y su registro conservan su mecanismo existente.
+- markdown_html usa Bun.markdown.html desde texto/archivo, fragmento o HTML
+  standalone, salida a archivo y preview UTF-8 acotado con JSON válido.
+  PDF es una skill que requiere un renderizador instalado, no una API Bun nativa.
+- websocket usa el cliente Bun ws/wss, headers/subprotocolos, envío de texto,
+  recepción texto/base64, límites, timeout/cancelación con parciales y limpieza.
+  Once tools en catálogo ES/EN; llamadas/resultados persistidos y visibles.
+- Typecheck y 124 tests / 25 archivos / 1911 assertions correctos. GLM-4.7-Flash
+  ejecutó las tres tools con HTML/eco WS comprobados: 2 requests, 4589 entrada /
+  481 salida, 5,126 s. Intermitencia en un test existente de cancelación shell
+  registrada en QA; pasó aislado y en la suite final. Cinco capturas tmux de
+  index.ts a 100×32/60×16 revisadas.
+  README/specs/AGENTS/contratos/fase14/QA actualizados. Sin builds ni push;
+  pull fallido por main sin upstream. Cambios ajenos conservados fuera del commit.
+
 ### Mejorado — Paletas oscuras y tres combinaciones clásicas
 
 - Dark · Grafito y Green · Bosque reemplazan los tonos planos de grises/verdes:

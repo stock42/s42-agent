@@ -15,6 +15,9 @@ el contrato para integraciones existentes. Catálogo visible en **Tools → Nati
 | `search` / search.ts | `pattern`; `path="."`, `glob="**/*"` | Contenido literal sensible a mayúsculas. `archivo:línea:texto`; hasta 100 coincidencias, primer MiB por archivo. Omite binarios/UTF-8 inválido. |
 | `fetch` / fetch.ts | `url`; `method="GET"`, `headers`, `body`, `bodyType="json"`, `timeoutMs=30000` | HTTP/S con fetch nativo; JSON con URL final, status/statusText, headers, body texto y truncated. Body hasta 64 KiB. |
 | `shell` / shell.ts | `command`; `timeoutMs=limits.shellTimeoutMs` (120 s inicial) | Bun.spawn con cwd del proyecto; stdout/stderr, exitCode, timedOut/cancelled/truncated. Drena ambos streams, conserva hasta 64 KiB por stream y recorta cada salida a 30.000 bytes. |
+| `internal_skill` / internal_skill.ts | `name` opcional | Sin nombre, catálogo de internas; con nombre, instrucciones software-project/debug-and-verify/create-pdf. Sin ejecución de scripts. |
+| `markdown_html` / markdown_html.ts | Exactamente uno: `markdown` o `path`; `outputPath`, `standalone=false`, `title="S42 Agent"` opcionales | Bun.markdown.html; input UTF-8 hasta 1 MiB. Archivo HTML completo o JSON con preview hasta 64 KiB y truncated. |
+| `websocket` / websocket.ts | `url`; `headers`, `protocols`, `messages` opcionales; `receiveCount=1` (máximo 100), `timeoutMs=10000` | ws/wss, una conexión por call. Envía textos, recibe textos/binarios base64, desconecta. JSON con resultados parciales; máximo 64 KiB de payload recibido. |
 
 Las tools reciben un objeto JSON; nombres/campos desconocidos, tipos inválidos
 y enteros no positivos devuelven error. Rutas relativas usan el proyecto del
@@ -66,15 +69,68 @@ automáticamente a disco. El sobre JSON puede superar 64 KiB por escaping y
 headers: el límite de fetch corresponde al body retenido, sin romper el JSON.
 [Contrato oficial de fetch/headers/forms](https://bun.sh/docs/runtime/networking/fetch).
 
+## Skills internas y Markdown
+
+Las internas residen en `src/agent/skills/*/SKILL.md`, incluidas por imports de
+texto. `internal_skill` no requiere config ni carpeta externa. El modelo ve
+nombres/descripciones en el system prompt, y carga el cuerpo bajo demanda.
+`skill` sigue reservada para skills externas habilitadas; `/skill` invoca las
+externas registradas. [Investigación y decisiones](AGENT-INTELLIGENCE.md).
+
+```json
+{"name":"software-project"}
+```
+
+`markdown_html` convierte con [Bun.markdown.html](https://bun.sh/docs/runtime/markdown).
+Por defecto devuelve un fragmento; standalone=true agrega doctype, meta UTF-8,
+viewport y título escapado. Tablas/code/headings usan el renderer de Bun.
+
+```json
+{"markdown":"# Informe\n\n**Generado con Bun**","outputPath":"docs/informe.html","standalone":true,"title":"Informe"}
+```
+
+Alternativa: `{"path":"docs/informe.md","outputPath":"docs/informe.html"}`.
+Guardar crea padres y reemplaza el destino; devuelve path/bytes y AGENTS.md
+aplicable al destino. Sin outputPath devuelve html/bytes/truncated; un preview
+recortado no es un documento completo. El límite se mide en bytes y conserva
+UTF-8 válido; el JSON queda parseable. Guardar no recorta el archivo HTML.
+No agrega CSS, assets ni sanitización; no crea un PDF. `create-pdf` enseña a
+usar ese HTML y un Chrome/Chromium u otro renderizador ya instalado mediante
+shell, con comprobación de salida y límites de revisión visual.
+
+## WebSocket
+
+Utiliza el [cliente nativo de Bun](https://bun.sh/docs/runtime/http/websockets).
+Headers es un mapa string/string; protocols/messages son arrays de strings.
+Enviar JSON consiste en un mensaje de texto serializado. No hay allowlist de
+hosts; ws/wss usa la red y permisos del proceso, como fetch.
+
+```json
+{"url":"ws://127.0.0.1:3000/echo","headers":{"Authorization":"Bearer ejemplo"},"protocols":["v1"],"messages":["{\"event\":\"ping\"}"],"receiveCount":1,"timeoutMs":5000}
+```
+
+Resultado: url, opened, subprotocolo elegido protocol, cantidad sent, received y
+reason. Cada mensaje incluye type (text/binary), data (texto/base64), bytes
+originales y truncated. En cierre remoto devuelve closeCode/closeReason/wasClean.
+reason=received es éxito al alcanzar receiveCount. closed antes de alcanzar la
+cantidad, timeout, cancelled, error o limit son failed; conservan el parcial.
+Al completar/cancelar/fallar se retiran timers/listeners y se termina el socket;
+no queda una conexión disponible para futuras calls. No se reporta un código
+de cierre remoto cuando el cliente finaliza por recibir la cantidad esperada.
+El límite de 64 KiB es payload retenido, antes de escaping JSON o base64;
+no limita la longitud del frame que la API WebSocket ya recibió.
+
 ## Ejecución y eventos
 
 `execute(name, argumentsJSON, cwd, signal, shellTimeoutMs)` devuelve
 `{output, failed, durationMs, exitCode?, truncated?}`. Archivo/texto añade las
 instrucciones AGENTS aplicables como antes; HTTP y shell mantienen salida
-estructurada parseable. El loop persiste call/start/result y lo muestra en chat.
+estructurada parseable, al igual que Markdown/WebSocket. internal_skill carga
+el cuerpo como Markdown legible y lista el catálogo como JSON. El loop persiste
+call/start/result y lo muestra en chat.
 Las llamadas de un turno son secuenciales; los proyectos pueden ejecutar turnos
 distintos. Cancelar detiene búsqueda/HTTP y el árbol de shell, impide nuevas
 llamadas y conserva efectos ya realizados. No hay sandbox ni undo implícito.
 
-Pruebas: `tests/native-tools.test.ts`, `tests/agent.test.ts` y
+Pruebas: `tests/native-tools.test.ts`, `tests/internal-tools.test.ts`, `tests/agent.test.ts` y
 [QA con GLM real y TUI](qa/native-tools.md).

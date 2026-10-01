@@ -7,7 +7,7 @@ prompt fijo, explorer fuera del proyecto, Models/Projects, MCP, Skills y Prompti
 Menús de producto organizados, pestañas con turnos por proyecto y preparación MIT.
 Tools nativas separadas, búsqueda en disco y recursos/tokens visibles.
 UI español/inglés y razonamiento on/off configurables en Vista.
-Fases 02/03/07/08/09/10/11/12/13 completadas; implementación de 00/01/04/05 disponible con
+Fases 02/03/07/08/09/10/11/12/13/14 completadas; implementación de 00/01/04/05 disponible con
 validaciones físicas o por SO pendientes. Fase 06 incorpora QA real, rendimiento,
 prueba prolongada y distribución local. [QA integral](../qa/final-validation.md).
 
@@ -29,6 +29,7 @@ de implementación no sustituyen esos criterios de cierre. No hay release public
 | 11 | [Recuperación y About](11-staged-recovery-and-about.md) | 01, 03, 04, 08, 10 | Continuación por etapas, About y catálogo directo skills.sh. | R04, R14, R19 |
 | 12 | [Tools, explorador y recursos](12-native-tools-and-resources.md) | 01, 03, 04, 10, 11 | Tools nativas, búsqueda en disco, CPU/RAM/disco/VRAM y tokens por pestaña. | R22–R24 |
 | 13 | [Idioma y razonamiento](13-language-and-reasoning.md) | 01–03, 07–12 | UI español/inglés y razonamiento on/off en vivo/persistentes. | R25–R26 |
+| 14 | [Identidad y skills internas](14-internal-skills-and-tools.md) | 04, 08, 12, 13 | Prompt breve, skills internas, Markdown HTML y WebSocket nativos. | R27–R29 |
 | 06 | [Validación y distribución](06-quality-and-binaries.md) | 00–05 | Evidencia integral, mediciones y binarios comprobados. | R01–R17 |
 
 La UI QBasic, el uso de mouse y los componentes visuales están confirmados. El
