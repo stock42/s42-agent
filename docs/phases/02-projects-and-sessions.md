@@ -1,6 +1,6 @@
 # Fase 02 — Configuración, proyectos y sesiones
 
-Estado: **Pendiente**. Dependencias: [00](00-bun-foundation.md),
+Estado: **Pendiente**. Dependencias: [00](00-tui-viability.md),
 [01](01-terminal-ui.md). Requisitos: R06, R12.
 Contratos: SPECS §6, §7 y §11.
 

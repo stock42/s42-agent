@@ -2,10 +2,13 @@
 
 ## Proyecto
 
-Harness de coding local con TUI, escrito en TypeScript y ejecutado con Bun.
+Harness de coding local con TUI **100% estilo QBasic**, escrito en TypeScript y ejecutado con Bun.
 Prioridades: **simplicidad, rapidez y estabilidad**. Debe administrar proyectos,
 ofrecer colores y atajos inspirados en Vim, aceptar archivos arrastrados al
 terminal y permitir configurar proveedores/modelos, con `llama.cpp` por defecto.
+Mouse, ventanas con título/cierre, botones y menús superiores con desplegables
+forman parte explícita del alcance. Pi es referencia de arquitectura del agente,
+no una alternativa de apariencia.
 
 Referencia conceptual: [Pi](https://github.com/earendil-works/pi). No copiar todo
 su monorepo ni adoptar su stack como requisito. Si se reutiliza código MIT,
@@ -18,6 +21,11 @@ conservar licencias y atribuciones.
 - [docs/phases/README.md](docs/phases/README.md): orden y dependencias del desarrollo.
 - [docs/phases/](docs/phases/): tareas y evidencia de cada fase.
 - [CHANGELOG.md](CHANGELOG.md): cambios efectivamente realizados.
+
+Primer hito de desarrollo: [demo de viabilidad QBasic](docs/phases/00-tui-viability.md).
+Construir y comprobar los componentes visuales con mouse/teclado antes de los
+proveedores LLM y tools del agente; la configuración Bun y el binario mínimo
+se preparan dentro de ese hito. Después, reutilizar los componentes en el harness.
 
 Al crear esta guía, solo existe el scaffold de `bun init` y la documentación;
 el harness no está implementado. Bun observado: 1.4.2. Los scripts, la estructura
@@ -72,6 +80,9 @@ esta política Git a los proyectos sobre los que trabaja.
   raw mode, paths, directorios, append o rename. No requieren Node externo.
 - No agregar dotenv ni crear un nuevo mecanismo de entorno por conveniencia.
 - Compilar un binario desde la fase 00 y repetir el smoke en las fases siguientes.
+- Construir una biblioteca interna pequeña de componentes TUI con render por
+  celdas, clipping, foco y eventos compartidos. Está solicitada por el usuario;
+  no convertirla en un framework, motor CSS o paquete publicable por inferencia.
 - Typecheck es independiente de ejecución/build; no decir que Bun verifica tipos.
 - No agregar dependencias o abstracciones sin una necesidad concreta del alcance.
 - No introducir APIs experimentales para reemplazar un camino estable existente.
@@ -92,7 +103,9 @@ esta política Git a los proyectos sobre los que trabaja.
   mediante `bun run typecheck`, `bun test` y `bun run build`; antes de que existan,
   no afirmar que se ejecutaron.
 - Verificar la TUI en terminal real/PTY, con Unicode, resize, color desactivado,
-  pegado y cierre que restaure cursor y raw mode.
+  pegado y cierre que restaure cursor, raw mode y mouse.
+- Probar clic, release, rueda, arrastre de título, foco, ventanas superpuestas,
+  menús y modales. Input SGR inyectado en PTY no sustituye mouse real del emulador.
 - Drag & drop requiere una prueba desde el SO; simular una ruta prueba el parser.
 - Cross-compilar no demuestra que el artefacto corre en el sistema de destino.
 - Distinguir documentación, implementación, validación local, commit, publicación

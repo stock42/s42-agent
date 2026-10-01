@@ -7,13 +7,21 @@ implementación está completada. Los checks pendientes representan trabajo futu
 
 | Fase | Archivo | Depende de | Resultado | Requisitos |
 | --- | --- | --- | --- | --- |
-| 00 | [Base Bun y ejecutable](00-bun-foundation.md) | Specs | CLI mínima compilada y ejecutada. | R01, R02, R13, R14 |
-| 01 | [TUI](01-terminal-ui.md) | 00 | Conversación fixture, editor, color y terminal restaurado. | R03, R04, R05 |
+| 00 | [Demo QBasic y componentes](00-tui-viability.md) | Specs | Ventanas, botones, menús y mouse probados en una demo Bun compilada. | R01–R05, R13–R17 |
+| 01 | [TUI del harness](01-terminal-ui.md) | 00 validada | Conversación/editor fixture sobre los componentes QBasic. | R03–R05, R15, R16 |
 | 02 | [Proyectos y sesiones](02-projects-and-sessions.md) | 00, 01 | Configuración durable y separación por proyecto. | R06, R12 |
 | 03 | [Proveedores y llama.cpp](03-providers-and-local-llm.md) | 01, 02 | Streaming local y selección de proveedor/modelo. | R09, R10 |
 | 04 | [Ciclo de coding](04-agent-loop-and-tools.md) | 02, 03 | Leer, editar y verificar un proyecto mediante tools. | R04, R11 |
 | 05 | [Vim y adjuntos](05-vim-and-attachments.md) | 01, 02, 03, 04 | Operación con teclado y archivos arrastrados. | R07, R08 |
-| 06 | [Validación y distribución](06-quality-and-binaries.md) | 00–05 | Evidencia integral, mediciones y binarios comprobados. | R01–R14 |
+| 06 | [Validación y distribución](06-quality-and-binaries.md) | 00–05 | Evidencia integral, mediciones y binarios comprobados. | R01–R17 |
+
+La UI QBasic, el uso de mouse y los componentes visuales están confirmados. El
+primer paso es **generar y comprobar la TUI**, sin proveedores ni agente. La base
+Bun se prepara dentro de esa demo; no constituye un hito anterior de backend.
+
+La fase 00 debe comprobar ventanas, títulos/cierre, botones y menús desplegables
+con mouse y teclado. Luego se construye la conversación del harness reutilizando
+esos componentes. Pi continúa como referencia del agente, no como estilo visual.
 
 ## Cómo ejecutar las fases
 

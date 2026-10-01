@@ -25,3 +25,18 @@ cierre de cada tarea e incluirlo en su commit.
 - Entrega documental; no se implementó el harness ni se modificó el scaffold.
 - Se intentó `git pull`; el repositorio no tiene remoto ni upstream configurado.
   Esta tarea continúa localmente sin afirmar sincronización o publicación remota.
+
+### Actualizado — UI QBasic y primer hito visual
+
+- Confirmada la UI estilo QBasic con mouse y escritorio de ventanas TUI. La
+  selección visual ya no está pendiente; Pi queda como referencia del agente.
+- Agregados los contratos de componentes, foco, superposición, clipping, botones,
+  títulos/cierre, menús desplegables, diálogos, clic/release, rueda y arrastre.
+- La fase 00 pasa a ser `00-tui-viability.md`: demo Bun de componentes visuales,
+  compilada y comprobada antes de integrar LLMs o herramientas de coding.
+- La fase 01 reutiliza esa biblioteca para la conversación/editor del harness;
+  los modos Vim respetan el foco de menús y diálogos.
+- Actualizados AGENTS y criterios de validación para distinguir eventos mouse
+  inyectados en PTY de la interacción con mouse real en un terminal gráfico.
+- Este cambio de diseño no constituye una demo implementada ni una prueba de
+  viabilidad completada. Se volvió a intentar `git pull`, sin remoto/upstream.

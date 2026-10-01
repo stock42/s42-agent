@@ -7,16 +7,20 @@ Fecha: 2026-10-01. Estado: diseño inicial; el harness todavía no está impleme
 Crear un harness de coding con una TUI en color, simple, rápido y estable,
 escrito en TypeScript y ejecutado íntegramente con Bun. Debe distribuirse como
 un ejecutable que incluya el runtime, administrar proyectos por nombre y carpeta,
-permitir operar principalmente con el teclado y usar modelos locales mediante
+permitir operar con mouse y teclado y usar modelos locales mediante
 `llama.cpp` como opción predeterminada.
 
 Un harness incluye el ciclo completo: recibir una tarea, construir el contexto,
 consultar al modelo, ejecutar sus herramientas, devolver los resultados al modelo
 y mostrar el progreso hasta una respuesta final o una cancelación.
 
-Pi es la referencia de experiencia y arquitectura. Se toman sus ideas de TUI,
-streaming y separación entre proveedor, ciclo del agente y herramientas. La
-primera versión será una implementación propia pequeña; no un fork completo.
+La dirección visual confirmada es **100% estilo QBasic**, con un escritorio de
+ventanas simulado dentro del terminal. Mouse y componentes visuales forman parte
+del producto desde el primer prototipo, no son mejoras opcionales posteriores.
+
+Pi sigue siendo referencia para streaming y separación entre proveedor, ciclo
+del agente y herramientas. Su apariencia no es una alternativa visual pendiente.
+La primera versión será una implementación propia pequeña; no un fork completo.
 
 ## 2. Alcance y criterios de diseño
 
@@ -28,7 +32,7 @@ primera versión será una implementación propia pequeña; no un fork completo.
 | R02 | Simplicidad | Un paquete, un proceso, módulos pequeños y sin servicios internos obligatorios. |
 | R03 | Rapidez | Inicio y respuesta del teclado medidos por separado de la inferencia. |
 | R04 | Estabilidad | Cancelación, errores de proveedor y cierre restauran el terminal y conservan la sesión. |
-| R05 | TUI con colores | Conversación, herramientas, errores, editor y estado legibles con y sin color. |
+| R05 | TUI en color estilo QBasic | Escritorio azul, menú superior, ventanas con bordes/títulos y barra de atajos, legibles con y sin color. |
 | R06 | Múltiples proyectos | Alta, edición, selección y baja del registro mediante nombre y carpeta. |
 | R07 | Buenos atajos y experiencia Vim | Modos INSERT/NORMAL, navegación y acciones documentadas, sin conflictos entre modos. |
 | R08 | Drag & drop de archivos | Rutas entregadas por el terminal se convierten en adjuntos visibles antes del envío. |
@@ -38,13 +42,18 @@ primera versión será una implementación propia pequeña; no un fork completo.
 | R12 | Continuidad del trabajo | Crear y reabrir sesiones asociadas a cada proyecto. |
 | R13 | Binarios autónomos | Compilar y ejecutar fuera del checkout y sin Bun instalado en el equipo de destino. |
 | R14 | Documentación de trabajo | Specs, fases, AGENTS y CHANGELOG coherentes con el estado real. |
+| R15 | Mouse como interacción principal disponible | Clic en controles, foco, rueda y arrastre de ventanas comprobados en terminal real. |
+| R16 | Componentes visuales TUI reutilizables | Botones, ventanas con título/cierre, menús con desplegables y controles comparten render e input. |
+| R17 | Viabilidad de la TUI primero | Demo de componentes ejecutable y validada antes de integrar proveedores o tools del agente. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
 - Un repositorio y un paquete ESM. No monorepo ni framework de agentes.
 - Un agente activo y un turno de usuario a la vez; herramientas secuenciales.
 - Configuración JSON y sesiones JSONL en disco. Sin base de datos inicial.
-- TUI propia de alcance limitado, con ANSI y las APIs incluidas en Bun.
+- TUI propia estilo QBasic, con ANSI, mouse y las APIs incluidas en Bun.
+- Construir primero los componentes visuales y una demo de viabilidad sin LLM;
+  luego usar esos mismos componentes en la interfaz del harness.
 - Un protocolo LLM inicial: Chat Completions compatible con OpenAI. Sirve para
   `llama.cpp` y otros endpoints que implementen ese contrato concreto.
 - Modelos registrados por el usuario; descubrimiento opcional mediante `/models`.
@@ -68,7 +77,7 @@ que cualquier API o modalidad sea compatible.
 
 - Lenguaje: TypeScript con `strict`, módulos ESM y tipos de Bun.
 - Versión observada en este repositorio: Bun **1.4.2**. La fase 00 fijará la versión
-  reproducible de desarrollo y compilación, sin actualizar paquetes en esta tarea.
+  reproducible de la demo y compilación antes de construir el agente.
 - Runtime: Bun; paquetes: `bun install`; tests: `bun:test`; build: `bun build`.
 - Transporte: `fetch`, `ReadableStream`, `TextDecoder` y `AbortController`.
 - Archivos: `Bun.file`, `Bun.write`, `Bun.Glob` y APIs de filesystem incluidas en Bun.
@@ -111,9 +120,10 @@ Estructura objetivo; todavía no existe:
 
 ```text
 src/
+  tui-demo.ts              demo independiente de viabilidad, primer entregable
   cli.ts                   argumentos y arranque
   app.ts                   coordinación y estado activo
-  tui/                     terminal, input, editor, render, tema y selectores
+  tui/                     terminal, input, render y componentes visuales
   agent/                   ciclo, mensajes y herramientas
   llm/                     configuración del request y parser SSE
   storage/                 configuración, proyectos y sesiones
@@ -130,6 +140,11 @@ Estos son límites de responsabilidad, no una obligación de crear un archivo pa
 cada concepto. No agregar contenedores de dependencias, buses de eventos genéricos
 ni capas de plugins.
 
+La biblioteca interna de componentes TUI es parte explícita del alcance: debe
+resolver los controles del producto con un contrato pequeño de render, eventos,
+foco y límites por celdas. No requiere crear un framework publicable, React,
+un motor CSS, un lenguaje de layouts o un sistema de plugins.
+
 La TUI consume eventos tipados del agente: inicio, texto parcial, herramienta
 iniciada, salida parcial, herramienta terminada, uso reportado, fin, error y
 cancelación. El cliente LLM no imprime directamente al terminal.
@@ -138,25 +153,61 @@ cancelación. El cliente LLM no imprime directamente al terminal.
 
 ### Dirección visual
 
-La arquitectura toma Pi como referencia, pero la apariencia puede inspirarse en
-el QBasic clásico: fondo azul, texto claro, bordes de caracteres, menú superior
-y barra inferior de atajos. Esa estética es viable con el renderer ANSI previsto
-y puede convivir con los modos Vim.
+**Decisión confirmada por el usuario:** estética QBasic en toda la UI, con mouse
+y ventanas que simulan una interfaz de escritorio dentro del terminal.
 
-La elección entre QBasic y una apariencia minimalista queda pendiente de la
-preferencia del usuario. No se agrega un motor de temas múltiples por esa
-alternativa: una paleta semántica centralizada permite concretar el estilo elegido.
-Si se elige QBasic, el menú ofrece las acciones existentes; no reproduce un IDE
-completo ni agrega paneles innecesarios.
+- Fondo azul clásico, texto claro, barras grises y selección contrastante.
+- Bordes de caracteres, títulos y control de cierre `[×]`/`[X]` reconocible.
+- Ventanas superpuestas, foco visible y menús en la cabecera con desplegables.
+- Botones con estados normal, enfocado, presionado y deshabilitado.
+- Barra inferior con atajos y estado; paleta semántica única centralizada.
+
+No es una interfaz gráfica del sistema operativo: todas las ventanas y controles
+se dibujan en celdas de un único terminal. El estilo no exige reproducir las
+funciones del IDE QBasic ni incorporar un segundo tema tipo Pi.
+
+### Componentes visuales iniciales
+
+| Componente | Responsabilidad y comportamiento mínimo |
+| --- | --- |
+| `Desktop` | Área de trabajo, orden de superposición, foco y composición de ventanas. |
+| `Window` | Marco, título, contenido recortado, cierre y arrastre por el título. |
+| `Button` | Activación por clic/Enter/Espacio, foco y estados visible/deshabilitado. |
+| `MenuBar` y `MenuPopup` | Menús de cabecera, desplegables, separadores, selección y cierre. |
+| `Dialog` | Ventana modal que restringe input al diálogo y restaura el foco al cerrar. |
+| `TextInput` | Campo editable con cursor, foco, teclado y paste. |
+| `SelectList` | Lista con selección por clic/flechas y scroll con rueda/teclado. |
+
+Un componente conserva estado mínimo y expone un contrato tipado para dibujar,
+recibir eventos y manejar su foco. `Dialog` puede reutilizar `Window`; no crear
+una jerarquía compleja de clases ni duplicar la detección de input en cada control.
+El editor multilínea y la conversación se agregan después utilizando esa base.
+
+### Primer entregable: demo de viabilidad
+
+Antes del harness, construir una demo Bun que permita abrir una ventana de
+componentes desde un menú, pulsar botones, editar un campo, seleccionar una lista,
+abrir/cerrar un modal y mover/cerrar ventanas. Debe existir un submenu desplegable
+operable con mouse y teclado. Sus datos son fixtures identificados como demo;
+no llama LLMs, ejecuta herramientas de coding ni modifica proyectos.
+
+Verificar layout a 80×24 y 120×40, coordenadas de clic, orden de ventanas,
+restauración del terminal, repintado sin flicker y funcionamiento desde el binario.
+Con esa evidencia se determina la viabilidad antes de integrar el agente.
 
 ### Distribución
 
-Una pantalla alternativa con cuatro regiones:
+Una pantalla alternativa organizada como escritorio TUI:
 
-1. Cabecera compacta: proyecto, proveedor/modelo y sesión.
-2. Conversación desplazable: usuario, agente y resultados de herramientas.
-3. Editor multilínea y lista de adjuntos pendientes.
-4. Estado: INSERT/NORMAL, foco, actividad, uso disponible y ayuda breve.
+1. Menú superior: Archivo, Proyectos, Modelos, Ventanas y Ayuda, con desplegables.
+2. Área de ventanas. La ventana principal del agente contiene conversación,
+   editor multilínea y adjuntos; los selectores se abren en ventanas/diálogos.
+3. Contexto visible: proyecto, proveedor/modelo y sesión en la ventana principal.
+4. Barra inferior: INSERT/NORMAL, foco, actividad, uso disponible y atajos.
+
+Ventanas y menús usan un orden de superposición común. Cerrar una ventana auxiliar
+no elimina una sesión ni borra datos; cerrar la conversación no cancela un turno
+implícitamente. Las acciones de cancelar o salir deben ser explícitas.
 
 El estado de cada herramienta muestra su nombre, argumentos relevantes,
 resultado, código de salida y duración. No llamar «completada» a una herramienta
@@ -171,7 +222,10 @@ fallida ni a un turno cancelado.
 - Respetar ancho visible, ANSI, Unicode, tildes, emoji y caracteres anchos.
 - Markdown básico: títulos, listas, énfasis, código y enlaces legibles. Resaltar
   bloques de código por estilo; colorear cada lenguaje no es requisito inicial.
-- Un tema semántico pequeño: texto, secundario, acento, éxito, advertencia y error.
+- Un tema QBasic con tokens para escritorio, menú, marco/título activo e inactivo,
+  control, selección, texto, secundario, éxito, advertencia y error.
+- Componer una pantalla por celdas con clipping: el contenido de una ventana no
+  invade su marco ni controles vecinos, incluso con texto ancho.
 - Detectar capacidad de color y respetar `NO_COLOR` y `TERM=dumb`; acompañar los
   colores con texto. Con `TERM=dumb`, mostrar el requisito de un terminal ANSI.
 - Soportar al menos 80×24 y degradar a un layout compacto en 60×16 sin perder el
@@ -179,10 +233,48 @@ fallida ni a un turno cancelado.
 - Si stdin o stdout no es TTY, informar que el modo interactivo necesita un
   terminal y salir con código distinto de cero, sin secuencias ANSI.
 
-Raw mode, cursor, pantalla alternativa y bracketed paste se activan al entrar y
+Raw mode, cursor, pantalla alternativa, mouse y bracketed paste se activan al entrar y
 se restauran al salir por cierre normal, error controlado, SIGINT o SIGTERM. En
 raw mode Ctrl+C llega como entrada y debe manejarse explícitamente. SIGKILL o
 una caída del sistema no permiten garantizar restauración.
+
+### Mouse y ventanas
+
+El protocolo inicial es mouse SGR por celdas (`1006`) con tracking de botones y
+movimiento durante arrastre (`1002`). El terminal entrega secuencias por stdin;
+Bun las decodifica junto con el teclado. Las coordenadas del protocolo parten
+de 1 y se normalizan a la grilla interna. No usar coordenadas en píxeles ni un
+puente de UI nativa. [Protocolo de xterm](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Mouse-Tracking).
+
+- Clic enfoca el control/ventana superior que realmente ocupa esa celda.
+- Botón activa al soltar dentro del mismo control donde se presionó; soltar fuera
+  cancela la activación. Un control deshabilitado no recibe acciones.
+- Arrastrar el título mueve la ventana con captura del puntero hasta release;
+  limitar la posición al área útil para conservar acceso al título/cierre.
+- Rueda desplaza la lista o conversación ubicada bajo el puntero.
+- El clipping y el orden visible gobiernan el hit testing: no pulsar controles
+  ocultos detrás de otra ventana ni atravesar un modal.
+- Menús se abren al hacer clic, permiten elegir una opción y se cierran al elegir,
+  hacer clic afuera o pulsar Escape. Menús y modales reciben input antes que Vim.
+- No exigir hover o tracking de todos los movimientos para el prototipo.
+- Restaurar los modos de mouse activados al cerrar. Si el emulador no envía esos
+  eventos, conservar operación por teclado y registrar la limitación de mouse.
+
+Arrastrar una ventana interna y arrastrar un archivo desde el SO son flujos
+distintos. El segundo sigue el contrato de adjuntos de la sección 10; recibir
+eventos de mouse no entrega por sí mismo archivos del sistema operativo.
+
+### Foco y teclado de controles
+
+Tab/Shift+Tab recorren controles en una ventana/diálogo. F10 activa la barra de
+menús; flechas recorren menú y opciones; Enter selecciona y Escape cierra el nivel
+actual. F1 abre ayuda. Mouse y teclado invocan la misma acción de cada control.
+Si un terminal no distingue Shift+Tab o una tecla de función, la ayuda indica
+su alternativa disponible; no depender exclusivamente de Alt ni de Kitty.
+
+El foco vuelve al control previo después de cerrar un diálogo. Mientras haya un
+menú/modal, sus acciones tienen prioridad; los atajos Vim operan sobre el editor
+y la conversación cuando esos componentes tienen foco, no sobre todo el escritorio.
 
 ### Teclado
 
@@ -196,6 +288,9 @@ Ctrl+J será la forma portable de insertar una nueva línea.
 
 | Contexto | Tecla | Acción |
 | --- | --- | --- |
+| Escritorio | F10 / F1 | Abrir barra de menús / ayuda. |
+| Ventana/diálogo | Tab / Shift+Tab | Recorrer controles enfocados. |
+| Menú/diálogo | Escape | Cerrar menú o diálogo antes de cambiar modo Vim. |
 | Global | Ctrl+C | Cancelar el turno activo; si está inactivo, cerrar guardando el borrador. |
 | Global | Ctrl+P | Seleccionar proyecto. |
 | Global | Ctrl+O | Seleccionar modelo del proveedor activo. |
@@ -563,10 +658,11 @@ El historial durable puede crecer; el viewport y sus caches tienen límites.
 El primer build será mínimo y verificable:
 
 ```bash
-bun build ./src/cli.ts --compile --outfile ./dist/s42-agent
+bun build ./src/tui-demo.ts --compile --outfile ./dist/s42-tui-demo
 ```
 
-Es un comando objetivo para la fase 00; `src/cli.ts` todavía no existe.
+Es un comando objetivo para la primera demo de viabilidad, fase 00;
+`src/tui-demo.ts` todavía no existe. El harness tendrá su propio entrypoint después.
 
 En desarrollo, empezar por Linux x64, que es el entorno de este checkout. La
 distribución objetivo incluye Linux x64/arm64, macOS x64/arm64 y Windows x64.
@@ -591,7 +687,8 @@ en el ejecutable. Registrar versión Bun, versión app, target y checksum del ar
 
 ## 14. Estrategia de validación y orden de desarrollo
 
-Tests con `bun:test` sobre comportamientos: parser de teclado/paste, Unicode,
+Tests con `bun:test` sobre comportamientos: parser de teclado/mouse/paste, Unicode,
+clic/release, drag, clipping, foco, superposición, menús y modales,
 acciones Vim, separación de proyectos, append/recuperación, SSE fragmentado,
 tool calls, edición exacta, cancelación, adjuntos y selección de defaults.
 
@@ -600,20 +697,25 @@ repositorios temporales. Las pruebas con un GGUF real se identifican por separad
 y documentan modelo, quantización, template, versión de servidor y resultado.
 No llamar cobertura real a una suite omitida por falta de modelo.
 
-La QA de input/render se puede automatizar con `Bun.Terminal`; arrastrar archivos
-desde el SO también requiere prueba manual en un terminal con interfaz gráfica.
+La QA de input/render se puede automatizar con `Bun.Terminal`. Las secuencias de
+mouse inyectadas prueban el parser y la UI, pero clic, rueda y arrastre con mouse
+real también requieren un terminal gráfico. Arrastrar archivos desde el SO
+requiere su propia prueba manual.
 Usar un emulador de prueba solo como dependencia de desarrollo si hace falta
 validar el estado de pantalla, sin añadirlo al runtime.
 
 Orden y tareas en [phases/README.md](phases/README.md):
 
-1. Base Bun y primer ejecutable.
-2. TUI y ciclo de vida del terminal.
+1. Componentes visuales QBasic, mouse y demo de viabilidad compilada con Bun.
+2. TUI del harness sobre esos componentes: conversación, editor y eventos fixture.
 3. Configuración, proyectos y sesiones.
 4. Proveedores y streaming local.
 5. Ciclo de coding y herramientas.
 6. Vim, drag & drop y adjuntos completos.
 7. QA integrada, rendimiento y binarios de distribución.
+
+La primera demo debe comprobarse antes de conectar proveedores y herramientas;
+el primer hito no es una CLI de texto ni el backend del agente.
 
 Una fase se termina con evidencia de sus criterios, no solamente con un commit.
 Las tareas de desarrollo permanecen pendientes en esta entrega documental.

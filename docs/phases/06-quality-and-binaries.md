@@ -1,7 +1,7 @@
 # Fase 06 — Validación integrada, rendimiento y distribución
 
-Estado: **Pendiente**. Dependencias: fases [00](00-bun-foundation.md) a
-[05](05-vim-and-attachments.md). Requisitos: R01–R14.
+Estado: **Pendiente**. Dependencias: fases [00](00-tui-viability.md) a
+[05](05-vim-and-attachments.md). Requisitos: R01–R17.
 Contratos: SPECS §12, §13 y §14.
 
 ## Objetivo
@@ -25,7 +25,8 @@ ejecutados en las plataformas que se declaren soportadas.
   versión, checksum y assets embebidos. Mantener datos/config fuera del binario.
 - [ ] F06-07. Ejecutar smoke de cada target en su SO/arquitectura, fuera del checkout
   y sin Bun/Node. Separar los targets compilados que aún no tienen validación runtime.
-- [ ] F06-08. Comprobar TUI, tool shell, restauración y drop en la matriz de terminales;
+- [ ] F06-08. Comprobar TUI QBasic, mouse, ventanas/menús, tool shell, restauración
+  y drop en la matriz de terminales;
   publicar solo la compatibilidad comprobada. Registrar lo pendiente sin ocultarlo.
 - [ ] F06-09. Completar README con instalación del binario, proyectos, configuración,
   servidor local externo, modelos, atajos, adjuntos y solución de errores reales.
@@ -47,7 +48,8 @@ a partir de un build o commit.
 4. Resultados p95/RSS incluyen hardware, SO, Bun y fixture; separar inferencia de
    overhead del harness. Si hay incumplimientos, corregir o registrar el bloqueo.
 5. Cada binario declarado soportado corre sin archivos del checkout, Bun, Node,
-   dependencias de runtime instaladas ni descargas automáticas del harness.
+   dependencias de runtime instaladas ni descargas automáticas del harness. Probar
+   clic, rueda, arrastre de ventanas y cierre de menús con mouse real, además del teclado.
 6. Configurar un endpoint local caído, un modelo inválido y uno sin herramientas:
    errores comprensibles sin fallback cloud ni efectos duplicados.
 7. El README permite reproducir una sesión local desde el binario con su servidor
