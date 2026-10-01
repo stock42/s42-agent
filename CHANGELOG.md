@@ -161,3 +161,15 @@ cierre de cada tarea e incluirlo en su commit.
 - Typecheck y 7 casos de transporte/storage correctos. Validación de proveedor
   real pendiente: usuario configura host/modelo en Models. No se descargaron modelos.
 - `git pull` intentado sin upstream; commit local, sin build de binarios.
+
+### Agregado — Loop de coding y herramientas
+
+- Loop secuencial con read/list/search/write/edit/shell, argumentos validados, cwd
+  del proyecto, instrucciones AGENTS aplicables y resultados persistidos por call.
+- Edit exige coincidencia única; shell consume stdout/stderr concurrentes, informa
+  exit code, timeout, duración y recorte. Cancelar detiene el grupo en Linux.
+- Límites de pasos/contexto, resultados de herramientas fallidas y recuperación
+  de llamadas interrumpidas sin repetirlas; se conservan errores al reabrir.
+- Typecheck y 10 casos de tools/persistencia pasan. Fixture HTTP lee, edita y
+  verifica un archivo con Bun; no constituye prueba con un modelo real.
+- Pull previo falló por ausencia de upstream. Commit local; sin builds de binarios.

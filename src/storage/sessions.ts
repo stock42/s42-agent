@@ -52,9 +52,10 @@ export class Session {
       const file = Bun.file(path), source = await file.exists() ? await file.text() : "";
       const state: SessionState = { id, projectId, title: "Nueva sesión", draft: "", attachments: [], messages: [], events: [], notices: [] };
       let validBytes = 0;
-      for (const [index, line] of source.split("\n").entries()) {
-        if (!line) continue;
-        if (!source.endsWith("\n") && index === source.split("\n").length - 1) { state.notices.push("Último registro incompleto recuperado"); break; }
+      const lines = source.split("\n");
+      for (const [index, line] of lines.entries()) {
+        if (!source.endsWith("\n") && index === lines.length - 1 && line) { state.notices.push("Último registro incompleto recuperado"); break; }
+        if (!line) { if (index < lines.length - 1) validBytes++; continue; }
         try { state.events.push(parseEvent(JSON.parse(line), projectId)); } catch { throw new Error(`Sesión corrupta: línea ${index + 1}`); }
         validBytes += Buffer.byteLength(line + "\n");
       }
@@ -63,17 +64,36 @@ export class Session {
         if (e.type === "session") state.title = e.title;
         if (e.type === "draft") { state.draft = e.text; state.attachments = e.attachments; }
         if (e.type === "selection") state.selection = e.selection;
-        if (e.type === "message") state.messages.push(e.message);
+        if (e.type === "message") {
+          const callIndex = e.message.role === "tool" ? state.messages.findIndex(m => m.tool_calls?.some(c => c.id === e.message.tool_call_id)) : -1;
+          if (callIndex < 0) state.messages.push(e.message);
+          else { let index = callIndex + 1; while (state.messages[index]?.role === "tool") index++; state.messages.splice(index, 0, e.message); }
+        }
         if (e.type === "tool-start") pending.set(e.callId, e.name);
         if (e.type === "tool-result") pending.delete(e.callId);
+        if (e.type === "turn" && e.state !== "completed") state.notices.push(e.detail);
       }
       for (const [callId, name] of pending) {
         state.notices.push(`Herramienta interrumpida: ${name}; pudo haber tenido efectos`);
-        if (!state.messages.some(m => m.role === "tool" && m.tool_call_id === callId)) state.messages.push({ role: "tool", tool_call_id: callId, content: "Interrumpida al cerrar. No reejecutar automáticamente; pudo haber tenido efectos." });
+      }
+      // Restore each persisted call/result pair, including a crash between result and message.
+      const repairs: Message[] = [];
+      for (const message of [...state.messages]) for (const call of message.tool_calls ?? []) {
+        if (state.messages.some(m => m.role === "tool" && m.tool_call_id === call.id)) continue;
+        const result = state.events.findLast(e => e.type === "tool-result" && e.callId === call.id);
+        const content = result?.type === "tool-result" ? result.output : "Interrumpida al cerrar. No reejecutar automáticamente; pudo haber tenido efectos.";
+        const repaired: Message = { role: "tool", tool_call_id: call.id, content };
+        // A recovered tool result must immediately follow the assistant's call group.
+        let index = state.messages.indexOf(message) + 1;
+        while (state.messages[index]?.role === "tool") index++;
+        state.messages.splice(index, 0, repaired); repairs.push(repaired);
+        if (!result && !pending.has(call.id)) state.notices.push(`Llamada interrumpida: ${call.function.name}; no se reejecutó`);
       }
       const fd = await open(path, "a");
       if (state.notices.some(n => n.startsWith("Último"))) await fd.truncate(validBytes);
-      return new Session(path, lock, token, fd, state);
+      const session = new Session(path, lock, token, fd, state);
+      for (const message of repairs) await session.append({ type: "message", message });
+      return session;
     } catch (error) { await unlink(lock); throw error; }
   }
   append(data: EventData): Promise<void> {

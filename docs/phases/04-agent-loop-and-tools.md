@@ -1,6 +1,6 @@
 # Fase 04 — Ciclo del agente y herramientas de coding
 
-Estado: **Pendiente**. Dependencias: [02](02-projects-and-sessions.md),
+Estado: **En curso**. Dependencias: [02](02-projects-and-sessions.md),
 [03](03-providers-and-local-llm.md). Requisitos: R04, R11.
 Contrato: SPECS §9 y §11.
 
@@ -11,25 +11,25 @@ su verificación, con eventos visibles, resultados persistidos y cancelación.
 
 ## Tareas
 
-- [ ] F04-01. Definir mensajes canónicos, resultados tipados y máquina de estados;
+- [x] F04-01. Definir mensajes canónicos, resultados tipados y máquina de estados;
   inmovilizar proyecto, sesión y selección LLM durante cada turno.
-- [ ] F04-02. Implementar `read`, `list` y `search` con APIs Bun, límites claros y
+- [x] F04-02. Implementar `read`, `list` y `search` con APIs Bun, límites claros y
   búsqueda incremental, sin requerir indexador ni herramientas instaladas extra.
-- [ ] F04-03. Implementar `write` y `edit` con resultado visible; el edit exacto
+- [x] F04-03. Implementar `write` y `edit` con resultado visible; el edit exacto
   exige una sola coincidencia y no modifica el archivo en los demás casos.
-- [ ] F04-04. Implementar `shell` con `Bun.spawn`, cwd explícito, stdout/stderr
+- [x] F04-04. Implementar `shell` con `Bun.spawn`, cwd explícito, stdout/stderr
   consumidos concurrentemente, timeout y exit code; no tomar stdin de la TUI.
-- [ ] F04-05. Registrar herramientas y validar nombre, argumentos e ID; ejecutar
+- [x] F04-05. Registrar herramientas y validar nombre, argumentos e ID; ejecutar
   solamente llamadas completas y devolver un resultado por tool call.
-- [ ] F04-06. Conectar el loop secuencial: request, tools, resultados, request y
+- [x] F04-06. Conectar el loop secuencial: request, tools, resultados, request y
   respuesta final, con límite de pasos y errores de herramienta corregibles.
-- [ ] F04-07. Persistir tool start antes de ejecutar y tool result/turn result al
+- [x] F04-07. Persistir tool start antes de ejecutar y tool result/turn result al
   terminar; no reejecutar una acción interrumpida al recuperar una sesión.
 - [ ] F04-08. Conectar cancelación HTTP y procesos, impedir nuevas tools y validar
   terminación de descendientes según SO. Indicar efectos ya realizados.
-- [ ] F04-09. Implementar preparación de contexto, instrucciones AGENTS, recorte
+- [x] F04-09. Implementar preparación de contexto, instrucciones AGENTS, recorte
   explícito de tool output y manejo del límite, manteniendo pares call/result.
-- [ ] F04-10. Renderizar estados de tools y turnos sin mezclar fallas con éxito.
+- [x] F04-10. Renderizar estados de tools y turnos sin mezclar fallas con éxito.
 - [ ] F04-11. Ejecutar escenarios fixture y una tarea real con modelo local apto
   para tool calling, registrando el diff y su verificación.
 - [ ] F04-12. Repetir el flujo desde el entrypoint Bun, actualizar evidencia y CHANGELOG
@@ -59,7 +59,9 @@ su verificación, con eventos visibles, resultados persistidos y cancelación.
 
 | Tarea/caso | Fixture, comando o diff | Resultado, modelo y exit code |
 | --- | --- | --- |
-| — | — | Pendiente; no ejecutado. |
+| Loop y herramientas | `bun run typecheck`; `bun test tests/agent.test.ts tests/storage.test.ts` | 10 casos pasan; fixture HTTP lee, edita y ejecuta Bun con resultado 4. Edición ambigua/JSON inválido sin cambios; límite de pasos; stdout/stderr abundantes; timeout. |
+| Cancelación/recuperación | Tests de grupo de procesos y sesión interrumpida | Linux: descendiente detenido al cancelar; lock de PID muerto y pares call/result reparados sin repetir efectos. Otros SO pendientes. |
+| Modelo real / fuente interactiva | Pendiente | No hay endpoint/modelo real disponible; fixture no demuestra inferencia real. |
 
 ## Cierre
 

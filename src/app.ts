@@ -6,7 +6,8 @@ import { createWorkspaceView } from "./ui/workspace.ts";
 import { choose, form } from "./ui/dialogs.ts";
 import { createDemoPanels } from "./ui/demo.ts";
 import { theme } from "./ui/theme.ts";
-import { complete, CompletionError, credential, discoverModels } from "./llm/client.ts";
+import { CompletionError, credential, discoverModels } from "./llm/client.ts";
+import { runTurn } from "./agent/loop.ts";
 import { markdownText } from "./ui/markdown.ts";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
@@ -152,7 +153,7 @@ export class App {
     try { this.current(); await this.session?.append({ type: "selection", selection }); if (this.session) this.session.state.selection = selection; }
     catch (e) { this.selection = old; throw e; } this.status = "Modelo elegido"; this.showContext(); }
   models(): void { choose(this.desktop, "Models · elegir", this.store.value.providers.flatMap(p => p.models.map(m => ({ label: `${p.name} · ${m.id}`, value: { providerId: p.id, modelId: m.id } }))), s => this.run(() => this.selectModel(s))); }
-  providers(): void { choose(this.desktop, "Proveedores", this.store.value.providers.map(value => ({ label: `${value.name} · ${value.baseUrl}`, value })), p => { this.selection = { providerId: p.id }; this.modelForm(); }); }
+  providers(): void { choose(this.desktop, "Proveedores", this.store.value.providers.map(value => ({ label: `${value.name} · ${value.baseUrl}`, value })), p => this.run(async () => { this.requireIdle(); this.selection = { providerId: p.id }; this.modelForm(); })); }
   modelForm(add = false, newProvider = false): void {
     if (this.busy) { this.status = "Cancelá el turno antes de configurar modelos"; return; }
     const provider = this.store.value.providers.find(p => p.id === this.selection.providerId) ?? this.store.value.providers[0];
@@ -208,11 +209,11 @@ export class App {
       try {
         await this.message({ role: "user", content: text }); this.showHistory(false);
         this.view.response.append("\n\nAgente:\n");
-        const result = await complete({ provider, model, messages: session.state.messages, key, signal: this.controller!.signal,
-          ...{ firstEventMs: this.store.value.limits.firstEventMs, idleMs: this.store.value.limits.idleMs },
+        const result = await runTurn({ project: this.project!, session, provider, model, key, signal: this.controller!.signal, limits: this.store.value.limits,
+          onState: state => { this.status = state; this.desktop.invalidate(); },
+          onMessage: () => { this.showHistory(false); this.view.response.append("\n\nAgente:\n"); this.desktop.invalidate(); },
           onDelta: delta => { this.status = "Respondiendo…"; this.view.response.append(delta); this.desktop.invalidate(); } });
-        await this.message(result.message);
-        this.status = result.usage?.total_tokens !== undefined ? `Listo · ${result.usage.total_tokens} tokens` : "Listo · uso no reportado";
+        this.status = result.usage !== undefined ? `Listo · ${result.usage} tokens` : "Listo · uso no reportado";
         await session.append({ type: "turn", state: "completed", detail: this.status });
       } catch (e) {
         if (e instanceof CompletionError && e.partial.content) await this.message({ role: "assistant", content: e.partial.content });

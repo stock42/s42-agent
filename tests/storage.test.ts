@@ -39,3 +39,12 @@ test("proyectos y sesiones mantienen borradores; Models y aviso sin modelo visib
   await app.desktop.onBeforeExit!();
   const resumed = await App.open({ config }); expect(resumed.view.prompt.value).toBe("borrador A"); await resumed.desktop.onBeforeExit!();
 });
+test("reinicio repara pares call/result y recupera un lock de proceso muerto", async () => {
+  const root=await fixture(), one=await Session.open(root,'A','crash');
+  await one.append({type:'message',message:{role:'assistant',content:null,tool_calls:[{id:'c1',type:'function',function:{name:'write',arguments:'{}'}}]}});
+  await one.append({type:'tool-start',callId:'c1',name:'write',arguments:'{}'}); await one.close();
+  const child=Bun.spawn([process.execPath,'-e','setInterval(()=>{},1000)'],{stdout:'ignore',stderr:'ignore'}); child.kill(); await child.exited;
+  await Bun.write(join(root,'A/crash.jsonl.lock'),JSON.stringify({pid:child.pid,token:'old'}));
+  let recovered=await Session.open(root,'A','crash'); expect(recovered.state.messages.map(m=>m.role)).toEqual(['assistant','tool']); expect(recovered.state.messages[1]?.content).toContain('No reejecutar'); await recovered.close();
+  recovered=await Session.open(root,'A','crash'); expect(recovered.state.messages.map(m=>m.role)).toEqual(['assistant','tool']); await recovered.close();
+});

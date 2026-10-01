@@ -1,0 +1,68 @@
+import { expect, test } from "bun:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { execute } from "../src/agent/tools.ts";
+import { runTurn } from "../src/agent/loop.ts";
+import { Session } from "../src/storage/sessions.ts";
+import { defaultConfig, type Model, type Provider } from "../src/storage/config.ts";
+test("tools read/search/edit exacto/write y shell con exit code real", async () => {
+  const root = await mkdtemp(join(tmpdir(),'s42-tools-')), signal = new AbortController().signal;
+  try {
+    await Bun.write(join(root,'a.ts'),'export const suma = 1 + 1;\n');
+    expect((await execute('read','{"path":"a.ts"}',root,signal)).output).toContain('1: export');
+    expect((await execute('search','{"pattern":"suma"}',root,signal)).output).toContain('a.ts:1');
+    expect((await execute('edit',JSON.stringify({path:'a.ts',oldText:'inexistente',newText:'x'}),root,signal)).failed).toBe(true);
+    await Bun.write(join(root,'duplicado'),'aaa'); expect((await execute('edit',JSON.stringify({path:'duplicado',oldText:'aa',newText:'x'}),root,signal)).failed).toBe(true); expect(await Bun.file(join(root,'duplicado')).text()).toBe('aaa');
+    expect((await execute('write',JSON.stringify({path:'sub/nuevo',content:'hola'}),root,signal)).failed).toBe(false);
+    const command = await execute('shell',JSON.stringify({command:'echo salida; echo error >&2; exit 7'}),root,signal); expect(command.failed).toBe(true); expect(command.exitCode).toBe(7); expect(command.output).toContain('error');
+    expect((await execute('inventada','{}',root,signal)).failed).toBe(true);
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+test("loop fixture lee, edita y verifica archivo; persiste call/result sin reejecutar", async () => {
+  const root = await mkdtemp(join(tmpdir(),'s42-loop-')), session = await Session.open(join(root,'sessions'),'project'); let requests=0;
+  await Bun.write(join(root,'code.ts'),'console.log(1 + 1);');
+  const calls = [{name:'read',args:{path:'code.ts'}},{name:'edit',args:{path:'code.ts',oldText:'1 + 1',newText:'2 + 2'}},{name:'shell',args:{command:'bun code.ts'}}];
+  const server = Bun.serve({port:0,async fetch(req){const body=await req.json() as any; expect(body.messages[0].role).toBe('system');
+    const call=calls[requests++]; const delta=call?{tool_calls:[{index:0,id:`call-${requests}`,function:{name:call.name,arguments:JSON.stringify(call.args)}}]}:{content:'Cambio verificado: 4'};
+    return new Response(`data: ${JSON.stringify({choices:[{delta,finish_reason:call?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);}});
+  const model:Model={id:'fixture',name:'Fixture',contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
+  const provider:Provider={id:'fixture',name:'Fixture',kind:'openai-compatible',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[model]};
+  try {await session.append({type:'session',title:'Coding'}); session.state.messages.push({role:'user',content:'Cambiar suma'});
+    await runTurn({project:{id:'project',name:'Fixture',path:root},session,provider,model,signal:new AbortController().signal,limits:defaultConfig().limits,onDelta:()=>{},onState:()=>{},onMessage:()=>{}});
+    expect(await Bun.file(join(root,'code.ts')).text()).toBe('console.log(2 + 2);'); expect(requests).toBe(4); expect(session.state.messages.at(-1)?.content).toBe('Cambio verificado: 4');
+    expect(session.state.events.filter(e=>e.type==='tool-start').length).toBe(3); expect(session.state.messages.filter(m=>m.role==='tool').length).toBe(3);
+  } finally {server.stop(true);await session.close();await rm(root,{recursive:true,force:true});}
+});
+test("cancelar shell mata también al descendiente de su grupo", async () => {
+  const root=await mkdtemp(join(tmpdir(),'s42-cancel-')), controller=new AbortController();
+  try {
+    const command='sleep 30 & echo $! > child.pid; wait';
+    const run=execute('shell',JSON.stringify({command}),root,controller.signal);
+    for(let i=0;i<100 && !(await Bun.file(join(root,'child.pid')).exists());i++) await Bun.sleep(5);
+    const pid=Number((await Bun.file(join(root,'child.pid')).text()).trim()); controller.abort(new Error('cancelado')); const result=await run; expect(result.failed).toBe(true);
+    // A short-lived zombie is no longer executing and is waiting for its parent/reaper.
+    let alive=false; try { const status=await Bun.file(`/proc/${pid}/stat`).text(); alive=!status.includes(') Z '); } catch {}
+    expect(alive).toBe(false);
+  } finally {await rm(root,{recursive:true,force:true});}
+});
+test("salida abundante se drena, timeout y JSON inválido sin efectos", async () => {
+  const root = await mkdtemp(join(tmpdir(), 's42-output-')), signal = new AbortController().signal;
+  try {
+    const result = await execute('shell', JSON.stringify({ command: "bun -e 'console.log(\"a\".repeat(100000)); console.error(\"b\".repeat(100000))'" }), root, signal);
+    expect(result.exitCode).toBe(0); expect(result.truncated).toBe(true); expect(JSON.parse(result.output).stdout).toContain('recortada'); expect(JSON.parse(result.output).stderr).toContain('recortada');
+    expect((await execute('shell', JSON.stringify({command:'sleep 30',timeoutMs:15}), root, signal)).failed).toBe(true);
+    expect((await execute('write', '{"path":"oops","content":7}', root, signal)).failed).toBe(true); expect(await Bun.file(join(root,'oops')).exists()).toBe(false);
+    await Bun.write(join(root,'AGENTS.md'),'Root A'); await Bun.write(join(root,'sub/AGENTS.md'),'Child A'); await Bun.write(join(root,'sub/file'),'hola');
+    expect((await execute('read','{"path":"sub/file"}',root,signal)).output).toContain('Child A');
+    const other = await mkdtemp(join(tmpdir(),'s42-other-')); try { await Bun.write(join(other,'AGENTS.md'),'Root B'); await Bun.write(join(other,'file'),'hola'); const read=await execute('read','{"path":"file"}',other,signal); expect(read.output).toContain('Root B'); expect(read.output).not.toContain('Root A'); } finally { await rm(other,{recursive:true,force:true}); }
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+test("límite del loop devuelve resultados por cada call sin ejecutar las siguientes", async () => {
+  const root=await mkdtemp(join(tmpdir(),'s42-limit-')), session=await Session.open(join(root,'sessions'),'A'); let requests=0;
+  const server=Bun.serve({port:0,fetch(){requests++;return new Response(`data: ${JSON.stringify({choices:[{delta:{tool_calls:[{index:0,id:`id-${requests}`,function:{name:'write',arguments:JSON.stringify({path:'count',content:String(requests)})}}]},finish_reason:'tool_calls'}]})}\n\ndata: [DONE]\n\n`);}});
+  const model:Model={id:'fixture',name:'Fixture',contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
+  try { await expect(runTurn({project:{id:'A',name:'A',path:root},session,provider:{id:'P',name:'P',kind:'llama.cpp',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[model]},model,signal:new AbortController().signal,limits:{...defaultConfig().limits,maxSteps:1},onDelta:()=>{},onState:()=>{},onMessage:()=>{}})).rejects.toThrow('Límite');
+    expect(await Bun.file(join(root,'count')).text()).toBe('1'); expect(session.state.messages.filter(m=>m.role==='tool').length).toBe(2);
+  } finally {server.stop(true);await session.close();await rm(root,{recursive:true,force:true});}
+});
