@@ -5,6 +5,18 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Cinco imágenes comerciales de S42 Agent
+
+- Campaña en español con cinco PNG cuadrados de 1254 × 1254 px: TUI QBasic,
+  proyectos/archivos, idiomas/seis temas, modelos/tools/MCP/skills/CLI y benchmark.
+- Estética común azul DOS/cian, ventanas y menús de terminal. Textos comerciales
+  y prompts conservados junto a las piezas en assets/banners/.
+- Benchmark reproduce final-validation.md con cifras, unidades, versión,
+  host y condiciones; identifica el registro histórico y excluye inferencia LLM.
+- Revisión visual de textos y métricas; cinco PNG válidos y dimensiones iguales.
+  Sin cambios de runtime, builds, nuevos benchmarks o publicación externa.
+  Pull falló por main sin upstream; cambios previos de QA preservados.
+
 ### Corregido — Coding local, actividad por pestaña y SQLite
 
 - llama.cpp consulta /props al descubrir/enviar: tools, contexto y visión reales.
