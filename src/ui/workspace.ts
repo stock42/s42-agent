@@ -42,7 +42,8 @@ export function createWorkspaceView(project: ProjectContext = { name: basename(p
 
   desktop.onResize = (width, height) => {
     const top = desktop.tabs ? 2 : 1;
-    const available = Math.max(4, height - top - 1); const promptHeight = height >= 20 ? 7 : 4;
+    const extraStatusRows = Math.max(0, (desktop.statusLines?.().length ?? 0) - 1);
+    const available = Math.max(4, height - top - 1 - extraStatusRows); const promptHeight = height >= 20 ? 7 : 4;
     const editorHeight = Math.max(2, available - promptHeight);
     Object.assign(editorWindow.bounds, { x: 0, y: top, width, height: editorHeight });
     Object.assign(promptWindow.bounds, { x: 0, y: top + editorHeight, width, height: Math.max(2, available - editorHeight) });

@@ -4,6 +4,7 @@ import type { Project } from "./storage/config.ts";
 import type { Session } from "./storage/sessions.ts";
 import { Button } from "./ui/components/button.ts";
 import { TextArea } from "./ui/components/text-area.ts";
+import type { TokenUsage } from "./agent/usage.ts";
 
 export interface ProjectTab {
   id: string; project?: Project; session?: Session;
@@ -13,6 +14,7 @@ export interface ProjectTab {
   rendered: WeakMap<Message, string>;
   response: TextArea; prompt: TextArea; send: Button;
   panel: "editor" | "prompt"; focusedId?: string;
+  tokens?: TokenUsage;
 }
 
 export function createProjectTab(controls?: Pick<ProjectTab, "response" | "prompt" | "send">): ProjectTab {

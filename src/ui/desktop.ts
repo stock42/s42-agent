@@ -18,6 +18,8 @@ export class Desktop {
   onHelp: () => void = () => {};
   invalidate: () => void = () => {};
   onBeforeExit?: () => Promise<void>;
+  onStart?: () => void;
+  statusLines?: () => string[];
   onShortcut?: (event: InputEvent) => boolean;
   onControlInput?: (event: InputEvent) => boolean;
   footer?: () => string;
@@ -41,6 +43,7 @@ export class Desktop {
     const index = this.windows.indexOf(window);
     if (index < 0) return;
     this.windows.splice(index, 1);
+    window.onClose?.();
     if (this.capture?.window === window) this.cancelCapture();
     if (this.active === window) this.active = this.modal ?? this.windows.at(-1);
     this.status = `Ventana cerrada: ${window.title}`;
@@ -49,6 +52,7 @@ export class Desktop {
   private fit(window: Window): void {
     if (window.fixed) return;
     const area = this.floatingArea ?? { x: 0, y: 1, width: this.width, height: this.height - 2 };
+    window.onFit?.(area);
     window.bounds.width = Math.min(window.preferred.width, Math.max(2, area.width - 2));
     window.bounds.height = Math.min(window.preferred.height, Math.max(2, area.height));
     window.bounds.x = Math.max(area.x, Math.min(window.bounds.x, area.x + area.width - window.bounds.width));
@@ -192,6 +196,13 @@ export class Desktop {
     });
     this.tabs?.draw(canvas);
     this.menu.draw(canvas);
+    const lines = this.statusLines?.() ?? [];
+    for (const [index, line] of lines.entries()) {
+      const y = this.height - lines.length + index;
+      canvas.fill({ x: 0, y, width: this.width, height: 1 }, theme.footer);
+      canvas.text(1, y, line, theme.footer, this.width - 2);
+    }
+    if (lines.length) return canvas;
     const footer = this.height - 1;
     canvas.fill({ x: 0, y: footer, width: this.width, height: 1 }, theme.footer);
     const hints = this.menu.opened >= 0 ? "←/→ Menú  ↑/↓ Opción  Enter Elegir  Esc Cerrar  ^Q Salir"

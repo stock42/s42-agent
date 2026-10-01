@@ -11,6 +11,8 @@ export class Window {
   fixed = false;
   onLayout?: (client: Rect) => void;
   onDraw?: (canvas: Canvas, client: Rect) => void;
+  onClose?: () => void;
+  onFit?: (area: Rect) => void;
   readonly preferred: { width: number; height: number };
 
   constructor(readonly id: string, public title: string, public bounds: Rect) {

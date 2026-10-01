@@ -90,3 +90,30 @@ test("Ctrl+E abre explorador, adjunta archivo externo y conserva proyecto y prom
     app.desktop.handle({type:"key",key:"escape"});app.desktop.handle({type:"key",key:"alt+p"});expect(app.desktop.menu.opened).toBe(1);expect(app.desktop.menu.menus[1]!.label).toBe("Projects");
   } finally {await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}
 });
+
+test("explorador grande busca en disco, preview/adjuntos por resultado, cancela y conserva compactos",async()=>{
+  const root=await mkdtemp(join(tmpdir(),"s42-explorer-search-")),project=join(root,"proyecto"),outside=join(root,"otro","sub");
+  await mkdir(project);await mkdir(outside,{recursive:true});await Bun.write(join(outside,"Notas á.ts"),"texto fuera del proyecto");
+  const app=await App.open({config:join(root,"config.json"),cwd:project});const explorer=new FileExplorer(app.desktop,project,{attach:path=>app.attach([path])});
+  try {
+    app.view.prompt.setValue("conservar borrador");app.desktop.resize(190,50);await explorer.show();
+    expect(explorer.window.bounds.width).toBeGreaterThan(170);expect(explorer.window.bounds.height).toBeGreaterThan(35);
+    const before=explorer.entries;await explorer.search();expect(explorer.entries).toBe(before);expect(explorer.window.focusedId).toBe("query");
+    explorer.pathInput.setValue(root);explorer.searchInput.setValue("*.ts");explorer.window.focusedId="query";
+    app.desktop.handle({type:"key",key:"enter"});await until(()=>explorer.status.includes("1 resultados"));
+    expect(explorer.list.items).toEqual(["[F] otro/sub/Notas á.ts"]);expect(explorer.folder).toBe(root);expect(app.project!.path).toBe(project);
+    await explorer.openSelected();expect(app.desktop.modal?.title).toBe("Notas á.ts");expect((app.desktop.modal!.controls[0] as TextArea).readOnly).toBe(true);app.desktop.close();
+    button(app.desktop,explorer.window,"select");await until(()=>app.attachments.length===1);expect(app.attachments[0]!.path).toBe(join(outside,"Notas á.ts"));
+    const pending=explorer.search();await explorer.search();await pending;expect(explorer.status).toContain("cancelada");
+    await explorer.search();expect(explorer.entries).toHaveLength(1);
+    for (const [width,height] of [[60,16],[80,24],[190,50]] as const) {
+      app.desktop.resize(width,height);const text=screen(app.desktop);expect(text).toContain("Buscar");expect(text).toContain("Notas á.ts");expect(text).toContain("Prompt");expect(text).toContain("Tokens E/S");
+      expect(explorer.window.bounds.y+explorer.window.bounds.height).toBeLessThanOrEqual(app.view.promptWindow.bounds.y);
+    }
+    app.desktop.resize(60,16);const rect=explorer.window.controlRect(explorer.list);
+    for(const action of ["press","release"] as const)app.desktop.handle({type:"mouse",action,x:rect.x+2,y:rect.y,button:0,delta:0});
+    expect(explorer.window.focusedId).toBe("files");
+    explorer.searchInput.setValue("no-match");await explorer.search();expect(screen(app.desktop)).toContain("Sin resultados");
+    const closed=explorer.search();app.desktop.close(explorer.window);await closed;expect(app.desktop.modal).toBeUndefined();expect(app.view.prompt.value).toBe("conservar borrador");
+  } finally {await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}
+});

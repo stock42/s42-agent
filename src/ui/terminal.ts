@@ -61,7 +61,7 @@ export function runTerminal(desktop: Desktop, options: { color: boolean; mouse: 
       process.stdin.on("data", data); process.stdout.on("resize", resize);
       process.on("SIGINT", stop); process.on("SIGTERM", stop);
       process.stdout.write(enter + (options.mouse ? mouseOn : ""));
-      desktop.resize(process.stdout.columns ?? 80, process.stdout.rows ?? 24); frame();
+      desktop.resize(process.stdout.columns ?? 80, process.stdout.rows ?? 24); desktop.onStart?.(); frame();
     } catch (error) { finish(error); }
   });
 }

@@ -1,6 +1,7 @@
 import { mkdir, open, readdir, unlink, type FileHandle } from "node:fs/promises";
 import { join } from "node:path";
 import type { Message, Selection } from "../agent/messages.ts";
+import type { TokenUsage } from "../agent/usage.ts";
 
 export type EventData =
   | { type: "notice"; text: string }
@@ -10,7 +11,7 @@ export type EventData =
   | { type: "message"; message: Message }
   | { type: "tool-start"; callId: string; name: string; arguments: string }
   | { type: "tool-result"; callId: string; output: string; failed: boolean }
-  | { type: "turn"; state: "completed" | "cancelled" | "failed"; detail: string };
+  | { type: "turn"; state: "completed" | "cancelled" | "failed"; detail: string; tokens?: TokenUsage };
 export type SessionEvent = EventData & { version: 1; id: string; projectId: string; at: string };
 export interface SessionState { id: string; projectId: string; title: string; selection?: Selection; draft: string; attachments: string[]; messages: Message[]; events: SessionEvent[]; notices: string[] }
 
@@ -26,7 +27,9 @@ function parseEvent(value: unknown, projectId: string): SessionEvent {
       && (e.message.reasoning_content===undefined || typeof e.message.reasoning_content==="string") && (e.message.reasoning===undefined || typeof e.message.reasoning==="string")) return e; break;
     case "tool-start": if ([e.callId, e.name, e.arguments].every(v => typeof v === "string")) return e; break;
     case "tool-result": if (typeof e.callId === "string" && typeof e.output === "string" && typeof e.failed === "boolean") return e; break;
-    case "turn": if (["completed", "cancelled", "failed"].includes(e.state) && typeof e.detail === "string") return e;
+    case "turn": if (["completed", "cancelled", "failed"].includes(e.state) && typeof e.detail === "string"
+      && (e.tokens === undefined || e.tokens && [e.tokens.requests, e.tokens.reported].every(v => Number.isSafeInteger(v) && v >= 0)
+        && typeof e.tokens.partial === "boolean" && [e.tokens.input, e.tokens.output, e.tokens.total].every(v => v === undefined || Number.isSafeInteger(v) && v >= 0))) return e;
   }
   throw new Error("Evento de sesión inválido");
 }

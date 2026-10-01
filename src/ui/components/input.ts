@@ -4,6 +4,7 @@ import { graphemes, type InputEvent, type Rect } from "../types.ts";
 import { Component } from "./component.ts";
 
 export class Input extends Component {
+  placeholder = "";
   private cursor: number;
   private start = 0;
   private anchor?: number;
@@ -46,6 +47,7 @@ export class Input extends Component {
     const chars = this.visible();
     const style = this.disabled ? theme.disabled : theme.menu;
     canvas.fill(bounds, style);
+    if (!this.value) canvas.text(bounds.x, bounds.y, this.placeholder, theme.disabled, bounds.width);
     const selection = this.selection;
     let used = 0;
     for (let index = this.start; index < chars.length; index++) {

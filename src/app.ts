@@ -18,6 +18,9 @@ import { FileExplorer } from "./ui/components/file-explorer.ts";
 import { TabBar } from "./ui/components/tab-bar.ts";
 import { createProjectTab, type ProjectTab } from "./project-tab.ts";
 import { version } from "../package.json";
+import { SystemMonitor, metricDetails, metricLines } from "./system/metrics.ts";
+import { nativeTools } from "./agent/tools.ts";
+import { emptyUsage } from "./agent/usage.ts";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
 export class App {
@@ -38,6 +41,7 @@ export class App {
   set attachments(value: Attachment[]) { this.activeTab.attachments = value; }
   readonly extensions:Extensions;
   readonly promptings: Promptings;
+  readonly metrics: SystemMonitor;
   get mode() { return this.activeTab.mode; }
   set mode(value: "INSERT" | "NORMAL") { this.activeTab.mode = value; }
   private get pending() { return this.activeTab.pending; }
@@ -50,6 +54,9 @@ export class App {
   private set controller(value: AbortController | undefined) { this.activeTab.controller = value; }
   private constructor(readonly store: ConfigStore, readonly sessionsPath: string, readonly cwd: string) {
     this.desktop.palette = store.value.ui.palette;
+    this.metrics = new SystemMonitor(() => this.project?.path ?? this.cwd);
+    this.desktop.statusLines = () => metricLines(this.metrics.snapshot, this.activeTab.tokens, this.desktop.width);
+    this.desktop.onStart = () => this.metrics.start(() => this.desktop.invalidate());
     const { promptWindow } = this.view;
     this.bindTab(this.activeTab);
     this.desktop.tabs = new TabBar(() => this.tabs.filter(t => t.project).map(t => ({ id: t.id, label: t.project!.name, busy: t.busy })),
@@ -115,6 +122,7 @@ export class App {
         { label: "Guardar prompt actual", run: () => this.promptings.editor(undefined, this.view.prompt.value) },
       ] },
       { label: "Tools", hotkey: "o", items: [
+        { label: "Nativas · catálogo", run: () => choose(this.desktop, "Tools nativas", nativeTools.map(tool => ({ label: tool.definition.function.name, value: tool })), tool => info(this.desktop, `Tool · ${tool.definition.function.name}`, [tool.definition.function.description, "", JSON.stringify(tool.definition.function.parameters, null, 2)])) },
         { label: "MCP · servidores", run: () => this.extensions.servers() },
         { label: "MCP · agregar stdio", run: () => this.extensions.serverForm("stdio") },
         { label: "MCP · agregar HTTP", run: () => this.extensions.serverForm("http") },
@@ -126,6 +134,7 @@ export class App {
         { label: "Respuestas", run: () => this.desktop.focus(this.view.editorWindow) },
         { label: "Prompt", run: () => this.desktop.focus(promptWindow) },
         { label: "Paleta de colores", run: () => this.colorPalette() },
+        { label: "Recursos y tokens", run: () => info(this.desktop, "Recursos y tokens", metricDetails(this.metrics.snapshot, this.activeTab.tokens)) },
         { label: "Cambiar panel", shortcut: "Ctrl+N", run: () => this.desktop.cycle() },
         { label: "Cerrar auxiliar", shortcut: "Ctrl+W", run: () => this.desktop.close() },
         { label: "Activar / desactivar Vim", run: () => this.run(async () => {
@@ -184,6 +193,8 @@ export class App {
       : this.desktop.active===promptWindow && this.store.value.ui.vimMode ? `Enter Enviar  Esc NORMAL  ^N Panel  ${this.bindingLabel("attachments").replace("Ctrl+","^")} Adjuntos  ^Q Salir` : "Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir";
     this.desktop.onBeforeExit = async () => {
       for (const tab of this.tabs) tab.controller?.abort(new Error("Turno cancelado; cerrando s42-agent"));
+      for (const window of [...this.desktop.windows].reverse()) if (!window.fixed) this.desktop.close(window);
+      await this.metrics.stop();
       let pending: Promise<unknown>; do { pending = this.operations; await pending; } while (pending !== this.operations);
       for (const tab of this.tabs) tab.controller?.abort(new Error("Turno cancelado; cerrando s42-agent"));
       await Promise.all(this.tabs.map(tab => tab.turn));
@@ -212,6 +223,7 @@ export class App {
       app.showContext(); if (!store.value.projects.length) app.projectForm();
       return app;
     } catch (error) {
+      await app.metrics.stop();
       for (const tab of app.tabs) await tab.session?.close().catch(() => {});
       throw error;
     }
@@ -260,6 +272,8 @@ export class App {
     tab.mode = "INSERT"; tab.pending = ""; tab.panel = "prompt"; tab.focusedId = tab.prompt.id;
     tab.selection = structuredClone(next.state.selection ?? project.selection ?? this.store.value.defaults);
     tab.prompt.setValue(next.state.draft); tab.rendered = new WeakMap(); tab.status = "Listo";
+    const lastTurn = next.state.events.findLast(event => event.type === "turn");
+    tab.tokens = lastTurn?.type === "turn" ? lastTurn.tokens : undefined;
     project.lastSessionId = next.state.id;
     this.bindTab(tab); if (!this.tabs.includes(tab)) this.tabs.push(tab);
     this.showHistory(true, tab); this.showContext(tab);
@@ -563,7 +577,7 @@ export class App {
     const content=contentWithAttachments(text,tab.attachments);
     const key = credential(provider, this.keys.get(provider.id));
     const controller = new AbortController(), context = structuredClone({ limits: this.store.value.limits, mcpServers: this.store.value.mcpServers, skills: this.store.value.skills });
-    tab.busy = true; tab.controller = controller; tab.send.label = "Cancelar";
+    tab.busy = true; tab.controller = controller; tab.send.label = "Cancelar"; tab.tokens = emptyUsage();
     tab.prompt.setValue(""); tab.attachments=[]; tab.status = "Conectando…"; this.desktop.invalidate();
     this.desktop.resize(this.desktop.width,this.desktop.height);
     tab.turn = (async () => {
@@ -577,6 +591,7 @@ export class App {
           tab.response.append(delta);this.desktop.invalidate();
         };
         const result = await runTurn({ project, session, provider, model, key, signal: controller.signal, ...context,
+          onUsage: usage => { tab.tokens = usage; this.desktop.invalidate(); },
           onState: state => { if(state==="Conectando…")resetLive();tab.status = state; this.desktop.invalidate(); },
           onMessage: () => { this.showHistory(false, tab);resetLive();this.desktop.invalidate(); },
           onReasoning: delta => { tab.status="Razonando…";appendLive("reasoning","Razonamiento:",delta); },
@@ -588,14 +603,14 @@ export class App {
           },
           onToolStart: call => { appendLive(`running-${call.id}`,`Herramienta · ${call.function.name} · ejecutando…`,""); },
           onDelta: delta => { tab.status = "Respondiendo…";appendLive("answer","Agente:",delta); } });
-        tab.status = result.usage !== undefined ? `Listo · ${result.usage} tokens` : "Listo · uso no reportado";
-        await session.append({ type: "turn", state: "completed", detail: tab.status });
+        tab.status = result.tokens.reported ? `Listo · E/S ${result.tokens.input ?? "N/D"}/${result.tokens.output ?? "N/D"}${result.tokens.partial ? " · parcial" : ""}` : "Listo · uso no reportado";
+        await session.append({ type: "turn", state: "completed", detail: tab.status, tokens: tab.tokens });
       } catch (e) {
         if (e instanceof CompletionError && (e.partial.content || e.partial.reasoning_content || e.partial.reasoning)) {
           const {tool_calls: _incomplete, ...partial}=e.partial; await this.message(partial, tab);
         }
         tab.status = (e as Error).message; session.state.notices.push(tab.status);
-        await session.append({ type: "turn", state: controller.signal.aborted ? "cancelled" : "failed", detail: tab.status });
+        await session.append({ type: "turn", state: controller.signal.aborted ? "cancelled" : "failed", detail: tab.status, tokens: tab.tokens });
       } finally { tab.busy = false; tab.controller = undefined; tab.send.label = "Enviar"; this.showHistory(false, tab); this.desktop.invalidate(); }
     })();
     // Keep configuration/input responsive while the request runs.

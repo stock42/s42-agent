@@ -38,7 +38,23 @@ los errores quedan en el formulario. No fijar IDs de modelos ni consultar al ini
 Las plantillas también están disponibles en configuraciones anteriores sin
 reemplazar endpoints registrados. Claves de sesión tienen prioridad y no se guardan.
 Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
-read/list/search/write/edit/shell, Vim acotado y adjuntos por rutas ya implementados.
+read/write/edit/list/find/search/fetch/shell, Vim acotado y adjuntos por rutas ya implementados.
+Tools nativas en **src/agent/tools/**, un módulo por herramienta y catálogo
+**Tools → Nativas**. `src/agent/tools.ts` reexporta el contrato existente.
+`find` busca nombre/glob en cualquier carpeta; `search` busca contenido.
+`fetch` usa HTTP nativo con métodos/headers y bodies JSON, form URL-encoded,
+multipart de campos string o texto; timeout/cancelación y status/body de errores.
+Contratos y límites en [docs/TOOLS.md](docs/TOOLS.md).
+El explorador aprovecha todo el editor, incluye Buscar por nombre/glob desde
+la ruta superior, resultados con ubicación, Cancelar, preview y adjuntos;
+no sigue enlaces en búsquedas, cuenta carpetas inaccesibles y limita a 1000.
+CPU/RAM/disco/VRAM U/L y tokens E/S aparecen en la barra inferior; detalle en
+**Vista → Recursos y tokens**. `src/system/metrics.ts`: muestreo cada 2 s sin
+superposición, APIs Bun/compat y DRM o nvidia-smi instalado para VRAM. N/D si
+falta contador; nunca inventar cero. Tokens del proveedor acumulados por turno/
+pestaña, incluidas tools/etapas/length, persistidos en evento turn opcional;
+parcial cuando falta uso. `src/agent/usage.ts`; [QA](docs/qa/native-tools.md).
+La demo no muestrea recursos: cero bytes idle históricos aplican a `--demo`.
 Si el proveedor termina por `finish_reason: length`, conservar texto/reasoning
 parcial y solicitar etapas pequeñas automáticamente. `src/agent/stages.ts`
 mantiene una instrucción al comienzo de cada etapa; no repetirla tras cada tool.
@@ -88,7 +104,7 @@ CI fuente Linux con Bun 1.4.2. `package.json` conserva `private: true` porque no
 se publica un paquete npm. [Publicación](docs/PUBLISHING.md): no cambiar visibilidad,
 hacer push ni crear releases sin pedido explícito.
 
-Fases 02/03/07/08/09/10/11 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09/10/11/12 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.

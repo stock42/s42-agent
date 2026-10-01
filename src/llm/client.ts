@@ -1,9 +1,10 @@
 import type { Message, ToolCall } from "../agent/messages.ts";
 import type { Model, Provider } from "../storage/config.ts";
+import type { ProviderUsage } from "../agent/usage.ts";
 
 export interface ToolDefinition { type: "function"; function: { name: string; description: string; parameters: Record<string, unknown> } }
-export interface Completion { message: Message; usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }; finishReason?: string }
-export class CompletionError extends Error { constructor(message: string, readonly partial: Message, readonly finishReason?: string) { super(message); } }
+export interface Completion { message: Message; usage?: ProviderUsage; finishReason?: string }
+export class CompletionError extends Error { constructor(message: string, readonly partial: Message, readonly finishReason?: string, readonly usage?: ProviderUsage) { super(message); } }
 
 export class SSEParser {
   private decoder = new TextDecoder(); private buffer = ""; private lines: string[] = [];
@@ -55,7 +56,7 @@ export async function complete(options: { provider: Provider; model: Model; mess
     arm(options.firstEventMs, "Timeout esperando el primer evento del modelo");
     const response = await fetch(`${options.provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST", signal: controller.signal, headers: { "Content-Type": "application/json", ...(options.key ? { Authorization: `Bearer ${options.key}` } : {}) },
-      body: JSON.stringify({ model: options.model.id, messages: options.messages, stream: true, max_tokens: options.model.maxOutputTokens,
+      body: JSON.stringify({ model: options.model.id, messages: options.messages, stream: true, stream_options: { include_usage: true }, max_tokens: options.model.maxOutputTokens,
         ...(options.tools?.length ? { tools: options.tools } : {}) }),
     });
     if (!response.ok) throw new Error(`Proveedor: HTTP ${response.status}${response.status === 401 ? " · revisar API key" : response.status === 404 ? " · revisar endpoint/modelo" : response.status === 429 ? " · límite del proveedor" : ""}`);
@@ -90,13 +91,13 @@ export async function complete(options: { provider: Provider; model: Model; mess
     }
     if (!done) { parser.end(); if (!finishReason) throw new Error("El stream se desconectó sin completar la respuesta"); }
     if (controller.signal.aborted) throw controller.signal.reason;
-    if (finishReason === "length") throw new CompletionError("El modelo alcanzó el límite de salida; respuesta incompleta", partial(), "length");
+    if (finishReason === "length") throw new CompletionError("El modelo alcanzó el límite de salida; respuesta incompleta", partial(), "length", usage);
     const message = partial();
     if (message.tool_calls?.some(c => !c.id || !c.function.name) || new Set(message.tool_calls?.map(c => c.id)).size !== (message.tool_calls?.length ?? 0)) throw new Error("Tool calls incompletas o IDs duplicados");
     return { message, usage, finishReason };
   } catch (e) {
     if (e instanceof CompletionError && !controller.signal.aborted) throw e;
-    throw new CompletionError(controller.signal.aborted ? (controller.signal.reason as Error)?.message ?? "Cancelado" : (e as Error).message, partial());
+    throw new CompletionError(controller.signal.aborted ? (controller.signal.reason as Error)?.message ?? "Cancelado" : (e as Error).message, partial(), undefined, usage);
   }
   finally { clearTimeout(timer!); options.signal.removeEventListener("abort", relay); await reader?.cancel().catch(() => {}); }
 }

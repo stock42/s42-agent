@@ -43,8 +43,8 @@ bun run index.ts --help
 | Projects | Abrir/agregar/editar/quitar proyectos, sesiones y pestañas. |
 | Models | Proveedores, catálogo, selección/configuración de modelos y defaults. |
 | Promptings | Biblioteca, nueva plantilla y guardar el prompt actual. |
-| Tools | CRUD/activación de MCP, registro/activación de Skills y buscador skills.sh. |
-| Vista | Respuestas/prompt, foco, auxiliares, paletas y modo Vim. |
+| Tools | Catálogo nativo, CRUD/activación de MCP, Skills y buscador skills.sh. |
+| Vista | Respuestas/prompt, recursos y tokens, foco, auxiliares, paletas y modo Vim. |
 | Ayuda | Atajos, mouse, comandos y About con autor, MIT y versión. |
 
 El agente abre directamente este espacio de trabajo. El laboratorio de componentes
@@ -143,6 +143,14 @@ escritas, incluyendo fuera del proyecto. Enter/doble clic abre carpetas o previe
 de texto en solo lectura; rueda, flechas y `h/j/k/l` navegan. Preview hasta 64 KiB;
 los binarios muestran su tipo. Adjuntar no cambia el cwd de las herramientas.
 
+El explorador ocupa el área disponible del chat, se adapta al resize y conserva
+el prompt visible. Escribí la ruta donde buscar arriba (podés usar la raíz del
+disco), un nombre o glob como `*.ts` debajo y pulsá **Buscar** o Enter en ese
+campo. Recorre subcarpetas, incluidos ocultos y carpetas de dependencias; devuelve
+hasta 1.000 archivos con su ubicación. **Cancelar** detiene la búsqueda. Preview
+y Adjuntar funcionan sobre los resultados; **Ir** vuelve a navegar la ruta.
+No sigue enlaces al buscar y muestra cuántas carpetas fueron inaccesibles.
+
 Pegar/arrastrar rutas prepara adjuntos. **Ctrl+F** o `/attach ruta` permite revisar,
 agregar o quitar. En terminales sin bracketed paste, el primer Enter reconoce rutas
 existentes y adjunta; el siguiente envía. Los bloques de código quedan como texto.
@@ -150,11 +158,28 @@ Texto UTF-8 hasta 1 MiB; PNG/JPEG/WebP hasta 5 MiB si el modelo acepta imágenes
 Máximo 10 archivos y 10 MiB incluyendo base64. Si un adjunto cambia, revisar su
 versión actualizada antes de volver a enviar. El historial conserva lo enviado.
 
-Las herramientas nativas son **read/list/search/write/edit/shell**. Edit exige
+Las herramientas nativas son **read/write/edit/list/find/search/fetch/shell**,
+con un archivo por tool en `src/agent/tools/` y un catálogo en **Tools → Nativas**.
+`find` busca nombres/globs; `search` busca contenido. `fetch` hace HTTP con
+método, headers y body JSON, form URL-encoded, multipart o texto. Edit exige
 una coincidencia exacta única; shell devuelve stdout/stderr, duración y exit code.
 Se leen instrucciones AGENTS del proyecto y sus subcarpetas. Las herramientas
 tienen los permisos del usuario y efectos reales; no hay sandbox. Cancelar no
 revierte cambios ni reejecuta herramientas interrumpidas al reabrir.
+[Contratos, ejemplos y límites de cada tool](docs/TOOLS.md).
+
+La barra inferior muestra **CPU, RAM, disco y VRAM usados/libres (U/L)**, más
+**tokens de entrada/salida (E/S)** del último turno de la pestaña. El uso del LLM
+suma todas sus requests, tools y continuaciones; se guarda al terminar el turno.
+Un conteo incompleto aparece como parcial, y un valor no reportado como **N/D**.
+Los tokens vienen del proveedor; no se estiman contando caracteres.
+
+**Vista → Recursos y tokens** explica las unidades y el origen. CPU/RAM/disco
+usan APIs incluidas en Bun, con muestras cada 2 segundos. Disco corresponde al
+volumen del proyecto; libre es el espacio disponible para el usuario. VRAM usa
+contadores Linux DRM o, cuando está instalado, `nvidia-smi` vía Bun.spawn. Si
+el SO/driver no informa VRAM, muestra N/D y su motivo; no instala drivers ni
+programas. En GPU integrada puede no existir un contador de memoria dedicada.
 
 El chat muestra razonamiento solo cuando el proveedor envía `reasoning_content`
 o `reasoning`. Muestra argumentos parciales de tool calls, ejecución y resultados;
@@ -217,7 +242,9 @@ No se asignan acciones a F1–F12.
 **Vista → Paleta de colores** cambia en vivo y guarda **QBasic**, **Grises** o
 **Verdes**. **Vista → Activar / desactivar Vim** configura el modo. Se respetan
 `NO_COLOR`, `--no-color` y `--no-mouse`; RGB con `COLORTERM=truecolor`, fallback
-ANSI16 para otros terminales. Renderer por filas modificadas, sin frames idle.
+ANSI16 para otros terminales. Renderer por filas modificadas; las métricas se
+muestrean cada 2 s y solo se emiten filas cuyo contenido cambió. La demo mantiene
+el render por demanda sin muestreo de recursos.
 
 **Ayuda → About** muestra `Powered by César Casas.`, `MIT.`, `S42 Agent.` y
 `Version: 0.1.0`. La versión se toma de package.json, como `--version`.

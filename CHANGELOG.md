@@ -5,6 +5,26 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Tools nativas, explorador grande y recursos
+
+- src/agent/tools con un archivo/schema/handler por read/write/edit/list/find/
+  search/fetch/shell. Catálogo Tools → Nativas y docs/TOOLS.md con contratos.
+  Find por nombre/glob; fetch HTTP con métodos, headers, JSON/forms/multipart/
+  texto, status de errores, límites, timeout y cancelación. APIs Bun incluidas.
+- Explorador adaptable al editor: ruta base + Buscar, recorrido de disco fuera
+  del proyecto, resultados ordenados con ubicación, cancelación, preview y
+  adjuntos. Compacto 60×16 conserva resultados clicables y prompt fijo visible.
+- Barra inferior con CPU/RAM/disco/VRAM usados/libres y tokens E/S de la pestaña;
+  Vista → Recursos y tokens ofrece detalle/origen. Muestreo cada 2 s sin requests
+  superpuestas; N/D si SO/driver no informa, sin instalar utilidades/drivers.
+- Uso real del proveedor acumulado entre requests/tools/etapas/length, parcial
+  explícito y persistencia de último turno compatible con sesiones v1.
+- Typecheck y 111 tests correctos, 23 archivos; GLM real ejecutó find + fetch POST
+  y reportó 2520 entrada / 360 salida. Capturas de index.ts/tmux 190×50, 80×24,
+  60×16 inspeccionadas. VRAM N/D por driver/library mismatch del host.
+  Fase12/specs/README/AGENTS/QA actualizados. Sin builds nuevos. Pull fallido por
+  main sin upstream; cierre local sin push, cambios ajenos preservados.
+
 ### Agregado — Recuperación por etapas, About y catálogo directo
 
 - Límite de salida length tipado: conserva texto/reasoning parcial y pide al

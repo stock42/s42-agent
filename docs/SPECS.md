@@ -61,6 +61,9 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R19 | Skills | Registro global/proyecto de SKILL.md, activación, carga progresiva, búsqueda e instalación desde skills.sh. |
 | R20 | Promptings reutilizables | CRUD con nombre/texto multilínea y preguntas por cada `{{metavar_name}}` al cargar o ejecutar con el modelo actual. |
 | R21 | Preparación open source | MIT, README reproducible, contribución, metadata y CI fuente; publicación como acción separada. |
+| R22 | Tools nativas definidas | read/write/edit/list/find/search/fetch/shell, archivo por tool y contratos documentados. |
+| R23 | Explorador grande y buscador en disco | Ventana adaptable, nombre/glob recursivo desde cualquier carpeta y cancelación, sin tapar el prompt. |
+| R24 | Recursos y tokens visibles | CPU/RAM/disco/VRAM usado/libre y entrada/salida por turno/pestaña, con N/D explícito cuando faltan datos. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
@@ -151,7 +154,9 @@ src/
     demo.ts                composición de la demo inicial
     promptings.ts           CRUD y preguntas de metavariables
     components/            window, button, input, text-area, select-list, menu, tab-bar, file-explorer
-  agent/                   loop, mensajes, tools y adjuntos
+  agent/                   loop, mensajes, adjuntos y acumulación de uso
+    tools/                 read, write, edit, list, find, search, fetch, shell; registro y helpers comunes
+  system/                  medición de CPU/RAM/disco/VRAM
   llm/                     Chat Completions y SSE
   storage/                 configuración, proyectos y sesiones
 tests/                     pruebas de comportamiento y fixtures
@@ -301,6 +306,45 @@ a navegar. El prompt sigue visible, también en 60×16.
 
 Projects reutiliza el explorador como picker: Elegir folder devuelve la carpeta
 visitada al formulario sin perder Name ni el borrador de la conversación.
+
+La ventana aprovecha casi todo el editor, crece/encoge al cambiar el terminal y
+mantiene el prompt visible. Ruta superior = carpeta base de búsqueda; puede ser
+la raíz del disco. Campo nombre/glob + Buscar/Enter busca recursivamente archivos
+con `Bun.Glob.match`/recorrido incremental, sin proceso find/rg externo ni índice.
+Incluye ocultos/dependencias; no sigue enlaces, omite subcarpetas inaccesibles y
+reporta el conteo. Máximo 1.000 resultados con ubicación, preview y adjuntos.
+Resultados finales ordenados por ruta/nombre. Cancelar/navegar/cerrar/salir
+interrumpen el recorrido; respuestas obsoletas no reabren ventanas.
+En 60×16 la lista usa filas sin marco para conservar resultados clicables.
+
+### Recursos y tokens
+
+Barra inferior QBasic: U/L (usado/libre) de CPU, RAM, disco y VRAM; E/S (entrada/
+salida) del último turno de la pestaña. Una fila en ≥120 columnas, dos en tamaños
+menores, sustituyendo la barra inferior de atajos. Vista → Recursos y tokens
+ofrece detalle/origen; los atajos siguen en Ayuda y los hints de controles.
+
+CPU: delta de ticks idle/total de `node:os.cpus()`; RAM: `totalmem/freemem`.
+Disco: `node:fs/promises.statfs` del volumen del proyecto, libre = bavail; los
+bloques reservados no se anuncian como usados. APIs implementadas por Bun.
+Muestreo cada 2 s durante la TUI, sin consultas superpuestas; cierre detiene
+timer/proceso del contador. Solo cambian filas cuyo texto difiere. La demo no
+muestrea: la evidencia histórica de cero bytes idle corresponde a esa demo.
+
+VRAM dedicada: archivos Linux DRM `mem_info_vram_total/used` cuando existen;
+si no, `nvidia-smi --query-gpu=memory.total,memory.used,memory.free` instalado,
+ejecutado con Bun.spawn sin shell y timeout 2 s. Suma contadores disponibles
+del origen elegido. No hay API Bun portable de VRAM utilizada ni instalación
+automática; driver/OS sin contador → N/D con motivo. Validado Linux x64; no
+afirmar funcionamiento de hardware/otros SO por el parser de un fixture.
+
+Solicitar `stream_options.include_usage`; acumular `prompt_tokens` y
+`completion_tokens` de cada request del turno, incluidas tools/etapas/length.
+No sumar deltas SSE como tokens ni estimar uso ausente. Cancelación/error
+conservan lo reportado; parcial indica algún request con E/S faltantes. El
+evento turn admite `tokens` opcional sin invalidar sesiones v1 anteriores.
+Pestañas/nuevas sesiones tienen conteos separados; reabrir restaura el último
+turno persistido, sin inferencia adicional.
 
 ### Renderizado
 
@@ -671,15 +715,27 @@ reemplaza el borrador, historial o estado del proyecto visible.
 | --- | --- | --- |
 | `read` | path, offset y límite opcionales | Leer texto con límites e indicar si fue recortado. |
 | `list` | path y glob opcional | Listar archivos y carpetas sin cargar todo el repositorio. |
+| `find` | pattern, path/limit/includeIgnored opcionales | Buscar archivos por nombre o glob desde cualquier carpeta del disco. |
 | `search` | patrón de texto y path/glob | Búsqueda literal inicial, resultados con archivo y línea. |
 | `write` | path y contenido | Crear o reemplazar contenido; informar el archivo afectado. |
 | `edit` | path, texto anterior y nuevo | Reemplazo exacto único; cero o varias coincidencias devuelven error. |
+| `fetch` | url, method/headers/body/bodyType/timeoutMs opcionales | HTTP GET/POST/PUT/PATCH/DELETE/HEAD/etc; JSON, forms URL-encoded/multipart o texto. |
 | `shell` | comando y timeout opcional | Ejecutar mediante `Bun.spawn` con cwd explícito, stdout/stderr y exit code. |
 
 `list/search` usan recorrido incremental con exclusiones iniciales de `.git`,
 `node_modules`, `dist` y `out`. No depender de `rg` instalado para el funcionamiento
 básico ni introducir un indexador. Las búsquedas complejas pueden ejecutarse con
 `shell` si el proyecto tiene la herramienta adecuada.
+
+Un módulo por herramienta en `src/agent/tools/`, con schema y handler juntos;
+registro pequeño en index.ts y compatibilidad de imports anteriores.
+**Tools → Nativas** lista contratos. [Argumentos/límites/ejemplos](TOOLS.md).
+find ofrece path fuera del proyecto, substring de nombre sin case o glob Bun,
+includeIgnored opcional y límite 200/default, 1000/máximo; no sigue enlaces.
+fetch usa Web APIs incluidas en Bun para HTTP/S, métodos/headers y cuerpos JSON,
+URLSearchParams, FormData o texto. Timeout 30 s/default; HTTP no-2xx conserva
+status/body y failed, sin retry. Hasta 64 KiB de body; el sobre JSON añade
+headers/escaping y permanece parseable. Multipart admite campos string.
 
 `shell` usa el shell del usuario o el shell de la plataforma, registrado como
 argumentos explícitos a `Bun.spawn`; no construir un comando envolvente mediante
@@ -694,7 +750,8 @@ tomar el control del terminal.
 - Límite inicial de 30 iteraciones con herramientas por turno, configurable;
   al agotarse, terminar con estado y motivo explícitos.
 - Timeout de comando inicial: 120 s, configurable. Recortar salida enviada al
-  modelo a 64 KiB por herramienta y conservar el indicador de recorte.
+  modelo a 64 KiB de texto por herramienta y conservar el indicador de recorte;
+  fetch limita su body a 64 KiB y conserva el sobre JSON con headers/status.
 - Leer stdout y stderr concurrentemente para no bloquear el subproceso.
 - Cancelar el HTTP, impedir nuevas llamadas y terminar procesos iniciados por
   el turno. Verificar también los descendientes según el sistema operativo;
