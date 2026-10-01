@@ -21,7 +21,7 @@ test('entrypoint real: Models primer uso, host/puerto/key, coding, cancelación 
   try{
     await Bun.write(join(root,'code.ts'),'console.log(1 + 1);');await until(()=>text.includes('No hay modelo configurado'));
     write('\x1bm\x1b[B\r');await until(()=>text.includes('ID del modelo'));
-    paste('fixture');write('\t');paste('Fixture');write('\t');paste('http://127.0.0.1/v1');write('\t\r');await until(()=>text.includes('API key (sesión)'));
+    paste('fixture');write('\t');paste('Fixture');write('\t');paste('http://127.0.0.1/v1');write('\t\r');await until(()=>text.includes('API key · llavero'));
     paste(String(server.port));write('\t');paste('fixture-secret');write('\t\t\t\r');await until(()=>text.includes('Tools / imágenes'));
     paste('32000');write('\t');paste('1000');write('\t');paste('sí/no');write('\t\t\r');
     await until(()=>text.includes('Local · llama.cpp · fixture'));expect(await Bun.file(config).text()).not.toContain('fixture-secret');

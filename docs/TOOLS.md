@@ -14,10 +14,11 @@ el contrato para integraciones existentes. Catálogo visible en **Tools → Nati
 | `find` / find.ts | `pattern`; `path="."`, `limit=200`, `includeIgnored=false` | Nombres sin distinguir mayúsculas o glob Bun. Rutas absolutas, conteos y recorte. Límite máximo 1.000. |
 | `search` / search.ts | `pattern`; `path="."`, `glob="**/*"` | Contenido literal sensible a mayúsculas. `archivo:línea:texto`; hasta 100 coincidencias, primer MiB por archivo. Omite binarios/UTF-8 inválido. |
 | `fetch` / fetch.ts | `url`; `method="GET"`, `headers`, `body`, `bodyType="json"`, `timeoutMs=30000` | HTTP/S con fetch nativo; JSON con URL final, status/statusText, headers, body texto y truncated. Body hasta 64 KiB. |
-| `shell` / shell.ts | `command`; `timeoutMs=limits.shellTimeoutMs` (120 s inicial) | Bun.spawn con cwd del proyecto; stdout/stderr, exitCode, timedOut/cancelled/truncated. Drena ambos streams, conserva hasta 64 KiB por stream y recorta cada salida a 30.000 bytes. |
+| `shell` / shell.ts | `command`; `timeoutMs=limits.shellTimeoutMs` (120 s inicial) | Bun Shell ($) en subproceso Bun propio con cwd del proyecto; stdout/stderr, exitCode, timedOut/cancelled/truncated. Drena ambos streams, conserva hasta 64 KiB por stream y recorta cada salida a 30.000 bytes. |
 | `internal_skill` / internal_skill.ts | `name` opcional | Sin nombre, catálogo de internas; con nombre, instrucciones software-project/debug-and-verify/create-pdf. Sin ejecución de scripts. |
 | `markdown_html` / markdown_html.ts | Exactamente uno: `markdown` o `path`; `outputPath`, `standalone=false`, `title="S42 Agent"` opcionales | Bun.markdown.html; input UTF-8 hasta 1 MiB. Archivo HTML completo o JSON con preview hasta 64 KiB y truncated. |
 | `websocket` / websocket.ts | `url`; `headers`, `protocols`, `messages` opcionales; `receiveCount=1` (máximo 100), `timeoutMs=10000` | ws/wss, una conexión por call. Envía textos, recibe textos/binarios base64, desconecta. JSON con resultados parciales; máximo 64 KiB de payload recibido. |
+| `scrape` / scrape.ts | `url`; `selector="body"`, `format="text"` o `"html"`, `timeoutMs=30000` | Bun.WebView: URL final, título, contenido del primer elemento CSS y hasta 25 enlaces (texto 100/href 500 caracteres), linkCount y truncated. Contenido hasta 30.000 bytes; espera que exista el selector. |
 
 Las tools reciben un objeto JSON; nombres/campos desconocidos, tipos inválidos
 y enteros no positivos devuelven error. Rutas relativas usan el proyecto del
@@ -31,8 +32,14 @@ Todo corre dentro de Bun: Bun.file/write, Bun.Glob.match, fetch, FormData,
 URLSearchParams, AbortController, streams y Bun.spawn. `node:fs/promises`/path
 son implementaciones incluidas en Bun para directorios/paths, según la
 [documentación de archivos](https://bun.sh/docs/runtime/file-io). No hay
-dependencias de runtime ni procesos externos find/rg/curl. Shell requiere el
-shell del SO y los programas que el comando del usuario invoque.
+dependencias de runtime ni procesos externos find/rg/curl. Shell usa el intérprete de Bun; los programas externos invocados deben estar
+instalados. `src/system/command.ts` conserva timeout, cancelación de árbol y
+captura acotada del padre; el intérprete Bun Shell mantiene su propio buffer
+mientras ejecuta. Un output muy abundante puede consumir memoria en ese proceso.
+Argv internos se escapan; el texto command de la tool es un programa Shell.
+Bun Shell admite pipes/redirecciones/builtins, pero no toda la sintaxis Bash/cmd:
+redirigir stderr con `1>&2`; background `&` no está soportado. Para sintaxis de
+un shell externo, invocarlo explícitamente si está instalado.
 
 ## HTTP
 
@@ -134,3 +141,24 @@ llamadas y conserva efectos ya realizados. No hay sandbox ni undo implícito.
 
 Pruebas: `tests/native-tools.test.ts`, `tests/internal-tools.test.ts`, `tests/agent.test.ts` y
 [QA con GLM real y TUI](qa/native-tools.md).
+
+## Scraping renderizado
+
+`fetch` devuelve la respuesta HTTP; `scrape` carga el DOM con JavaScript en
+[Bun.WebView](https://bun.com/docs/runtime/webview). Solo HTTP(S), formato texto
+o HTML; selector como dato, sin ejecutar JavaScript provisto como argumento.
+Seleccionar un elemento que aparece después de la carga permite esperar contenido
+dinámico. No garantiza network idle ni que todo el sitio haya finalizado.
+Navegación resuelve en load; errores HTTP con una página de error se extraen como
+DOM (para status/headers usar fetch). Timeout y señal cierran la vista, incluidos
+los requests de esa pestaña. Cada call usa una vista efímera; el browser compartido
+permanece hasta salir del entrypoint y se cierra en su finally.
+
+WebKit del SO en macOS; Chrome, Chromium, Edge o Brave instalado en Linux/Windows.
+`BUN_CHROME_PATH` puede apuntar al ejecutable. Chrome inicia headless con url:false,
+sin conectarse al perfil personal ni descargar navegadores. API experimental en
+Bun 1.4.2; runtime Linux comprobado, macOS/Windows pendientes.
+
+```json
+{"url":"https://example.com","selector":"main","format":"text","timeoutMs":30000}
+```

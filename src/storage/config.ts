@@ -8,7 +8,7 @@ import type { Language } from "../ui/i18n.ts";
 
 export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string }
 export interface Model { id: string; name: string; contextWindow: number; maxOutputTokens: number; capabilities: { tools: boolean; images: boolean } }
-export interface Provider { id: string; name: string; kind: "llama.cpp" | "openai-compatible"; baseUrl: string; apiKeyEnv?: string; models: Model[] }
+export interface Provider { id: string; name: string; kind: "llama.cpp" | "openai-compatible"; baseUrl: string; apiKeyEnv?: string; apiKeySecret?: string; models: Model[] }
 export interface McpServer { id:string; name:string; enabled:boolean; transport:"stdio"|"http"; command?:string; args?:string[]; cwd?:string; envRefs?:Record<string,string>; url?:string; apiKeyEnv?:string }
 export interface Skill { id:string; name:string; path:string; enabled:boolean; projectId?:string; source?:string }
 export interface Prompting { id: string; name: string; text: string }
@@ -25,11 +25,23 @@ export interface Config {
 export function storagePaths(configPath?: string, env = process.env, platform = process.platform) {
   const home = homedir();
   const base = platform === "darwin" ? join(home, "Library/Application Support/s42-agent")
-    : platform === "win32" ? join(env.APPDATA ?? home, "s42-agent") : join(env.XDG_CONFIG_HOME ?? join(home, ".config"), "s42-agent");
+    : platform === "win32" ? join(env.APPDATA || join(home, "AppData/Roaming"), "s42-agent") : join(env.XDG_CONFIG_HOME || join(home, ".config"), "s42-agent");
   return { config: resolve(configPath ?? join(base, "config.json")),
     sessions: configPath ? join(dirname(resolve(configPath)), "sessions") : platform === "linux"
-      ? join(env.XDG_STATE_HOME ?? join(home, ".local/state"), "s42-agent/sessions")
-      : platform === "win32" ? join(env.LOCALAPPDATA ?? home, "s42-agent/sessions") : join(base, "sessions") };
+      ? join(env.XDG_STATE_HOME || join(home, ".local/state"), "s42-agent/sessions")
+      : platform === "win32" ? join(env.LOCALAPPDATA || join(home, "AppData/Local"), "s42-agent/sessions") : join(base, "sessions") };
+}
+
+// Older configs saved the catalog but only remembered choices inside a session.
+// Recover a sole configured model locally; never guess among multiple models.
+export function modelSelection(config: Config, ...choices: (Selection | undefined)[]): Selection {
+  for (const selection of [...choices, config.defaults]) {
+    if (selection && config.providers.some(p => p.id === selection.providerId && p.models.some(m => m.id === selection.modelId)))
+      return { providerId: selection.providerId, modelId: selection.modelId };
+  }
+  const provider = config.providers.find(p => p.id === config.defaults.providerId);
+  if (provider?.models.length === 1) return { providerId: provider.id, modelId: provider.models[0]!.id };
+  return { providerId: config.defaults.providerId };
 }
 
 export function defaultProviders(): Provider[] {
@@ -64,7 +76,8 @@ export function validateConfig(value: unknown): Config {
     || (p.selection && (!text(p.selection.providerId) || (p.selection.modelId !== undefined && !text(p.selection.modelId))))) throw new Error("Proyecto inválido en config");
   for (const p of c.providers) {
     if (!p || !text(p.id) || !text(p.name) || !["llama.cpp", "openai-compatible"].includes(p.kind) || !Array.isArray(p.models)
-      || (p.apiKeyEnv !== undefined && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.apiKeyEnv))) throw new Error("Proveedor inválido en config");
+      || (p.apiKeyEnv !== undefined && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.apiKeyEnv))
+      || (p.apiKeySecret !== undefined && !text(p.apiKeySecret))) throw new Error("Proveedor inválido en config");
     let url: URL; try { url = new URL(p.baseUrl); } catch { throw new Error(`Endpoint inválido: ${p.name}`); }
     if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error(`Endpoint inválido: ${p.name}`);
     for (const m of p.models) if (!m || !text(m.id) || !text(m.name) || !positive(m.contextWindow) || !positive(m.maxOutputTokens)
@@ -108,7 +121,9 @@ export class ConfigStore {
   constructor(readonly path: string, public value: Config) {}
   static async load(path: string): Promise<ConfigStore> {
     const file = Bun.file(path);
-    return new ConfigStore(path, await file.exists() ? validateConfig(await file.json()) : defaultConfig());
+    const config = await file.exists() ? validateConfig(await file.json()) : defaultConfig();
+    if (config.defaults.modelId === undefined) config.defaults = { ...config.defaults, ...modelSelection(config) };
+    return new ConfigStore(path, config);
   }
   async save(next: Config): Promise<void> {
     validateConfig(next); await mkdir(dirname(this.path), { recursive: true });

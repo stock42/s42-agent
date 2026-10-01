@@ -68,8 +68,9 @@ elegido en la sesión/proyecto o el primero registrado/disponible en `/models`.
 Modelos descubiertos habilitan tools; el servidor debe soportar tool calling.
 Al cambiar el endpoint con flags consulta el catálogo nuevo y usa la clave
 explícita, conservando la configuración guardada. Un ID explícito no requiere
-`/models`. Sin overrides usa llama.cpp o el proveedor configurado y su variable
-de credencial existente.
+`/models`. Sin overrides usa llama.cpp o el proveedor configurado y su llavero
+o variable de credencial existente. Cambiar el endpoint descarta también la
+referencia al secreto anterior; --llm_apikey sigue siendo un override en memoria.
 
 **stdout** recibe la respuesta en streaming. **stderr** recibe razonamiento si
 está activo, ejecución/resultados de tools, avisos, ruta de sesión y tokens E/S
@@ -130,7 +131,7 @@ propios. El editor central muestra el nombre del proyecto.
 | Proveedor precargado | Endpoint inicial | Credencial |
 | --- | --- | --- |
 | llama.cpp — default | `http://127.0.0.1:8080/v1` | Sin clave inicialmente. |
-| DeepSeek | `https://api.deepseek.com` | API key de sesión o `DEEPSEEK_API_KEY`. |
+| DeepSeek | `https://api.deepseek.com` | Llavero del SO o `DEEPSEEK_API_KEY`. |
 
 **Models → Proveedores** permite editar host, puerto y credencial. Guardar uno de
 estos presets consulta `/models` y abre el catálogo para elegir el modelo. Los
@@ -138,9 +139,14 @@ errores de conexión o autenticación quedan en el formulario. El catálogo se c
 por esa acción, sin requests al iniciar. No se inventan IDs de modelos.
 
 **Nuevo proveedor** ofrece los presets y **Otro proveedor** para endpoints
-compatibles con Chat Completions. La clave escrita vive en memoria durante la
-ejecución; para reutilizarla se guarda el nombre de una variable de entorno.
-No se crean `.env.local` ni se guardan claves en las sesiones.
+compatibles con Chat Completions. **API key · llavero** guarda la clave mediante
+[Bun.secrets](https://bun.com/docs/runtime/secrets) en el almacén de credenciales
+del SO; **Variable API key** conserva la alternativa de entorno. La clave se
+muestra enmascarada y, al editar, **Guardada · vacío conserva** indica que dejar
+el campo vacío reutiliza la guardada. Config guarda solo la referencia; las
+sesiones no guardan claves.
+En Linux debe estar disponible/desbloqueado GNOME Keyring, KWallet u otro Secret
+Service; si falla, el formulario informa el error. No se crean `.env.local`.
 
 **Configurar modelo** permite indicar ID/nombre, endpoint/puerto, credencial,
 contexto, máximo de salida y capacidades `Tools / imágenes` (`sí/no`, `no/no` o
@@ -148,9 +154,11 @@ contexto, máximo de salida y capacidades `Tools / imágenes` (`sí/no`, `no/no`
 Los valores configurados se conservan al redescubrir el catálogo. DeepSeek usa
 la [API oficial de modelos](https://api-docs.deepseek.com/api/list-models/).
 
-La elección es por pestaña/sesión; se pueden guardar defaults globales o del
-proyecto. Un historial con imágenes requiere un modelo que las acepte o una
-sesión nueva. Sin modelo seleccionado, el chat lo indica y conserva el borrador.
+Elegir un modelo lo recuerda automáticamente en la sesión, el proyecto y el
+default global para proyectos nuevos. Cada pestaña conserva su elección. Una
+config anterior con un único modelo local registrado lo recupera sin red; con
+varios modelos sin elección válida se mantiene el selector. Un historial con
+imágenes requiere un modelo que las acepte o una sesión nueva. Sin modelo seleccionado, el chat lo indica y conserva el borrador.
 
 ### Servidor llama.cpp
 
@@ -231,6 +239,16 @@ timeout y cancelación.
 `find` busca nombres/globs; `search` busca contenido. `fetch` hace HTTP con
 método, headers y body JSON, form URL-encoded, multipart o texto. Edit exige
 una coincidencia exacta única; shell devuelve stdout/stderr, duración y exit code.
+Los comandos usan [Bun Shell](https://bun.com/docs/runtime/shell), también Git
+para instalar skills y nvidia-smi para métricas. Admiten pipes/redirecciones y
+builtins sin Bash/cmd externo; la sintaxis es la de Bun (por ejemplo `1>&2`,
+sin comandos en background con `&`). Mantienen timeout y cancelación del árbol.
+
+**scrape** usa [Bun.WebView](https://bun.com/docs/runtime/webview) para leer
+páginas renderizadas, incluido JavaScript, con selector CSS, texto/HTML y enlaces.
+macOS usa WebKit del sistema; Linux/Windows necesitan Chrome, Chromium, Edge
+o Brave instalado. También acepta `BUN_CHROME_PATH`. Sin descargas automáticas;
+el browser se inicia al usar la tool y se cierra al salir. [Contrato](docs/TOOLS.md).
 Se leen instrucciones AGENTS del proyecto y sus subcarpetas. Las herramientas
 tienen los permisos del usuario y efectos reales; no hay sandbox. Cancelar no
 revierte cambios ni reejecuta herramientas interrumpidas al reabrir.
@@ -377,7 +395,10 @@ Comandos: `/help`, `/projects`, `/models`, `/providers`, `/sessions`, `/files`,
 
 Linux respeta XDG: config en `~/.config/s42-agent/config.json` y sesiones en
 `~/.local/state/s42-agent/sessions/`. macOS usa `~/Library/Application Support/s42-agent/`;
-Windows, APPDATA/LOCALAPPDATA. Con `--config`, sesiones en `sessions/` junto al JSON.
+Windows guarda config en `%APPDATA%/s42-agent/config.json` y sesiones en
+`%LOCALAPPDATA%/s42-agent/sessions/` (fallback `~/AppData/Roaming` y `~/AppData/Local`).
+Las variables XDG/AppData vacías usan los defaults. Con `--config`, sesiones
+en `sessions/` junto al JSON. La carpeta del proyecto no cambia la config global.
 
 Configuración: proyectos/proveedores/modelos, MCP/Skills/Promptings, defaults,
 `workspace.openProjectIds`, `lastProjectId`, paleta, idioma, visibilidad del razonamiento y bindings. Las sesiones JSONL

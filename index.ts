@@ -37,6 +37,10 @@ export function parseArgs(args: string[]): CliOptions & { demo: boolean; color: 
 // Keep startup inside an async function for Bun bytecode compilation.
 async function main():Promise<void> {
   try {
+    if (Bun.argv.length === 3 && Bun.argv[2] === "--internal-shell") {
+      const { shellWorker } = await import("./src/system/shell-worker.ts");
+      await shellWorker(); return;
+    }
     const options = parseArgs(Bun.argv.slice(2));
     if (options.help) {
       console.log(`s42-agent ${version} · TUI estilo QBasic
@@ -83,6 +87,8 @@ Alt+T: promptings · Alt+Y: ayuda · Ctrl+W: cerrar · Ctrl+Q: salir`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
+  } finally {
+    Bun.WebView.closeAll();
   }
 }
 

@@ -18,7 +18,7 @@ export function info(desktop: Desktop, title: string, lines: string[], parent?: 
   desktop.add(window);
 }
 
-export interface Field { label: string; value: string; browse?: (value: string, select: (value: string) => void, parent: Window) => void }
+export interface Field { label: string; value: string; secret?: boolean; placeholder?: string; browse?: (value: string, select: (value: string) => void, parent: Window) => void }
 export function form(desktop: Desktop, title: string, fields: Field[], save: (values: string[]) => Promise<void|(()=>void)>): void {
   if (desktop.modal) return;
   const area = desktop.floatingArea ?? { y: 1, height: desktop.height - 2 };
@@ -26,6 +26,7 @@ export function form(desktop: Desktop, title: string, fields: Field[], save: (va
   const window = new Window(`form-${crypto.randomUUID()}`, title, { x: Math.max(0, (desktop.width - 58) >> 1), y: area.y + Math.max(0,(area.height-height)>>1), width: 58, height });
   window.modal = true; let page = 0, error = "", saving = false;
   const inputs = fields.map((field, index) => new Input(`field-${index}`, { x: 20, y: 0, width: 32, height: 1 }, field.value));
+  inputs.forEach((input, index) => { input.secret = fields[index]!.secret ?? false; input.placeholder = desktop.t(fields[index]!.placeholder ?? ""); });
   const pages = Math.ceil(fields.length / 3);
   const refresh = () => { window.controls.splice(0, window.controls.length, ...inputs.slice(page * 3, page * 3 + 3),
     ...(fields.slice(page*3,page*3+3).some(f=>f.browse)?[browse]:[]), ...(pages>1?[previous,next]:[]), accept); window.focusedId = window.controls[0]?.id; desktop.invalidate(); };

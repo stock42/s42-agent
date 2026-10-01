@@ -1,6 +1,7 @@
 import type { Message, ToolCall } from "../agent/messages.ts";
 import type { Model, Provider } from "../storage/config.ts";
 import type { ProviderUsage } from "../agent/usage.ts";
+export { credential } from "../storage/credentials.ts";
 
 export interface ToolDefinition { type: "function"; function: { name: string; description: string; parameters: Record<string, unknown> } }
 export interface Completion { message: Message; usage?: ProviderUsage; finishReason?: string }
@@ -21,11 +22,6 @@ export class SSEParser {
   end(): void { this.buffer += this.decoder.decode(); this.drain(); if (this.buffer.trim() || this.lines.length) throw new Error("SSE incompleto al desconectarse"); }
 }
 
-export function credential(provider: Provider, sessionKey?: string): string | undefined {
-  if (sessionKey) return sessionKey;
-  if (provider.apiKeyEnv) { const key = process.env[provider.apiKeyEnv]; if (!key) throw new Error(`Falta la variable ${provider.apiKeyEnv} para ${provider.name}`); return key; }
-  return undefined;
-}
 export async function discoverModels(provider: Provider, key?: string, signal?: AbortSignal): Promise<Model[]> {
   const response = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/models`, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal: signal ?? AbortSignal.timeout(120000) });
   if (!response.ok) throw new Error(`Models: HTTP ${response.status}${response.status === 401 ? " · revisar API key" : ""}`);

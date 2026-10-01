@@ -5,6 +5,29 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Corregido — Modelo global persistente y APIs nativas de Bun
+
+- Elegir modelo guarda sesión/proyecto/default global, heredado en nuevas
+  sesiones y proyectos. Config anterior con un único modelo del proveedor default
+  lo recupera sin requests al iniciar. Rutas por SO conservadas, con fallback
+  de variables vacías y AppData estándar; --config sigue siendo override.
+- API keys TUI con Bun.secrets en llavero del SO, referencias en JSON, campos
+  enmascarados y hint guardada/vacío conserva. Recuperación asíncrona en TUI/CLI;
+  alternativa de entorno y errores concretos si el llavero falla. Overrides CLI
+  quedan en memoria y otro endpoint descarta referencia/caché previa.
+- Shell/Git/nvidia-smi usan Bun Shell ($). Proceso interno del mismo entrypoint
+  conserva timeout, cancelación de árbol, cwd, streams y argv escapados; MCP
+  stdio conserva Bun.spawn para RPC bidireccional. Compatibilidad de sintaxis
+  Bun y buffer del intérprete documentados.
+- Tool scrape con Bun.WebView: DOM JavaScript real, CSS, texto/HTML, título,
+  URL y enlaces, recorte, timeout/cancelación y cierre. Backend solo al usarla,
+  compartido hasta salir; navegador instalado en Linux/Windows, WebKit macOS.
+- README/AGENTS/SPECS/TOOLS, fase 17 y QA actualizados. Typecheck correcto;
+  suite completa 150 pass/0 fail; revisión focalizada final 22 pass/0 fail.
+  Llavero real Linux + reapertura index.ts PTY autenticada verificados con fixture;
+  Chrome real para scraping. Sin config personal modificada, builds ni push.
+  Pull falló por main sin upstream; trabajo ajeno preservado.
+
 ### Eliminado — CLAUDE.md
 
 - Eliminado CLAUDE.md del checkout por pedido del usuario. Era un archivo sin

@@ -1,0 +1,31 @@
+{
+  "runtime": "1.4.2",
+  "platform": "linux",
+  "realKeyring": true,
+  "configuredThroughProviderForm": true,
+  "masked": true,
+  "model": "persistent-fixture",
+  "defaults": {
+    "providerId": "llama.cpp",
+    "modelId": "persistent-fixture"
+  },
+  "projectModel": {
+    "providerId": "llama.cpp",
+    "modelId": "persistent-fixture"
+  },
+  "restoredWithoutSetup": true,
+  "authenticatedAfterRestart": true,
+  "requests": [
+    {
+      "path": "/v1/models",
+      "authenticated": true
+    },
+    {
+      "path": "/v1/chat/completions",
+      "authenticated": true
+    }
+  ],
+  "noPlaintext": true,
+  "sessionsNoPlaintext": true,
+  "exitCode": 0
+}

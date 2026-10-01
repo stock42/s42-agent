@@ -400,7 +400,7 @@ muestrea: la evidencia histórica de cero bytes idle corresponde a esa demo.
 
 VRAM dedicada: archivos Linux DRM `mem_info_vram_total/used` cuando existen;
 si no, `nvidia-smi --query-gpu=memory.total,memory.used,memory.free` instalado,
-ejecutado con Bun.spawn sin shell y timeout 2 s. Suma contadores disponibles
+ejecutado con Bun Shell mediante runCommand y timeout 2 s. Suma contadores disponibles
 del origen elegido. No hay API Bun portable de VRAM utilizada ni instalación
 automática; driver/OS sin contador → N/D en la barra. Validado Linux x64; no
 afirmar funcionamiento de hardware/otros SO por el parser de un fixture.
@@ -605,10 +605,10 @@ proyectos ni inventar reglas Git para el repositorio del usuario.
   todas cerradas; un proyecto explícito de CLI se abre igualmente. Restaurar no
   reejecuta tools; si una sesión está bloqueada, liberar las ya abiertas durante
   ese intento y conservar la configuración para corregir el bloqueo.
-- Nunca crear `.env.local`. Los secretos se obtienen de variables de entorno ya
-  configuradas; la configuración solo guarda el nombre de la variable.
-- La API key ingresada en Models vive solo en memoria durante esa ejecución.
-  Si se proporciona, tiene prioridad sobre la variable configurada del proveedor.
+- Nunca crear `.env.local`. Secretos TUI se guardan con Bun.secrets en el
+  llavero del SO; JSON solo guarda apiKeySecret. Variables siguen disponibles.
+- Clave explícita de CLI tiene prioridad y permanece en memoria; luego llavero
+  y variable configurada. Ver §23 para persistencia y selección automática.
 - Las sesiones no guardan cabeceras HTTP ni valores de credenciales.
 
 No habrá configuración ejecutable, evaluación de JavaScript ni comandos para
@@ -618,7 +618,7 @@ Cambiarla respecto del mecanismo existente se propondrá antes de implementarlo.
 
 ### Contrato
 
-Un proveedor contiene `id`, `name`, `kind`, `baseUrl`, `apiKeyEnv` opcional y una
+Un proveedor contiene `id`, `name`, `kind`, `baseUrl`, `apiKeyEnv`/`apiKeySecret` opcionales y una
 lista de modelos. `kind` admite `llama.cpp` u `openai-compatible`; ambos usan el
 cliente Chat Completions inicial, con las particularidades locales concentradas
 en el módulo LLM.
@@ -715,7 +715,7 @@ manualmente. El default de proveedor es `llama.cpp` aun antes de elegir modelo.
 
 - POST a `{baseUrl}/chat/completions`, `stream: true`, mensajes y herramientas
   conforme al contrato del endpoint. Normalizar `/` sin duplicar `/v1`.
-- Autenticación Bearer solo si se configuró `apiKeyEnv` y tiene un valor.
+- Autenticación Bearer si hay una clave explícita, del llavero o de apiKeyEnv.
 - Parser SSE incremental con CRLF/LF, líneas y JSON divididos entre chunks,
   múltiples eventos por chunk, UTF-8 incremental, eventos vacíos y `[DONE]`.
 - Reconstruir tool calls por índice/ID y acumular argumentos hasta su cierre.
@@ -800,7 +800,7 @@ reemplaza el borrador, historial o estado del proyecto visible.
 | `write` | path y contenido | Crear o reemplazar contenido; informar el archivo afectado. |
 | `edit` | path, texto anterior y nuevo | Reemplazo exacto único; cero o varias coincidencias devuelven error. |
 | `fetch` | url, method/headers/body/bodyType/timeoutMs opcionales | HTTP GET/POST/PUT/PATCH/DELETE/HEAD/etc; JSON, forms URL-encoded/multipart o texto. |
-| `shell` | comando y timeout opcional | Ejecutar mediante `Bun.spawn` con cwd explícito, stdout/stderr y exit code. |
+| `shell` | comando y timeout opcional | Ejecutar mediante Bun Shell ($) en subproceso Bun propio, con cwd explícito, stdout/stderr y exit code. |
 | `internal_skill` | name opcional | Lista/carga guías internas sin ejecutar scripts; nombres/descripciones en el prompt inicial. |
 | `markdown_html` | markdown o path; outputPath/standalone/title opcionales | Conversión Bun nativa a fragmento/documento HTML; archivo completo o preview UTF-8 acotado. |
 | `websocket` | url; headers/protocols/messages/receiveCount/timeoutMs opcionales | Prueba ws/wss con una conexión por call, recepción texto/base64 y cierre al terminar. |
@@ -834,9 +834,9 @@ scripts al cargar. create-pdf compone Markdown/HTML y un renderizador instalado
 mediante shell. AGENTS.md y el contexto del proyecto prevalecen. Skills externas
 conservan su tool skill, scopes y CRUD. [Investigación](AGENT-INTELLIGENCE.md).
 
-`shell` usa el shell del usuario o el shell de la plataforma, registrado como
-argumentos explícitos a `Bun.spawn`; no construir un comando envolvente mediante
-concatenación de rutas. El texto del comando sigue teniendo efectos reales de
+`shell` usa Bun Shell ($) mediante un subproceso del propio agente. No requiere
+Bash/cmd externo y mantiene cancelación/timeout de árbol. Argv internos se escapan
+con $.escape; la sintaxis de command es la de Bun Shell. El texto del comando sigue teniendo efectos reales de
 shell. En la primera versión no se incluyen programas interactivos que necesiten
 tomar el control del terminal.
 
@@ -1340,7 +1340,7 @@ Flags exclusivos de CLI requieren --prompting; errores legibles sin renderer.
 
 Host sin path utiliza /v1; URL base conserva su path. Flags sobrescriben endpoint
 en memoria, sin reescribir config ni guardar credenciales. Endpoint diferente
-descarta metadata/variable de clave del proveedor anterior: modelo por flag o
+descarta metadata/variable/referencia de secreto del proveedor anterior: modelo por flag o
 catálogo nuevo y clave explícita. Sin overrides respeta el proveedor/config y
 su mecanismo de credenciales existente. API key CLI tiene prioridad.
 --model registrado conserva límites/capacidades; ID no registrado funciona sin
@@ -1368,3 +1368,41 @@ los contratos existentes, sin flujos interactivos.
 [Fase16](phases/16-cli-without-tui.md), [QA](qa/cli.md): proceso sin TTY,
 fixtures de flags/coding/config/skills/error/stages/señales, regresión TUI y
 GLM-4.7-Flash real con edición y tests independientes. Sin build/publicación.
+
+## 23. Configuración global y APIs nativas Bun
+
+R32. Detectar SO para config/sesiones globales, independientes de cwd. Respetar
+XDG_CONFIG_HOME/XDG_STATE_HOME en Linux, Application Support en macOS y
+APPDATA/LOCALAPPDATA en Windows, con fallback estándar si están vacías/ausentes.
+Conservar --config explícito. Elegir modelo guarda selección en sesión/proyecto
+y default global; nuevas sesiones/proyectos la reutilizan. Config vieja con
+catálogo único del proveedor default se recupera sin consultar /models; múltiples
+modelos sin selección válida requieren elección, sin adivinar por orden.
+
+Guardar API keys ingresadas en TUI mediante Bun.secrets (servicio s42-agent,
+nombre derivado de config/proveedor/endpoint, persist local en Windows). JSON
+guarda referencia, nunca valor. Campo enmascarado, estado guardada y vacío conserva.
+Cambiar endpoint descarta referencia/caché anterior; quitar proveedor elimina su
+entrada. Prioridad override CLI/memoria, secreto y variable. Sin llavero disponible
+mostrar error útil; variable configurada disponible sirve como fallback. No escribir
+secretos en sesiones ni modificar la config personal para QA.
+
+Comandos del agente usan $ de bun: shell nativa, Git de skills y nvidia-smi.
+ShellPromise no expone kill: index.ts incluye rama interna --internal-shell antes
+de parsear UI/CLI, con input JSON por stdin y salida por pipes; runCommand termina
+árbol en timeout/cancelación, conserva hasta 64 KiB por stream en el padre y
+recorta payload. No prometer que el buffer interno del intérprete está acotado.
+MCP stdio conserva Bun.spawn por su proceso/RPC bidireccional. La sintaxis soportada
+es Bun Shell: pipes/redirecciones/builtins, no todo Bash/cmd ni background &.
+
+Tool scrape en src/agent/tools/scrape.ts: Bun.WebView, HTTP(S), selector CSS con
+espera, texto/HTML, título/URL/enlaces y recorte. Cierre de vista al terminar,
+fallar, timeout o señal; browser compartido hasta salir del agente. Linux/Windows
+requieren Chrome-family instalado, macOS WebKit; no descargar ni conectar al
+perfil personal. Solo instanciar al usar la tool; no ejecutar JS arbitrario enviado
+como argumento. Contrato de límites/errores en TOOLS.md. Ambas APIs experimentales
+son un pedido explícito del usuario. [Fase17](phases/17-global-config-and-bun-native.md),
+[QA](qa/global-config-and-bun-native.md). Fuentes oficiales:
+[Bun Secrets](https://bun.com/docs/runtime/secrets),
+[Bun Shell](https://bun.com/docs/runtime/shell),
+[Bun WebView](https://bun.com/docs/runtime/webview).

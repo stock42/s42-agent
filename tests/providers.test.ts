@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, beforeEach, expect, spyOn, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -10,6 +10,15 @@ import { Input } from "../src/ui/components/input.ts";
 import { SelectList } from "../src/ui/components/select-list.ts";
 
 const roots: string[] = [];
+const secrets = new Map<string, string>();
+let getSecret: ReturnType<typeof spyOn>, setSecret: ReturnType<typeof spyOn>, removeSecret: ReturnType<typeof spyOn>;
+beforeEach(() => {
+  secrets.clear();
+  getSecret = spyOn(Bun.secrets, "get").mockImplementation(async (value: any) => secrets.get(value.name) ?? null);
+  setSecret = spyOn(Bun.secrets, "set").mockImplementation(async (value: any) => { secrets.set(value.name, value.value); });
+  removeSecret = spyOn(Bun.secrets, "delete").mockImplementation(async (value: any) => secrets.delete(value.name));
+});
+afterEach(() => { getSecret.mockRestore(); setSecret.mockRestore(); removeSecret.mockRestore(); });
 afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }); });
 async function fixture() { const root = await mkdtemp(join(tmpdir(), "s42-provider-")); roots.push(root); return root; }
 async function until(check: () => boolean) {
@@ -60,11 +69,11 @@ test("catálogo usa Bearer, metadata y modelos únicos; IDs simples siguen siend
     expect((await discoverModels(provider))[2]).toMatchObject({ contextWindow: 8192, maxOutputTokens: 2048, capabilities: { tools: false, images: false } });
     expect(requests[1]).toBe("/v1/models:null");
     provider.apiKeyEnv = `S42_MISSING_${crypto.randomUUID().replaceAll("-", "")}`;
-    expect(credential(provider, "explicit-session-key")).toBe("explicit-session-key"); expect(() => credential(provider)).toThrow("Falta la variable");
+    expect(await credential(provider, "explicit-session-key")).toBe("explicit-session-key"); await expect(credential(provider)).rejects.toThrow("Falta la variable");
   } finally { server.stop(true); }
 });
 
-test("DeepSeek corrige 401 en el formulario, elige un modelo explícito y conserva clave solo en memoria", async () => {
+test("DeepSeek corrige 401, guarda key en llavero y recupera modelo/clave tras reinicio", async () => {
   const root = await fixture(), path = join(root, "config.json"); let requests = 0;
   const server = Bun.serve({ port: 0, fetch(req) { requests++; return req.headers.get("authorization") === "Bearer accepted-fixture" ? Response.json(catalog) : new Response("", { status: 401 }); } });
   const app = await App.open({ config: path, cwd: root }); let closed = false;
@@ -84,10 +93,16 @@ test("DeepSeek corrige 401 en el formulario, elige un modelo explícito y conser
     expect(app.view.response.placeholder).not.toContain("No hay modelo configurado");
     expect(app.selection.providerId).toBe("deepseek"); expect(app.keys.get("deepseek")).toBe("accepted-fixture");
     expect(app.current().model.maxOutputTokens).toBe(1024); expect(await Bun.file(path).text()).not.toContain("accepted-fixture");
+    expect(app.store.value.defaults).toMatchObject(app.selection); expect(app.project!.selection).toEqual(app.selection);
+    expect(secrets.size).toBe(1);
     expect(await Bun.file(app.session!.path).text()).not.toContain("accepted-fixture");
     await app.desktop.onBeforeExit!(); closed = true;
     const reopened = await App.open({ config: path });
-    try { expect(reopened.selection).toEqual(app.selection); expect(reopened.keys.size).toBe(0); expect(reopened.view.prompt.value).toBe("borrador intacto"); expect(requests).toBe(2); }
+    try {
+      expect(reopened.selection).toEqual(app.selection); expect(reopened.keys.size).toBe(0); expect(await credential(reopened.current().provider)).toBe("accepted-fixture"); expect(reopened.view.prompt.value).toBe("borrador intacto"); expect(requests).toBe(2);
+      reopened.providerForm(reopened.current().provider); expect(inputs(reopened)[0]!.placeholder).toBe("Guardada · vacío conserva"); expect(inputs(reopened)[0]!.secret).toBe(true); key(reopened, "escape");
+      await reopened.newSession(); expect(reopened.selection).toEqual(app.selection);
+    }
     finally { await reopened.desktop.onBeforeExit!(); }
   } finally { if (!closed) await app.desktop.onBeforeExit!(); server.stop(true); }
 });
@@ -116,12 +131,12 @@ test("index.ts en PTY muestra presets, configura DeepSeek y elige el modelo del 
   initial.providers[1]!.baseUrl = `http://127.0.0.1:${server.port}`; await Bun.write(config, JSON.stringify(initial));
   let text = "";
   const terminal = new Bun.Terminal({ cols: 60, rows: 16, data: (_, data) => { text += new TextDecoder().decode(data); } });
-  const child = Bun.spawn([process.execPath, resolve(import.meta.dir, "../index.ts"), "--config", config, "--cwd", root, "--no-color"], { cwd: root, env: { ...process.env, TERM: "xterm-256color" }, terminal });
+  const child = Bun.spawn([process.execPath, resolve(import.meta.dir, "../index.ts"), "--config", config, "--cwd", root, "--no-color"], { cwd: root, env: { ...process.env, TERM: "xterm-256color", S42_PROVIDER_TEST_KEY: "pty-fixture-key" }, terminal });
   try {
     await until(() => text.includes("No hay modelo configurado")); terminal.write("borrador PTY\x02");
     await until(() => text.includes("llama.cpp") && text.includes("DeepSeek")); expect(text).toContain("Proveedores");
-    terminal.write("\x1b[B\r"); await until(() => text.includes("API key (sesión)"));
-    terminal.write("pty-fixture-key\t\t\t\r"); await until(() => text.includes("Puerto"));
+    terminal.write("\x1b[B\r"); await until(() => text.includes("API key · llavero"));
+    terminal.write("\t\x01S42_PROVIDER_TEST_KEY\t\t\r"); await until(() => text.includes("Puerto"));
     terminal.write("\t\t\t\r"); await until(() => text.includes("Beta disponible"));
     expect(auth as string | null).toBe("Bearer pty-fixture-key"); expect(text).toContain("Prompt");
     terminal.write("\x1b[B\r"); await until(() => text.includes("Modelo elegido")); expect(text).toContain("DeepSeek · remote-beta");

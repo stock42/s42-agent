@@ -10,11 +10,12 @@ import { shell } from "./shell.ts";
 import { internalSkill } from "./internal_skill.ts";
 import { markdownHtml } from "./markdown_html.ts";
 import { websocket } from "./websocket.ts";
+import { scrape } from "./scrape.ts";
 import { clip, instructions, validate, type ToolResult } from "./shared.ts";
 
 export { instructions } from "./shared.ts";
 export type { ToolResult } from "./shared.ts";
-export const nativeTools = [read, write, edit, list, find, search, httpFetch, shell, internalSkill, markdownHtml, websocket];
+export const nativeTools = [read, write, edit, list, find, search, httpFetch, shell, internalSkill, markdownHtml, websocket, scrape];
 export const toolDefinitions = nativeTools.map(tool => tool.definition);
 
 export async function execute(name: string, raw: string, cwd: string, signal: AbortSignal, shellTimeoutMs = 120000): Promise<ToolResult> {
@@ -29,6 +30,6 @@ export async function execute(name: string, raw: string, cwd: string, signal: Ab
     if (name !== "shell" && name !== "websocket") signal.throwIfAborted();
     const output = (guidance ? `Instrucciones aplicables:\n${guidance}\n\n` : "") + result.output;
     // Structured results bound their own payloads; clipping the JSON would corrupt it.
-    return { ...result, output: ["fetch", "shell", "internal_skill", "markdown_html", "websocket"].includes(name) ? output : clip(output), durationMs: Math.round(performance.now() - started) };
+    return { ...result, output: ["fetch", "shell", "internal_skill", "markdown_html", "websocket", "scrape"].includes(name) ? output : clip(output), durationMs: Math.round(performance.now() - started) };
   } catch (e) { return { output: (e as Error).message, failed: true, durationMs: Math.round(performance.now() - started) }; }
 }

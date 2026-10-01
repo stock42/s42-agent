@@ -100,7 +100,14 @@ const english: Readonly<Record<string, string>> = {
   "Nombre": "Name",
   "Rutas": "Paths",
   "ID del modelo": "Model ID",
-  "API key (sesión)": "API key (session)",
+  "API key · llavero": "API key · keychain",
+  "Guardada · vacío conserva": "Saved · blank keeps it",
+  "Opcional · guardar en el SO": "Optional · save in OS keychain",
+  "No se pudo guardar la API key en el llavero del SO. Desbloquealo o usá Variable API key.": "Could not save the API key in the OS keychain. Unlock it or use API key variable.",
+  "No se pudo leer la API key del llavero del SO. Desbloquealo o usá Variable API key.": "Could not read the API key from the OS keychain. Unlock it or use API key variable.",
+  "API key ausente en el llavero del SO. Configurá el proveedor en Models.": "API key missing from the OS keychain. Configure the provider in Models.",
+  "Scrape requiere una URL http/https": "Scrape requires an http/https URL",
+  "Timeout de scraping": "Scraping timed out",
   "Variable API key": "API key variable",
   "Host / URL base": "Host / base URL",
   "Puerto": "Port",
@@ -453,7 +460,8 @@ const spanish: Readonly<Record<string, string>> = {
   "Find files recursively by case-insensitive name substring or Bun glob. path can be any directory on disk. Does not follow symlinks; skips .git/node_modules/dist/out unless includeIgnored=true.": "Buscar archivos por parte del nombre sin distinguir mayúsculas o por glob de Bun. path puede ser cualquier directorio del disco. No sigue enlaces; omite .git/node_modules/dist/out salvo includeIgnored=true.",
   "Search literal text in files recursively. Returns paths and line numbers; omits .git, node_modules, dist and out.": "Buscar texto literal en archivos de forma recursiva. Devuelve rutas y números de línea; omite .git, node_modules, dist y out.",
   "HTTP request to any http/https URL with method, headers and optional JSON, URL-encoded form, multipart form or text body. Returns status, headers and text body (max 64 KiB); HTTP errors fail the tool.": "Request HTTP a cualquier URL http/https con método, headers y body opcional JSON, formulario URL-encoded, multipart o texto. Devuelve status, headers y body de texto (máximo 64 KiB); los errores HTTP hacen fallar la tool.",
-  "Run a non-interactive system command in the project directory. Return stdout/stderr, exit code and duration.": "Ejecutar un comando del sistema sin interacción en el directorio del proyecto. Devuelve stdout/stderr, código de salida y duración."
+  "Run a non-interactive command with Bun Shell in the project directory. Supports pipes, redirects and builtins; not all Bash/cmd syntax. Return stdout/stderr, exit code and duration.": "Ejecutar comandos con Bun Shell en el proyecto. Admite pipes, redirecciones y comandos internos; no toda la sintaxis Bash/cmd. Devuelve stdout/stderr, código de salida y duración.",
+  "Scrape a rendered HTTP(S) page with Bun.WebView, including JavaScript content. Return title, URL, text or HTML and links. Optional CSS selector waits for an element; requires an installed Chrome-family browser on Linux/Windows.": "Extraer una página HTTP(S) renderizada con Bun.WebView, incluido contenido JavaScript. Devuelve título, URL, texto o HTML y enlaces. Espera el selector CSS opcional; requiere Chrome, Chromium, Edge o Brave instalado en Linux/Windows."
 };
 
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

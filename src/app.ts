@@ -1,7 +1,8 @@
 import { Extensions } from "./ui/extensions.ts";
 import { Promptings } from "./ui/promptings.ts";
 import { basename, dirname, resolve, sep } from "node:path";
-import { ConfigStore, defaultProviders, normalizeFolder, storagePaths, validateConfig, type Project, type Provider, type Model, type ResourceIndicators } from "./storage/config.ts";
+import { ConfigStore, defaultProviders, modelSelection, normalizeFolder, storagePaths, validateConfig, type Project, type Provider, type Model, type ResourceIndicators } from "./storage/config.ts";
+import { saveCredential, deleteCredential } from "./storage/credentials.ts";
 import { Session, listSessions } from "./storage/sessions.ts";
 import type { Message, Selection, ToolCall } from "./agent/messages.ts";
 import { createWorkspaceView } from "./ui/workspace.ts";
@@ -61,6 +62,7 @@ export class App {
   private get controller() { return this.activeTab.controller; }
   private set controller(value: AbortController | undefined) { this.activeTab.controller = value; }
   private constructor(readonly store: ConfigStore, readonly sessionsPath: string, readonly cwd: string) {
+    this.selection = modelSelection(store.value);
     this.desktop.palette = store.value.ui.palette;
     this.desktop.language = store.value.ui.language;
     this.metrics = new SystemMonitor(() => this.project?.path ?? this.cwd);
@@ -341,7 +343,7 @@ export class App {
     tab.project = project; tab.session = next; tab.attachments = [];
     for (const path of next.state.attachments) try { tab.attachments.push(await snapshot(path, project.path)); } catch (e) { next.state.notices.push(`Adjunto ${path}: ${(e as Error).message}`); }
     tab.mode = "INSERT"; tab.pending = ""; tab.panel = "prompt"; tab.focusedId = tab.prompt.id;
-    tab.selection = structuredClone(next.state.selection ?? project.selection ?? this.store.value.defaults);
+    tab.selection = modelSelection(this.store.value, next.state.selection, project.selection);
     tab.prompt.setValue(next.state.draft); tab.rendered = new WeakMap(); tab.status = "Listo";
     const lastTurn = next.state.events.findLast(event => event.type === "turn");
     tab.tokens = lastTurn?.type === "turn" ? lastTurn.tokens : undefined;
@@ -525,9 +527,17 @@ export class App {
     }
     if (reset) tab.response.setValue(fragments, "end"); else tab.response.update(fragments);
   }
-  async selectModel(selection: Selection): Promise<void> { this.requireIdle(); const old = this.selection; this.selection = selection;
-    try { const {model} = this.current(); if (!model.capabilities.images && hasImages(this.session?.state.messages ?? [])) throw new Error("La sesión contiene imágenes: elegí un modelo con imágenes o creá /new"); await this.session?.append({ type: "selection", selection }); if (this.session) this.session.state.selection = selection; }
-    catch (e) { this.selection = old; throw e; } this.status = "Modelo elegido"; this.showContext(); }
+  async selectModel(selection: Selection): Promise<void> { const tab = this.activeTab; this.requireIdle(tab); const old = tab.selection; tab.selection = selection;
+    try {
+      const {model} = this.current(tab); if (!model.capabilities.images && hasImages(tab.session?.state.messages ?? [])) throw new Error("La sesión contiene imágenes: elegí un modelo con imágenes o creá /new");
+      const next = structuredClone(this.store.value);
+      next.defaults = { ...next.defaults, ...selection };
+      if (tab.project) next.projects.find(p => p.id === tab.project!.id)!.selection = { ...selection };
+      await this.store.save(next);
+      if (tab.project) tab.project.selection = { ...selection };
+      await tab.session?.append({ type: "selection", selection }); if (tab.session) tab.session.state.selection = selection;
+    }
+    catch (e) { tab.selection = old; throw e; } tab.status = "Modelo elegido"; this.showContext(tab); }
   models(providerId?: string, ids?: string[]): void {
     const providers = this.store.value.providers.filter(p => !providerId || p.id === providerId);
     choose(this.desktop, providerId ? `Models · ${providers[0]?.name}` : this.desktop.t("Models · elegir"), providers.flatMap(p => p.models.filter(m => !ids || ids.includes(m.id)).map(m => ({
@@ -547,7 +557,7 @@ export class App {
     const url=new URL(provider.baseUrl),port=url.port;url.port="";
     const preset = provider.id === "deepseek" || provider.kind === "llama.cpp";
     form(this.desktop, this.desktop.t(`${provider.name} · configurar`),[
-      {label: this.desktop.t("API key (sesión)"),value:""}, {label: this.desktop.t("Variable API key"),value:provider.apiKeyEnv??""}, {label: this.desktop.t("Host / URL base"),value:url.href.replace(/\/$/,"")},
+      {label: this.desktop.t("API key · llavero"),value:"",secret:true,placeholder:provider.apiKeySecret ? "Guardada · vacío conserva" : "Opcional · guardar en el SO"}, {label: this.desktop.t("Variable API key"),value:provider.apiKeyEnv??""}, {label: this.desktop.t("Host / URL base"),value:url.href.replace(/\/$/,"")},
       {label: this.desktop.t("Puerto"),value:port}, {label: this.desktop.t("Nombre"),value:provider.name},
     ], async ([apiKey,env,host,port,name]) => {
       let ids: string[] | undefined;
@@ -555,15 +565,19 @@ export class App {
         this.requireIdle();const endpoint=new URL(host!);if(port && (!/^\d+$/.test(port)||Number(port)<1||Number(port)>65535))throw new Error("Puerto inválido");endpoint.port=port??"";
         const next=structuredClone(this.store.value),p=next.providers.find(p=>p.id===provider.id)??structuredClone(provider);
         p.name=name!;p.baseUrl=endpoint.href.replace(/\/$/,"");p.apiKeyEnv=env?.trim()||undefined;
+        const changedEndpoint = p.baseUrl !== provider.baseUrl.replace(/\/$/, "");
+        if (changedEndpoint) p.apiKeySecret = undefined;
         if (!next.providers.some(saved => saved.id === p.id)) next.providers.push(p);
         // Validate locally before contacting the configured endpoint.
         validateConfig(next);
-        const sessionKey = apiKey?.trim() || this.keys.get(p.id);
+        const sessionKey = apiKey?.trim() || (!changedEndpoint ? this.keys.get(p.id) : undefined);
         if (preset) {
           const models = await this.providerModels(p, sessionKey); ids = models.map(m => m.id);
           for (const model of models) if (!p.models.some(saved => saved.id === model.id)) p.models.push(model);
         }
-        await this.store.save(next); if (apiKey?.trim()) this.keys.set(p.id, apiKey.trim()); this.showContext();
+        if (apiKey?.trim()) await saveCredential(p, apiKey.trim(), this.store.path);
+        await this.store.save(next); if (changedEndpoint) this.keys.delete(p.id);
+        if (apiKey?.trim()) this.keys.set(p.id, apiKey.trim()); this.showContext();
       });
       return ids ? () => this.models(provider.id, ids) : undefined;
     });
@@ -575,7 +589,7 @@ export class App {
     const url = new URL(newProvider ? "http://127.0.0.1:8080/v1" : provider?.baseUrl ?? "http://127.0.0.1:8080/v1"), port = url.port; url.port = "";
     form(this.desktop, this.desktop.t("Models · host, puerto y modelo"), [
       { label: this.desktop.t("ID del modelo"), value: model?.id ?? "" }, { label: this.desktop.t("Nombre"), value: model?.name ?? "" }, { label: this.desktop.t("Host / URL base"), value: url.href.replace(/\/$/, "") },
-      { label: this.desktop.t("Puerto"), value: port }, { label: this.desktop.t("API key (sesión)"), value: "" }, { label: this.desktop.t("Variable API key"), value: newProvider ? "" : provider?.apiKeyEnv ?? "" },
+      { label: this.desktop.t("Puerto"), value: port }, { label: this.desktop.t("API key · llavero"), value: "", secret: true, placeholder: !newProvider && provider?.apiKeySecret ? "Guardada · vacío conserva" : "Opcional · guardar en el SO" }, { label: this.desktop.t("Variable API key"), value: newProvider ? "" : provider?.apiKeyEnv ?? "" },
       { label: this.desktop.t("Contexto"), value: String(model?.contextWindow ?? 8192) }, { label: this.desktop.t("Máximo salida"), value: String(model?.maxOutputTokens ?? 2048) },
       { label: this.desktop.t("Tools / imágenes (sí/no)"), value: `${model?.capabilities.tools ? (this.desktop.language === "en" ? "yes" : "sí") : "no"}/${model?.capabilities.images ? (this.desktop.language === "en" ? "yes" : "sí") : "no"}` },
     ], ([id, name, host, port, apiKey, apiKeyEnv, context, max, caps]) => this.change(async () => {
@@ -584,12 +598,17 @@ export class App {
       const next = structuredClone(this.store.value), providerId = newProvider ? crypto.randomUUID() : provider?.id ?? "llama.cpp";
       let configured = next.providers.find(p => p.id === providerId);
       if (!configured) { configured = { id: providerId, name: newProvider ? endpoint.host : "Local · llama.cpp", kind: newProvider ? "openai-compatible" : "llama.cpp", baseUrl: endpoint.href, models: [] }; next.providers.push(configured); }
+      const changedEndpoint = configured.baseUrl.replace(/\/$/, "") !== endpoint.href.replace(/\/$/, "");
+      if (changedEndpoint) configured.apiKeySecret = undefined;
       configured.baseUrl = endpoint.href.replace(/\/$/, ""); configured.apiKeyEnv = apiKeyEnv?.trim() || undefined;
       const capabilities = caps!.toLowerCase().split("/"); if (capabilities.length !== 2 || !capabilities.every(c => ["sí", "si", "yes", "no"].includes(c))) throw new Error("Capacidades: sí/no, no/no o sí/sí");
       const saved: Model = { id: id.trim(), name: name?.trim() || id.trim(), contextWindow: Number(context), maxOutputTokens: Number(max), capabilities: { tools: capabilities[0] !== "no", images: capabilities[1] !== "no" } };
       if (add && configured.models.some(m => m.id === saved.id)) throw new Error("Ese modelo ya está registrado");
       configured.models = [...configured.models.filter(m => m.id !== (model?.id ?? saved.id)), saved];
-      await this.store.save(next); if (apiKey) this.keys.set(providerId, apiKey);
+      validateConfig(next);
+      if (apiKey?.trim()) await saveCredential(configured, apiKey.trim(), this.store.path);
+      await this.store.save(next); if (changedEndpoint) this.keys.delete(providerId);
+      if (apiKey?.trim()) this.keys.set(providerId, apiKey.trim());
       await this.selectModel({ providerId, modelId: saved.id });
     }));
   }
@@ -599,13 +618,13 @@ export class App {
   async saveDefault(): Promise<void> { this.requireIdle(); this.current(); const next = structuredClone(this.store.value); next.defaults = { ...this.selection, projectId: this.project?.id }; await this.store.save(next); this.status = "Default guardado"; this.desktop.invalidate(); }
   async saveProjectDefault(): Promise<void> { this.requireIdle(); this.current(); if (!this.project) throw new Error("Elegí un proyecto"); const next=structuredClone(this.store.value); next.projects.find(p=>p.id===this.project!.id)!.selection={...this.selection}; await this.store.save(next); this.project.selection={...this.selection}; this.status="Default del proyecto guardado"; }
   removeProvider(): void { choose(this.desktop, this.desktop.t("Quitar proveedor"),this.store.value.providers.map(value=>({label:value.name,value})),p=>this.run(async()=>{
-    this.requireIdle(); const next=structuredClone(this.store.value); next.providers=next.providers.filter(provider=>provider.id!==p.id); await this.store.save(next); this.keys.delete(p.id); this.showContext();
+    this.requireIdle(); const next=structuredClone(this.store.value); next.providers=next.providers.filter(provider=>provider.id!==p.id); await deleteCredential(p); await this.store.save(next); this.keys.delete(p.id); this.showContext();
   })); }
   private async providerModels(provider: Provider, sessionKey?: string): Promise<Model[]> {
-    this.requireIdle();
-    const key=credential(provider,sessionKey ?? this.keys.get(provider.id));
+    const tab = this.activeTab; this.requireIdle(tab);
+    const key=await credential(provider,sessionKey ?? this.keys.get(provider.id));
     if (provider.id === "deepseek" && !key) throw new Error("Ingresá una API key de DeepSeek o su variable de entorno");
-    const tab = this.activeTab, controller = new AbortController();
+    this.requireIdle(tab); const controller = new AbortController();
     tab.controller = controller; tab.busy = true;
     tab.status = `Consultando modelos de ${provider.name}…`; this.desktop.invalidate();
     try {
@@ -730,7 +749,8 @@ export class App {
     if(changed) {this.desktop.invalidate();throw new Error("Un adjunto cambió: vista actualizada. Revisá Ctrl+F y pulsá Enter de nuevo.");}
     const content=contentWithAttachments(text,tab.attachments);
     if (this.activeFile) { this.displayTab(tab); this.desktop.focus(this.view.promptWindow); }
-    const key = credential(provider, this.keys.get(provider.id));
+    const key = await credential(provider, this.keys.get(provider.id));
+    this.requireIdle(tab);
     const controller = new AbortController(), context = structuredClone({ limits: this.store.value.limits, mcpServers: this.store.value.mcpServers, skills: this.store.value.skills });
     tab.busy = true; tab.controller = controller; tab.tokens = emptyUsage();
     tab.agentState = "Conectando…"; this.startActivity();

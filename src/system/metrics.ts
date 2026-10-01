@@ -3,6 +3,7 @@ import { readdir, statfs } from "node:fs/promises";
 import { join } from "node:path";
 import { tokensPerSecond, type TokenUsage } from "../agent/usage.ts";
 import type { ResourceIndicators } from "../storage/config.ts";
+import { runCommand } from "./command.ts";
 
 export interface Capacity { used: number; free: number; total: number }
 export interface SystemMetrics { cpu?: Capacity; ram?: Capacity; disk?: Capacity; diskPath: string; gpu?: Capacity; gpuSource?: string; gpuError?: string; at?: string }
@@ -43,14 +44,9 @@ async function gpuMemory(signal: AbortSignal): Promise<Pick<SystemMetrics, "gpu"
   const executable = Bun.which("nvidia-smi");
   if (!executable) return { gpuError: "No hay contador de VRAM disponible (DRM o nvidia-smi)." };
   signal.throwIfAborted();
-  const child = Bun.spawn([executable, "--query-gpu=memory.total,memory.used,memory.free", "--format=csv,noheader,nounits"], { stdin: "ignore", stdout: "pipe", stderr: "pipe" });
-  const abort = () => child.kill(), timer = setTimeout(abort, 2000);
-  signal.addEventListener("abort", abort, { once: true }); if (signal.aborted) abort();
-  try {
-    const [out, err, code] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
-    signal.throwIfAborted(); const gpu = code === 0 ? parseNvidiaMemory(out) : undefined;
-    return gpu ? { gpu, gpuSource: "nvidia-smi (suma de GPUs)" } : { gpuError: (err.trim() || out.trim()).slice(0, 300) || "El driver no reportó VRAM válida." };
-  } finally { clearTimeout(timer); signal.removeEventListener("abort", abort); }
+  const result = await runCommand([executable, "--query-gpu=memory.total,memory.used,memory.free", "--format=csv,noheader,nounits"], { timeoutMs: 2000, signal });
+  signal.throwIfAborted(); const gpu = !result.failed ? parseNvidiaMemory(result.stdout) : undefined;
+  return gpu ? { gpu, gpuSource: "nvidia-smi (suma de GPUs)" } : { gpuError: (result.stderr.trim() || result.stdout.trim()).slice(0, 300) || "El driver no reportó VRAM válida." };
 }
 
 export class SystemMonitor {

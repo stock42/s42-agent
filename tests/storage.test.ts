@@ -1,8 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { ConfigStore, normalizeFolder } from "../src/storage/config.ts";
+import { homedir, tmpdir } from "node:os";
+import { ConfigStore, defaultConfig, modelSelection, normalizeFolder, storagePaths } from "../src/storage/config.ts";
 import { Session } from "../src/storage/sessions.ts";
 import { App } from "../src/app.ts";
 const folders: string[] = [];
@@ -17,6 +17,36 @@ test("config local por defecto, proyectos normalizados y JSON inválido conserva
   await Bun.write(join(root, "file.txt"), "archivo"); await expect(normalizeFolder("file.txt", root)).rejects.toThrow("carpeta");
   expect((await ConfigStore.load(store.path)).resolveProject("A").path).toBe(a.path);
   await Bun.write(store.path, "{mal"); await expect(ConfigStore.load(store.path)).rejects.toThrow(); expect(await Bun.file(store.path).text()).toBe("{mal");
+});
+test("config global por SO, XDG/AppData, variables vacías y --config explícito", () => {
+  const home = homedir();
+  expect(storagePaths(undefined, { XDG_CONFIG_HOME: "/tmp/xdg-config", XDG_STATE_HOME: "/tmp/xdg-state" }, "linux"))
+    .toEqual({ config: "/tmp/xdg-config/s42-agent/config.json", sessions: "/tmp/xdg-state/s42-agent/sessions" });
+  expect(storagePaths(undefined, { XDG_CONFIG_HOME: "", XDG_STATE_HOME: "" }, "linux").config).toBe(join(home, ".config/s42-agent/config.json"));
+  expect(storagePaths(undefined, {}, "darwin").config).toBe(join(home, "Library/Application Support/s42-agent/config.json"));
+  expect(storagePaths(undefined, { APPDATA: "/tmp/roaming", LOCALAPPDATA: "/tmp/local" }, "win32"))
+    .toEqual({ config: "/tmp/roaming/s42-agent/config.json", sessions: "/tmp/local/s42-agent/sessions" });
+  expect(storagePaths(undefined, {}, "win32").config).toBe(join(home, "AppData/Roaming/s42-agent/config.json"));
+  expect(storagePaths("/tmp/override/config.json", {}, "darwin").sessions).toBe("/tmp/override/sessions");
+});
+test("config anterior recupera modelo único; selección persiste en sesiones y proyectos nuevos", async () => {
+  const root = await fixture(), config = join(root, "config.json"), value = defaultConfig();
+  const model = { id: "local-model", name: "Local", contextWindow: 32000, maxOutputTokens: 2048, capabilities: { tools: true, images: false } };
+  value.providers[0]!.models.push(model); await Bun.write(config, JSON.stringify(value));
+  const app = await App.open({ config, cwd: root });
+  try {
+    expect(app.current().model.id).toBe(model.id); expect(app.store.value.defaults.modelId).toBe(model.id);
+    const second = { ...model, id: "second", name: "Second" };
+    const next = structuredClone(app.store.value); next.providers[0]!.models.push(second); await app.store.save(next);
+    await app.selectModel({ providerId: "llama.cpp", modelId: "second" }); await app.newSession();
+    expect(app.current().model.id).toBe("second");
+    await mkdir(join(root, "B")); const project = await app.store.project("B", "B", root); await app.switchProject(project);
+    expect(app.current().model.id).toBe("second");
+  } finally { await app.desktop.onBeforeExit!(); }
+  const reopened = await App.open({ config });
+  try { expect(reopened.current().model.id).toBe("second"); } finally { await reopened.desktop.onBeforeExit!(); }
+  value.providers[0]!.models.push({ ...model, id: "another" });
+  expect(modelSelection(value).modelId).toBeUndefined();
 });
 test("sesión append serializado, borrador, selección y lock de único escritor", async () => {
   const root = await fixture(), session = await Session.open(root, "A", "one");

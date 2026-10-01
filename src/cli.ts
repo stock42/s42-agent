@@ -54,8 +54,8 @@ export async function runCli(options: CliOptions): Promise<number> {
     const source = config.providers.find(provider => provider.id === (options.provider ?? selection.providerId));
     if (!source) throw new Error(`Proveedor no registrado: ${options.provider ?? selection.providerId}`);
     const baseUrl = endpoint(source, options), changedEndpoint = baseUrl !== source.baseUrl.replace(/\/+$/, "");
-    const provider = { ...source, baseUrl, ...(changedEndpoint ? { models: [], apiKeyEnv: undefined } : {}) };
-    const key = credential(provider, options.llmApiKey);
+    const provider = { ...source, baseUrl, ...(changedEndpoint ? { models: [], apiKeyEnv: undefined, apiKeySecret: undefined } : {}) };
+    const key = await credential(provider, options.llmApiKey);
     const selectedId = options.model ?? (!changedEndpoint && provider.id === selection.providerId ? selection.modelId : undefined);
     let model: Model | undefined = provider.models.find(model => model.id === selectedId);
     if (!model && selectedId) {

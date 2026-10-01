@@ -15,7 +15,7 @@ test("tools read/search/edit exacto/write y shell con exit code real", async () 
     expect((await execute('edit',JSON.stringify({path:'a.ts',oldText:'inexistente',newText:'x'}),root,signal)).failed).toBe(true);
     await Bun.write(join(root,'duplicado'),'aaa'); expect((await execute('edit',JSON.stringify({path:'duplicado',oldText:'aa',newText:'x'}),root,signal)).failed).toBe(true); expect(await Bun.file(join(root,'duplicado')).text()).toBe('aaa');
     expect((await execute('write',JSON.stringify({path:'sub/nuevo',content:'hola'}),root,signal)).failed).toBe(false);
-    const command = await execute('shell',JSON.stringify({command:'echo salida; echo error >&2; exit 7'}),root,signal); expect(command.failed).toBe(true); expect(command.exitCode).toBe(7); expect(command.output).toContain('error');
+    const command = await execute('shell',JSON.stringify({command:'echo salida; echo error 1>&2; exit 7'}),root,signal); expect(command.failed).toBe(true); expect(command.exitCode).toBe(7); expect(command.output).toContain('error');
     expect((await execute('inventada','{}',root,signal)).failed).toBe(true);
   } finally { await rm(root,{recursive:true,force:true}); }
 });
@@ -34,10 +34,22 @@ test("loop fixture lee, edita y verifica archivo; persiste call/result sin reeje
     expect(session.state.events.filter(e=>e.type==='tool-start').length).toBe(3); expect(session.state.messages.filter(m=>m.role==='tool').length).toBe(3);
   } finally {server.stop(true);await session.close();await rm(root,{recursive:true,force:true});}
 });
+test("Bun Shell pipes/redirecciones/cwd y argv literal con metacaracteres", async () => {
+  const { runCommand } = await import("../src/system/command.ts");
+  const root = await mkdtemp(join(tmpdir(), "s42-bun-shell-")), signal = new AbortController().signal;
+  try {
+    const command = await execute("shell", JSON.stringify({ command: "echo 'hello á文🙂' | cat > output.txt; cat output.txt" }), root, signal);
+    expect(command.failed).toBe(false); expect(await Bun.file(join(root, "output.txt")).text()).toBe("hello á文🙂\n");
+    const text = "literal $(touch injected) ; quotes ' \"";
+    const result = await runCommand([process.execPath, "-e", "console.log(process.argv.at(-1));console.log(process.env.S42_SHELL_TEST)", text], { cwd: root, signal, timeoutMs: 2000, env: { ...process.env, S42_SHELL_TEST: "custom" } });
+    expect(result.failed).toBe(false); expect(result.stdout).toContain(text); expect(result.stdout).toContain("custom");
+    expect(await Bun.file(join(root, "injected")).exists()).toBe(false);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
 test("cancelar shell mata también al descendiente de su grupo", async () => {
   const root=await mkdtemp(join(tmpdir(),'s42-cancel-')), controller=new AbortController();
   try {
-    const command='sleep 30 & echo $! > child.pid; wait';
+    const command=`bun -e 'const child=Bun.spawn(["sleep","30"],{stdout:"inherit",stderr:"inherit"});await Bun.write("child.pid",String(child.pid));await child.exited'`;
     const run=execute('shell',JSON.stringify({command}),root,controller.signal);
     for(let i=0;i<100 && !(await Bun.file(join(root,'child.pid')).exists());i++) await Bun.sleep(5);
     const pid=Number((await Bun.file(join(root,'child.pid')).text()).trim()); controller.abort(new Error('cancelado')); const result=await run; expect(result.failed).toBe(true);

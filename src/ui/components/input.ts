@@ -4,6 +4,7 @@ import { graphemes, type InputEvent, type Rect } from "../types.ts";
 import { Component } from "./component.ts";
 
 export class Input extends Component {
+  secret = false;
   placeholder = "";
   private cursor: number;
   private start = 0;
@@ -23,9 +24,10 @@ export class Input extends Component {
     this.cursor = Math.min(this.cursor, chars.length);
     this.start = Math.min(this.start, this.cursor);
     const width = Math.max(1, this.bounds.width);
-    const caretWidth = Math.min(width, Math.max(1, Bun.stringWidth(chars[this.cursor] ?? " ")));
-    while (Bun.stringWidth(chars.slice(this.start, this.cursor).join("")) + caretWidth > width) this.start++;
-    while (this.start > 0 && Bun.stringWidth(chars.slice(this.start - 1, this.cursor).join("")) + caretWidth <= width) this.start--;
+    const displayWidth = (items: string[]) => this.secret ? items.length : Bun.stringWidth(items.join(""));
+    const caretWidth = this.secret ? 1 : Math.min(width, Math.max(1, Bun.stringWidth(chars[this.cursor] ?? " ")));
+    while (displayWidth(chars.slice(this.start, this.cursor)) + caretWidth > width) this.start++;
+    while (this.start > 0 && displayWidth(chars.slice(this.start - 1, this.cursor)) + caretWidth <= width) this.start--;
     return chars;
   }
 
@@ -37,14 +39,14 @@ export class Input extends Component {
     let width = 0;
     let index = this.start;
     const column = Math.max(0, Math.min(this.bounds.width, x));
-    while (index < chars.length && width + Bun.stringWidth(chars[index]!) <= column) width += Bun.stringWidth(chars[index++]!);
+    while (index < chars.length && width + (this.secret ? 1 : Bun.stringWidth(chars[index]!)) <= column) { width += this.secret ? 1 : Bun.stringWidth(chars[index]!); index++; }
     if (this.dragging && x < 0) return Math.max(0, this.start - 1);
     if (this.dragging && x >= this.bounds.width) return Math.min(chars.length, index + 1);
     return index;
   }
 
   draw(canvas: Canvas, bounds: Rect, focused: boolean): void {
-    const chars = this.visible();
+    const chars = this.visible().map(char => this.secret ? "*" : char);
     const style = this.disabled ? theme.disabled : theme.menu;
     canvas.fill(bounds, style);
     if (!this.value) canvas.text(bounds.x, bounds.y, this.placeholder, theme.disabled, bounds.width);

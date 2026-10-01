@@ -96,9 +96,11 @@ test("CLI respeta proyecto/modelo/capacidades/key de config y URL base con path"
       switched = await req.json(); return new Response(event({ content: "Otro servidor." }));
     } });
     try {
+      const saved = JSON.parse(source); saved.providers[0].apiKeySecret = "fixture-unread-keychain-reference";
+      const withSecret = JSON.stringify(saved); await Bun.write(config, withSecret);
       const override = await launch(["--config", config, "--project", "Elegido", "--llm_server", `http://127.0.0.1:${other.port}`, "--prompting", "Hola"], root).done;
       expect(override.code).toBe(0); expect(override.stdout).toBe("Otro servidor.\n"); expect(switched.model).toBe("other-model");
-      expect(headers).toEqual([null, null]); expect(switched.tools.length).toBeGreaterThan(0); expect(await Bun.file(config).text()).toBe(source);
+      expect(headers).toEqual([null, null]); expect(switched.tools.length).toBeGreaterThan(0); expect(await Bun.file(config).text()).toBe(withSecret);
     } finally { other.stop(true); }
   } finally { server.stop(true); await rm(root, { recursive: true, force: true }); }
 });

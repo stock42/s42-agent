@@ -4,7 +4,7 @@ import {tmpdir} from 'node:os';
 import type {Skill} from '../storage/config.ts';
 import type {ToolDefinition} from '../llm/client.ts';
 import type {ToolResult} from '../agent/tools.ts';
-import {killTree} from '../agent/process.ts';
+import {runCommand} from '../system/command.ts';
 
 export interface LoadedSkill {name:string;description:string;path:string;body:string;source?:string}
 export async function readSkill(path:string,requireMatchingFolder=true):Promise<LoadedSkill>{
@@ -45,10 +45,8 @@ export async function installSkill(result:SkillResult,destination:string,signal:
   if(!/^[\w.-]+\/[\w.-]+$/.test(result.source))throw new Error(`Origen sin repositorio GitHub instalable. Consultá ${catalogUrl(result)}`);
   const temp=await mkdtemp(join(tmpdir(),'s42-skill-'));let copied:string|undefined;
   try{
-    signal.throwIfAborted();const child=Bun.spawn(['git','clone','--depth','1',`https://github.com/${result.source}.git`,join(temp,'repo')],{detached:true,stdin:'ignore',stdout:'ignore',stderr:'pipe',env:{...process.env,GIT_TERMINAL_PROMPT:'0'}});
-    const abort=()=>{void killTree(child).catch(()=>{});};signal.addEventListener('abort',abort,{once:true});if(signal.aborted)abort();const timer=setTimeout(abort,120000);let exit:number,stderr:string;
-    try{[exit,stderr]=await Promise.all([child.exited,new Response(child.stderr).text()]);}finally{clearTimeout(timer);signal.removeEventListener('abort',abort);await killTree(child);}
-    signal.throwIfAborted();if(exit!==0)throw new Error(`Git clone falló: ${stderr.slice(-500)}`);
+    const cloned=await runCommand(['git','clone','--depth','1',`https://github.com/${result.source}.git`,join(temp,'repo')],{timeoutMs:120000,signal,env:{...process.env,GIT_TERMINAL_PROMPT:'0'}});
+    signal.throwIfAborted();if(cloned.failed)throw new Error(`Git clone falló: ${cloned.timedOut?'timeout':cloned.stderr.slice(-500)}`);
     const matches:LoadedSkill[]=[];const glob=new Bun.Glob('**/SKILL.md');for await(const path of glob.scan({cwd:join(temp,'repo'),absolute:true,onlyFiles:true})){try{const skill=await readSkill(path,false);if(skill.name===result.skillId||basename(dirname(path))===result.skillId)matches.push(skill);}catch{}}
     if(matches.length!==1)throw new Error(matches.length?'Skill ambigua en el repositorio':'No se encontró la skill del catálogo en el repositorio');
     const selected=matches[0]!;copied=join(resolve(destination),crypto.randomUUID());await mkdir(copied,{recursive:true});const target=join(copied,selected.name);await cp(dirname(selected.path),target,{recursive:true,verbatimSymlinks:true,filter:path=>basename(path)!==".git"});

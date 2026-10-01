@@ -29,7 +29,7 @@ se preparan dentro de ese hito. Después, reutilizar los componentes en el harne
 
 Estado actual: harness desde **`index.ts` raíz**, único entrypoint. `bun run dev`
 abre proyectos/sesiones persistentes; **Models** configura host, puerto, ID del
-modelo y API key (en memoria o nombre de variable). Sin modelo elegido, el chat
+modelo y API key (llavero del SO o nombre de variable). Sin modelo elegido, el chat
 lo indica y no envía requests. `--demo` conserva el laboratorio sin persistencia.
 **`--prompting "pedido"`** ejecuta el mismo agente sin TUI desde `src/cli.ts`:
 `--llm_server`, `--llm_port`, `--llm_apikey`, `--model`, `--reasoning on|off`.
@@ -48,7 +48,15 @@ llama.cpp sigue como default. DeepSeek usa `https://api.deepseek.com` y la clave
 de sesión o `DEEPSEEK_API_KEY`. Guardar consulta `/models` y abre el selector;
 los errores quedan en el formulario. No fijar IDs de modelos ni consultar al iniciar.
 Las plantillas también están disponibles en configuraciones anteriores sin
-reemplazar endpoints registrados. Claves de sesión tienen prioridad y no se guardan.
+reemplazar endpoints registrados. API keys TUI se guardan con Bun.secrets; JSON
+solo guarda apiKeySecret. Campos enmascarados, vacío conserva la clave. CLI
+--llm_apikey tiene prioridad y permanece en memoria; luego llavero y variable.
+Sin llavero accesible, usar variable disponible o mostrar error concreto.
+La elección guarda sesión/proyecto/default global automáticamente; config vieja
+con único modelo del proveedor default se recupera sin red. Nuevas sesiones y
+proyectos heredan defaults, pestañas/sesiones existentes conservan su elección.
+Config global por SO: XDG Linux, Application Support macOS, AppData Windows;
+--config conserva override/sesiones vecinas. [Fase17](docs/phases/17-global-config-and-bun-native.md).
 Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
 read/write/edit/list/find/search/fetch/shell, Vim acotado y adjuntos por rutas ya implementados.
 Etiquetas Vos/Agente con estilos semánticos distintos en historial/stream/estado:
@@ -80,6 +88,16 @@ opcional; PDF requiere un renderizador instalado, no es una API nativa de Bun.
 `websocket` usa el cliente Bun ws/wss, headers/subprotocolos, mensajes de texto,
 recepción texto/base64, 64 KiB, timeout/cancelación y cierre al terminar cada call.
 Las tres aparecen en Tools → Nativas con descripciones ES/EN y en el chat.
+`scrape` agrega Bun.WebView para páginas HTTP(S) renderizadas con JS, selector
+CSS con espera, texto/HTML y enlaces. Cierra cada vista al terminar/cancelar;
+backend compartido hasta salir de index.ts. WebKit macOS; navegador Chrome-family
+instalado en Linux/Windows, sin descargar. API experimental solicitada por usuario.
+Shell usa $ de bun mediante src/system/shell-worker.ts, subprocess propio desde
+index.ts --internal-shell para cancelar árbol/timeout y drenar stdout/stderr.
+src/system/command.ts comparte esa ejecución para shell, Git y nvidia-smi.
+Argv internos escapados; el command de tool es un programa Bun Shell intencional.
+No sustituir MCP stdio: necesita proceso/RPC bidireccional y sigue con Bun.spawn.
+Bun Shell no soporta todo Bash/cmd (background &; stderr exige 1>&2).
 [Papers y decisiones](docs/AGENT-INTELLIGENCE.md), [fase 14](docs/phases/14-internal-skills-and-tools.md).
 No afirmar mejoras porcentuales del modelo por pruebas funcionales; distinguir
 prompt/skills orientativas de memoria episódica, autoaprendizaje o evals A/B.
@@ -178,7 +196,7 @@ CI fuente Linux con Bun 1.4.2. `package.json` conserva `private: true` porque no
 se publica un paquete npm. [Publicación](docs/PUBLISHING.md): no cambiar visibilidad,
 hacer push ni crear releases sin pedido explícito.
 
-Fases 02/03/07/08/09/10/11/12/13/14/15/16 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09/10/11/12/13/14/15/16/17 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.
@@ -275,7 +293,8 @@ esta política Git a los proyectos sobre los que trabaja.
   no convertirla en un framework, motor CSS o paquete publicable por inferencia.
 - Typecheck es independiente de ejecución/build; no decir que Bun verifica tipos.
 - No agregar dependencias o abstracciones sin una necesidad concreta del alcance.
-- No introducir APIs experimentales para reemplazar un camino estable existente.
+- No introducir APIs experimentales para reemplazar un camino estable existente
+  sin pedido explícito; Bun.secrets y Bun.WebView están solicitadas por el usuario.
 - Separar TUI, eventos del agente, cliente LLM, tools y persistencia con módulos
   pequeños; no crear frameworks internos, servicios o bases de datos iniciales.
 - El servidor `llama.cpp` y los modelos son externos al binario del harness.
