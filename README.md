@@ -10,8 +10,8 @@ y puede seguir trabajando mientras usás otro.
 
 ## Empezar
 
-Necesitás **Bun 1.4.2** y un terminal ANSI de al menos **60×16**; recomendado
-80×24. El servidor LLM se configura aparte.
+Necesitás **Bun 1.4.2**. Para la TUI, un terminal ANSI de al menos **60×16**;
+recomendado 80×24. El servidor LLM se configura aparte.
 
 ```bash
 git clone https://github.com/stock42/s42-agent.git
@@ -34,6 +34,54 @@ bun run index.ts --project nombre
 bun run index.ts --config /ruta/config.json
 bun run index.ts --help
 ```
+
+## Ejecutar desde la command line, sin TUI
+
+`--prompting` activa el modo CLI con el mismo loop, instrucciones del proyecto,
+tools nativas, MCP, skills y recuperación por etapas que usa la TUI. Funciona
+sin terminal interactivo y permite redirigir los resultados para comparar pruebas.
+
+```bash
+bun run index.ts \
+  --cwd /ruta/proyecto \
+  --llm_server http://127.0.0.1 \
+  --llm_port 8080 \
+  --prompting "Desarrolla un juego de Tetris en un archivo HTML" \
+  --reasoning off \
+  > respuesta.md 2> ejecucion.log
+```
+
+| Argumento | Comportamiento |
+| --- | --- |
+| `--prompting "texto"` | Ejecuta un turno y termina; admite texto multilínea. |
+| `--llm_server host_o_url` | Host o URL base HTTP/HTTPS. Host sin path usa `/v1`; una URL con path conserva ese path. |
+| `--llm_port puerto` | Sobrescribe el puerto; entero de 1 a 65535. |
+| `--llm_apikey "clave"` | Bearer de esta ejecución, en memoria; opcional para llama.cpp sin autenticación. |
+| `--model id` | ID explícito. Si está registrado conserva contexto/salida/capacidades; si no, usa 8192/2048 tokens y tools habilitadas. |
+| `--reasoning on\|off` | Muestra/oculta razonamiento recibido en stderr. Por defecto usa la preferencia de config; no cambia cómo razona el modelo. |
+| `--cwd carpeta` / `--project nombre_o_id` | Carpeta de trabajo o proyecto registrado; sin ambos, trabaja en la carpeta actual. |
+| `--provider id`, `--config archivo` | Seleccionan proveedor y configuración existentes. |
+| `--session id` | Continúa una sesión de esa carpeta/proyecto; por defecto crea una nueva. |
+
+Los argumentos también admiten `--opción=valor`. Sin `--model` utiliza el modelo
+elegido en la sesión/proyecto o el primero registrado/disponible en `/models`.
+Modelos descubiertos habilitan tools; el servidor debe soportar tool calling.
+Al cambiar el endpoint con flags consulta el catálogo nuevo y usa la clave
+explícita, conservando la configuración guardada. Un ID explícito no requiere
+`/models`. Sin overrides usa llama.cpp o el proveedor configurado y su variable
+de credencial existente.
+
+**stdout** recibe la respuesta en streaming. **stderr** recibe razonamiento si
+está activo, ejecución/resultados de tools, avisos, ruta de sesión y tokens E/S
+con promedio tok/s. Los eventos, parciales y razonamiento se guardan en las
+sesiones habituales. El modo CLI no cambia config, registro de proyectos,
+pestañas ni borradores de la TUI; una carpeta no registrada usa un ID estable.
+Para reabrir una ejecución con endpoint temporal, repetí sus flags.
+
+Código de salida: **0** completado, **1** error, **130** cancelado con Ctrl+C
+(SIGINT), **143** SIGTERM. Cancelar libera la sesión y conserva los efectos ya
+realizados. Sin `--prompting` se mantiene el arranque habitual de la TUI.
+[Validación CLI y modelo real](docs/qa/cli.md).
 
 ## Menús
 

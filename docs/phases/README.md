@@ -8,7 +8,8 @@ Menús de producto organizados, pestañas con turnos por proyecto y preparación
 Tools nativas separadas, búsqueda en disco y recursos/tokens visibles.
 UI español/inglés y razonamiento on/off configurables en Vista.
 Archivos en pestañas de solo lectura con sintaxis HTML/CSS/JavaScript/TypeScript.
-Fases 02/03/07/08/09/10/11/12/13/14/15 completadas; implementación de 00/01/04/05 disponible con
+Modo CLI sin TUI con el mismo agente, tools, sesiones y flags de proveedor.
+Fases 02/03/07/08/09/10/11/12/13/14/15/16 completadas; implementación de 00/01/04/05 disponible con
 validaciones físicas o por SO pendientes. Fase 06 incorpora QA real, rendimiento,
 prueba prolongada y distribución local. [QA integral](../qa/final-validation.md).
 
@@ -32,6 +33,7 @@ de implementación no sustituyen esos criterios de cierre. No hay release public
 | 13 | [Idioma y razonamiento](13-language-and-reasoning.md) | 01–03, 07–12 | UI español/inglés y razonamiento on/off en vivo/persistentes. | R25–R26 |
 | 14 | [Identidad y skills internas](14-internal-skills-and-tools.md) | 04, 08, 12, 13 | Prompt breve, skills internas, Markdown HTML y WebSocket nativos. | R27–R29 |
 | 15 | [Archivos y sintaxis](15-file-tabs-and-syntax.md) | 10, 12, 13 | Archivos en pestañas, panel central completo y resaltado HTML/CSS/JS/TS. | R30 |
+| 16 | [CLI sin TUI](16-cli-without-tui.md) | 02–04, 07, 08, 11 | Mismo agente desde command line, flags de endpoint/prompting/reasoning, sesión y cancelación. | R31 |
 | 06 | [Validación y distribución](06-quality-and-binaries.md) | 00–05 | Evidencia integral, mediciones y binarios comprobados. | R01–R17 |
 
 La UI QBasic, el uso de mouse y los componentes visuales están confirmados. El

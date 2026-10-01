@@ -31,6 +31,18 @@ Estado actual: harness desde **`index.ts` raíz**, único entrypoint. `bun run d
 abre proyectos/sesiones persistentes; **Models** configura host, puerto, ID del
 modelo y API key (en memoria o nombre de variable). Sin modelo elegido, el chat
 lo indica y no envía requests. `--demo` conserva el laboratorio sin persistencia.
+**`--prompting "pedido"`** ejecuta el mismo agente sin TUI desde `src/cli.ts`:
+`--llm_server`, `--llm_port`, `--llm_apikey`, `--model`, `--reasoning on|off`.
+Sin flags de carpeta usa cwd actual; --project elige registro, --cwd ruta.
+Respuesta streaming por stdout; reasoning/tools/resultados/avisos/tokens y sesión
+por stderr. No iniciar App/Desktop/raw mode/monitor en esta rama de index.ts.
+Sin modelo elegido usa el primero registrado o descubierto en /models; modelos
+nuevos habilitan tools. ID explícito funciona sin catálogo, fallback 8192/2048.
+Config solo lectura, overrides y API key en memoria; guardar eventos de sesión,
+no workspace/borrador. Carpeta no registrada tiene ID cli-hash estable; sesión
+nueva por defecto, --session reabre. Ctrl+C/SIGTERM cancelan y liberan locks,
+salida 130/143; éxito 0, error 1. --reasoning controla solo visibilidad, conserva
+reasoning/contexto. [Fase16](docs/phases/16-cli-without-tui.md), [QA](docs/qa/cli.md).
 **Proveedores / Nuevo proveedor** ofrece llama.cpp y DeepSeek preconfigurados;
 llama.cpp sigue como default. DeepSeek usa `https://api.deepseek.com` y la clave
 de sesión o `DEEPSEEK_API_KEY`. Guardar consulta `/models` y abre el selector;
@@ -166,7 +178,7 @@ CI fuente Linux con Bun 1.4.2. `package.json` conserva `private: true` porque no
 se publica un paquete npm. [Publicación](docs/PUBLISHING.md): no cambiar visibilidad,
 hacer push ni crear releases sin pedido explícito.
 
-Fases 02/03/07/08/09/10/11/12/13/14/15 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09/10/11/12/13/14/15/16 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.

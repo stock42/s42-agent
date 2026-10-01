@@ -70,6 +70,7 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R28 | Markdown HTML nativo | Bun.markdown.html desde texto/archivo, fragmento/documento y salida HTML opcional; no requiere una dependencia Markdown. |
 | R29 | WebSocket nativo | Cliente ws/wss para pruebas, headers/subprotocolos, mensajes, timeout/cancelación y cierre por call, visible en chat. |
 | R30 | Archivos en pestañas | Abrir archivos como pestañas junto al proyecto, título con el nombre, panel central completo y sintaxis HTML/CSS/JavaScript/TypeScript. |
+| R31 | CLI sin TUI | Ejecutar pedidos con --prompting, endpoint/puerto/API key y reasoning on/off; mismo agente/tools, stdout/stderr, sesiones y cancelación. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
@@ -136,18 +137,19 @@ TypeScript ejecutado mediante Bun, además de los tests.
 ## 4. Arquitectura mínima
 
 ```text
-CLI → aplicación → TUI
-                 → proyectos y sesiones
-                 → ciclo del agente → cliente LLM → endpoint configurado
-                                    → herramientas → filesystem / procesos
+index.ts → aplicación TUI → proyectos y sesiones
+         → runner CLI    → proyectos y sesiones
+                         → ciclo del agente → cliente LLM → endpoint configurado
+                                            → herramientas → filesystem / procesos
 ```
 
 Estructura acordada: `index.ts` raíz como único entrypoint y componentes dentro
 de `src/ui/components/`. TUI, agente, LLM y persistencia están implementados.
 
 ```text
-index.ts                   argumentos y arranque de demo/harness
+index.ts                   argumentos y arranque de TUI/demo/CLI
 src/
+  cli.ts                   runner sin TUI, overrides, streaming y cancelación
   app.ts                   composición del harness y configuración TUI
   project-tab.ts           estado y controles independientes por proyecto abierto
   prompts.ts               extracción y sustitución literal de metavariables
@@ -1320,3 +1322,49 @@ escritorio; mensajes canónicos se conservan en la sesión y traducen al present
 117 tests, typecheck, flujo real de index.ts en tmux, resize 100×30/60×16,
 reapertura sin color y SSE fixture con tool calling/cancelación. No hubo builds
 ni validación física de mouse/drop en esta tarea.
+
+## 22. Modo CLI sin TUI
+
+R31. `index.ts --prompting "pedido"` activa `src/cli.ts` antes del chequeo de
+TTY y del import de App/terminal. Reutiliza `runTurn` y su prompt, instrucciones,
+tools nativas, MCP/skills, límites, stages, cancelación y registro de eventos.
+Sin prompting conserva el arranque TUI/demo; no crear un loop alternativo.
+
+Argumentos: `--llm_server host_o_url`, `--llm_port entero_1_a_65535`,
+`--llm_apikey clave`, `--reasoning on|off`, además de --config, --provider,
+--model, --cwd/--project y --session. Aceptar valor separado o con `=`; preservar
+prompt multilínea/Unicode y no tratar su texto como una opción de ayuda.
+Rechazar valores ausentes, puerto inválido, reasoning distinto de on/off,
+--project combinado con --cwd y --demo combinado con --prompting.
+Flags exclusivos de CLI requieren --prompting; errores legibles sin renderer.
+
+Host sin path utiliza /v1; URL base conserva su path. Flags sobrescriben endpoint
+en memoria, sin reescribir config ni guardar credenciales. Endpoint diferente
+descarta metadata/variable de clave del proveedor anterior: modelo por flag o
+catálogo nuevo y clave explícita. Sin overrides respeta el proveedor/config y
+su mecanismo de credenciales existente. API key CLI tiene prioridad.
+--model registrado conserva límites/capacidades; ID no registrado funciona sin
+GET /models con contexto 8192, salida 2048 y tools habilitadas. Sin ID elegido,
+usar primero registrado o disponible en /models; descubrimiento habilita tools.
+No iniciar ni descargar servidores/modelos. Tool calling depende del servidor.
+
+Contexto: cwd actual o --cwd, o proyecto registrado con --project. No restaurar
+pestañas/borrador/último proyecto ni modificarlos. Config solo lectura; carpetas
+no registradas usan ID determinista `cli-` + hash de la ruta normalizada.
+Nueva sesión por ejecución; --session reabre explícitamente bajo ese proyecto.
+Usar locks/persistencia existentes. Guardar prompt, selección, mensajes,
+reasoning, resultados, uso y estado; no guardar claves ni endpoints temporales.
+
+Respuesta del modelo en streaming por stdout. Reasoning recibido (si on),
+ejecución/resultados de tools, notices, ruta de sesión y métricas por stderr.
+--reasoning por defecto respeta ui.showReasoning; modifica solo presentación,
+no generación ni contexto/sesión. Sin ANSI de TUI ni requisito de TTY; permitir
+redirección a archivos para analizar resultados. Promedio tok/s igual al core.
+Códigos: 0 turno completado, 1 error, 130 SIGINT, 143 SIGTERM. Señales abortan
+fetch/tools, conservan parciales/efectos y liberan locks; no reejecutar tools al
+reabrir. Restaurar handlers al salir. Config inválida y fallos de conexión siguen
+los contratos existentes, sin flujos interactivos.
+
+[Fase16](phases/16-cli-without-tui.md), [QA](qa/cli.md): proceso sin TTY,
+fixtures de flags/coding/config/skills/error/stages/señales, regresión TUI y
+GLM-4.7-Flash real con edición y tests independientes. Sin build/publicación.

@@ -5,6 +5,22 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Agente desde command line sin TUI
+
+- --prompting activa src/cli.ts desde index.ts antes de cargar App/terminal;
+  --llm_server, --llm_port, --llm_apikey y --reasoning on/off, junto a los flags
+  existentes de proyecto/cwd/modelo/proveedor/config/sesión. Valores separados
+  o con =, validación y ayuda actualizada. Overrides/clave en memoria.
+- Mismo runTurn, tools nativas, instrucciones, MCP/skills y etapas. Respuesta
+  streaming por stdout; reasoning opcional, tools/resultados, sesión y tokens
+  por stderr. Config/borradores/pestañas intactos; nueva sesión o reapertura.
+  SIGINT/SIGTERM cancelan, conservan parciales y liberan locks (130/143).
+- Typecheck, suite completa 142 tests / 30 archivos y pruebas CLI/TUI finales
+  correctas. GLM-4.7-Flash real leyó/editó/verificó una suma: read/read/edit/shell/
+  read, test independiente correcto, 12158 entrada/450 salida y 36,5 tok/s.
+  [QA](docs/qa/cli.md), README/specs/AGENTS/fase16 actualizados.
+  Sin builds ni push; pull falló por main sin upstream. Cambios ajenos preservados.
+
 ### Mejorado — Promedio tok/s identificado en Prompt
 
 - Contador explícito `Tokens E/S … · Prom. … tok/s` arriba a la derecha;
