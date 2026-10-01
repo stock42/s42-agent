@@ -63,8 +63,9 @@ real complementa los tests de secuencias ANSI.
 
 | Tarea/caso | Comando o captura | Resultado, terminal y versión |
 | --- | --- | --- |
-| Layout/edición/resize | [QA actual](../qa/workspace.md), [capturas](../qa/workspace-captures.txt) | Editor con proyecto, prompt fijo, respuesta demo, componentes reutilizados y tamaños 80×24 / 60×16 / 120×40. |
-| Fuente Bun | `bun run typecheck`, tests de componentes y PTY | 36 casos: input limpio, edición, envío, foco, scroll, restricciones de paneles, monocromo y cleanup. Sin build de binarios. |
+| Layout/edición/resize | [QA del layout](../qa/workspace.md), [capturas](../qa/workspace-captures.txt) | Editor con proyecto, prompt fijo, respuesta demo, componentes reutilizados y tamaños 80×24 / 60×16 / 120×40. |
+| Apariencia QBasic | [QA actual](../qa/qbasic-style.md), [capturas](../qa/qbasic-style-captures.txt) | Paleta DOS RGB/fallback ANSI, marcos finos, pestañas grises, Ayuda a la derecha y barra turquesa. Prompt visible con modal en 60×16. |
+| Fuente Bun | `bun run typecheck`, `bun test` | 38 casos: input limpio, edición, envío, foco, scroll, restricciones de paneles, color, monocromo y cleanup. Sin build de binarios. |
 | Pendiente | Streaming, Markdown, modelo/sesión, cancelación y selectores | No implementados; fixtures no demuestran operación de un proveedor. Mouse físico pendiente. |
 
 ## Cierre

@@ -3,7 +3,7 @@ import { theme } from "../theme.ts";
 import { contains, type InputEvent, type Rect } from "../types.ts";
 
 export interface MenuItem { label: string; shortcut?: string; disabled?: boolean; run: () => void }
-export interface Menu { label: string; hotkey?: string; items: MenuItem[] }
+export interface Menu { label: string; hotkey?: string; align?: "right"; items: MenuItem[] }
 
 export class MenuBar {
   opened = -1;
@@ -18,8 +18,10 @@ export class MenuBar {
   resize(width: number, height: number): void { this.width = width; this.height = height; }
 
   private header(index: number): Rect {
-    return { x: 1 + this.menus.slice(0, index).reduce((sum, menu) => sum + Bun.stringWidth(menu.label) + 3, 0),
-      y: 0, width: Bun.stringWidth(this.menus[index]!.label) + 2, height: 1 };
+    const menu = this.menus[index]!; const width = Bun.stringWidth(menu.label) + 2;
+    return { x: menu.align === "right" ? this.width - width - 1
+      : 1 + this.menus.slice(0, index).filter(menu => menu.align !== "right").reduce((sum, menu) => sum + Bun.stringWidth(menu.label) + 3, 0),
+      y: 0, width, height: 1 };
   }
 
   private popup(): Rect {
@@ -96,7 +98,7 @@ export class MenuBar {
     canvas.fill({ x: 0, y: 0, width: canvas.width, height: 1 }, theme.menu);
     this.menus.forEach((menu, index) => {
       const rect = this.header(index);
-      canvas.text(rect.x, 0, ` ${menu.label} `, index === this.opened ? theme.selected : theme.menu);
+      canvas.text(rect.x, 0, ` ${menu.label} `, index === this.opened ? theme.menuSelection : theme.menu);
       const hotkey = menu.label.toLowerCase().indexOf((menu.hotkey ?? menu.label[0] ?? "").toLowerCase());
       if (hotkey >= 0) canvas.text(rect.x + 1 + Bun.stringWidth(menu.label.slice(0, hotkey)), 0, menu.label[hotkey]!,
         index === this.opened ? theme.selectedHotkey : theme.menuHotkey);
@@ -106,10 +108,10 @@ export class MenuBar {
     canvas.fill({ ...popup, x: popup.x + 1, y: popup.y + 1 }, theme.shadow);
     canvas.fill(popup, theme.menu); canvas.box(popup, theme.menu);
     this.menus[this.opened]!.items.slice(0, popup.height - 2).forEach((item, index) => {
-      const style = item.disabled ? theme.disabled : index === this.selected ? theme.selected : theme.menu;
+      const style = item.disabled ? theme.disabled : index === this.selected ? theme.menuSelection : theme.menu;
       canvas.fill({ x: popup.x + 1, y: popup.y + index + 1, width: popup.width - 2, height: 1 }, style);
       const shortcutWidth = Bun.stringWidth(item.shortcut ?? "");
-      canvas.text(popup.x + 2, popup.y + index + 1, `${index === this.selected ? ">" : " "}${item.label}`, style,
+      canvas.text(popup.x + 2, popup.y + index + 1, item.label, style,
         popup.width - 4 - (shortcutWidth ? shortcutWidth + 1 : 0));
       if (item.shortcut) canvas.text(popup.x + popup.width - Bun.stringWidth(item.shortcut) - 2, popup.y + index + 1, item.shortcut, style);
     });

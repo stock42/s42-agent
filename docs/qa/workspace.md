@@ -1,6 +1,8 @@
 # UI del proyecto y prompt fijo
 
-Fecha: 2026-10-01. Fuente: `index.ts` → `src/ui/workspace.ts`.
+Fecha: 2026-10-01. Snapshot del layout: `e56056c`.
+Fuente: `index.ts` → `src/ui/workspace.ts`.
+La apariencia posterior se registra en [qbasic-style.md](qbasic-style.md).
 Alcance: pedido visual del usuario, editor con proyecto y prompt permanente.
 La respuesta es una **demostración explícita**, sin requests LLM ni escrituras de
 archivos/proyectos. El registro de múltiples proyectos sigue en fase 02.

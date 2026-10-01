@@ -36,7 +36,7 @@ test("paneles fijos conservan proyecto y prompt visibles al cerrar o arrastrar",
   expect(heading.indexOf(` ${project.name} `)).toBe(Math.floor((desktop.width - project.name.length - 2) / 2));
   expect(canvas.lines().join("\n")).not.toContain("[X]");
   expect(canvas.cells[editor.bounds.y]![0]!.text).toBe("┌");
-  expect(canvas.cells[prompt.bounds.y]![0]!.text).toBe("╔");
+  expect(canvas.cells[prompt.bounds.y]![0]!.text).toBe("┌");
   desktop.focus(editor); expect(desktop.draw().lines().join("\n")).toContain("La respuesta aparecerá en este editor.");
 });
 
@@ -116,8 +116,25 @@ test("botones centrados, marco unido y estados legibles en monocromo", () => {
   const window = desktop.active!; const button = window.controlRect(window.controls[2]!);
   const canvas = desktop.draw(); const text = "< Aceptar >";
   expect(canvas.lines()[button.y]!.indexOf(text)).toBe(button.x + Math.floor((button.width - Bun.stringWidth(text)) / 2));
-  expect(canvas.cells[window.bounds.y]![window.bounds.x]!.text).toBe("╔");
-  expect(canvas.cells[window.bounds.y]![window.bounds.x + window.bounds.width - 1]!.text).toBe("╗");
+  expect(canvas.cells[window.bounds.y]![window.bounds.x]!.text).toBe("┌");
+  expect(canvas.cells[window.bounds.y]![window.bounds.x + window.bounds.width - 1]!.text).toBe("┐");
   const disabled = window.controlRect(window.controls[5]!); expect(canvas.cells[disabled.y]![disabled.x]!.style).toBe(theme.disabled);
   expect(new Renderer().frame(canvas, false)).toContain("\x1b[2m");
+});
+
+test("pestañas QBasic, barra turquesa y Ayuda a la derecha conservan hit testing", () => {
+  const { desktop, editor } = panels();
+  for (const width of [60, 80, 120]) {
+    desktop.resize(width, 24); const canvas = desktop.draw();
+    const titleX = canvas.lines()[editor.bounds.y]!.indexOf(` ${project.name} `);
+    expect(canvas.cells[editor.bounds.y]![titleX]!.style).toBe(theme.title);
+    expect(canvas.cells[23]![0]!.style).toBe(theme.footer);
+    expect(canvas.lines()[0]!.indexOf("Ayuda")).toBe(width - 7);
+    desktop.handle(mouse(width - 4, 0)); desktop.handle(mouse(width - 4, 0, "release"));
+    expect(desktop.menu.opened).toBe(3);
+    const popup = desktop.draw(); const option = popup.lines()[2]!;
+    expect(option).toContain("Atajos y mouse"); expect(option).not.toContain(">Atajos");
+    expect(popup.cells[2]![option.indexOf("Atajos")]!.style).toBe(theme.menuSelection);
+    desktop.handle(key("escape"));
+  }
 });

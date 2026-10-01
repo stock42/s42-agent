@@ -7,7 +7,8 @@ Estado actual: demo QBasic implementada desde `index.ts`, con componentes en
 teclado y layout comprobada en PTY/tmux; falta mouse físico. La fase 01 está
 **En curso**: editor central con proyecto y prompt fijo, adelantados a solicitud
 del usuario; streaming/Markdown pendientes. Fases 02–06 pendientes.
-[UI actual](../qa/workspace.md), [evidencia inicial](../qa/tui-demo.md).
+[Apariencia actual](../qa/qbasic-style.md), [layout/edición](../qa/workspace.md),
+[evidencia inicial](../qa/tui-demo.md).
 
 | Fase | Archivo | Depende de | Resultado | Requisitos |
 | --- | --- | --- | --- | --- |

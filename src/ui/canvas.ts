@@ -1,5 +1,5 @@
 import { contains, graphemes, intersect, type Rect } from "./types.ts";
-import { theme, type Style } from "./theme.ts";
+import { dosColors, theme, type Style } from "./theme.ts";
 
 export interface Cell { text: string; style: Style; width: number }
 
@@ -66,7 +66,8 @@ export class Canvas {
   }
 }
 
-function ansi(style: Style): string {
+function ansi(style: Style, trueColor: boolean): string {
+  if (trueColor) return `\x1b[38;2;${dosColors[style.fg]};48;2;${dosColors[style.bg]}m`;
   return `\x1b[${style.fg < 8 ? 30 + style.fg : 90 + style.fg - 8};${style.bg < 8 ? 40 + style.bg : 100 + style.bg - 8}m`;
 }
 
@@ -74,8 +75,8 @@ export class Renderer {
   private previous: string[] = [];
   private size = "";
 
-  frame(canvas: Canvas, color = true): string {
-    const size = `${canvas.width}:${canvas.height}:${color}`;
+  frame(canvas: Canvas, color = true, trueColor = false): string {
+    const size = `${canvas.width}:${canvas.height}:${color}:${trueColor}`;
     let output = size !== this.size ? "\x1b[2J" : "";
     if (size !== this.size) this.previous = [];
     this.size = size;
@@ -85,10 +86,10 @@ export class Renderer {
       let current = "";
       for (const cell of canvas.cells[y]!) {
         if (cell.width === 0) continue;
-        const inverted = cell.style === theme.focused || cell.style === theme.selected || cell.style === theme.selectedHotkey;
+        const inverted = cell.style === theme.focused || cell.style === theme.selected || cell.style === theme.selectedHotkey || cell.style === theme.menuSelection;
         const mnemonic = cell.style === theme.menuHotkey || cell.style === theme.selectedHotkey;
         const dim = cell.style === theme.disabled || cell.style === theme.inactiveTitle;
-        const code = color ? ansi(cell.style) : (inverted ? "\x1b[7m" : "\x1b[27m") + (mnemonic ? "\x1b[4m" : "\x1b[24m") + (dim ? "\x1b[2m" : "\x1b[22m");
+        const code = color ? ansi(cell.style, trueColor) : (inverted ? "\x1b[7m" : "\x1b[27m") + (mnemonic ? "\x1b[4m" : "\x1b[24m") + (dim ? "\x1b[2m" : "\x1b[22m");
         if (code !== current) { line += code; current = code; }
         line += cell.text;
       }

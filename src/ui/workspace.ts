@@ -64,7 +64,7 @@ export function createWorkspace(project: ProjectContext = { name: basename(proce
       { label: "Componentes", run: demo.components }, { label: "Nueva ventana", run: demo.secondary },
       { label: "Diálogo modal", run: () => demo.dialog() },
     ] },
-    { label: "Ayuda", hotkey: "y", items: [{ label: "Atajos y mouse", shortcut: "Alt+Y", run: help }] },
+    { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", shortcut: "Alt+Y", run: help }] },
   );
   return desktop;
 }

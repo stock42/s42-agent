@@ -12,6 +12,7 @@ export function runTerminal(desktop: Desktop, options: { color: boolean; mouse: 
   }
   return new Promise((resolve, reject) => {
     const renderer = new Renderer();
+    const trueColor = /^(truecolor|24bit)$/i.test(process.env.COLORTERM ?? "");
     const wasRaw = process.stdin.isRaw;
     let done = false;
     let frameTimer: ReturnType<typeof setTimeout> | undefined;
@@ -33,7 +34,7 @@ export function runTerminal(desktop: Desktop, options: { color: boolean; mouse: 
       if (done) return;
       try {
         // A full last row must not scroll the terminal at the bottom-right cell.
-        const output = renderer.frame(desktop.draw(), options.color);
+        const output = renderer.frame(desktop.draw(), options.color, trueColor);
         if (output) process.stdout.write(`\x1b[?7l${output}\x1b[?7h`);
         lastFrame = performance.now();
       } catch (error) { finish(error); }

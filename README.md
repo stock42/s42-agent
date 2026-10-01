@@ -53,6 +53,11 @@ bun run index.ts --no-color
 bun run index.ts --no-mouse
 ```
 
+La apariencia sigue las capturas de QBasic: azul DOS, marcos finos, títulos en
+pestañas grises, Ayuda a la derecha y barra inferior turquesa. Con
+`COLORTERM=truecolor` o `24bit` se usa la paleta RGB propia; en otros terminales
+se conservan los 16 colores ANSI, cuyo tono depende de la paleta del emulador.
+
 También se respeta `NO_COLOR`. Sin color, cursor y selección usan video inverso,
 los menús subrayan sus letras de acceso; botones deshabilitados y títulos
 inactivos usan texto tenue. Fuera de TTY o con `TERM=dumb`, se informa el
@@ -94,7 +99,8 @@ bun test
 ```
 
 La prioridad actual es iterar sobre `bun run dev`, mouse, teclado, foco y layout.
-[Layout y comprobaciones actuales](docs/qa/workspace.md).
+[Apariencia y comprobaciones actuales](docs/qa/qbasic-style.md),
+[layout y edición](docs/qa/workspace.md).
 
 ## Distribución, cuando corresponda
 

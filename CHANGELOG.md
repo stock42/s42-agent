@@ -104,3 +104,16 @@ cierre de cada tarea e incluirlo en su commit.
   capturas tmux en 80×24 / 60×16 / 120×40. Mouse físico pendiente.
 - Sin builds ni benchmarks de binarios. `git pull` intentado: `main` sigue sin
   upstream; trabajo y commit locales.
+
+### Mejorado — Apariencia según las capturas de QBasic
+
+- Paleta DOS propia en terminales que anuncian truecolor/24bit; fallback de 16
+  colores ANSI y modos sin color conservados. Barra inferior turquesa.
+- Marcos finos de una línea, títulos centrados en pestañas grises, Ayuda a la
+  derecha y selección negra en los menús, sin el prefijo `>`.
+- Editor del proyecto y Prompt fijo conservados; controles, mouse, foco y atajos
+  sin teclas F mantienen su comportamiento.
+- Typecheck, 38 pruebas desde fuente y cuatro capturas tmux con RGB comprobadas;
+  evidencia en `docs/qa/qbasic-style.md`. Actualizados README, AGENTS, specs y fases.
+- Sin builds ni benchmarks de binarios; mouse físico pendiente. `git pull`
+  intentado: `main` sigue sin upstream; trabajo y commit locales.

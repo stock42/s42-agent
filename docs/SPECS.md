@@ -2,11 +2,12 @@
 
 Fecha: 2026-10-01. Estado: layout QBasic del agente desde `index.ts`, con editor
 central y prompt fijo; el harness de coding/LLMs sigue pendiente.
-[Evidencia actual](qa/workspace.md), [demo inicial](qa/tui-demo.md).
+[Apariencia actual](qa/qbasic-style.md), [layout/edición](qa/workspace.md),
+[demo inicial](qa/tui-demo.md).
 
 Prioridad confirmada: perfeccionar la experiencia dentro de la TUI mediante
 `bun run dev`. Builds, smoke y benchmarks de binarios se realizan al preparar
-distribución o a pedido explícito. [UI actual](qa/workspace.md).
+distribución o a pedido explícito. [UI actual](qa/qbasic-style.md).
 
 ## 1. Objetivo
 
@@ -237,6 +238,12 @@ estado por color/video inverso/tenue, sin combinar marcadores de foco/presión.
 Los marcos conservan esquinas unidas a la cabecera y sombras de una celda solo
 en ventanas flotantes.
 
+Las capturas de QBasic suministradas fijan la guía visual: azul DOS `#0000AA`,
+gris `#AAAAAA`, barra inferior turquesa `#00AAAA`, marcos finos de una línea,
+títulos centrados en pestañas grises y Ayuda alineada a la derecha. Los menús
+seleccionan con fondo negro, sin añadir un marcador `>` a la etiqueta.
+El panel inferior conserva el nombre Prompt y sus acciones del harness.
+
 Ventanas y menús usan un orden de superposición común. Cerrar una ventana auxiliar
 no elimina una sesión ni borra datos. Las acciones de cancelar o salir deben ser explícitas.
 
@@ -259,6 +266,9 @@ fallida ni a un turno cancelado.
   invade su marco ni controles vecinos, incluso con texto ancho.
 - Detectar capacidad de color y respetar `NO_COLOR` y `TERM=dumb`; acompañar los
   colores con texto. Con `TERM=dumb`, mostrar el requisito de un terminal ANSI.
+  Implementación actual: paleta DOS RGB si `COLORTERM` indica `truecolor` o
+  `24bit`; fallback a 16 colores ANSI en los demás casos. El fallback depende de
+  la paleta del emulador. No modificar su paleta global ni fijar su tipografía.
 - Soportar al menos 80×24 y degradar a un layout compacto en 60×16 sin perder el
   editor ni el estado. Tamaños menores reciben un aviso legible.
 - Si stdin o stdout no es TTY, informar que el modo interactivo necesita un

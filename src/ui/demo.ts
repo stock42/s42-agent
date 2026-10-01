@@ -21,7 +21,7 @@ export function createDemo(): Desktop {
       { label: "Diálogo modal", run: () => panels.dialog() },
       { label: "Agente LLM (próxima fase)", disabled: true, run: () => {} },
     ] },
-    { label: "Ayuda", hotkey: "y", items: [{ label: "Atajos y mouse", shortcut: "Alt+Y", run: panels.help }] },
+    { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", shortcut: "Alt+Y", run: panels.help }] },
   );
   desktop.onHelp = panels.help;
   panels.components();

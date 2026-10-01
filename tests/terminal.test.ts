@@ -3,7 +3,8 @@ import { resolve } from "node:path";
 
 const root = resolve(import.meta.dir, "..");
 const command = process.env.S42_TEST_BINARY ? [resolve(process.env.S42_TEST_BINARY)] : [process.execPath, `${root}/index.ts`];
-const env = { ...process.env, TERM: "xterm-256color" };
+const { NO_COLOR: inheritedNoColor, ...inheritedEnv } = process.env;
+const env = { ...inheritedEnv, TERM: "xterm-256color", COLORTERM: "truecolor" };
 
 async function until(check: () => boolean, timeout = 3000): Promise<void> {
   const deadline = performance.now() + timeout;
@@ -36,6 +37,8 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
       await until(() => run.output.includes("Demo sin LLM"));
       expect(run.output).toContain("\x1b[?1006h");
       expect(run.output).toContain("\x1b[?1003h");
+      expect(run.output).toContain("48;2;0;0;170m");
+      expect(run.output).toContain("48;2;0;170;170m");
       // Pegar no envía: el botón Enviar comparte la acción de Enter.
       run.terminal.write("\x1b[200~á文🙂\nSegunda línea\x1b[201~");
       await until(() => run.output.includes("Segunda línea"));
@@ -59,7 +62,7 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
       // Abrir ayuda mientras el desplegable sigue abierto.
       const beforeHelp = run.output.length;
       run.terminal.write("\x1b");
-      await until(() => run.output.slice(beforeHelp).includes(">Salir"));
+      await until(() => run.output.slice(beforeHelp).includes("Ctrl+Q"));
       run.terminal.write("\x1by");
       await until(() => run.output.slice(beforeHelp).includes("Ctrl+A / Shift+flechas"));
       run.terminal.write("\x1b"); await Bun.sleep(80);

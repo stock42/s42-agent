@@ -104,6 +104,16 @@ describe("interacciones de escritorio", () => {
 });
 
 describe("render y composición", () => {
+  test("paleta DOS RGB conserva fallback ANSI, monocromo y repintado al cambiar perfil", () => {
+    const canvas = new Canvas(4, 1); canvas.fill({ x: 0, y: 0, width: 4, height: 1 }, theme.window);
+    const renderer = new Renderer();
+    expect(renderer.frame(canvas)).toContain("\x1b[37;44m");
+    const rgb = renderer.frame(canvas, true, true);
+    expect(rgb).toContain("\x1b[2J"); expect(rgb).toContain("\x1b[38;2;170;170;170;48;2;0;0;170m");
+    expect(renderer.frame(canvas, true, true)).toBe("");
+    expect(renderer.frame(canvas, false, true)).not.toContain("38;2;");
+  });
+
   test("Unicode ancho, capas parciales y clipping mantienen el ancho de cada fila", () => {
     const canvas = new Canvas(12, 4); canvas.text(0, 0, "á文🙂", theme.window);
     canvas.clipped({ x: 3, y: 0, width: 1, height: 1 }, () => canvas.text(3, 0, "X", theme.title));

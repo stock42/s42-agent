@@ -42,7 +42,8 @@ físico en un terminal gráfico. El primer binario Linux x64 corresponde al hito
 inicial; la comprobación de un host sin Bun/Node pertenece a distribución.
 La fase 01 está **En curso** por pedido del usuario: layout y edición multilínea
 implementados; streaming y Markdown pendientes.
-Evidencia actual: [docs/qa/workspace.md](docs/qa/workspace.md); hito inicial:
+Evidencia actual: [apariencia QBasic](docs/qa/qbasic-style.md) y
+[layout/edición](docs/qa/workspace.md); hito inicial:
 [docs/qa/tui-demo.md](docs/qa/tui-demo.md). Actualizar este estado al
 desarrollar; eventos inyectados no cierran la prueba manual.
 
@@ -66,6 +67,9 @@ desarrollar; eventos inyectados no cierran la prueba manual.
 - Editor central titulado con el nombre del proyecto, como el archivo en QBasic.
   Prompt en un panel fijo siempre visible. No permitir cerrar/mover esos paneles
   ni tapar el prompt con auxiliares; mostrar las respuestas dentro del editor.
+- Usar las capturas de QBasic suministradas como guía: azul DOS, marcos finos,
+  títulos centrados en pestañas grises, Ayuda a la derecha, menús con selección
+  negra y barra inferior turquesa. Conservar atajos sin teclas F.
 
 ## Regla Git obligatoria
 
