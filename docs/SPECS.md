@@ -1,6 +1,7 @@
 # s42-agent — Especificaciones
 
-Fecha: 2026-10-01. Estado: diseño inicial; el harness todavía no está implementado.
+Fecha: 2026-10-01. Estado: demo QBasic implementada desde `index.ts`; el harness
+de coding sigue pendiente. [Evidencia de la demo](qa/tui-demo.md).
 
 ## 1. Objetivo
 
@@ -116,18 +117,24 @@ CLI → aplicación → TUI
                                     → herramientas → filesystem / procesos
 ```
 
-Estructura objetivo; todavía no existe:
+Estructura acordada: `index.ts` raíz como único entrypoint y componentes dentro
+de `src/ui/components/`. La UI existe; agente, LLM y storage son objetivos futuros.
 
 ```text
+index.ts                   argumentos y arranque de demo/harness
 src/
-  tui-demo.ts              demo independiente de viabilidad, primer entregable
-  cli.ts                   argumentos y arranque
-  app.ts                   coordinación y estado activo
-  tui/                     terminal, input, render y componentes visuales
-  agent/                   ciclo, mensajes y herramientas
-  llm/                     configuración del request y parser SSE
-  storage/                 configuración, proyectos y sesiones
-  attachments/             rutas pegadas y preparación de adjuntos
+  ui/
+    terminal.ts            lifecycle y frames por demanda
+    input-parser.ts        teclado, paste y mouse
+    canvas.ts              celdas, clipping y renderer
+    theme.ts               paleta QBasic
+    desktop.ts             foco, capas y captura
+    demo.ts                composición de la demo inicial
+    components/            window, button, input, select-list, menu
+  agent/                   objetivo: ciclo, mensajes y herramientas
+  llm/                     objetivo: requests y parser SSE
+  storage/                 objetivo: configuración, proyectos y sesiones
+  attachments/             objetivo: rutas y preparación de adjuntos
 tests/                     pruebas de comportamiento y fixtures
 scripts/                   build y mediciones en TypeScript/Bun
 docs/SPECS.md
@@ -173,9 +180,9 @@ funciones del IDE QBasic ni incorporar un segundo tema tipo Pi.
 | `Desktop` | Área de trabajo, orden de superposición, foco y composición de ventanas. |
 | `Window` | Marco, título, contenido recortado, cierre y arrastre por el título. |
 | `Button` | Activación por clic/Enter/Espacio, foco y estados visible/deshabilitado. |
-| `MenuBar` y `MenuPopup` | Menús de cabecera, desplegables, separadores, selección y cierre. |
+| `MenuBar` | Menús de cabecera y desplegable integrado, selección y cierre. |
 | `Dialog` | Ventana modal que restringe input al diálogo y restaura el foco al cerrar. |
-| `TextInput` | Campo editable con cursor, foco, teclado y paste. |
+| `Input` | Campo editable con cursor, foco, teclado y paste. |
 | `SelectList` | Lista con selección por clic/flechas y scroll con rueda/teclado. |
 
 Un componente conserva estado mínimo y expone un contrato tipado para dibujar,
@@ -629,7 +636,8 @@ flush se verifica en las pruebas de interrupción.
 
 ## 12. Rapidez y estabilidad
 
-Objetivos iniciales, **todavía no medidos**:
+Objetivos del producto. La demo ya tiene mediciones PTY en
+[qa/tui-demo.md](qa/tui-demo.md); SSE, sesiones e inferencia siguen sin medir.
 
 | Métrica | Objetivo | Medición |
 | --- | --- | --- |
@@ -658,11 +666,13 @@ El historial durable puede crecer; el viewport y sus caches tienen límites.
 El primer build será mínimo y verificable:
 
 ```bash
-bun build ./src/tui-demo.ts --compile --outfile ./dist/s42-tui-demo
+bun build ./index.ts --compile --outfile ./dist/s42-agent
 ```
 
-Es un comando objetivo para la primera demo de viabilidad, fase 00;
-`src/tui-demo.ts` todavía no existe. El harness tendrá su propio entrypoint después.
+Comando implementado en `bun run build` para la demo de fase 00. `index.ts`
+es también el punto de entrada del futuro agente, por decisión del usuario.
+El artefacto Linux x64 y sus mediciones están registrados en
+[qa/tui-benchmark.json](qa/tui-benchmark.json).
 
 En desarrollo, empezar por Linux x64, que es el entorno de este checkout. La
 distribución objetivo incluye Linux x64/arm64, macOS x64/arm64 y Windows x64.

@@ -1,0 +1,19 @@
+{
+  "name": "s42-agent",
+  "version": "0.1.0",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run index.ts",
+    "typecheck": "bun ./node_modules/typescript/bin/tsc --noEmit",
+    "test": "bun test",
+    "build": "bun build ./index.ts --compile --outfile ./dist/s42-agent",
+    "bench:tui": "bun run scripts/bench-tui.ts"
+  },
+  "engines": { "bun": "1.4.2" },
+  "devDependencies": {
+    "@types/bun": "1.4.2",
+    "typescript": "7.0.2"
+  }
+}

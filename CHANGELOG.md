@@ -40,3 +40,26 @@ cierre de cada tarea e incluirlo en su commit.
   inyectados en PTY de la interacción con mouse real en un terminal gráfico.
 - Este cambio de diseño no constituye una demo implementada ni una prueba de
   viabilidad completada. Se volvió a intentar `git pull`, sin remoto/upstream.
+
+### Agregado — Demo QBasic desde index.ts
+
+- `index.ts` raíz como punto de entrada: laboratorio TUI, ayuda/version y opciones
+  sin color/mouse; error limpio si falta terminal interactivo.
+- `src/ui/components/`: Window, Button, Input, SelectList y MenuBar con
+  desplegable integrado; modal reutilizando Window. Desktop con foco, capas,
+  cierre, captura de mouse y arrastre de títulos.
+- Parser incremental de teclado, mouse SGR y paste; canvas con grafemas Unicode,
+  clipping y renderer por filas modificadas. Paleta QBasic, estados por texto,
+  cursor monocromo, resize y lifecycle con cleanup.
+- Scripts Bun `dev`, `typecheck`, `test`, `build` y `bench:tui`; Bun/types 1.4.2,
+  TypeScript 7.0.2 y lockfile. Cero dependencias de runtime.
+- 17 tests de comportamiento/PTY, binario Linux x64 compilado y ejecutado desde
+  `/tmp`; benchmark sobre una copia externa con PATH sin Bun/Node.
+- README, specs, AGENTS y fase 00 actualizados. Evidencia en `docs/qa/`: capturas
+  tmux, mediciones, hallazgos corregidos y límites de la validación.
+- Medición final PTY: arranque p95 16,76 ms (30 muestras), input p95 35,93 ms
+  (100), RSS 36,39 MiB, cero bytes en idle de 10 s y 50 ciclos de modales.
+- Fase 00 En curso: quedan mouse físico y host sin Bun/Node. Proveedores,
+  agente de coding y drag & drop del SO siguen pendientes.
+- Tras configurar el remoto, se volvió a intentar `git pull`: el remoto aún no
+  tiene ramas y `main` no tiene upstream. Trabajo y commit locales; sin push.

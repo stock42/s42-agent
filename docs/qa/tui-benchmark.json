@@ -1,0 +1,29 @@
+{
+  "measuredAt": "2026-10-01T14:25:36.580Z",
+  "bun": "1.4.2",
+  "platform": "linux",
+  "arch": "x64",
+  "cpu": "Intel(R) Core(TM) Ultra 9 275HX",
+  "ramKiB": 65274432,
+  "os": "Ubuntu 24.04.5 LTS",
+  "terminal": "Bun.Terminal · 80×24 · xterm-256color",
+  "binaryBytes": 81352160,
+  "sha256": "2623c2d2b9df283f338f127c22fde7133419a471bdd63915b3cbd1c553de4363",
+  "startup": {
+    "samples": 30,
+    "minMs": 14.681572000000017,
+    "p50Ms": 15.309282999999994,
+    "p95Ms": 16.758767999999975,
+    "maxMs": 16.918225000000007
+  },
+  "input": {
+    "samples": 100,
+    "minMs": 33.005087,
+    "p50Ms": 34.792880000000196,
+    "p95Ms": 35.92976199999998,
+    "maxMs": 36.21815599999991
+  },
+  "idleRSSMiB": 36.39453125,
+  "modalOpenCloseCycles": 50,
+  "limits": "Caché del SO caliente; frame medido al recibir bytes en PTY, sin pintura gráfica. Binario copiado fuera del checkout con PATH sin Bun/Node; no se desinstalaron runtimes del host."
+}

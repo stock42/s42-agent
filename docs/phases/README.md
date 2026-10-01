@@ -2,8 +2,10 @@
 
 Fuente de requisitos: [SPECS.md](../SPECS.md). Fecha: 2026-10-01.
 
-Estado actual: especificaciones y planificación creadas. Ninguna fase de
-implementación está completada. Los checks pendientes representan trabajo futuro.
+Estado actual: demo QBasic implementada y compilada desde `index.ts`, con
+componentes en `src/ui/components/`. La fase 00 está **En curso**, con tests,
+PTY y capturas tmux; falta mouse físico y un host sin Bun/Node. Las fases 01–06
+siguen pendientes. [Evidencia](../qa/tui-demo.md).
 
 | Fase | Archivo | Depende de | Resultado | Requisitos |
 | --- | --- | --- | --- | --- |

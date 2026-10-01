@@ -1,6 +1,8 @@
 # Fase 00 — Componentes QBasic y demo de viabilidad TUI
 
-Estado: **Pendiente**. Dependencia: [SPECS.md](../SPECS.md).
+Estado: **En curso**. Demo y binario Linux x64 implementados y probados en PTY;
+pendientes mouse físico en terminal gráfico y host sin Bun/Node instalados.
+Dependencia: [SPECS.md](../SPECS.md).
 Requisitos: R01, R02, R03, R04, R05, R13, R14, R15, R16, R17.
 
 ## Objetivo
@@ -14,33 +16,35 @@ anteponer una fase separada de backend o una CLI sin componentes.
 
 ## Tareas
 
-- [ ] F00-01. Revisar el scaffold existente, `CLAUDE.md`, package, lockfile y
+- [x] F00-01. Revisar el scaffold existente, `CLAUDE.md`, package, lockfile y
   tsconfig. Conservar los archivos del usuario; no reinicializar el repositorio.
-- [ ] F00-02. Registrar/fijar Bun y dependencias de desarrollo; preparar scripts de
+- [x] F00-02. Registrar/fijar Bun y dependencias de desarrollo; preparar scripts de
   demo, typecheck, test y build con Bun. Mantener un paquete y cero dependencias
   de runtime. Respetar el mecanismo de entorno y no crear `.env.local`.
-- [ ] F00-03. Crear `src/tui-demo.ts` independiente del agente, con ayuda/version y
+- [x] F00-03. Arrancar la demo desde `index.ts` raíz, con composición en
+  `src/ui/demo.ts`, ayuda/version y
   error no TTY. Sin requests LLM, tools, persistencia de proyectos ni red.
-- [ ] F00-04. Implementar lifecycle del terminal: raw mode, pantalla alternativa,
+- [x] F00-04. Implementar lifecycle del terminal: raw mode, pantalla alternativa,
   cursor, dimensiones, paste, mouse SGR y cleanup idempotente.
-- [ ] F00-05. Implementar parser incremental compartido de teclado, mouse y paste,
+- [x] F00-05. Implementar parser incremental compartido de teclado, mouse y paste,
   normalizando coordenadas por celda sin confundir eventos con texto del usuario.
-- [ ] F00-06. Crear renderer de grilla, clipping y filas modificadas, con paleta
+- [x] F00-06. Crear renderer de grilla, clipping y filas modificadas, con paleta
   QBasic centralizada y ancho Unicode correcto. No emitir frames en reposo.
-- [ ] F00-07. Implementar `Desktop` y `Window`: marco, título, cierre, foco,
+- [x] F00-07. Implementar `Desktop` y `Window`: marco, título, cierre, foco,
   superposición y movimiento arrastrando la barra de título.
-- [ ] F00-08. Implementar `Button`, `MenuBar` y `MenuPopup`: estados de botón,
+- [x] F00-08. Implementar `Button` y `MenuBar` con desplegable integrado: estados de botón,
   clic/release, desplegables, opciones deshabilitadas, cierre afuera y Escape.
-- [ ] F00-09. Implementar controles `TextInput` y `SelectList`, y un diálogo modal
+- [x] F00-09. Implementar controles `Input` y `SelectList`, y un diálogo modal
   reutilizando Window. Tab, flechas y rueda invocan las mismas acciones que mouse.
-- [ ] F00-10. Componer una demo que ejercite los componentes: abrir dos ventanas,
+- [x] F00-10. Componer una demo que ejercite los componentes: abrir dos ventanas,
   mover/enfocar/cerrar, editar un campo, elegir una lista, abrir/cerrar un modal.
   Identificar claramente sus datos como fixtures de la demo visual.
 - [ ] F00-11. Probar input partido, hit testing, capas, clipping, captura durante
   drag y modal, resize y restauración. Registrar mouse real por separado de PTY.
-- [ ] F00-12. Compilar `s42-tui-demo` con `bun build --compile`; ejecutar fuera del
+  Parcial: escenarios automatizados y tmux comprobados; mouse físico pendiente.
+- [x] F00-12. Compilar `s42-agent` desde `index.ts` con `bun build --compile`; ejecutar fuera del
   checkout. Medir arranque, respuesta de input y repintados según SPECS §12.
-- [ ] F00-13. Documentar ejecución, atajos, componentes y evidencia de viabilidad.
+- [x] F00-13. Documentar ejecución, atajos, componentes y evidencia de viabilidad.
   Registrar límites reales de terminal/SO; actualizar CHANGELOG y hacer commit.
 
 ## Escenarios de aceptación
@@ -70,7 +74,12 @@ anteponer una fase separada de backend o una CLI sin componentes.
 
 | Tarea/caso | Comando, captura o artefacto | Resultado, entorno y tipo de prueba |
 | --- | --- | --- |
-| — | — | Pendiente; no ejecutado. |
+| F00-01–10 | `index.ts`, `src/ui/`, `src/ui/components/`, README | Demo funcional sin LLMs ni dependencias de runtime. |
+| Tipos y comportamiento | `bun run typecheck`, `bun test` | Tipos correctos; 17 tests; eventos, capas, modal, Unicode y PTY. |
+| Terminal emulado | [Capturas tmux](../qa/tui-captures.txt) | Componentes, ventanas, modal, menú y tamaños 80×24 / 60×16 / 120×40. |
+| Binario | `bun run build`; `S42_TEST_BINARY="$PWD/dist/s42-agent" bun test` | Linux x64 probado desde `/tmp`; mismo flujo PTY. |
+| F00-12 | `bun run bench:tui`; [mediciones](../qa/tui-benchmark.json) | 30 arranques, 100 entradas, RSS y 50 ciclos modales; copia externa con PATH sin Bun/Node. |
+| F00-11 pendiente | [QA y límites](../qa/tui-demo.md) | Mouse físico y host sin runtimes no comprobados. La fase permanece abierta. |
 
 ## Cierre
 

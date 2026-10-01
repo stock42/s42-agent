@@ -27,10 +27,16 @@ Construir y comprobar los componentes visuales con mouse/teclado antes de los
 proveedores LLM y tools del agente; la configuración Bun y el binario mínimo
 se preparan dentro de ese hito. Después, reutilizar los componentes en el harness.
 
-Al crear esta guía, solo existe el scaffold de `bun init` y la documentación;
-el harness no está implementado. Bun observado: 1.4.2. Los scripts, la estructura
-`src/` y los contratos del producto son objetivos de las fases, no capacidades
-disponibles. Actualizar este estado al desarrollar.
+Estado actual: demo QBasic implementada en el **`index.ts` raíz**, único punto
+de entrada del agente. La UI está en `src/ui/`, con controles reutilizables en
+`src/ui/components/`. Bun y sus tipos: 1.4.2; TypeScript: 7.0.2. Existen scripts
+`dev`, `typecheck`, `test`, `build` y `bench:tui`; no hay dependencias de runtime.
+El agente, los proyectos, los proveedores y los adjuntos siguen pendientes.
+
+La fase 00 está **En curso**: tests y binario Linux x64 comprobados con PTY/tmux;
+falta validar mouse físico en un terminal gráfico y un host sin Bun/Node.
+Evidencia: [docs/qa/tui-demo.md](docs/qa/tui-demo.md). Actualizar este estado al
+desarrollar; eventos inyectados no cierran la prueba manual.
 
 ## Preferencias globales del usuario
 
@@ -72,6 +78,9 @@ esta política Git a los proyectos sobre los que trabaja.
 ## Stack y convenciones
 
 - TypeScript estricto y ESM; un paquete y un proceso iniciales.
+- Mantener `index.ts` raíz como entrypoint. Implementación en `src/`; componentes
+  visuales en `src/ui/components/`. La demo se compone en `src/ui/demo.ts` y el
+  futuro harness reutiliza esos controles.
 - Usar `bun`, `bun run`, `bun install`, `bun test` y `bun build`. No depender de
   Node.js, npm, yarn o pnpm para desarrollar o ejecutar el harness.
 - Preferir APIs Bun: archivos, glob, spawn, texto, colores y Markdown. Usar APIs

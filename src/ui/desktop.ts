@@ -1,0 +1,156 @@
+import { Canvas } from "./canvas.ts";
+import type { Component } from "./components/component.ts";
+import { MenuBar } from "./components/menu.ts";
+import { Window } from "./components/window.ts";
+import { theme } from "./theme.ts";
+import { contains, type InputEvent } from "./types.ts";
+
+type Capture = { window: Window; control: Component } | { window: Window; close: true }
+  | { window: Window; offsetX: number; offsetY: number };
+
+export class Desktop {
+  readonly windows: Window[] = [];
+  active?: Window;
+  status = "Demo de componentes · Bun";
+  onExit: () => void = () => {};
+  onHelp: () => void = () => {};
+  private capture?: Capture;
+
+  constructor(readonly menu: MenuBar, public width = 80, public height = 24) { menu.resize(width, height); }
+
+  get modal(): Window | undefined { return this.windows.findLast((window) => window.modal); }
+
+  add(window: Window): void {
+    this.cancelCapture();
+    this.menu.close(); this.windows.push(window); this.active = window;
+    this.fit(window); window.onLayout?.(window.client); this.ensureFocus(window);
+  }
+
+  close(window = this.active): void {
+    if (!window || (this.modal && window !== this.modal)) return;
+    const index = this.windows.indexOf(window);
+    if (index < 0) return;
+    this.windows.splice(index, 1);
+    if (this.capture?.window === window) this.cancelCapture();
+    if (this.active === window) this.active = this.modal ?? this.windows.at(-1);
+    this.status = `Ventana cerrada: ${window.title}`;
+  }
+
+  private fit(window: Window): void {
+    window.bounds.width = Math.min(window.preferred.width, Math.max(2, this.width - 2));
+    window.bounds.height = Math.min(window.preferred.height, Math.max(2, this.height - 3));
+    window.bounds.x = Math.max(0, Math.min(window.bounds.x, this.width - window.bounds.width));
+    window.bounds.y = Math.max(1, Math.min(window.bounds.y, this.height - 1 - window.bounds.height));
+  }
+
+  resize(width: number, height: number): void {
+    this.width = Math.max(1, width); this.height = Math.max(1, height); this.menu.resize(this.width, this.height);
+    for (const window of this.windows) { this.fit(window); window.onLayout?.(window.client); this.ensureFocus(window); }
+  }
+
+  private ensureFocus(window: Window): void {
+    const controls = window.focusable();
+    if (!controls.some((control) => control.id === window.focusedId)) window.focusedId = controls[0]?.id;
+  }
+
+  private raise(window: Window): void {
+    const index = this.windows.indexOf(window);
+    this.windows.splice(index, 1); this.windows.push(window); this.active = window;
+    this.ensureFocus(window);
+  }
+
+  cycle(): void {
+    if (this.modal || this.windows.length < 2) return;
+    this.cancelCapture();
+    const next = this.windows[0]!; this.raise(next);
+  }
+
+  private local(event: Extract<InputEvent, { type: "mouse" }>, window: Window, control: Component): InputEvent {
+    const rect = window.controlRect(control);
+    return { ...event, x: event.x - rect.x, y: event.y - rect.y };
+  }
+
+  private cancelCapture(): void {
+    const capture = this.capture;
+    this.capture = undefined;
+    if (!capture) return;
+    if ("control" in capture) capture.control.handle({ type: "mouse", action: "release", x: -1, y: -1, button: 0, delta: 0 });
+    if ("close" in capture) capture.window.closePressed = false;
+  }
+
+  handle(event: InputEvent): boolean {
+    if (event.type === "key" && (event.key === "ctrl+q" || event.key === "ctrl+c")) { this.onExit(); return false; }
+    if (this.width < 60 || this.height < 16) return false;
+    if (event.type === "mouse" && this.capture) {
+      const capture = this.capture;
+      if (event.action === "release" && event.button === 0) {
+        this.capture = undefined;
+        if ("control" in capture) capture.control.handle(this.local(event, capture.window, capture.control));
+        else if ("close" in capture) {
+          capture.window.closePressed = false;
+          if (contains(capture.window.closeRect, event.x, event.y)) this.close(capture.window);
+        }
+        return true;
+      }
+      if (event.action === "move" && "offsetX" in capture) {
+        capture.window.bounds.x = event.x - capture.offsetX; capture.window.bounds.y = event.y - capture.offsetY;
+        this.fit(capture.window); return true;
+      }
+      return false;
+    }
+    if (!this.modal && this.menu.handle(event)) { this.cancelCapture(); return true; }
+    if (event.type === "key") {
+      if (event.key === "f1") { this.onHelp(); return true; }
+      if (event.key === "f6") { this.cycle(); return true; }
+      if (event.key === "ctrl+w" || (event.key === "escape" && this.modal)) { this.close(); return true; }
+      const window = this.active;
+      if (!window) return false;
+      if (event.key === "tab" || event.key === "shift+tab") {
+        const controls = window.focusable();
+        if (!controls.length) return false;
+        const current = controls.findIndex((control) => control.id === window.focusedId);
+        window.focusedId = controls[(current + (event.key === "tab" ? 1 : -1) + controls.length) % controls.length]!.id;
+        return true;
+      }
+    }
+    if (event.type !== "mouse") return this.active?.controls.find((control) => control.id === this.active?.focusedId)?.handle(event) ?? false;
+    const window = this.modal ?? this.windows.findLast((candidate) => contains(candidate.bounds, event.x, event.y));
+    if (!window || !contains(window.bounds, event.x, event.y)) return false;
+    if (event.action === "wheel") {
+      const control = window.controlAt(event.x, event.y);
+      return control?.handle(this.local(event, window, control)) ?? false;
+    }
+    if (event.action !== "press" || event.button !== 0) return false;
+    this.raise(window);
+    if (contains(window.closeRect, event.x, event.y)) {
+      window.closePressed = true; this.capture = { window, close: true }; return true;
+    }
+    if (event.y === window.bounds.y) {
+      this.capture = { window, offsetX: event.x - window.bounds.x, offsetY: event.y - window.bounds.y }; return true;
+    }
+    const control = window.controlAt(event.x, event.y);
+    if (control && !control.disabled) {
+      window.focusedId = control.id; this.capture = { window, control };
+      control.handle(this.local(event, window, control));
+    }
+    return true;
+  }
+
+  draw(): Canvas {
+    const canvas = new Canvas(this.width, this.height);
+    if (this.width < 60 || this.height < 16) {
+      canvas.text(1, 1, "Terminal pequeño: mínimo 60 × 16", theme.window, this.width - 2);
+      canvas.text(1, 3, "Ctrl+Q para salir", theme.window, this.width - 2);
+      return canvas;
+    }
+    canvas.clipped({ x: 0, y: 1, width: this.width, height: this.height - 2 }, () => {
+      for (const window of this.windows) { window.onLayout?.(window.client); this.ensureFocus(window); window.draw(canvas, window === this.active); }
+    });
+    this.menu.draw(canvas);
+    const footer = this.height - 1;
+    canvas.fill({ x: 0, y: footer, width: this.width, height: 1 }, theme.menu);
+    canvas.text(1, footer, "F1 Ayuda  F10 Menú  Tab Foco  F6 Ventana  ^Q Salir", theme.menu, this.width - 2);
+    if (!this.windows.length) canvas.text(2, 3, "F10 → Ventanas → Componentes para volver", theme.window, this.width - 4);
+    return canvas;
+  }
+}

@@ -1,0 +1,166 @@
+Capturas de texto de tmux · 2026-10-01
+No son screenshots gráficos ni pruebas de mouse físico.
+
+80×24 · componentes
+  Archivo   Ventanas   Demo   Ayuda
+
+       s42-agent · Laboratorio TUI                                    [X]
+     ║                                                                    ║
+     ║  Un escritorio clásico, hecho con celdas de terminal.              ║
+     ║                                                                    ║
+     ║  Nombre                                                            ║
+     ║  [s42-agent                             ]                          ║
+     ║                                                                    ║
+     ║  Componentes · ↑/↓ o rueda                                         ║
+     ║  ┌───────────────────────────────────────────┐    [ Aceptar ]      ║
+     ║  │Ventanas con título y cierre               │    [ Ventana ]      ║
+     ║  │Botones y estados                          │    [ Diálogo ]      ║
+     ║  │Inputs con Unicode: á 文 🙂                │    [-Inactivo-]     ║
+     ║  │Listas y rueda de mouse                    │                     ║
+     ║  └───────────────────────────────────────────┘                     ║
+     ║                                                                    ║
+     ║                                                                    ║
+     ║  Demo de componentes · Bun                                         ║
+     ║                                                                    ║
+     ╚════════════════════════════════════════════════════════════════════╝
+
+
+ F1 Ayuda  F10 Menú  Tab Foco  F6 Ventana  ^Q Salir
+
+80×24 · ventanas superpuestas
+  Archivo   Ventanas   Demo   Ayuda
+
+       s42-agent · Laboratorio TUI                                    [X]
+     │                                                                    │
+     │  Un escritorio clásico, hecho con celdas de terminal.              │
+     │                                                                    │
+     │  Nombre              Ventana 1                          [X]        │
+     │  [s42-agent        ║                                        ║      │
+     │                    ║  Ventanas superpuestas, foco y cierre  ║      │
+     │  Componentes · ↑/↓ ║  Arrástrame desde la barra de título.  ║      │
+     │  ┌─────────────────║  F6 vuelve a la otra ventana.          ║      │
+     │  │Ventanas con títu║                                        ║      │
+     │  │Botones y estados║                                        ║      │
+     │  │Inputs con Unicod║  [>Cerrar<]                            ║      │
+     │  │Listas y rueda de║                                        ║      │
+     │  └─────────────────╚════════════════════════════════════════╝      │
+     │                                                                    │
+     │                                                                    │
+     │  Demo de componentes · Bun                                         │
+     │                                                                    │
+     └────────────────────────────────────────────────────────────────────┘
+
+
+ F1 Ayuda  F10 Menú  Tab Foco  F6 Ventana  ^Q Salir
+
+80×24 · diálogo modal
+  Archivo   Ventanas   Demo   Ayuda
+
+       s42-agent · Laboratorio TUI                                    [X]
+     │                                                                    │
+     │  Un escritorio clásico, hecho con celdas de terminal.              │
+     │                                                                    │
+     │  Nombre              Ventana 1                          [X]        │
+     │  [s42-agent  Ayuda                                    [X]   │      │
+     │            ║                                              ║        │
+     │  Componente║  Mouse: clic, rueda y arrastre de título.    ║        │
+     │  ┌─────────║  Tab / Shift+Tab: cambiar foco.              ║        │
+     │  │Ventanas ║  F10 o Alt+A/V/D: abrir menús.               ║        │
+     │  │Botones y║  F6: ventana · Ctrl+W: cerrar.               ║        │
+     │  │Inputs co║                                              ║        │
+     │  │Listas y ║                [>Aceptar<]                   ║        │
+     │  └─────────║                                              ║        │
+     │            ╚══════════════════════════════════════════════╝        │
+     │                                                                    │
+     │  Demo de componentes · Bun                                         │
+     │                                                                    │
+     └────────────────────────────────────────────────────────────────────┘
+
+
+ F1 Ayuda  F10 Menú  Tab Foco  F6 Ventana  ^Q Salir
+
+80×24 · menú desplegable
+  Archivo   Ventanas   Demo   Ayuda
+           ┌─────────────────┐
+       s42-│ >Componentes    │ TUI                                    [X]
+     ║     │  Nueva ventana  │                                            ║
+     ║  Un │  Siguiente   F6 │ hecho con celdas de terminal.              ║
+     ║     │  Cerrar  Ctrl+W │                                            ║
+     ║  Nom└─────────────────┘                                            ║
+     ║  [s42                                   ]                          ║
+     ║                                                                    ║
+     ║  Componentes · ↑/↓ o rueda                                         ║
+     ║  ┌───────────────────────────────────────────┐    [ Aceptar ]      ║
+     ║  │Ventanas con título y cierre               │    [ Ventana ]      ║
+     ║  │Botones y estados                          │    [ Diálogo ]      ║
+     ║  │Inputs con Unicode: á 文 🙂                │    [-Inactivo-]     ║
+     ║  │Listas y rueda de mouse                    │                     ║
+     ║  └───────────────────────────────────────────┘                     ║
+     ║                                                                    ║
+     ║                                                                    ║
+     ║  Ventana cerrada: Ventana 1                                        ║
+     ║                                                                    ║
+     ╚════════════════════════════════════════════════════════════════════╝
+
+
+ F1 Ayuda  F10 Menú  Tab Foco  F6 Ventana  ^Q Salir
+
+60×16 · layout compacto
+  Archivo   Ventanas   Demo   Ayuda
+
+    s42-agent · Laboratorio TUI                        [X]
+  ║                                                        ║
+  ║  Un escritorio clásico, hecho con celdas de terminal.  ║
+  ║                                                        ║
+  ║  Nombre                                                ║
+  ║  [s42-agent                             ]              ║
+  ║  Componentes · ↑/↓ o rueda                             ║
+  ║  ┌───────────────────────────────┐    [ Aceptar ]      ║
+  ║  │Ventanas con título y cierre   │    [ Ventana ]      ║
+  ║  └───────────────────────────────┘    [ Diálogo ]      ║
+  ║  Ventana cerrada: Ventana 1           [-Inactivo-]     ║
+  ║                                                        ║
+  ╚════════════════════════════════════════════════════════╝
+ F1 Ayuda  F10 Menú  Tab Foco  F6 Ventana  ^Q Salir
+
+120×40 · escritorio (captura tras completar el resize)
+  Archivo   Ventanas   Demo   Ayuda
+
+    s42-agent · Laboratorio TUI                                    [X]
+  ║                                                                    ║
+  ║  Un escritorio clásico, hecho con celdas de terminal.              ║
+  ║                                                                    ║
+  ║  Nombre                                                            ║
+  ║  [s42-agent                             ]                          ║
+  ║                                                                    ║
+  ║  Componentes · ↑/↓ o rueda                                         ║
+  ║  ┌───────────────────────────────────────────┐    [ Aceptar ]      ║
+  ║  │Ventanas con título y cierre               │    [ Ventana ]      ║
+  ║  │Botones y estados                          │    [ Diálogo ]      ║
+  ║  │Inputs con Unicode: á 文 🙂                │    [-Inactivo-]     ║
+  ║  │Listas y rueda de mouse                    │                     ║
+  ║  └───────────────────────────────────────────┘                     ║
+  ║                                                                    ║
+  ║                                                                    ║
+  ║  Demo de componentes · Bun                                         ║
+  ║                                                                    ║
+  ╚════════════════════════════════════════════════════════════════════╝
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ F1 Ayuda  F10 Menú  Tab Foco  F6 Ventana  ^Q Salir
