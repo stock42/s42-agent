@@ -9,7 +9,9 @@ import { theme } from "./theme.ts";
 
 export interface ProjectContext { name: string; path: string }
 
-export function createWorkspace(project: ProjectContext = { name: basename(process.cwd()) || process.cwd(), path: process.cwd() }): Desktop {
+export function createWorkspace(project?: ProjectContext): Desktop { return createWorkspaceView(project).desktop; }
+
+export function createWorkspaceView(project: ProjectContext = { name: basename(process.cwd()) || process.cwd(), path: process.cwd() }) {
   const desktop = new Desktop(new MenuBar([]));
   const editorWindow = new Window("editor", project.name, { x: 0, y: 1, width: 80, height: 15 });
   const promptWindow = new Window("prompt", "Prompt", { x: 0, y: 16, width: 80, height: 7 });
@@ -67,5 +69,5 @@ export function createWorkspace(project: ProjectContext = { name: basename(proce
     ] },
     { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", shortcut: "Alt+Y", run: help }] },
   );
-  return desktop;
+  return { desktop, editorWindow, promptWindow, response: editor, prompt, send };
 }

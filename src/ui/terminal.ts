@@ -28,7 +28,8 @@ export function runTerminal(desktop: Desktop, options: { color: boolean; mouse: 
       process.off("SIGINT", stop); process.off("SIGTERM", stop);
       process.stdin.setRawMode(wasRaw ?? false); process.stdin.pause();
       process.stdout.write(leave);
-      error ? reject(error) : resolve();
+      desktop.invalidate = () => {};
+      Promise.resolve().then(() => desktop.onBeforeExit?.()).then(() => error ? reject(error) : resolve(), reject);
     };
     const frame = () => {
       frameTimer = undefined;
@@ -54,6 +55,7 @@ export function runTerminal(desktop: Desktop, options: { color: boolean; mouse: 
     const resize = () => { desktop.resize(process.stdout.columns ?? 80, process.stdout.rows ?? 24); requestFrame(); };
     const stop = () => finish();
     desktop.onExit = stop;
+    desktop.invalidate = requestFrame;
     try {
       process.stdin.setRawMode(true); process.stdin.resume();
       process.stdin.on("data", data); process.stdout.on("resize", resize);

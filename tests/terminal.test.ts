@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dir, "..");
-const command = process.env.S42_TEST_BINARY ? [resolve(process.env.S42_TEST_BINARY)] : [process.execPath, `${root}/index.ts`];
+const command = process.env.S42_TEST_BINARY ? [resolve(process.env.S42_TEST_BINARY), "--demo"] : [process.execPath, `${root}/index.ts`, "--demo"];
 const { NO_COLOR: inheritedNoColor, ...inheritedEnv } = process.env;
 const env = { ...inheritedEnv, TERM: "xterm-256color", COLORTERM: "truecolor" };
 

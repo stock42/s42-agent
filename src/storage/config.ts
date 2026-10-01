@@ -1,0 +1,86 @@
+import { access, mkdir, realpath, rename, stat, unlink } from "node:fs/promises";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
+import { homedir } from "node:os";
+import type { Selection } from "../agent/messages.ts";
+
+export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string }
+export interface Model { id: string; name: string; contextWindow: number; maxOutputTokens: number; capabilities: { tools: boolean; images: boolean } }
+export interface Provider { id: string; name: string; kind: "llama.cpp" | "openai-compatible"; baseUrl: string; apiKeyEnv?: string; models: Model[] }
+export interface Config {
+  version: 1; projects: Project[]; providers: Provider[];
+  defaults: Selection & { projectId?: string }; lastProjectId?: string;
+  ui: { vimMode: boolean; color: "auto" | "never" };
+  limits: { maxSteps: number; shellTimeoutMs: number; firstEventMs: number; idleMs: number };
+}
+
+export function storagePaths(configPath?: string, env = process.env, platform = process.platform) {
+  const home = homedir();
+  const base = platform === "darwin" ? join(home, "Library/Application Support/s42-agent")
+    : platform === "win32" ? join(env.APPDATA ?? home, "s42-agent") : join(env.XDG_CONFIG_HOME ?? join(home, ".config"), "s42-agent");
+  return { config: resolve(configPath ?? join(base, "config.json")),
+    sessions: configPath ? join(dirname(resolve(configPath)), "sessions") : platform === "linux"
+      ? join(env.XDG_STATE_HOME ?? join(home, ".local/state"), "s42-agent/sessions")
+      : platform === "win32" ? join(env.LOCALAPPDATA ?? home, "s42-agent/sessions") : join(base, "sessions") };
+}
+
+export function defaultConfig(): Config {
+  return { version: 1, projects: [], providers: [{ id: "llama.cpp", name: "Local · llama.cpp", kind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", models: [] }],
+    defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto" },
+    limits: { maxSteps: 30, shellTimeoutMs: 120000, firstEventMs: 120000, idleMs: 120000 } };
+}
+const text = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
+const positive = (value: unknown) => Number.isSafeInteger(value) && Number(value) > 0;
+export function validateConfig(value: unknown): Config {
+  const c = value as Config;
+  if (!c || c.version !== 1 || !Array.isArray(c.projects) || !Array.isArray(c.providers) || !c.defaults || !text(c.defaults.providerId)
+    || !c.ui || typeof c.ui.vimMode !== "boolean" || !["auto", "never"].includes(c.ui.color)) throw new Error("Configuración v1 inválida");
+  const unique = (values: string[]) => new Set(values).size === values.length;
+  for (const p of c.projects) if (!p || !text(p.id) || !text(p.name) || !text(p.path) || !isAbsolute(p.path)
+    || (p.selection && (!text(p.selection.providerId) || (p.selection.modelId !== undefined && !text(p.selection.modelId))))) throw new Error("Proyecto inválido en config");
+  for (const p of c.providers) {
+    if (!p || !text(p.id) || !text(p.name) || !["llama.cpp", "openai-compatible"].includes(p.kind) || !Array.isArray(p.models)
+      || (p.apiKeyEnv !== undefined && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.apiKeyEnv))) throw new Error("Proveedor inválido en config");
+    let url: URL; try { url = new URL(p.baseUrl); } catch { throw new Error(`Endpoint inválido: ${p.name}`); }
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error(`Endpoint inválido: ${p.name}`);
+    for (const m of p.models) if (!m || !text(m.id) || !text(m.name) || !positive(m.contextWindow) || !positive(m.maxOutputTokens)
+      || m.maxOutputTokens >= m.contextWindow || !m.capabilities || typeof m.capabilities.tools !== "boolean" || typeof m.capabilities.images !== "boolean") throw new Error(`Modelo inválido: ${p.name}`);
+    if (!unique(p.models.map(m => m.id))) throw new Error(`Modelos duplicados: ${p.name}`);
+  }
+  if (!unique(c.projects.map(p => p.id)) || !unique(c.projects.map(p => p.path)) || !unique(c.providers.map(p => p.id))) throw new Error("IDs o carpetas duplicados en config");
+  c.limits ??= defaultConfig().limits;
+  if (!Object.values(c.limits).every(positive)) throw new Error("Límites inválidos en config");
+  return c;
+}
+
+export async function normalizeFolder(path: string, cwd: string): Promise<string> {
+  const expanded = path === "~" ? homedir() : path.startsWith("~/") ? join(homedir(), path.slice(2)) : path;
+  const normalized = await realpath(resolve(cwd, expanded));
+  if (!(await stat(normalized)).isDirectory()) throw new Error("La ruta debe ser una carpeta");
+  await access(normalized); return normalized;
+}
+
+export class ConfigStore {
+  constructor(readonly path: string, public value: Config) {}
+  static async load(path: string): Promise<ConfigStore> {
+    const file = Bun.file(path);
+    return new ConfigStore(path, await file.exists() ? validateConfig(await file.json()) : defaultConfig());
+  }
+  async save(next: Config): Promise<void> {
+    validateConfig(next); await mkdir(dirname(this.path), { recursive: true });
+    const temporary = `${this.path}.${crypto.randomUUID()}.tmp`;
+    try { await Bun.write(temporary, JSON.stringify(next, null, 2) + "\n"); await rename(temporary, this.path); this.value = next; }
+    finally { await unlink(temporary).catch(() => {}); }
+  }
+  async project(name: string, path: string, cwd: string, id: string = crypto.randomUUID()): Promise<Project> {
+    if (!name.trim()) throw new Error("Escribí un nombre de proyecto");
+    const folder = await normalizeFolder(path, cwd);
+    if (this.value.projects.some(p => p.id !== id && p.path === folder)) throw new Error("La carpeta ya está registrada");
+    const project = { ...this.value.projects.find(p => p.id === id), id, name: name.trim(), path: folder };
+    const next = structuredClone(this.value); next.projects = [...next.projects.filter(p => p.id !== id), project]; await this.save(next); return project;
+  }
+  resolveProject(input: string): Project {
+    const matches = this.value.projects.filter(p => p.id === input || p.name === input);
+    if (matches.length !== 1) throw new Error(matches.length ? "Nombre ambiguo: usá el ID del proyecto" : `Proyecto no registrado: ${input}`);
+    return matches[0]!;
+  }
+}

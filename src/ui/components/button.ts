@@ -6,7 +6,7 @@ import { Component } from "./component.ts";
 export class Button extends Component {
   private pressed = false;
   private inside = false;
-  constructor(id: string, bounds: Rect, public label: string, private onClick: () => void) { super(id, bounds); }
+  constructor(id: string, bounds: Rect, public label: string, public onClick: () => void) { super(id, bounds); }
 
   draw(canvas: Canvas, bounds: Rect, focused: boolean): void {
     const down = this.pressed && this.inside;

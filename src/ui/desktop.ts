@@ -14,6 +14,10 @@ export class Desktop {
   status = "Demo de componentes · Bun";
   onExit: () => void = () => {};
   onHelp: () => void = () => {};
+  invalidate: () => void = () => {};
+  onBeforeExit?: () => Promise<void>;
+  onShortcut?: (event: InputEvent) => boolean;
+  onControlInput?: (event: InputEvent) => boolean;
   onResize?: (width: number, height: number) => void;
   floatingArea?: Rect;
   private capture?: Capture;
@@ -89,6 +93,7 @@ export class Desktop {
   }
 
   handle(event: InputEvent): boolean {
+    if (this.onShortcut?.(event)) return true;
     if (event.type === "key" && (event.key === "ctrl+q" || event.key === "ctrl+c")) { this.onExit(); return false; }
     if (this.width < 60 || this.height < 16) return false;
     if (event.type === "mouse" && this.capture) {
@@ -137,7 +142,10 @@ export class Desktop {
         return true;
       }
     }
-    if (event.type !== "mouse") return this.active?.controls.find((control) => control.id === this.active?.focusedId)?.handle(event) ?? false;
+    if (event.type !== "mouse") {
+      if (this.onControlInput?.(event)) return true;
+      return this.active?.controls.find((control) => control.id === this.active?.focusedId)?.handle(event) ?? false;
+    }
     const window = this.modal ?? this.windows.findLast((candidate) => contains(candidate.bounds, event.x, event.y));
     if (!window || !contains(window.bounds, event.x, event.y)) return false;
     if (event.action === "wheel") {

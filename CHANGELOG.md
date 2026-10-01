@@ -135,3 +135,17 @@ cierre de cada tarea e incluirlo en su commit.
   navegación, selección y scroll. El Prompt sigue siendo editable.
 - Typecheck y pruebas de workspace/componentes; actualizado el contrato visual.
 - `git pull` intentado: `main` sin upstream. Commit local, sin build de binarios.
+
+### Agregado — Configuración, proyectos, sesiones y Models
+
+- Inicio persistente desde `index.ts`; `--demo` conserva el laboratorio sin datos.
+  CLI `--config`, `--project`, `--cwd`, `--session`, `--provider` y `--model`.
+- Menús Proyectos, Models y sesiones, con formularios paginados que caben en
+  60×16. Models configura ID, host, puerto, API key de sesión, variable de clave,
+  contexto, límite de salida y capacidades explícitas. Aviso central sin modelo.
+- Config JSON validada con temporal/rename; proyectos normalizados por carpeta.
+  Sesiones JSONL, append serializado, lock por escritor, recuperación de última
+  línea incompleta, herramientas interrumpidas y borradores separados.
+- Typecheck y 13 casos de storage/workspace correctos. Fase 02 En curso;
+  transporte y tools continúan en las fases siguientes. No hay inferencia real aún.
+- `git pull` intentado sin upstream; commit local, sin build ni nuevas dependencias.

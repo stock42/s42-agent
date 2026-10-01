@@ -1,0 +1,101 @@
+import { mkdir, open, readdir, unlink, type FileHandle } from "node:fs/promises";
+import { join } from "node:path";
+import type { Message, Selection } from "../agent/messages.ts";
+
+export type EventData =
+  | { type: "session"; title: string }
+  | { type: "selection"; selection: Selection }
+  | { type: "draft"; text: string; attachments: string[] }
+  | { type: "message"; message: Message }
+  | { type: "tool-start"; callId: string; name: string; arguments: string }
+  | { type: "tool-result"; callId: string; output: string; failed: boolean }
+  | { type: "turn"; state: "completed" | "cancelled" | "failed"; detail: string };
+export type SessionEvent = EventData & { version: 1; id: string; projectId: string; at: string };
+export interface SessionState { id: string; projectId: string; title: string; selection?: Selection; draft: string; attachments: string[]; messages: Message[]; events: SessionEvent[]; notices: string[] }
+
+function parseEvent(value: unknown, projectId: string): SessionEvent {
+  const e = value as SessionEvent;
+  if (!e || e.version !== 1 || typeof e.id !== "string" || e.projectId !== projectId || typeof e.at !== "string") throw new Error("Evento de sesión inválido");
+  switch (e.type) {
+    case "session": if (typeof e.title === "string") return e; break;
+    case "selection": if (e.selection && typeof e.selection.providerId === "string" && (e.selection.modelId === undefined || typeof e.selection.modelId === "string")) return e; break;
+    case "draft": if (typeof e.text === "string" && Array.isArray(e.attachments) && e.attachments.every(p => typeof p === "string")) return e; break;
+    case "message": if (e.message && ["user", "assistant", "tool"].includes(e.message.role) && (e.message.content === null || typeof e.message.content === "string" || Array.isArray(e.message.content))) return e; break;
+    case "tool-start": if ([e.callId, e.name, e.arguments].every(v => typeof v === "string")) return e; break;
+    case "tool-result": if (typeof e.callId === "string" && typeof e.output === "string" && typeof e.failed === "boolean") return e; break;
+    case "turn": if (["completed", "cancelled", "failed"].includes(e.state) && typeof e.detail === "string") return e;
+  }
+  throw new Error("Evento de sesión inválido");
+}
+
+export class Session {
+  private queue: Promise<void> = Promise.resolve();
+  private closed = false;
+  private constructor(readonly path: string, readonly lock: string, private token: string, private fd: FileHandle, readonly state: SessionState) {}
+  static async open(root: string, projectId: string, id: string = crypto.randomUUID()): Promise<Session> {
+    if (![projectId, id].every(v => /^[A-Za-z0-9._-]+$/.test(v) && v !== "." && v !== "..")) throw new Error("ID de sesión/proyecto inválido");
+    const folder = join(root, projectId); await mkdir(folder, { recursive: true });
+    const path = join(folder, `${id}.jsonl`), lock = `${path}.lock`, token = crypto.randomUUID();
+    for (let attempt = 0; ; attempt++) {
+      try { const owner = await open(lock, "wx"); try { await owner.writeFile(JSON.stringify({ pid: process.pid, token })); } finally { await owner.close(); } break; }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "EEXIST" || attempt) throw new Error("La sesión ya está abierta en otra instancia");
+        let pid: number;
+        try { pid = (await Bun.file(lock).json()).pid; if (!Number.isSafeInteger(pid) || pid <= 0) throw new Error(); }
+        catch { throw new Error("Lock de sesión incompleto: usá una sesión nueva"); }
+        try { process.kill(pid, 0); throw new Error("La sesión ya está abierta en otra instancia"); }
+        catch (probe) { if ((probe as NodeJS.ErrnoException).code !== "ESRCH") throw probe; }
+        await unlink(lock);
+      }
+    }
+    try {
+      const file = Bun.file(path), source = await file.exists() ? await file.text() : "";
+      const state: SessionState = { id, projectId, title: "Nueva sesión", draft: "", attachments: [], messages: [], events: [], notices: [] };
+      let validBytes = 0;
+      for (const [index, line] of source.split("\n").entries()) {
+        if (!line) continue;
+        if (!source.endsWith("\n") && index === source.split("\n").length - 1) { state.notices.push("Último registro incompleto recuperado"); break; }
+        try { state.events.push(parseEvent(JSON.parse(line), projectId)); } catch { throw new Error(`Sesión corrupta: línea ${index + 1}`); }
+        validBytes += Buffer.byteLength(line + "\n");
+      }
+      const pending = new Map<string, string>();
+      for (const e of state.events) {
+        if (e.type === "session") state.title = e.title;
+        if (e.type === "draft") { state.draft = e.text; state.attachments = e.attachments; }
+        if (e.type === "selection") state.selection = e.selection;
+        if (e.type === "message") state.messages.push(e.message);
+        if (e.type === "tool-start") pending.set(e.callId, e.name);
+        if (e.type === "tool-result") pending.delete(e.callId);
+      }
+      for (const [callId, name] of pending) {
+        state.notices.push(`Herramienta interrumpida: ${name}; pudo haber tenido efectos`);
+        if (!state.messages.some(m => m.role === "tool" && m.tool_call_id === callId)) state.messages.push({ role: "tool", tool_call_id: callId, content: "Interrumpida al cerrar. No reejecutar automáticamente; pudo haber tenido efectos." });
+      }
+      const fd = await open(path, "a");
+      if (state.notices.some(n => n.startsWith("Último"))) await fd.truncate(validBytes);
+      return new Session(path, lock, token, fd, state);
+    } catch (error) { await unlink(lock); throw error; }
+  }
+  append(data: EventData): Promise<void> {
+    if (this.closed) return Promise.reject(new Error("Sesión cerrada"));
+    const event = { ...data, version: 1 as const, projectId: this.state.projectId, id: crypto.randomUUID(), at: new Date().toISOString() };
+    this.queue = this.queue.then(async () => { await this.fd.appendFile(JSON.stringify(event) + "\n"); await this.fd.sync(); this.state.events.push(event); });
+    return this.queue;
+  }
+  async close(): Promise<void> {
+    if (this.closed) return; this.closed = true;
+    try { await this.queue; } finally { await this.fd.close(); if ((await Bun.file(this.lock).json()).token === this.token) await unlink(this.lock); }
+  }
+}
+
+export async function listSessions(root: string, projectId: string): Promise<{ id: string; title: string }[]> {
+  const folder = join(root, projectId); let files: string[];
+  try { files = await readdir(folder); } catch (e) { if ((e as NodeJS.ErrnoException).code === "ENOENT") return []; throw e; }
+  const result: { id: string; title: string }[] = [];
+  for (const name of files.filter(n => n.endsWith(".jsonl")).sort()) {
+    const first = (await Bun.file(join(folder, name)).text()).split("\n")[0];
+    try { result.push({ id: name.slice(0, -6), title: JSON.parse(first ?? "").title ?? name.slice(0, 8) }); }
+    catch { result.push({ id: name.slice(0, -6), title: `${name.slice(0, 8)} (revisar)` }); }
+  }
+  return result;
+}

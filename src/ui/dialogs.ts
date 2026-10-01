@@ -1,0 +1,49 @@
+import { Button } from "./components/button.ts";
+import { Input } from "./components/input.ts";
+import { SelectList } from "./components/select-list.ts";
+import { Window } from "./components/window.ts";
+import type { Desktop } from "./desktop.ts";
+import { theme } from "./theme.ts";
+
+export interface Field { label: string; value: string }
+export function form(desktop: Desktop, title: string, fields: Field[], save: (values: string[]) => Promise<void>): void {
+  if (desktop.modal) return;
+  const area = desktop.floatingArea ?? { y: 1, height: desktop.height - 2 };
+  const window = new Window(`form-${crypto.randomUUID()}`, title, { x: Math.max(0, (desktop.width - 58) >> 1), y: area.y, width: 58, height: Math.min(13, area.height) });
+  window.modal = true; let page = 0, error = "", saving = false;
+  const inputs = fields.map((field, index) => new Input(`field-${index}`, { x: 20, y: 0, width: 32, height: 1 }, field.value));
+  const pages = Math.ceil(fields.length / 3);
+  const refresh = () => { window.controls.splice(0, window.controls.length, ...inputs.slice(page * 3, page * 3 + 3), previous, next, accept); window.focusedId = window.controls[0]?.id; desktop.invalidate(); };
+  const previous = new Button("previous", { x: 1, y: 0, width: 12, height: 1 }, "Anterior", () => { if (page) { page--; refresh(); } });
+  const next = new Button("next", { x: 14, y: 0, width: 13, height: 1 }, "Siguiente", () => { if (page + 1 < pages) { page++; refresh(); } });
+  const accept = new Button("save", { x: 36, y: 0, width: 16, height: 1 }, "Guardar", () => {
+    if (saving) return; saving = true; accept.disabled = true; error = "Guardando…"; desktop.invalidate();
+    void save(inputs.map(input => input.value)).then(() => desktop.close(window), e => { error = (e as Error).message; }).finally(() => { saving = false; accept.disabled = false; desktop.invalidate(); });
+  });
+  window.onLayout = client => {
+    inputs.forEach((input, index) => { input.bounds.y = 1 + index % 3; input.bounds.width = Math.max(1, client.width - 21); });
+    for (const button of [previous, next, accept]) button.bounds.y = client.height - 1;
+    accept.bounds.x = client.width - accept.bounds.width - 1;
+    previous.disabled = page === 0; next.disabled = page + 1 === pages;
+  };
+  window.onDraw = (canvas, client) => {
+    canvas.text(client.x + 1, client.y, `${page + 1}/${pages} · Tab: campo · Esc: cerrar`, theme.dialog, client.width - 2);
+    fields.slice(page * 3, page * 3 + 3).forEach((field, index) => canvas.text(client.x + 1, client.y + index + 1, field.label, theme.dialog, 18));
+    canvas.text(client.x + 1, client.y + client.height - 2, error, theme.dialog, client.width - 2);
+  };
+  refresh(); desktop.add(window);
+}
+
+export function choose<T>(desktop: Desktop, title: string, entries: { label: string; value: T }[], select: (value: T) => void): void {
+  if (desktop.modal) return;
+  const area = desktop.floatingArea ?? { y: 1, height: desktop.height - 2 };
+  const window = new Window(`choose-${crypto.randomUUID()}`, title, { x: Math.max(0, (desktop.width - 58) >> 1), y: area.y, width: 58, height: Math.min(13, area.height) });
+  window.modal = true;
+  const list = new SelectList("entries", { x: 0, y: 0, width: 56, height: 8 }, entries.map(e => e.label));
+  const activate = () => { const entry = entries[list.selected]; if (entry) { desktop.close(window); select(entry.value); } };
+  const original = list.handle.bind(list); list.handle = event => event.type === "key" && event.key === "enter" ? (activate(), true) : original(event);
+  const accept = new Button("select", { x: 1, y: 0, width: 15, height: 1 }, "Elegir", activate);
+  window.controls.push(list, accept);
+  window.onLayout = client => { list.bounds.width = client.width; list.bounds.height = Math.max(3, client.height - 1); accept.bounds.y = client.height - 1; };
+  desktop.add(window);
+}
