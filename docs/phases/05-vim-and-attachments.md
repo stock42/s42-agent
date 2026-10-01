@@ -17,7 +17,8 @@ al terminal en adjuntos verificables, con alternativas de teclado.
 - [ ] F05-02. Conectar acciones globales y leader con selectores de proyectos,
   modelos, proveedores, sesiones, adjuntos y ayuda; permitir desactivar Vim.
 - [ ] F05-03. Validar bindings configurables por contexto y documentar los que el
-  terminal no distingue. Mantener Ctrl+J como newline portable. Menús, controles
+  terminal no distingue. Shift+Enter para nueva línea; Ctrl+J como alternativa
+  de compatibilidad. Menús, controles
   y diálogos tienen prioridad sobre Vim; mouse y teclado siguen siendo operables.
 - [ ] F05-04. Implementar parser de rutas pegadas: POSIX, espacios/comillas,
   Windows/UNC, Unicode, `file://` y múltiples archivos; sin evaluar como shell.

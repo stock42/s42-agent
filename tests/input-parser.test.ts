@@ -3,6 +3,30 @@ import { InputParser } from "../src/ui/input-parser.ts";
 import type { InputEvent } from "../src/ui/types.ts";
 
 describe("input del terminal", () => {
+  test("Shift+Enter CSI-u y modifyOtherKeys fragmentados se distinguen de Enter", () => {
+    const events: InputEvent[] = [];
+    const parser = new InputParser(event => events.push(event));
+    const data = new TextEncoder().encode("\r\x1b[13;2u\x1b[27;2;13~\x1b[13;2:1u\x1b[13;2:3u\x1b[57414;2u\n");
+    for (const byte of data) parser.feed(new Uint8Array([byte]));
+    expect(events).toEqual([
+      { type: "key", key: "enter" }, { type: "key", key: "shift+enter" },
+      { type: "key", key: "shift+enter" }, { type: "key", key: "shift+enter" },
+      { type: "key", key: "shift+enter" }, { type: "key", key: "ctrl+j" },
+    ]);
+  });
+
+  test("teclado extendido conserva atajos, texto, Tab, Escape y navegación", () => {
+    const events: InputEvent[] = [];
+    const parser = new InputParser(event => events.push(event));
+    parser.feed("\x1b[113;5u\x1b[27;5;99~\x1b[121;3u\x1b[9;2u\x1b[27u\x1b[27;2;65~\x1b[57417u\x1b[57358u\x1b[57376u");
+    expect(events).toEqual([
+      { type: "key", key: "ctrl+q" }, { type: "key", key: "ctrl+c" },
+      { type: "key", key: "alt+y" }, { type: "key", key: "shift+tab" },
+      { type: "key", key: "escape" }, { type: "key", key: "shift+a", text: "A" },
+      { type: "key", key: "left" },
+    ]);
+  });
+
   test("SGR, paste y UTF-8 partidos en cada byte conservan los eventos", () => {
     const events: InputEvent[] = [];
     const parser = new InputParser((event) => events.push(event));

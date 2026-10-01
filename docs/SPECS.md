@@ -226,7 +226,7 @@ Una pantalla alternativa organizada como escritorio TUI:
    allí y pueden editarse; no abrir una ventana de chat independiente.
 3. Panel **Prompt** fijo debajo del editor, siempre visible. Ambos paneles no
    tienen cierre ni arrastre; auxiliares y modales quedan dentro del área del editor.
-   Enter/Enviar envía explícitamente; Ctrl+J inserta una línea y pegar no envía.
+   Enter/Enviar envía explícitamente; Shift+Enter inserta una línea y pegar no envía.
 4. Contexto visible: proyecto, proveedor/modelo y sesión en la ventana principal.
 5. Barra inferior: INSERT/NORMAL, foco, actividad, uso disponible y atajos.
 
@@ -325,9 +325,13 @@ El parser conserva secuencias de escape y caracteres UTF-8 divididos entre
 chunks. Bracketed paste se procesa como un bloque, incluso si contiene Enter,
 Escape o comandos. El pegado no envía mensajes automáticamente.
 
-No exigir Kitty keyboard protocol. Los atajos deben funcionar con secuencias
-tradicionales. Shift+Enter solo será una alternativa cuando sea distinguible;
-Ctrl+J será la forma portable de insertar una nueva línea.
+Shift+Enter es el atajo principal para nueva línea y Enter envía el prompt.
+Solicitar desambiguación de teclado Kitty y xterm modifyOtherKeys al entrar;
+consumir CSI-u y `CSI 27;modificador;código~`, sin exigir un emulador específico.
+Conservar los controles tradicionales. Si el terminal entrega Shift+Enter como
+Enter, no se pueden distinguir esos bytes; Ctrl+J queda como alternativa.
+Al salir, restaurar la pila Kitty y el valor inicial de modifyOtherKeys.
+[Verificación del atajo](qa/shift-enter.md).
 
 | Contexto | Tecla | Acción |
 | --- | --- | --- |
@@ -344,7 +348,7 @@ Ctrl+J será la forma portable de insertar una nueva línea.
 | Global | Ctrl+F | Agregar o quitar adjuntos por ruta. |
 | INSERT | Escape | Entrar a NORMAL cuando Vim está habilitado. |
 | INSERT | Enter | Enviar el borrador; si acaba de reconocer rutas sin marcadores, primero adjuntarlas. |
-| INSERT | Ctrl+J | Insertar salto de línea. |
+| INSERT | Shift+Enter | Insertar salto de línea; Ctrl+J como alternativa de compatibilidad. |
 | INSERT | Tab | Completar comando o ruta, cuando haya candidatos. |
 | NORMAL, editor | i / a / I / A | Insertar antes/después o al principio/final de la línea. |
 | NORMAL, editor | h / j / k / l | Mover el cursor. |

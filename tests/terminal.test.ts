@@ -39,6 +39,12 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
       expect(run.output).toContain("\x1b[?1003h");
       expect(run.output).toContain("48;2;0;0;170m");
       expect(run.output).toContain("48;2;0;170;170m");
+      expect(run.output).toContain("\x1b[>1u"); expect(run.output).toContain("\x1b[>4;2m");
+      // Ambas codificaciones de Shift+Enter insertan líneas sin enviar.
+      run.terminal.write("primera\x1b[13;2u\x1b[200~segunda\x1b[201~\x1b[27;2;13~tercera");
+      await until(() => run.output.includes("tercera"));
+      expect(run.output).not.toContain("Respuesta de demostración");
+      run.terminal.write("\x1b[97;5u\x7f"); // Ctrl+A extendido y borrado.
       // Pegar no envía: el botón Enviar comparte la acción de Enter.
       run.terminal.write("\x1b[200~á文🙂\nSegunda línea\x1b[201~");
       await until(() => run.output.includes("Segunda línea"));
@@ -82,6 +88,7 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
       await until(() => run.output.includes("\x1b[?1049l"));
       expect(run.output).toContain("\x1b[?1006l"); expect(run.output).toContain("\x1b[?25h");
       expect(run.output).toContain("\x1b[?1003l");
+      expect(run.output).toContain("\x1b[<u"); expect(run.output).toContain("\x1b[>4m");
     } finally { run.dispose(); }
   });
 

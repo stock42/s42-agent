@@ -14,7 +14,7 @@ Uso: s42-agent [--no-color] [--no-mouse]
   --version    Mostrar versión
   --help       Mostrar ayuda
 
-Enter: enviar demo · Ctrl+J: nueva línea · Esc: menú
+Enter: enviar demo · Shift+Enter: nueva línea · Esc: menú
 Tab: foco · Ctrl+N: panel · Alt+Y: ayuda · Ctrl+Q: salir`);
   } else if (args.includes("--version")) console.log(version);
   else {

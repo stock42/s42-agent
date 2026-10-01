@@ -117,3 +117,14 @@ cierre de cada tarea e incluirlo en su commit.
   evidencia en `docs/qa/qbasic-style.md`. Actualizados README, AGENTS, specs y fases.
 - Sin builds ni benchmarks de binarios; mouse físico pendiente. `git pull`
   intentado: `main` sigue sin upstream; trabajo y commit locales.
+
+### Mejorado — Shift+Enter para nueva línea
+
+- Shift+Enter pasa a ser el atajo principal de nueva línea del Prompt; Enter y
+  Enviar conservan el envío. Actualizados panel, ayuda CLI, README, specs y AGENTS.
+- Teclado extendido Kitty/xterm con parser CSI-u/modifyOtherKeys incremental;
+  atajos Ctrl/Alt, texto y navegación conservados, sin doble acción por release.
+  Los modos se restablecen al salir. Ctrl+J queda como alternativa de compatibilidad.
+- Typecheck y 40 pruebas correctas; Shift+Enter/Enter comprobados desde fuente
+  en tmux 3.4. Evidencia y capturas en `docs/qa/shift-enter.md`.
+- Sin builds de binarios. `git pull` intentado: `main` sin upstream; commit local.

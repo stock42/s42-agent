@@ -43,7 +43,7 @@ inicial; la comprobación de un host sin Bun/Node pertenece a distribución.
 La fase 01 está **En curso** por pedido del usuario: layout y edición multilínea
 implementados; streaming y Markdown pendientes.
 Evidencia actual: [apariencia QBasic](docs/qa/qbasic-style.md) y
-[layout/edición](docs/qa/workspace.md); hito inicial:
+[layout/edición](docs/qa/workspace.md), [Shift+Enter](docs/qa/shift-enter.md); hito inicial:
 [docs/qa/tui-demo.md](docs/qa/tui-demo.md). Actualizar este estado al
 desarrollar; eventos inyectados no cierran la prueba manual.
 
@@ -70,6 +70,9 @@ desarrollar; eventos inyectados no cierran la prueba manual.
 - Usar las capturas de QBasic suministradas como guía: azul DOS, marcos finos,
   títulos centrados en pestañas grises, Ayuda a la derecha, menús con selección
   negra y barra inferior turquesa. Conservar atajos sin teclas F.
+- Enter envía el prompt; Shift+Enter es el atajo principal para nueva línea.
+  Ctrl+J se conserva como alternativa de compatibilidad si el terminal no
+  distingue Shift+Enter. Mostrar Shift+Enter en la UI y la ayuda.
 
 ## Regla Git obligatoria
 

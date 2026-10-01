@@ -87,11 +87,12 @@ test("editor conserva edición y borrador tras resize y cambio de foco", () => {
   expect(draft.value).toBe("á文🙂".repeat(30));
 });
 
-test("textarea conserva Unicode y saltos pegados sin enviar; Ctrl+J inserta línea", () => {
+test("textarea conserva Unicode y saltos pegados sin enviar; Shift+Enter inserta línea", () => {
   const area = new TextArea("area", { x: 0, y: 0, width: 8, height: 3 }); let calls = 0;
   area.onSubmit = () => { calls++; };
   area.handle({ type: "paste", text: "áé文🙂\r\nsegunda" }); expect(calls).toBe(0);
-  area.handle(key("ctrl+j")); area.handle(key("X", "X")); expect(area.value).toBe("áé文🙂\nsegunda\nX");
+  area.handle(key("shift+enter")); area.handle(key("X", "X")); expect(area.value).toBe("áé文🙂\nsegunda\nX"); expect(calls).toBe(0);
+  area.handle(key("ctrl+j")); expect(area.value).toBe("áé文🙂\nsegunda\nX\n"); expect(calls).toBe(0);
   area.handle(key("ctrl+a")); area.handle({ type: "paste", text: "文🙂" });
   area.handle(key("backspace")); expect(area.value).toBe("文"); area.handle(key("enter")); expect(calls).toBe(1);
 });

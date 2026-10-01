@@ -18,8 +18,9 @@ otra TUI.
 - [ ] F01-02. Componer menús Archivo/Proyectos/Modelos/Ventanas/Ayuda y la ventana
   principal, con contexto del proyecto/modelo/sesión y barra inferior de atajos.
   Parcial: editor del proyecto y prompt fijo; modelo/sesión/selectores pendientes.
-- [x] F01-03. Crear editor multilínea INSERT con cursor, borrado, Enter, Ctrl+J y pegado
+- [x] F01-03. Crear editor multilínea INSERT con cursor, borrado, Enter, Shift+Enter y pegado
   multilínea; evitar envíos producidos por caracteres dentro de un paste.
+  Ctrl+J conservado como alternativa de compatibilidad.
 - [ ] F01-04. Integrar botones de enviar/cancelar, selectores y diálogos sobre los
   componentes existentes, con las mismas acciones por mouse y teclado.
   Parcial: Enviar demo por botón/Enter; cancelación y selectores pendientes.
@@ -65,7 +66,8 @@ real complementa los tests de secuencias ANSI.
 | --- | --- | --- |
 | Layout/edición/resize | [QA del layout](../qa/workspace.md), [capturas](../qa/workspace-captures.txt) | Editor con proyecto, prompt fijo, respuesta demo, componentes reutilizados y tamaños 80×24 / 60×16 / 120×40. |
 | Apariencia QBasic | [QA actual](../qa/qbasic-style.md), [capturas](../qa/qbasic-style-captures.txt) | Paleta DOS RGB/fallback ANSI, marcos finos, pestañas grises, Ayuda a la derecha y barra turquesa. Prompt visible con modal en 60×16. |
-| Fuente Bun | `bun run typecheck`, `bun test` | 38 casos: input limpio, edición, envío, foco, scroll, restricciones de paneles, color, monocromo y cleanup. Sin build de binarios. |
+| Shift+Enter | [QA del teclado](../qa/shift-enter.md), [capturas](../qa/shift-enter-captures.txt) | Nueva línea sin envío y Enter para enviar. CSI-u/modifyOtherKeys fragmentados, atajos y cleanup conservados. |
+| Fuente Bun | `bun run typecheck`, `bun test` | 40 casos: input limpio, edición, envío, foco, scroll, restricciones de paneles, teclado extendido, color, monocromo y cleanup. Sin build de binarios. |
 | Pendiente | Streaming, Markdown, modelo/sesión, cancelación y selectores | No implementados; fixtures no demuestran operación de un proveedor. Mouse físico pendiente. |
 
 ## Cierre

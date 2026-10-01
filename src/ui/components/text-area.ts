@@ -130,7 +130,7 @@ export class TextArea extends Component {
     if (event.type === "paste") { this.replace(event.text); return true; }
     if (event.text) { this.replace(event.text); return true; }
     if (event.key === "enter" && this.onSubmit) { this.onSubmit(); return true; }
-    if (event.key === "enter" || event.key === "ctrl+j") { this.replace("\n"); return true; }
+    if (event.key === "enter" || event.key === "shift+enter" || event.key === "ctrl+j") { this.replace("\n"); return true; }
     if (event.key === "ctrl+a") { this.anchor = 0; this.cursor = this.chars.length; this.reveal = true; this.following = true; return true; }
     if (event.key === "backspace" || event.key === "delete") {
       if (!this.selection) {

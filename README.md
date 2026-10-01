@@ -34,7 +34,7 @@ lista y modales. Sus datos siguen siendo ejemplos.
 | Mover ventana | Arrastrar su barra de título |
 | Cerrar auxiliar | Ctrl+W o `[X]`; editor y prompt son fijos |
 | Enviar prompt de demo | Enter o botón Enviar |
-| Nueva línea en el prompt | Ctrl+J; el pegado multilínea no envía |
+| Nueva línea en el prompt | Shift+Enter; el pegado multilínea no envía |
 | Editor | Flechas / Home / End / Ctrl+Home / Ctrl+End / PageUp / PageDown, clic o rueda; Enter inserta una línea |
 | Lista | Flechas / Home / End / PageUp / PageDown, clic o rueda; ↑/↓ en el marco indican más filas |
 | Seleccionar texto | Ctrl+A, Shift+flechas / Home / End, o arrastre del mouse |
@@ -46,6 +46,10 @@ lista y modales. Sus datos siguen siendo ejemplos.
 No se asignan acciones a F1–F12. Cerrar un auxiliar conserva el editor y el
 borrador del prompt. El contexto de proyecto usa la carpeta de ejecución;
 el registro persistente de múltiples proyectos corresponde a la fase 02.
+
+La TUI solicita teclado extendido para distinguir Shift+Enter de Enter. Si el
+emulador entrega la misma secuencia para ambos, Ctrl+J sigue disponible como
+alternativa para nueva línea. No se requiere usar el terminal Kitty.
 
 ```bash
 bun run index.ts --help
@@ -100,7 +104,7 @@ bun test
 
 La prioridad actual es iterar sobre `bun run dev`, mouse, teclado, foco y layout.
 [Apariencia y comprobaciones actuales](docs/qa/qbasic-style.md),
-[layout y edición](docs/qa/workspace.md).
+[layout y edición](docs/qa/workspace.md), [Shift+Enter](docs/qa/shift-enter.md).
 
 ## Distribución, cuando corresponda
 

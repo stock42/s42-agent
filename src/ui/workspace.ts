@@ -35,7 +35,7 @@ export function createWorkspace(project: ProjectContext = { name: basename(proce
     send.bounds.x = Math.max(1, client.width - 15);
   };
   promptWindow.onDraw = (canvas, client) => canvas.text(client.x + 1, client.y + client.height - 1,
-    `${submitted ? "Respuesta demo" : "Demo sin LLM"} · Enter enviar · Ctrl+J nueva línea`, theme.window, client.width - 2);
+    `${submitted ? "Respuesta demo" : "Demo sin LLM"} · Enter enviar · Shift+Enter nueva línea`, theme.window, client.width - 2);
 
   desktop.onResize = (width, height) => {
     const available = Math.max(4, height - 2); const promptHeight = height >= 20 ? 7 : 4;
@@ -48,7 +48,7 @@ export function createWorkspace(project: ProjectContext = { name: basename(proce
   desktop.add(editorWindow); desktop.add(promptWindow);
   const demo = createDemoPanels(desktop);
   const help = () => demo.dialog("Ayuda", [
-    "Enter: enviar · Ctrl+J: nueva línea.", "Ctrl+N: cambiar entre paneles.", "Tab / Shift+Tab: foco · Esc: menú.",
+    "Enter: enviar · Shift+Enter: nueva línea.", "Ctrl+N: cambiar entre paneles.", "Tab / Shift+Tab: foco · Esc: menú.",
     "Ctrl+A / Shift+flechas: seleccionar.", "Mouse: foco, scroll y selección.",
   ]);
   desktop.onHelp = help;

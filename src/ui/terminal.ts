@@ -2,9 +2,10 @@ import { Renderer } from "./canvas.ts";
 import type { Desktop } from "./desktop.ts";
 import { InputParser } from "./input-parser.ts";
 
-const enter = "\x1b[?1049h\x1b[?25l\x1b[?2004h";
+// Request distinguishable Shift+Enter; unsupported terminals ignore these modes.
+const enter = "\x1b[?1049h\x1b[?25l\x1b[?2004h\x1b[>4;2m\x1b[>1u";
 const mouseOn = "\x1b[?1003h\x1b[?1006h";
-const leave = "\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?2004l\x1b[0m\x1b[?25h\x1b[?1049l";
+const leave = "\x1b[<u\x1b[>4m\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?2004l\x1b[0m\x1b[?25h\x1b[?1049l";
 
 export function runTerminal(desktop: Desktop, options: { color: boolean; mouse: boolean }): Promise<void> {
   if (!process.stdin.isTTY || !process.stdout.isTTY || process.env.TERM === "dumb") {

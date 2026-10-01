@@ -1,6 +1,8 @@
 # Apariencia inspirada en las capturas de QBasic
 
-Fecha: 2026-10-01. Fuente: `index.ts`, ejecutada con Bun 1.4.2 en Linux.
+Fecha: 2026-10-01. Snapshot: `21777d2`.
+Fuente: `index.ts`, ejecutada con Bun 1.4.2 en Linux.
+El cambio posterior del atajo de nueva línea está en [shift-enter.md](shift-enter.md).
 Referencias: las cuatro capturas del QBasic original suministradas por el usuario.
 
 ## Cambios
