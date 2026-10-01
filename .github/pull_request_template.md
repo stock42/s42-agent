@@ -1,12 +1,13 @@
-## Cambio
+## Change
 
-Problema y comportamiento resultante.
+Describe the concrete problem and resulting behavior.
 
-## Validación
+## Validation
 
-Comandos y escenarios realmente ejecutados. Para TUI, incluir terminal/tamaño y
-evidencia de interacción. Distinguir fixture/proveedor real y mouse inyectado/físico.
+List commands and scenarios actually exercised. For TUI changes, include the
+terminal/dimensions and interaction evidence. Distinguish fixtures from real
+providers, and injected mouse events from physical mouse testing.
 
-## Documentación
+## Documentation
 
-README/docs y CHANGELOG actualizados cuando corresponda.
+Update the relevant README/user guide and CHANGELOG when behavior changes.

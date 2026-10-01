@@ -1,9 +1,11 @@
-# Contribuir a s42-agent
+# Contributing to S42 Agent
 
-Leé [AGENTS.md](AGENTS.md) antes de cambiar código. El objetivo es mantener un
-harness pequeño, rápido y estable, con runtime Bun y una TUI estilo QBasic.
+[Español](CONTRIBUTING.es.md)
 
-## Entorno
+Keep the harness small, fast and stable: TypeScript/Bun, a QBasic-style TUI and
+local-model support. Read [AGENTS.md](AGENTS.md) before changing code.
+
+## Environment
 
 ```bash
 git clone https://github.com/stock42/s42-agent.git
@@ -12,36 +14,47 @@ bun install --frozen-lockfile
 bun run dev
 ```
 
-Bun 1.4.2 y terminal ANSI de al menos 60×16. Para una prueba aislada:
+Use Bun 1.4.2 and an ANSI terminal of at least 60×16 cells. For an isolated workspace:
 
 ```bash
-bun run index.ts --config /tmp/s42-contribution/config.json --cwd /ruta/proyecto-de-prueba
+bun run index.ts --config /tmp/s42-contribution/agent.sqlite --cwd /path/to/test-project
 ```
 
-## Cambios
+The source test suite does not require an LLM or API key. Browser integration
+tests use an installed supported browser and skip that scenario if unavailable.
 
-1. Sincronizá tu rama con `git pull` y mantené el cambio dentro del issue/pedido.
-2. Usá TypeScript estricto; conservá `index.ts` como entrypoint. Componentes
-   visuales en `src/ui/components/`; sin dependencias de runtime nuevas por rutina.
-3. Validá `bun run typecheck` y `bun test`. Para cambios de TUI, revisá 80×24 y
-   60×16, mouse/teclado, resize y modo sin color. No asignar teclas F1–F12.
-4. Probá con configuración y proyectos temporales. Streaming, tools y sesiones
-   deben conservar el proyecto que originó cada turno, aunque cambie la pestaña.
-5. Actualizá README/docs si cambia el uso y CHANGELOG antes de hacer el commit.
-6. Abrí un PR con problema, comportamiento resultante y validación ejecutada.
+## Focused changes
 
-Los tests de fuente no requieren modelos ni API keys. Indicá por separado si
-usaste un fixture, un proveedor real, mouse inyectado o mouse físico. Las pruebas
-de binarios se hacen para cambios de distribución; no sustituyen la revisión TUI.
+1. Run `git pull` on your configured branch before starting. Preserve unrelated changes.
+2. Use strict TypeScript and keep `index.ts` as the entrypoint.
+   TUI components live in `src/ui/components/`; native tools in `src/agent/tools/`.
+3. Run `bun run typecheck` and `bun test`.
+   For TUI changes, exercise 80×24 and 60×16, keyboard/mouse, resize and no-color mode.
+   Do not bind function keys F1–F12.
+4. Use temporary config and project folders. Streams, tools and sessions must
+   retain their originating project when tabs change.
+5. Update relevant documentation and CHANGELOG before committing.
+6. Submit a PR describing the problem, resulting behavior and actual validation.
 
-## Reportar un problema
+Use Bun's APIs where they fit. Avoid adding runtime dependencies without a concrete
+need. Binary tests apply to distribution changes; they do not replace TUI review.
 
-Incluí SO, terminal, versión Bun, tamaño de ventana, pasos y comportamiento
-esperado/observado. Para proveedores/MCP, indicar tipo y error recibido. Compartí
-una configuración mínima con credenciales y datos personales retirados.
+## Report a problem
 
-El workflow de CI usa las acciones oficiales [checkout](https://github.com/actions/checkout)
-y [setup-bun](https://github.com/oven-sh/setup-bun) y ejecuta install/typecheck/tests
-en Linux. La ejecución remota de CI se verifica en GitHub después de publicar.
+Reports in English or Spanish are welcome. Include OS, terminal, dimensions,
+Bun/S42 Agent versions, steps and expected/actual behavior. For provider/MCP
+issues, name the model or transport and the error observed. Remove credentials
+and private project data from shared examples.
 
-Las contribuciones se distribuyen bajo la [licencia MIT](LICENSE).
+Distinguish fixtures from real-model validation and injected mouse events from
+physical terminal interaction. Cross-compilation is not destination runtime proof.
+
+## CI and license
+
+[CI](.github/workflows/ci.yml) uses official checkout/setup-bun actions and runs
+frozen installation, typecheck and tests on Linux. It does not publish releases
+or packages. Its keychain integration test uses an isolated D-Bus/Secret Service
+with temporary fixture credentials. Linux test dependencies are provisioned in
+the workflow. Verify remote CI after pushing the reviewed commit.
+
+Contributions are distributed under the [MIT license](LICENSE).

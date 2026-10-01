@@ -5,6 +5,24 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Preparado — Publicación GitHub y anuncio de la preview v0.1.0
+
+- README EN/ES con portada horizontal, quickstart, capacidades y estado real;
+  manual anterior conservado en docs/USAGE.es.md. CONTRIBUTING bilingüe,
+  plantillas de bugs/features y PR listas para colaboración.
+- Notas de prerelease fuente v0.1.0, descripción/topics/homepage en JSON y
+  anuncios LinkedIn ES/EN, mensajes cortos, post de benchmark y orden del carrusel.
+  Social Preview JPEG 1774×887, 250.795 bytes, PNG/prompt conservados.
+- CI remota previa fallaba en el test de Bun.secrets por falta de Secret Service.
+  Workflow prepara D-Bus/gnome-keyring temporal aislado; conserva la cobertura
+  sin credenciales reales. Suite local completa con ese entorno: 161 pass/0 fail.
+- Install frozen y typecheck correctos; suite normal 161 pass/0 fail. Copia limpia
+  fuera del checkout instala, abre index.ts en PTY con SQLite temporal y restaura
+  el terminal. Metadata, enlaces y revisión visual documentados en QA.
+- Pull correcto con origin/main. Repo privado verificado; sin push, cambios de
+  visibilidad, release, anuncios enviados, builds o benchmarks nuevos.
+  Edición previa de final-validation.md conservada fuera del commit.
+
 ### Agregado — Cinco imágenes comerciales de S42 Agent
 
 - Campaña en español con cinco PNG cuadrados de 1254 × 1254 px: TUI QBasic,

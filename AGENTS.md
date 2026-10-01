@@ -214,6 +214,15 @@ CI fuente Linux con Bun 1.4.2. `package.json` conserva `private: true` porque no
 se publica un paquete npm. [Publicación](docs/PUBLISHING.md): no cambiar visibilidad,
 hacer push ni crear releases sin pedido explícito.
 
+Presentación open source en README.md (inglés) y README.es.md; manual detallado
+conservado en docs/USAGE.es.md. CONTRIBUTING tiene variantes EN/ES. Notas de
+preview fuente v0.1.0 en docs/releases/, metadata y anuncios en docs/launch/;
+portada social JPEG/PNG en assets/github/. Las imágenes son ilustraciones de
+producto, no capturas ni validación. Mantener el benchmark histórico separado
+de la QA actual. CI Linux necesita Secret Service para el test PTY de API key:
+instala dbus/gnome-keyring/libsecret y usa D-Bus/llavero temporal aislado; no
+omitir ese test ni usar secretos personales. [QA de publicación](docs/qa/publication-readiness.md).
+
 Fases 02/03/07/08/09/10/11/12/13/14/15/16/17/18 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con

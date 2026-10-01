@@ -18,4 +18,18 @@ jobs:
           bun-version: "1.4.2"
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
-      - run: bun test
+      - name: Install Linux keyring test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends dbus gnome-keyring libsecret-1-0
+      - name: Test with an isolated Secret Service
+        run: |
+          S42_CI_KEYRING_ROOT="$(mktemp -d "$RUNNER_TEMP/s42-keyring.XXXXXX")"
+          export XDG_DATA_HOME="$S42_CI_KEYRING_ROOT/data"
+          export GNOME_KEYRING_CONTROL="$S42_CI_KEYRING_ROOT/control"
+          mkdir -p "$XDG_DATA_HOME" "$GNOME_KEYRING_CONTROL"
+          dbus-run-session -- bash -euo pipefail -c '
+            eval "$(printf "%s" "s42-ci-fixture" | gnome-keyring-daemon --unlock --components=secrets --control-directory="$GNOME_KEYRING_CONTROL")"
+            export GNOME_KEYRING_CONTROL
+            bun test
+          '

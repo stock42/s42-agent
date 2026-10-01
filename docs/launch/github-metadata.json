@@ -1,0 +1,25 @@
+{
+  "repository": "stock42/s42-agent",
+  "description": "A Bun coding agent with the soul of QBasic: terminal windows, mouse, project tabs, local LLMs, native tools, MCP and skills. TUI + headless CLI. MIT.",
+  "homepage": "https://github.com/stock42/s42-agent#readme",
+  "topics": [
+    "bun",
+    "typescript",
+    "coding-agent",
+    "terminal-ui",
+    "qbasic",
+    "local-llm",
+    "llama-cpp",
+    "mcp",
+    "agent-skills",
+    "open-source"
+  ],
+  "release": {
+    "tag": "v0.1.0",
+    "target": "main",
+    "title": "S42 Agent v0.1.0 — QBasic meets local AI",
+    "prerelease": true,
+    "notes": "docs/releases/v0.1.0.md",
+    "distribution": "source-only"
+  }
+}

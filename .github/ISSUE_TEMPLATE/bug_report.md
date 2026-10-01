@@ -1,23 +1,26 @@
 ---
 name: Bug report
-about: Un problema reproducible del agente o de la TUI
+about: A reproducible problem with the agent or terminal UI
 title: ""
 labels: ""
 assignees: ""
 ---
 
-**Problema**
+Reports in English or Spanish are welcome.
 
-**Pasos para reproducir**
+**Problem**
 
-**Resultado esperado / observado**
+**Steps to reproduce**
 
-**Entorno**
-- SO:
-- Terminal y dimensiones:
-- Bun / versión de s42-agent:
-- Proveedor/modelo o transporte MCP, si corresponde:
+**Expected / actual behavior**
 
-**Captura o log mínimo**
+**Environment**
 
-Retirar credenciales y datos personales antes de compartir archivos o logs.
+- OS:
+- Terminal and dimensions:
+- Bun / S42 Agent version:
+- Provider/model or MCP transport, if relevant:
+
+**Minimal screenshot or log**
+
+Remove credentials and private project data before sharing files or logs.
