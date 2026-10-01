@@ -37,3 +37,7 @@ practices expuso un alias (name vercel-react-best-practices, carpeta react-best-
 practices). El instalador ahora identifica por metadata y normaliza la carpeta
 de destino al name. Nueva prueba real pasó y conservó rules/AGENTS.md/README.md.
 El registro local sigue comprobando name/carpeta según la especificación.
+
+Models a 60×16: popup/sombra dentro del editor, scroll con flechas/páginas/rueda
+e indicadores de continuidad. Prueba de regresión conserva todas las filas del
+prompt mientras se recorre el menú completo.

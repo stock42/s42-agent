@@ -8,6 +8,7 @@ export interface Menu { label: string; hotkey?: string; align?: "right"; items: 
 export class MenuBar {
   opened = -1;
   private selected = 0;
+  private offset = 0;
   private pressed = -1;
   private tracking = false;
   private width = 80;
@@ -33,10 +34,21 @@ export class MenuBar {
       width, height: Math.min(menu.items.length + 2, this.height - 2) };
   }
 
+  private reveal():void {
+    if(this.opened<0)return;const visible=Math.max(1,this.popup().height-2),count=this.menus[this.opened]!.items.length;
+    this.offset=Math.max(0,Math.min(this.offset,count-visible));
+    if(this.selected<this.offset)this.offset=this.selected;
+    if(this.selected>=this.offset+visible)this.offset=this.selected-visible+1;
+  }
+  private move(direction:number):void {
+    const items=this.menus[this.opened]!.items;
+    for(let step=0;step<items.length;step++){this.selected=(this.selected+direction+items.length)%items.length;if(!items[this.selected]!.disabled)break;}
+    this.reveal();
+  }
   close(): void { this.opened = -1; this.pressed = -1; this.tracking = false; }
 
   private open(index: number): void {
-    this.opened = index; this.selected = Math.max(0, this.menus[index]!.items.findIndex((item) => !item.disabled)); this.pressed = -1;
+    this.opened = index; this.offset=0; this.selected = Math.max(0, this.menus[index]!.items.findIndex((item) => !item.disabled)); this.pressed = -1;
   }
 
   private activate(index: number): boolean {
@@ -54,17 +66,14 @@ export class MenuBar {
       if (match >= 0) { this.open(match); return true; }
       if (this.opened < 0) return false;
       if (event.key === "left" || event.key === "right") this.open((this.opened + (event.key === "left" ? -1 : 1) + this.menus.length) % this.menus.length);
-      else if (event.key === "up" || event.key === "down") {
-        const items = this.menus[this.opened]!.items;
-        for (let step = 0; step < items.length; step++) {
-          this.selected = (this.selected + (event.key === "up" ? -1 : 1) + items.length) % items.length;
-          if (!items[this.selected]!.disabled) break;
-        }
-      } else if (event.key === "enter") return this.activate(this.selected);
+      else if (event.key === "up" || event.key === "down") this.move(event.key==="up"?-1:1);
+      else if(event.key==="pageup"||event.key==="pagedown"){for(let i=0;i<Math.max(1,this.popup().height-2);i++)this.move(event.key==="pageup"?-1:1);}
+      else if (event.key === "enter") return this.activate(this.selected);
       else return false;
       return true;
     }
-    if (event.type !== "mouse" || event.action === "wheel") return false;
+    if(event.type!=="mouse")return false;
+    if(event.action==="wheel"){if(this.opened<0||!contains(this.popup(),event.x,event.y))return false;this.move(event.delta>0?1:-1);return true;}
     const header = this.menus.findIndex((_, index) => contains(this.header(index), event.x, event.y));
     if (event.action === "move" && this.opened >= 0 && header >= 0 && header !== this.opened) { this.open(header); return true; }
     if (event.action !== "move" && event.button !== 0) return false;
@@ -74,10 +83,10 @@ export class MenuBar {
       return true;
     }
     if (this.opened < 0) return false;
-    const popup = this.popup();
-    const index = event.y - popup.y - 1;
+    this.reveal();const popup = this.popup();
+    const row=event.y-popup.y-1,index=row+this.offset;
     const inside = contains(popup, event.x, event.y) && event.x > popup.x && event.x < popup.x + popup.width - 1
-      && index >= 0 && index < popup.height - 2;
+      && row >= 0 && row < popup.height - 2 && index<this.menus[this.opened]!.items.length;
     if (event.action === "move") {
       const changed = inside && this.selected !== index;
       if (inside) this.selected = index;
@@ -106,11 +115,13 @@ export class MenuBar {
         index === this.opened ? theme.selectedHotkey : theme.menuHotkey);
     });
     if (this.opened < 0) return;
-    const popup = this.popup();
+    this.reveal();const popup = this.popup();
     canvas.fill({ ...popup, x: popup.x + 1, y: popup.y + 1 }, theme.shadow);
     canvas.fill(popup, theme.menu); canvas.box(popup, theme.menu);
-    this.menus[this.opened]!.items.slice(0, popup.height - 2).forEach((item, index) => {
-      const style = item.disabled ? theme.disabled : index === this.selected ? theme.menuSelection : theme.menu;
+    if(this.offset)canvas.text(popup.x+popup.width-3,popup.y,"↑",theme.menu);
+    if(this.offset+popup.height-2<this.menus[this.opened]!.items.length)canvas.text(popup.x+popup.width-3,popup.y+popup.height-1,"↓",theme.menu);
+    this.menus[this.opened]!.items.slice(this.offset,this.offset+popup.height - 2).forEach((item, index) => {
+      const style = item.disabled ? theme.disabled : index+this.offset === this.selected ? theme.menuSelection : theme.menu;
       canvas.fill({ x: popup.x + 1, y: popup.y + index + 1, width: popup.width - 2, height: 1 }, style);
       const shortcutWidth = Bun.stringWidth(item.shortcut ?? "");
       canvas.text(popup.x + 2, popup.y + index + 1, item.label, style,

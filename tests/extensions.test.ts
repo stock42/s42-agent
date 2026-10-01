@@ -34,3 +34,11 @@ test('app loop loads invoked skill, executes MCP tool, persists named results an
  try{app.view.prompt.setValue('/skill guide check MCP');await app.submit();await until(()=>!app.busy);expect(usedSkill).toBe(true);expect(effects).toBe(1);expect(app.view.response.value).toContain('MCP_RESULT 1');expect(app.view.response.value).toContain('Razonamiento:');expect(app.session!.state.events.some(e=>e.type==='notice' && e.text.includes('MCP Fixture'))).toBe(true);expect(app.session!.state.messages.at(-1)?.content).toBe('MCP response verified');const id=app.session!.state.id;await app.desktop.onBeforeExit!();closed=true;const reopened=await App.open({config:path,session:id});try{expect(reopened.view.response.value).toContain('MCP_RESULT 1');expect(effects).toBe(1);}finally{await reopened.desktop.onBeforeExit!();}}
  finally{if(!closed)await app.desktop.onBeforeExit!();mcp.stop(true);llm.stop(true);await rm(root,{recursive:true,force:true});}
 });
+
+test('long Models menu scrolls with keys and wheel without covering the fixed prompt at 60x16',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'s42-long-menu-')),app=await App.open({config:join(root,'config.json'),cwd:root});
+ try{app.desktop.resize(60,16);const promptRows=()=>app.desktop.draw().lines().slice(app.view.promptWindow.bounds.y,15);const baseline=promptRows();key(app,'alt+m');
+ expect(promptRows()).toEqual(baseline);for(let i=0;i<app.desktop.menu.menus[2]!.items.length-1;i++)key(app,'down');expect(app.desktop.draw().lines().join('\n')).toContain('Quitar proveedor');expect(promptRows()).toEqual(baseline);
+ app.desktop.handle({type:'mouse',action:'wheel',x:25,y:4,button:0,delta:-1});expect(promptRows()).toEqual(baseline);key(app,'escape');expect(app.desktop.menu.opened).toBe(-1);
+ }finally{await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}
+});

@@ -55,6 +55,7 @@ export class Desktop {
   resize(width: number, height: number): void {
     this.width = Math.max(1, width); this.height = Math.max(1, height); this.menu.resize(this.width, this.height);
     this.onResize?.(this.width, this.height);
+    this.menu.resize(this.width,this.floatingArea?Math.min(this.height,this.floatingArea.y+this.floatingArea.height):this.height);
     for (const window of this.windows) { this.fit(window); window.onLayout?.(window.client); this.ensureFocus(window); }
   }
 

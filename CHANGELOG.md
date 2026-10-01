@@ -5,6 +5,13 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Corregido — Menús largos en terminal compacto
+
+- Models ahora desplaza sus opciones dentro del área superior: flechas,
+  PageUp/PageDown y rueda, con indicadores de continuidad. El popup y su sombra
+  conservan el prompt visible a 60×16; hit testing usa el offset real.
+- Typecheck y 34 casos pertinentes pasan. Pull sin upstream; commit local.
+
 ### Ajustado — Atajos de MCP/skills y recursos instalados
 
 - MCP/skills participan de los bindings configurables: Alt+C/Alt+S y
