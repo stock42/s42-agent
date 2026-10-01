@@ -30,7 +30,7 @@ test("tokens suman calls y length, se aíslan por pestaña, persisten y vuelven 
   }});
   for(const id of ["A","B"]){const path=join(root,id);await mkdir(path);initial.projects.push({id,name:id,path,selection:{providerId:"llama.cpp",modelId:id}});}
   initial.lastProjectId="A";initial.providers[0]!.baseUrl=`http://127.0.0.1:${server.port}/v1`;
-  initial.providers[0]!.models=["A","B"].map(id=>({id,name:id,contextWindow:32000,maxOutputTokens:500,capabilities:{tools:true,images:false}}));await Bun.write(config,JSON.stringify(initial));
+  initial.providers[0]!.models=["A","B"].map(id=>({id,name:id,manual: true, contextWindow:32000,maxOutputTokens:500,capabilities:{tools:true,images:false}}));await Bun.write(config,JSON.stringify(initial));
   const app=await App.open({config});let closed=false;
   try {
     app.view.prompt.setValue("Pedido A");await app.submit();await app.tabs[0]!.turn;

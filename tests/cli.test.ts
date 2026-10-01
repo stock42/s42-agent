@@ -42,6 +42,7 @@ test("index.ts sin TTY descubre modelo, autentica, lee/escribe/ejecuta y reabre 
   const bodies: any[] = [], auth: (string | null)[] = []; let discoveries = 0;
   const calls = [{ name: "read", args: { path: "game.ts" } }, { name: "write", args: { path: "game.ts", content: "console.log('tetris fixture');\n" } }, { name: "shell", args: { command: "bun game.ts" } }];
   const server = Bun.serve({ port: 0, async fetch(req) {
+    if (req.method === "GET" && new URL(req.url).pathname.endsWith("/props")) return new Response("", {status:404});
     auth.push(req.headers.get("authorization"));
     if (req.url.endsWith("/models")) { discoveries++; return Response.json({ data: [{ id: "fixture", context_window: 32000, max_output_tokens: 1000 }] }); }
     bodies.push(await req.json()); const call = calls[bodies.length - 1];
@@ -76,7 +77,7 @@ test("CLI respeta proyecto/modelo/capacidades/key de config y URL base con path"
   const server = Bun.serve({ port: 0, async fetch(req) { url = new URL(req.url).pathname; authorization = req.headers.get("authorization"); body = await req.json(); return new Response(event({ content: "Modelo configurado." })); } });
   const value = defaultConfig(); value.projects = [{ id: "registered", name: "Elegido", path: cwd, selection: { providerId: "llama.cpp", modelId: "configured" } }];
   value.providers[0]!.baseUrl = `http://127.0.0.1:${server.port}/api`; value.providers[0]!.apiKeyEnv = "S42_CLI_TEST_KEY";
-  value.providers[0]!.models = [{ id: "configured", name: "Configured", contextWindow: 16000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
+  value.providers[0]!.models = [{ id: "configured", name: "Configured", manual: true, contextWindow: 16000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
   await mkdir(join(cwd, "cli-guide"));
   const skillPath = join(cwd, "cli-guide", "SKILL.md"); await Bun.write(skillPath, "---\nname: cli-guide\ndescription: CLI guide\n---\nCLI_SKILL_GUIDANCE: responder brevemente.");
   value.skills = [{ id: "cli-guide", name: "cli-guide", path: skillPath, enabled: true, projectId: "registered" }];
@@ -91,6 +92,7 @@ test("CLI respeta proyecto/modelo/capacidades/key de config y URL base con path"
     // Changing server uses its catalog and does not inherit the old server's key/model.
     const headers: (string | null)[] = []; let switched: any;
     const other = Bun.serve({ port: 0, async fetch(req) {
+      if (req.method === "GET" && new URL(req.url).pathname.endsWith("/props")) return new Response("", {status:404});
       headers.push(req.headers.get("authorization"));
       if (req.url.endsWith("/models")) return Response.json({ data: [{ id: "other-model", context_window: 32000 }] });
       switched = await req.json(); return new Response(event({ content: "Otro servidor." }));
@@ -122,7 +124,7 @@ test("CLI informa errores HTTP y de argumentos, devuelve exit code sin arrancar 
 
 test("SIGINT/SIGTERM cancelan stream CLI, conservan parciales y liberan locks", async () => {
   const root = await mkdtemp(join(tmpdir(), "s42-cli-cancel-")), config = join(root, "config.json"), encoder = new TextEncoder();
-  const server = Bun.serve({ port: 0, fetch: () => new Response(new ReadableStream({ start(controller) {
+  const server = Bun.serve({ port: 0, fetch: req => req.method === "GET" ? new Response("",{status:404}) : new Response(new ReadableStream({ start(controller) {
     controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"reasoning_content":"thought guardado","content":"parcial á文🙂"}}]}\n\n'));
   } })) });
   try {
@@ -139,7 +141,8 @@ test("SIGINT/SIGTERM cancelan stream CLI, conservan parciales y liberan locks", 
 
 test("CLI recupera length por etapas y publica streaming sin el marcador interno", async () => {
   const root = await mkdtemp(join(tmpdir(), "s42-cli-stages-")), config = join(root, "config.json"); let requests = 0;
-  const server = Bun.serve({ port: 0, fetch: () => {
+  const server = Bun.serve({ port: 0, fetch: req => {
+    if (req.method === "GET") return new Response("",{status:404});
     requests++; return new Response(event({ content: requests === 1 ? "parcial" : requests === 2 ? "Etapa 1 lista [[S42_CONTINUE]]" : "Etapa 2 terminada" }, requests === 1 ? "length" : "stop"));
   } });
   try {

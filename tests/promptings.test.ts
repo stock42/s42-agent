@@ -122,7 +122,7 @@ test("index.ts en PTY: crear plantilla, completar variables, ejecutar con SSE y 
     return new Response(`data: ${JSON.stringify({ choices: [{ delta: { reasoning_content: "Reviso la plantilla", content: "Prompting ejecutado correctamente" }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`);
   } });
   const initial = defaultConfig(); initial.providers[0]!.baseUrl = `http://127.0.0.1:${server.port}/v1`;
-  initial.providers[0]!.models = [{ id: "fixture", name: "Fixture", contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
+  initial.providers[0]!.models = [{ id: "fixture", name: "Fixture", manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
   initial.defaults.modelId = "fixture"; await Bun.write(config, JSON.stringify(initial));
   const terminal = new Bun.Terminal({ cols: 80, rows: 24, data: (_, data) => { output += new TextDecoder().decode(data); } });
   let child = Bun.spawn([process.execPath, resolve(import.meta.dir, "../index.ts"), "--config", config, "--cwd", root, "--no-color"], { cwd: root, env: { ...process.env, TERM: "xterm-256color" }, terminal });

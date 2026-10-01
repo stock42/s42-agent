@@ -48,7 +48,7 @@ test('entrypoint: Projects Nombre/Carpeta, picker, explorador externo, reasoning
     return new Response(`data: ${JSON.stringify({choices:[{delta:{reasoning:'Ya revisé las entradas',content:'Resultado fixture visible'},finish_reason:'stop'}]})}\n\ndata: [DONE]\n\n`);
   }});
   const {defaultConfig}=await import('../src/storage/config.ts'),initial=defaultConfig();
-  initial.providers=[{id:'fixture',name:'Fixture',kind:'openai-compatible',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[{id:'fixture',name:'Fixture',contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}}]}];initial.defaults={providerId:'fixture',modelId:'fixture'};await Bun.write(config,JSON.stringify(initial));
+  initial.providers=[{id:'fixture',name:'Fixture',kind:'openai-compatible',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[{id:'fixture',name:'Fixture',manual: true, contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}}]}];initial.defaults={providerId:'fixture',modelId:'fixture'};await Bun.write(config,JSON.stringify(initial));
   const terminal=new Bun.Terminal({cols:80,rows:24,data:(_,data)=>{text+=new TextDecoder().decode(data);}});
   const child=Bun.spawn([process.execPath,index,'--config',config,'--no-color'],{cwd:project,env:{...process.env,TERM:'xterm-256color'},terminal});
   const write=(s:string)=>terminal.write(s),paste=(s:string)=>write(`\x01\x1b[200~${s}\x1b[201~`);

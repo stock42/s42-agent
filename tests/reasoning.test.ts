@@ -7,7 +7,7 @@ import { complete, CompletionError } from "../src/llm/client.ts";
 import type { ToolCall } from "../src/agent/messages.ts";
 import type { Model, Provider } from "../src/storage/config.ts";
 
-const model:Model={id:"fixture",name:"Fixture",contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
+const model:Model={id:"fixture",name:"Fixture",manual: true, contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
 const provider=(port:number):Provider=>({id:"fixture",name:"Fixture",kind:"openai-compatible",baseUrl:`http://127.0.0.1:${port}/v1`,models:[model]});
 const event=(delta:unknown,finish_reason?:string)=>`data: ${JSON.stringify({choices:[{delta,finish_reason}]})}\n\n`;
 const encoder=new TextEncoder();

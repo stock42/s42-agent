@@ -57,6 +57,22 @@ con único modelo del proveedor default se recupera sin red. Nuevas sesiones y
 proyectos heredan defaults, pestañas/sesiones existentes conservan su elección.
 Config global por SO: XDG Linux, Application Support macOS, AppData Windows;
 --config conserva override/sesiones vecinas. [Fase17](docs/phases/17-global-config-and-bun-native.md).
+Persistencia global en agent.sqlite mediante bun:sqlite: settings/config, sessions
+con títulos y events indexados por proyecto/sesión. WAL y transacciones; conectar
+solo durante load/save o durante la sesión, cerrar al terminar. Paths por SO
+mantienen los directorios globales, config e historial en la misma base. Primera
+apertura importa config.json y todos los JSONL anteriores en una transacción;
+conserva originales y referencias Bun.secrets. Escritor legacy vivo/corrupción
+completa abortan la migración sin confirmarla; último registro incompleto se
+omite con aviso. --config *.json conserva backend JSON/JSONL explícito, *.sqlite/
+*.sqlite3/*.db usa SQLite. QA siempre con bases temporales.
+llama.cpp consulta /props al descubrir/enviar para contexto, tools y visión
+reales; no consultar red al iniciar. Model.manual=true (formulario manual) conserva
+valores elegidos. Catálogo legacy sin manual se corrige con metadata del servidor.
+Salida automática hasta 8192, como máximo un cuarto del contexto. Fallback sin
+props conserva valores disponibles. El prompt pide archivos funcionales completos
+y verificables; write append=true agrega partes sin reemplazar lo ya escrito.
+[Fase18](docs/phases/18-reliable-coding-and-sqlite.md), [QA](docs/qa/reliable-coding-and-sqlite.md).
 Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
 read/write/edit/list/find/search/fetch/shell, Vim acotado y adjuntos por rutas ya implementados.
 Etiquetas Vos/Agente con estilos semánticos distintos en historial/stream/estado:
@@ -68,9 +84,9 @@ reservada bajo la conversación. Prompt no muestra estados de ese turno mientras
 trabaja; conserva modo, tokens, adjuntos y hint de nueva línea. `agentState`
 por pestaña es transitorio; no guardar indicadores en mensajes/sesión. El
 timer de animación de 200 ms solo existe durante turnos y se limpia al finalizar,
-fallar/cancelar o salir; no invalidar por cada tick si la pestaña visible está
-idle. Mantener nombre del proyecto y sufijo visible incluso si el título se
-recorta. Conservar scroll/foco/borrador y ui.showReasoning para el contenido real.
+fallar/cancelar o salir; animar cada proyecto activo incluso viendo otro chat
+idle o un archivo. Prefijos P:/F: distinguen proyectos/archivos. Mantener nombre
+y sufijo visible incluso si el título se recorta. Conservar scroll/foco/borrador y ui.showReasoning para el contenido real.
 [QA](docs/qa/agent-activity.md).
 Tools nativas en **src/agent/tools/**, un módulo por herramienta y catálogo
 **Tools → Nativas**. `src/agent/tools.ts` reexporta el contrato existente.
@@ -125,7 +141,9 @@ superposición, APIs Bun/compat y DRM o nvidia-smi instalado para VRAM. N/D si
 falta contador; nunca inventar cero. Tokens del proveedor acumulados por turno/
 pestaña, incluidas tools/etapas/length, persistidos en evento turn opcional;
 parcial cuando falta uso. Tok/s usa salida reportada/tiempo real de esas requests,
-incluye red/primer token y excluye tools. N/D sin uso/tiempo; no contar chunks.
+incluye red/primer token y excluye tools. N/D sin uso/tiempo; no contar chunks. llama.cpp solicita timings_per_token y
+actualiza E/S/promedio durante streaming desde cache_n+prompt_n y predicted_n,
+sin sumar snapshots duplicados ni escribir un evento por token.
 `src/agent/usage.ts`; [QA](docs/qa/persistent-indicators.md).
 La demo no muestrea recursos: cero bytes idle históricos aplican a `--demo`.
 Si el proveedor termina por `finish_reason: length`, conservar texto/reasoning
@@ -196,7 +214,7 @@ CI fuente Linux con Bun 1.4.2. `package.json` conserva `private: true` porque no
 se publica un paquete npm. [Publicación](docs/PUBLISHING.md): no cambiar visibilidad,
 hacer push ni crear releases sin pedido explícito.
 
-Fases 02/03/07/08/09/10/11/12/13/14/15/16/17 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09/10/11/12/13/14/15/16/17/18 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.
@@ -296,7 +314,7 @@ esta política Git a los proyectos sobre los que trabaja.
 - No introducir APIs experimentales para reemplazar un camino estable existente
   sin pedido explícito; Bun.secrets y Bun.WebView están solicitadas por el usuario.
 - Separar TUI, eventos del agente, cliente LLM, tools y persistencia con módulos
-  pequeños; no crear frameworks internos, servicios o bases de datos iniciales.
+  pequeños; no crear frameworks internos ni servicios adicionales. SQLite está solicitado.
 - El servidor `llama.cpp` y los modelos son externos al binario del harness.
 
 ## Validación y evidencia

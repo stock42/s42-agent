@@ -22,6 +22,28 @@ export class SSEParser {
   end(): void { this.buffer += this.decoder.decode(); this.drain(); if (this.buffer.trim() || this.lines.length) throw new Error("SSE incompleto al desconectarse"); }
 }
 
+// llama.cpp publishes the actual template capabilities and context in /props.
+// Old catalogs used conservative guesses; explicitly edited models keep their settings.
+export async function runtimeModel(provider: Provider, model: Model, key?: string, signal?: AbortSignal, timeoutMs = 5000): Promise<Model> {
+  if (provider.kind !== "llama.cpp" || model.manual) return model;
+  const url = new URL(provider.baseUrl); url.pathname = url.pathname.replace(/\/v1\/?$/, "").replace(/\/$/, "") + "/props";
+  url.searchParams.set("model", model.id);
+  try {
+    const response = await fetch(url, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs) });
+    if (!response.ok) return model;
+    const props = await response.json() as { model_alias?: string; default_generation_settings?: { n_ctx?: number }; chat_template_caps?: { supports_tools?: boolean; supports_tool_calls?: boolean }; modalities?: { vision?: boolean } };
+    if (props.model_alias && props.model_alias !== model.id) return model;
+    if (!props.default_generation_settings && !props.chat_template_caps && !props.modalities) return model;
+    const context = props.default_generation_settings?.n_ctx;
+    const contextWindow = Number.isSafeInteger(context) && context! > 1 ? context! : model.contextWindow;
+    const tools = props.chat_template_caps?.supports_tools;
+    return { ...model, contextWindow, maxOutputTokens: Number.isSafeInteger(context) && context! > 1 ? Math.min(8192, Math.max(1, Math.floor(contextWindow / 4)), contextWindow - 1) : Math.min(model.maxOutputTokens, contextWindow - 1), capabilities: {
+      tools: typeof tools === "boolean" ? tools : model.capabilities.tools,
+      images: typeof props.modalities?.vision === "boolean" ? props.modalities.vision : model.capabilities.images,
+    } };
+  } catch (error) { if (signal?.aborted) throw error; return model; }
+}
+
 export async function discoverModels(provider: Provider, key?: string, signal?: AbortSignal): Promise<Model[]> {
   const response = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/models`, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal: signal ?? AbortSignal.timeout(120000) });
   if (!response.ok) throw new Error(`Models: HTTP ${response.status}${response.status === 401 ? " · revisar API key" : ""}`);
@@ -34,13 +56,13 @@ export async function discoverModels(provider: Provider, key?: string, signal?: 
     const outputLimit = Number.isSafeInteger(m.max_output_tokens) && m.max_output_tokens! > 0 ? m.max_output_tokens! : 2048;
     models.set(m.id, { id: m.id, name: typeof m.name === "string" && m.name.trim() ? m.name : m.id,
       contextWindow, maxOutputTokens: Math.min(2048, outputLimit, contextWindow - 1),
-      capabilities: { tools: provider.id === "deepseek", images: Array.isArray(m.input_modalities) && m.input_modalities.includes("image") } });
+      capabilities: { tools: true, images: Array.isArray(m.input_modalities) && m.input_modalities.includes("image") } });
   }
-  return [...models.values()];
+  return Promise.all([...models.values()].map(model => runtimeModel(provider, model, key, signal)));
 }
 
 export async function complete(options: { provider: Provider; model: Model; messages: Message[]; tools?: ToolDefinition[]; key?: string; signal: AbortSignal;
-  firstEventMs: number; idleMs: number; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void }): Promise<Completion> {
+  firstEventMs: number; idleMs: number; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void; onProgress?: (usage: ProviderUsage) => void }): Promise<Completion> {
   const controller = new AbortController(), relay = () => controller.abort(options.signal.reason);
   if (options.signal.aborted) relay(); else options.signal.addEventListener("abort", relay, { once: true });
   let timer: ReturnType<typeof setTimeout>, reader: { cancel(): Promise<void> } | undefined;
@@ -53,7 +75,7 @@ export async function complete(options: { provider: Provider; model: Model; mess
     const response = await fetch(`${options.provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST", signal: controller.signal, headers: { "Content-Type": "application/json", ...(options.key ? { Authorization: `Bearer ${options.key}` } : {}) },
       body: JSON.stringify({ model: options.model.id, messages: options.messages, stream: true, stream_options: { include_usage: true }, max_tokens: options.model.maxOutputTokens,
-        ...(options.tools?.length ? { tools: options.tools } : {}) }),
+        ...(options.tools?.length ? { tools: options.tools } : {}), ...(options.provider.kind === "llama.cpp" ? { timings_per_token: true } : {}) }),
     });
     if (!response.ok) throw new Error(`Proveedor: HTTP ${response.status}${response.status === 401 ? " · revisar API key" : response.status === 404 ? " · revisar endpoint/modelo" : response.status === 429 ? " · límite del proveedor" : ""}`);
     if (!response.body) throw new Error("El proveedor no devolvió un stream");
@@ -63,7 +85,16 @@ export async function complete(options: { provider: Provider; model: Model; mess
       if (data.trim() === "[DONE]") { done = true; return; }
       const packet = JSON.parse(data);
       if (packet.error) throw new Error("El proveedor reportó un error durante el stream");
-      if (packet.usage) usage = packet.usage;
+      if (packet.usage) { usage = packet.usage; options.onProgress?.(usage!); }
+      else if (packet.timings) {
+        const timing = packet.timings;
+        const valid = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) >= 0;
+        if (valid(timing.cache_n) && valid(timing.prompt_n) && valid(timing.predicted_n)) {
+          usage = { prompt_tokens: timing.cache_n + timing.prompt_n, completion_tokens: timing.predicted_n,
+            total_tokens: timing.cache_n + timing.prompt_n + timing.predicted_n };
+          options.onProgress?.(usage);
+        }
+      }
       const choice = packet.choices?.[0]; if (!choice) return;
       if (choice.finish_reason) finishReason = choice.finish_reason;
       const delta = choice.delta;

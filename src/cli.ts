@@ -38,7 +38,7 @@ export async function runCli(options: CliOptions): Promise<number> {
   const save = async (message: Message) => { await session!.append({ type: "message", message }); session!.state.messages.push(message); };
   try {
     if (!options.prompting?.trim()) throw new Error("--prompting requiere un pedido no vacío");
-    const paths = storagePaths(options.config), store = await ConfigStore.load(paths.config), config = store.value;
+    const paths = storagePaths(options.config), store = await ConfigStore.load(paths.config, paths.legacy), config = store.value;
     const folder = options.project ? store.resolveProject(options.project).path : options.cwd ?? process.cwd();
     const path = await normalizeFolder(folder, process.cwd());
     const project = config.projects.find(project => project.path === path) ?? {
@@ -75,7 +75,7 @@ export async function runCli(options: CliOptions): Promise<number> {
     if (!session.state.events.length) await session.append({ type: "session", title: options.prompting.slice(0, 80) });
     await session.append({ type: "selection", selection: { providerId: provider.id, modelId: model.id } });
     await save({ role: "user", content: options.prompting });
-    log(`Proyecto: ${project.name} · Modelo: ${model.id}\nSesión: ${session.path}`);
+    log(`Proyecto: ${project.name} · Modelo: ${model.id}\nSesión: ${session.state.id} · ${session.path}`);
     for (const notice of session.state.notices) log(notice);
     const showReasoning = options.reasoning ? options.reasoning === "on" : config.ui.showReasoning;
     const toolNames = new Map<string, string>();

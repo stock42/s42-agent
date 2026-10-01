@@ -4,7 +4,7 @@ import type { Model, Project, Provider, Config, McpServer, Skill } from "../stor
 import type { Session } from "../storage/sessions.ts";
 import { McpConnections } from "../mcp/client.ts";
 import { SkillCatalog } from "../skills/index.ts";
-import { complete, CompletionError, type Completion } from "../llm/client.ts";
+import { complete, CompletionError, runtimeModel, type Completion } from "../llm/client.ts";
 import { stageReply, stageRequest, stageStream } from "./stages.ts";
 import { execute, instructions, toolDefinitions } from "./tools.ts";
 import { addUsage, emptyUsage, type TokenUsage, type ProviderUsage } from "./usage.ts";
@@ -12,8 +12,11 @@ import { agentPrompt } from "./prompt.ts";
 
 export async function runTurn(options: { project: Project; session: Session; provider: Provider; model: Model; key?: string; signal: AbortSignal;
   limits: Config["limits"]; mcpServers?:McpServer[]; skills?:Skill[]; onNotice?:(text:string)=>void; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
-  onToolStart?: (call: ToolCall) => void; onUsage?: (usage: TokenUsage) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number; tokens: TokenUsage }> {
-  const { session, project, signal, model } = options;
+  onModel?: (model: Model) => Promise<void>; onToolStart?: (call: ToolCall) => void; onUsage?: (usage: TokenUsage) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number; tokens: TokenUsage }> {
+  const { session, project, signal } = options;
+  const model = await runtimeModel(options.provider, options.model, options.key,
+    signal, Math.min(5000, options.limits.firstEventMs));
+  await options.onModel?.(model);
   const save = async (message: Message) => { await session.append({ type: "message", message }); session.state.messages.push(message); options.onMessage(); };
   const mcp=new McpConnections(),skills=new SkillCatalog();
   const notice=async(text:string)=>{await session.append({type:"notice",text});session.state.notices.push(text);options.onNotice?.(text);options.onMessage();};
@@ -28,7 +31,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
   if(explicit)await notice(`Skill ${explicit.name}: instrucciones cargadas por pedido`);
   const guidance = await instructions(project.path);
   const system: Message = { role: "system", content: agentPrompt({ cwd: project.path, tools: model.capabilities.tools, projectInstructions: guidance, externalSkills: skills.guidance,
-    invokedSkill: explicit ? `Skill invocada ${explicit.name} (base directory: ${dirname(explicit.path)}):\n${explicit.body}` : undefined }) };
+    outputTokens: model.maxOutputTokens, invokedSkill: explicit ? `Skill invocada ${explicit.name} (base directory: ${dirname(explicit.path)}):\n${explicit.body}` : undefined }) };
   let tokens = emptyUsage();
   const recordUsage = (usage: ProviderUsage | undefined, durationMs: number) => { tokens=addUsage(tokens,usage,durationMs); options.onUsage?.(tokens); };
   let stage = 0;
@@ -49,7 +52,8 @@ export async function runTurn(options: { project: Project; session: Session; pro
     let result: Completion;
     const started = performance.now();
     try {
-      result = await complete({ ...options, messages, tools, onDelta: stream?.push ?? options.onDelta,
+      result = await complete({ ...options, model, messages, tools,
+        onProgress: usage => options.onUsage?.(addUsage(tokens, usage, performance.now() - started)), onDelta: stream?.push ?? options.onDelta,
         firstEventMs: options.limits.firstEventMs, idleMs: options.limits.idleMs });
     } catch (error) {
       recordUsage(error instanceof CompletionError ? error.usage : undefined, performance.now() - started);

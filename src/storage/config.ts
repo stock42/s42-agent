@@ -1,13 +1,15 @@
 import { access, mkdir, realpath, rename, stat, unlink } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { homedir } from "node:os";
+import { isDatabase, openDatabase, setting, setSetting, insertEvent } from "./database.ts";
+import { legacySessions } from "./sessions.ts";
 import type { Selection } from "../agent/messages.ts";
 import { bindings, type Bindings } from "../ui/bindings.ts";
 import { palettes, type PaletteId } from "../ui/theme.ts";
 import type { Language } from "../ui/i18n.ts";
 
 export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string }
-export interface Model { id: string; name: string; contextWindow: number; maxOutputTokens: number; capabilities: { tools: boolean; images: boolean } }
+export interface Model { manual?: boolean; id: string; name: string; contextWindow: number; maxOutputTokens: number; capabilities: { tools: boolean; images: boolean } }
 export interface Provider { id: string; name: string; kind: "llama.cpp" | "openai-compatible"; baseUrl: string; apiKeyEnv?: string; apiKeySecret?: string; models: Model[] }
 export interface McpServer { id:string; name:string; enabled:boolean; transport:"stdio"|"http"; command?:string; args?:string[]; cwd?:string; envRefs?:Record<string,string>; url?:string; apiKeyEnv?:string }
 export interface Skill { id:string; name:string; path:string; enabled:boolean; projectId?:string; source?:string }
@@ -26,10 +28,12 @@ export function storagePaths(configPath?: string, env = process.env, platform = 
   const home = homedir();
   const base = platform === "darwin" ? join(home, "Library/Application Support/s42-agent")
     : platform === "win32" ? join(env.APPDATA || join(home, "AppData/Roaming"), "s42-agent") : join(env.XDG_CONFIG_HOME || join(home, ".config"), "s42-agent");
-  return { config: resolve(configPath ?? join(base, "config.json")),
-    sessions: configPath ? join(dirname(resolve(configPath)), "sessions") : platform === "linux"
-      ? join(env.XDG_STATE_HOME || join(home, ".local/state"), "s42-agent/sessions")
-      : platform === "win32" ? join(env.LOCALAPPDATA || join(home, "AppData/Local"), "s42-agent/sessions") : join(base, "sessions") };
+  const legacyConfig = join(base, "config.json");
+  const legacyRoot = platform === "linux" ? join(env.XDG_STATE_HOME || join(home, ".local/state"), "s42-agent/sessions")
+    : platform === "win32" ? join(env.LOCALAPPDATA || join(home, "AppData/Local"), "s42-agent/sessions") : join(base, "sessions");
+  const config = resolve(configPath ?? join(base, "agent.sqlite"));
+  return { config, sessions: isDatabase(config) ? config : join(dirname(config), "sessions"),
+    ...(!configPath ? { legacy: { config: legacyConfig, sessions: legacyRoot } } : {}) };
 }
 
 // Older configs saved the catalog but only remembered choices inside a session.
@@ -81,7 +85,7 @@ export function validateConfig(value: unknown): Config {
     let url: URL; try { url = new URL(p.baseUrl); } catch { throw new Error(`Endpoint inválido: ${p.name}`); }
     if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error(`Endpoint inválido: ${p.name}`);
     for (const m of p.models) if (!m || !text(m.id) || !text(m.name) || !positive(m.contextWindow) || !positive(m.maxOutputTokens)
-      || m.maxOutputTokens >= m.contextWindow || !m.capabilities || typeof m.capabilities.tools !== "boolean" || typeof m.capabilities.images !== "boolean") throw new Error(`Modelo inválido: ${p.name}`);
+      || (m.manual !== undefined && typeof m.manual !== "boolean") || m.maxOutputTokens >= m.contextWindow || !m.capabilities || typeof m.capabilities.tools !== "boolean" || typeof m.capabilities.images !== "boolean") throw new Error(`Modelo inválido: ${p.name}`);
     if (!unique(p.models.map(m => m.id))) throw new Error(`Modelos duplicados: ${p.name}`);
   }
   if (!unique(c.projects.map(p => p.id)) || !unique(c.projects.map(p => p.path)) || !unique(c.providers.map(p => p.id))) throw new Error("IDs o carpetas duplicados en config");
@@ -119,14 +123,40 @@ export async function normalizeFolder(path: string, cwd: string): Promise<string
 
 export class ConfigStore {
   constructor(readonly path: string, public value: Config) {}
-  static async load(path: string): Promise<ConfigStore> {
-    const file = Bun.file(path);
-    const config = await file.exists() ? validateConfig(await file.json()) : defaultConfig();
+  static async load(path: string, legacy?: { config: string; sessions: string }): Promise<ConfigStore> {
+    let config: Config;
+    if (isDatabase(path)) {
+      const db = await openDatabase(path);
+      try {
+        if (!setting(db, "config")) {
+          const file = legacy ? Bun.file(legacy.config) : undefined;
+          const imported = file && await file.exists() ? validateConfig(await file.json()) : defaultConfig();
+          const sessions = legacy ? await legacySessions(legacy.sessions) : [];
+          db.transaction(() => {
+            // A second instance may have completed migration while files were read.
+            if (setting(db, "config")) return;
+            setSetting(db, "config", JSON.stringify(imported));
+            for (const session of sessions) for (const event of session.events) insertEvent(db, session.id, event);
+            setSetting(db, "legacy-import-v1", new Date().toISOString());
+          })();
+        }
+        config = validateConfig(JSON.parse(setting(db, "config")!));
+      } finally { db.close(true); }
+    } else {
+      const file = Bun.file(path);
+      config = await file.exists() ? validateConfig(await file.json()) : defaultConfig();
+    }
     if (config.defaults.modelId === undefined) config.defaults = { ...config.defaults, ...modelSelection(config) };
     return new ConfigStore(path, config);
   }
   async save(next: Config): Promise<void> {
-    validateConfig(next); await mkdir(dirname(this.path), { recursive: true });
+    validateConfig(next);
+    if (isDatabase(this.path)) {
+      const db = await openDatabase(this.path);
+      try { setSetting(db, "config", JSON.stringify(next)); this.value = next; } finally { db.close(true); }
+      return;
+    }
+    await mkdir(dirname(this.path), { recursive: true });
     const temporary = `${this.path}.${crypto.randomUUID()}.tmp`;
     try { await Bun.write(temporary, JSON.stringify(next, null, 2) + "\n"); await rename(temporary, this.path); this.value = next; }
     finally { await unlink(temporary).catch(() => {}); }

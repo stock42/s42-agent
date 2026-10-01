@@ -31,7 +31,7 @@ bun run dev
 ```bash
 bun run index.ts --cwd /ruta/proyecto
 bun run index.ts --project nombre
-bun run index.ts --config /ruta/config.json
+bun run index.ts --config /ruta/agent.sqlite
 bun run index.ts --help
 ```
 
@@ -57,7 +57,7 @@ bun run index.ts \
 | `--llm_server host_o_url` | Host o URL base HTTP/HTTPS. Host sin path usa `/v1`; una URL con path conserva ese path. |
 | `--llm_port puerto` | Sobrescribe el puerto; entero de 1 a 65535. |
 | `--llm_apikey "clave"` | Bearer de esta ejecución, en memoria; opcional para llama.cpp sin autenticación. |
-| `--model id` | ID explícito. Si está registrado conserva contexto/salida/capacidades; si no, usa 8192/2048 tokens y tools habilitadas. |
+| `--model id` | ID explícito. llama.cpp consulta `/props` para contexto/tools reales; modelos editados manualmente conservan sus valores. Sin metadata, fallback 8192/2048. |
 | `--reasoning on\|off` | Muestra/oculta razonamiento recibido en stderr. Por defecto usa la preferencia de config; no cambia cómo razona el modelo. |
 | `--cwd carpeta` / `--project nombre_o_id` | Carpeta de trabajo o proyecto registrado; sin ambos, trabaja en la carpeta actual. |
 | `--provider id`, `--config archivo` | Seleccionan proveedor y configuración existentes. |
@@ -108,7 +108,9 @@ propios. El editor central muestra el nombre del proyecto.
 
 - Cambiá con clic, **Alt+←/→** o **Alt+1…9**. Las flechas y la rueda de la barra
   permiten recorrer pestañas que no caben en el terminal.
-- `~` señala un proyecto con un turno activo. Podés enviar en otro proyecto;
+- `P:nombre` identifica proyectos y `F:archivo` identifica archivos. Cada proyecto
+  activo anima su indicador `| / - \` en la pestaña, incluso viendo otro proyecto
+  o un archivo. Podés enviar en otro proyecto;
   cada turno conserva su modelo, carpeta y sesión, incluso en segundo plano.
 - El título del proyecto muestra una animación durante su turno, incluso antes
   del primer texto. El chat muestra «Agente: Razonando…», «Respondiendo…» o la
@@ -260,7 +262,9 @@ arriba a la derecha, por ejemplo `Tokens E/S 1200/120 · Prom. 28.5 tok/s`
 una línea y Ctrl+C cancela. El borrador usa todo el ancho bajo los contadores.
 Tokens por turno/pestaña incluyen todas sus requests, tools y continuaciones;
 se guardan al terminar. Los contadores se actualizan al recibir el uso del
-proveedor, normalmente al finalizar cada request. No se cuentan caracteres ni
+proveedor: llama.cpp envía timings por token y el promedio cambia durante
+la generación, desde el primer token. Otros endpoints dependen de la frecuencia
+de sus reportes de uso. No se cuentan caracteres ni
 deltas SSE como tokens. Conteo incompleto → parcial; dato ausente → **N/D**.
 Cantidades grandes se abrevian (`k`, `M`, etc.); la sesión conserva cifras exactas.
 Tok/s es el promedio observado: salida reportada dividida por tiempo de las
@@ -393,16 +397,29 @@ Comandos: `/help`, `/projects`, `/models`, `/providers`, `/sessions`, `/files`,
 
 ## Configuración y persistencia
 
-Linux respeta XDG: config en `~/.config/s42-agent/config.json` y sesiones en
-`~/.local/state/s42-agent/sessions/`. macOS usa `~/Library/Application Support/s42-agent/`;
-Windows guarda config en `%APPDATA%/s42-agent/config.json` y sesiones en
-`%LOCALAPPDATA%/s42-agent/sessions/` (fallback `~/AppData/Roaming` y `~/AppData/Local`).
-Las variables XDG/AppData vacías usan los defaults. Con `--config`, sesiones
-en `sessions/` junto al JSON. La carpeta del proyecto no cambia la config global.
+Configuración e historial usan **SQLite nativo de Bun**, sin servidor ni dependencias:
 
-Configuración: proyectos/proveedores/modelos, MCP/Skills/Promptings, defaults,
-`workspace.openProjectIds`, `lastProjectId`, paleta, idioma, visibilidad del razonamiento y bindings. Las sesiones JSONL
-guardan mensajes, selección, borrador y eventos, con un lock por sesión.
+| SO | Base global |
+| --- | --- |
+| Linux | `${XDG_CONFIG_HOME:-~/.config}/s42-agent/agent.sqlite` |
+| macOS | `~/Library/Application Support/s42-agent/agent.sqlite` |
+| Windows | `%APPDATA%/s42-agent/agent.sqlite` (fallback `~/AppData/Roaming`) |
+
+La primera apertura importa automáticamente `config.json` y las sesiones JSONL
+anteriores (XDG_STATE_HOME en Linux, LOCALAPPDATA en Windows). Conserva los
+originales, modelos, referencias al llavero, historial y borradores. Si hay una
+instancia anterior abierta o corrupción en un registro completo, informa el
+problema y no confirma la migración; permite corregirlo y reintentar.
+
+`--config /ruta/agent.sqlite` usa una base alternativa; `.db` y `.sqlite3` también.
+`--config /ruta/config.json` conserva el formato anterior y `sessions/` junto al
+JSON. La carpeta del proyecto no cambia el almacenamiento global.
+
+La base guarda proyectos/proveedores/modelos, MCP/Skills/Promptings, defaults,
+pestañas, preferencias y eventos por sesión. WAL permite leer mientras otros
+proyectos guardan sus eventos; cada sesión conserva su lock de escritor único.
+No se persiste cada token: se guarda el resultado de cada request y turno.
+Las API keys permanecen en **Bun.secrets**, la base guarda solo referencias.
 `--provider`, `--model` y `--session` permiten selecciones explícitas al iniciar.
 
 Bindings opcionales por acción conocida, con colisiones rechazadas:
@@ -426,6 +443,12 @@ Acciones: `projects`, `models`, `providers`, `sessions`, `attachments`, `explore
 `mcp`, `skills`, `promptings`, `help`. Atajos de edición/foco/lifecycle permanecen
 reservados. Límites iniciales: 30 pasos y 120 s para shell/primer evento/inactividad.
 El contexto se estima sin tokenizador; prevalece el límite del servidor.
+llama.cpp detecta contexto/tools/visión mediante `/props` al descubrir modelos y
+al enviar. Repara catálogos antiguos “sin tools” cuando la plantilla del servidor
+sí las soporta. El presupuesto automático de salida es hasta 8.192 tokens,
+limitado a un cuarto del contexto. Editar un modelo en Models fija sus valores
+manuales. `write` permite `append: true` para construir archivos por partes; el
+prompt del agente indica completar la funcionalidad en disco antes de terminar.
 
 Bun hereda el entorno y puede cargar archivos existentes; `--cwd` fija la carpeta
 de las tools, sin cambiar el directorio global del proceso. Para usar solo variables

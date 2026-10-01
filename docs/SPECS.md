@@ -71,13 +71,16 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R29 | WebSocket nativo | Cliente ws/wss para pruebas, headers/subprotocolos, mensajes, timeout/cancelación y cierre por call, visible en chat. |
 | R30 | Archivos en pestañas | Abrir archivos como pestañas junto al proyecto, título con el nombre, panel central completo y sintaxis HTML/CSS/JavaScript/TypeScript. |
 | R31 | CLI sin TUI | Ejecutar pedidos con --prompting, endpoint/puerto/API key y reasoning on/off; mismo agente/tools, stdout/stderr, sesiones y cancelación. |
+| R32 | Config global y APIs Bun | Modelo recordado, claves en llavero, comandos Bun Shell y scraping con Bun.WebView. |
+| R33 | Coding fiable y SQLite | Detectar tools/contexto de llama.cpp, tabs P:/F: con actividad simultánea, tok/s en streaming, migración/config/historial SQLite nativos. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
 - Un repositorio y un paquete ESM. No monorepo ni framework de agentes.
 - Un turno activo por proyecto; proyectos distintos pueden trabajar a la vez.
   Herramientas secuenciales dentro de cada turno.
-- Configuración JSON y sesiones JSONL en disco. Sin base de datos inicial.
+- Configuración e historial en SQLite nativo de Bun; importar JSON/JSONL anteriores
+  sin borrarlos. --config *.json mantiene compatibilidad explícita.
 - TUI propia estilo QBasic, con ANSI, mouse y las APIs incluidas en Bun.
 - Construir primero los componentes visuales y una demo de viabilidad sin LLM;
   luego usar esos mismos componentes en la interfaz del harness.
@@ -284,8 +287,8 @@ Una pantalla alternativa organizada como escritorio TUI:
    el borrador usa todo el ancho debajo, sin superposición con adjuntos/estado.
 4. Contexto visible: proyecto, proveedor/modelo y sesión en la ventana principal.
 5. Barra inferior: INSERT/NORMAL, foco, actividad, uso disponible y atajos.
-6. Fila de pestañas debajo del menú: nombre de cada proyecto, marca `~` de turno
-   activo, cierre `×` y `+` para abrir. Flechas/rueda desplazan las pestañas cuando
+6. Fila de pestañas debajo del menú: prefijos `P:nombre`/`F:archivo`, indicador animado de turno
+   en cada proyecto activo, cierre `×` y `+` para abrir. Flechas/rueda desplazan las pestañas cuando
    no entran; la activa se revela al cambiar de proyecto o redimensionar.
 
 Durante un turno, el título del proyecto incorpora un indicador animado
@@ -299,8 +302,8 @@ El indicador de actividad no genera contenido de razonamiento: ui.showReasoning
 sigue controlando únicamente texto recibido del proveedor.
 
 Estado de actividad por pestaña, transitorio; no guardarlo en mensajes/eventos.
-Un timer compartido por aplicación durante turnos: solo invalidar si la pestaña
-visible tiene actividad. Quitar indicador y fila al terminar/cancelar/fallar;
+Un timer compartido por aplicación durante turnos anima todas las pestañas
+de proyectos activos, incluso viendo un archivo o proyecto idle. Quitar indicador y fila al terminar/cancelar/fallar;
 detener timer al quedar sin turnos o cerrar. Mantener scroll, foco y borrador
 durante ticks y cambios de pestaña. [QA](qa/agent-activity.md).
 
@@ -589,16 +592,16 @@ proyectos ni inventar reglas Git para el repositorio del usuario.
 ### Persistencia y precedencia
 
 - `--config <archivo>` permite elegir la configuración global.
-- Linux: configuración en `${XDG_CONFIG_HOME:-~/.config}/s42-agent/config.json`
-  y sesiones en `${XDG_STATE_HOME:-~/.local/state}/s42-agent/sessions/`.
+- Linux: config e historial en `${XDG_CONFIG_HOME:-~/.config}/s42-agent/agent.sqlite`.
+  Migrar config.json y JSONL de XDG_STATE_HOME conservando originales.
 - macOS: bajo `~/Library/Application Support/s42-agent/`.
-- Windows: configuración bajo `%APPDATA%/s42-agent/` y sesiones bajo
-  `%LOCALAPPDATA%/s42-agent/sessions/`.
+- Windows: agent.sqlite bajo `%APPDATA%/s42-agent/`; importar sesiones anteriores
+  de `%LOCALAPPDATA%/s42-agent/sessions/`.
 - Precedencia para una sesión nueva: selección explícita de CLI/TUI, preferencia
   del proyecto, default global. Una sesión reabierta conserva su selección salvo
   override explícito; si fue eliminada, se solicita elegir otra.
 - Configuración versionada con `version: 1`. Validar antes de guardar y escribir
-  mediante archivo temporal más rename en la misma carpeta.
+  mediante transacción SQLite; backend JSON explícito usa temporal + rename.
 - `workspace?: { openProjectIds: string[] }` conserva IDs existentes, únicos y en
   orden; `lastProjectId` indica la activa y cada proyecto su `lastSessionId`.
   Sin workspace, abrir el último/default/primer proyecto como antes. `[]` mantiene
@@ -641,11 +644,13 @@ capacidades son datos configurados, no garantías inferidas del nombre.
   obtenido para ese proveedor. La selección previa se mantiene hasta elegir modelo.
   Un HTTP401/error/lista vacía conserva el formulario y evita guardar la operación.
 - Mostrar los nombres reales y tomar `context_window`/`input_modalities` cuando
-  el catálogo los publica. Salida inicial: mínimo entre 2048, máximo reportado y
-  contexto menos uno. Si solo hay IDs, usar contexto8192/salida2048 ajustables.
+  el catálogo los publica. Fallback: mínimo entre 2048, máximo reportado y
+  contexto menos uno. llama.cpp completa contexto/tools/visión con /props y salida
+  hasta 8192 o un cuarto del contexto; manual=true conserva la edición del usuario.
   Conservar las capacidades y límites de modelos ya configurados por el usuario.
 - Tools de DeepSeek se habilitan según su contrato Chat Completions; imágenes
-  según la metadata. Otros proveedores conservan tools desactivadas inicialmente.
+  según la metadata. Nuevos modelos OpenAI-compatible habilitan tools; llama.cpp
+  usa las capacidades de la plantilla publicadas en /props.
   No inferir capacidades de nombres ni hardcodear una lista de modelos disponibles.
 - Consulta cancelable con Ctrl+C, timeout y estado visible; sin requests de catálogo
   al iniciar. JSON/sesiones no contienen claves. [QA](qa/provider-presets.md).
@@ -932,14 +937,14 @@ solo declarar soportados los casos comprobados.
 ## 11. Sesiones y recuperación
 
 - Identificador de sesión independiente del nombre del proyecto.
-- Registro JSONL con eventos versionados, timestamp, ID, proyecto, selección
+- Registro SQLite con eventos versionados, timestamp, ID, proyecto, selección
   LLM y mensajes canónicos de usuario/asistente/herramienta.
 - Guardar mensajes finalizados, inicio/resultado de herramientas y resultado
   del turno; no escribir un evento de disco por token.
 - Guardar borrador en cambios de sesión/proyecto y cierre normal. Conservar un
   mensaje parcial explícitamente marcado en cancelación o error.
-- Un solo escritor serializado por sesión. Append real, sin reabrir un writer
-  que reemplace el archivo. Persistir el inicio antes de ejecutar una herramienta.
+- Un solo escritor serializado por sesión. Append en transacción SQLite (JSONL
+  para --config JSON), sin sustituir el historial. Persistir inicio antes de ejecutar tools.
 - En recuperación, una herramienta iniciada sin resultado queda «interrumpida».
   Completar su representación para el contexto con ese estado, sin ejecutarla otra vez.
 - Una última línea incompleta puede recuperarse conservando las anteriores.
@@ -1129,7 +1134,8 @@ comprueban disponibilidad, no una TUI implementada ni soporte multiplataforma.
 | Package manager, lockfile y lifecycle | Instalar con Bun y versionar un lock reproducible. |
 | Debugger y benchmarking | Diagnóstico y mediciones cuando existan implementaciones. |
 | Workers | Sin uso inicial; la API documenta partes experimentales. |
-| SQLite, SQL, Redis y S3 | Sin uso inicial: archivos locales cubren el almacenamiento. |
+| SQLite | Configuración e historial globales con bun:sqlite, WAL y migración JSON/JSONL. |
+| SQL remoto, Redis y S3 | Sin uso: el agente usa almacenamiento local. |
 | FFI, C compiler y Node-API | Sin uso inicial: evitar código nativo y toolchains extra. |
 | Secrets | Propuesta pendiente; la API está marcada experimental. |
 | HTTP server | Fixtures de pruebas; sin backend obligatorio del producto. |
@@ -1406,3 +1412,46 @@ son un pedido explícito del usuario. [Fase17](phases/17-global-config-and-bun-n
 [Bun Secrets](https://bun.com/docs/runtime/secrets),
 [Bun Shell](https://bun.com/docs/runtime/shell),
 [Bun WebView](https://bun.com/docs/runtime/webview).
+
+
+## 24. Coding fiable, pestañas y SQLite
+
+R33. Detectar capacidades y límites efectivos de llama.cpp por `/props`, sin
+clasificar sus modelos automáticamente como “sin tools”. Enviar todas las tools
+habilitadas al coding loop; cuando el servidor publica metadata, corregir
+catálogos legacy y persistir lo detectado en TUI. `manual: true` conserva límites
+/capacidades elegidos al editar un modelo. Sin props válido, conservar fallback.
+Presupuesto automático: min(8192, contexto/4), al menos uno y menor al contexto.
+No elevar límites arbitrariamente durante recuperación: detectar el contexto
+real antes de iniciar. System prompt indica terminar artefactos funcionales en
+disco; write admite append=true para archivos grandes. Mantener llamadas
+truncadas sin ejecutar y límites/cancelación de las etapas existentes.
+
+Pestañas `P:nombre` y `F:archivo`, spinner de cada proyecto activo cada 200 ms;
+continúa con otro proyecto/archivo visible, finaliza por proyecto sin alterar
+nombre, foco, scroll ni borrador. Detener el timer cuando todos quedan idle.
+
+llama.cpp solicita `timings_per_token: true`. SSE con timings válidos actualiza
+entrada cache_n+prompt_n, salida predicted_n y total de esa request; usage estándar
+cuando llega tiene prioridad. Promedio ponderado con tiempo observado desde
+inicio de request, incluyendo espera de primer token/red y excluyendo tools.
+Snapshots reemplazan la request activa sobre totales finalizados; no sumarlos
+como requests nuevas ni persistir cada token. Endpoints sin uso progresivo
+actualizan cuando lo reportan; no estimar tokens con texto/chunks.
+
+SQLite global nativo mediante bun:sqlite, sin ORM: settings (config v1 JSON),
+sessions (proyecto/id/título/fecha), events (ID/payload/orden), índice por sesión,
+WAL y transacciones. SO decide la carpeta global; config e historial en
+agent.sqlite. --config .sqlite/.sqlite3/.db usa base alternativa; .json conserva
+JSON/JSONL. Primera apertura valida/importa config anterior y logs de todas las
+carpetas de proyecto en una transacción. Conservar originales; no duplicar en
+siguientes aperturas. Corrupción completa o escritor anterior vivo abortan sin
+confirmar migración; último registro incompleto conserva prefijo con aviso.
+Locks por sesión/recuperación de procesos muertos y reparación de tool results
+se conservan. Claves en Bun.secrets, solo referencias en base. Conexiones cerradas
+al terminar. QA aislada: no migrar config personal para probar.
+
+[Fase18](phases/18-reliable-coding-and-sqlite.md),
+[QA](qa/reliable-coding-and-sqlite.md). Fuentes:
+[Bun SQLite](https://bun.com/docs/runtime/sqlite),
+[llama.cpp server](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md).

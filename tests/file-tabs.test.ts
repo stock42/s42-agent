@@ -34,7 +34,7 @@ test("explorador abre pestañas con título y sintaxis; conserva chat/draft/cwd,
     await until(() => app.fileTabs.length === 1 && !app.desktop.modal);
     const first = app.fileTabs[0]!;
     expect(app.view.editorWindow.title).toBe("index.html"); expect(app.view.response).toBe(first.content);
-    expect(app.desktop.draw().lines()[1]).toContain("2:index.html");
+    expect(app.desktop.draw().lines()[1]).toContain("2:F:index.html");
     expect(app.view.response.value).toBe(source); expect(app.view.response.readOnly).toBe(true);
     expect(app.desktop.draw().lines().join("\n")).toContain("<!DOCTYPE html>");
     expect(app.desktop.draw().cells.flat().some(c => c.style === theme.syntaxKeyword)).toBe(true);
@@ -46,7 +46,7 @@ test("explorador abre pestañas con título y sintaxis; conserva chat/draft/cwd,
     app.desktop.handle({ type: "paste", text: "no editar" }); key(app, "delete"); expect(first.content.value).toBe(source);
     key(app, "alt+1"); await until(() => app.view.response === chat);
     expect(chat.value).toBe("Conversación conservada"); expect(app.view.prompt.value).toBe("BORRADOR á文🙂");
-    const x = app.desktop.draw().lines()[1]!.indexOf("2:index.html") + 2;
+    const x = app.desktop.draw().lines()[1]!.indexOf("2:F:index.html") + 2;
     for (const action of ["press", "release"] as const) app.desktop.handle({ type: "mouse", action, x, y: 1, button: 0, delta: 0 });
     await until(() => app.view.response === first.content); expect(app.view.editorWindow.title).toBe("index.html");
     key(app, "alt+left"); await until(() => app.view.response === chat);
@@ -76,7 +76,7 @@ test("LLM responde en el chat del proyecto aunque se abrió un archivo; stream e
   await Bun.write(file, "export const value = 42;"); let controller: ReadableStreamDefaultController<Uint8Array> | undefined;
   const server = Bun.serve({ port: 0, fetch() { return new Response(new ReadableStream({ start(c) { controller = c; } })); } });
   initial.providers[0]!.baseUrl = `http://127.0.0.1:${server.port}/v1`;
-  initial.providers[0]!.models = [{ id: "fixture", name: "Fixture", contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
+  initial.providers[0]!.models = [{ id: "fixture", name: "Fixture", manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
   initial.defaults.modelId = "fixture"; await Bun.write(config, JSON.stringify(initial)); const app = await App.open({ config });
   try {
     const chat = app.tabs[0]!.response; await app.openFile(file); app.view.prompt.setValue("Hola"); await app.submit();
@@ -95,11 +95,11 @@ test("index.ts real abre un HTML desde el explorador en pestaña, colorea, resiz
   const child = Bun.spawn([process.execPath, resolve(import.meta.dir, "../index.ts"), "--config", config], { cwd: root, terminal,
     env: { ...process.env, TERM: "xterm-256color", COLORTERM: "truecolor", NO_COLOR: undefined } });
   try {
-    await until(() => output.includes("1:alpha")); terminal.write("borrador PTY\x05"); await until(() => output.includes("Explorador de archivos"));
-    terminal.write("\x1b[B\r"); await until(() => output.includes("2:index.html"));
+    await until(() => output.includes("1:P:alpha")); terminal.write("borrador PTY\x05"); await until(() => output.includes("Explorador de archivos"));
+    terminal.write("\x1b[B\r"); await until(() => output.includes("2:F:index.html"));
     expect(output).toContain("\x1b[38;2;255;85;255;48;2;0;0;170m\x1b[22mconst");
     expect(Bun.stripANSI(output)).toContain("solo lectura");
-    output = ""; terminal.resize(60, 16); child.kill("SIGWINCH"); await until(() => output.includes("2:index.html"));
+    output = ""; terminal.resize(60, 16); child.kill("SIGWINCH"); await until(() => output.includes("2:F:index.html"));
     expect(Bun.stripANSI(output)).toContain("Tokens E/S"); expect(Bun.stripANSI(output)).toContain("Prompt");
     expect(Bun.stripANSI(output)).toContain("borrador PTY");
     output = ""; terminal.write("\x1b1"); await until(() => output.includes("No hay modelo configurado"));

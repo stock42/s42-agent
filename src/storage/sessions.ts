@@ -1,5 +1,7 @@
 import { mkdir, open, readdir, unlink, type FileHandle } from "node:fs/promises";
 import { join } from "node:path";
+import type { Database } from "bun:sqlite";
+import { isDatabase, openDatabase, insertEvent } from "./database.ts";
 import type { Message, Selection } from "../agent/messages.ts";
 import type { TokenUsage } from "../agent/usage.ts";
 
@@ -38,11 +40,12 @@ function parseEvent(value: unknown, projectId: string): SessionEvent {
 export class Session {
   private queue: Promise<void> = Promise.resolve();
   private closed = false;
-  private constructor(readonly path: string, readonly lock: string, private token: string, private fd: FileHandle, readonly state: SessionState) {}
+  private constructor(readonly path: string, readonly lock: string, private token: string, private fd: FileHandle | undefined, readonly state: SessionState, private db?: Database) {}
   static async open(root: string, projectId: string, id: string = crypto.randomUUID()): Promise<Session> {
     if (![projectId, id].every(v => /^[A-Za-z0-9._-]+$/.test(v) && v !== "." && v !== "..")) throw new Error("ID de sesión/proyecto inválido");
-    const folder = join(root, projectId); await mkdir(folder, { recursive: true });
-    const path = join(folder, `${id}.jsonl`), lock = `${path}.lock`, token = crypto.randomUUID();
+    const sqlite = isDatabase(root);
+    const folder = join(sqlite ? `${root}.locks` : root, projectId); await mkdir(folder, { recursive: true });
+    const path = sqlite ? root : join(folder, `${id}.jsonl`), lock = join(folder, `${id}.jsonl.lock`), token = crypto.randomUUID();
     for (let attempt = 0; ; attempt++) {
       try { const owner = await open(lock, "wx"); try { await owner.writeFile(JSON.stringify({ pid: process.pid, token })); } finally { await owner.close(); } break; }
       catch (error) {
@@ -55,8 +58,12 @@ export class Session {
         await unlink(lock);
       }
     }
+    let db: Database | undefined;
     try {
-      const file = Bun.file(path), source = await file.exists() ? await file.text() : "";
+      if (sqlite) db = await openDatabase(path);
+      const file = Bun.file(path), source = db
+        ? db.query<{ data: string }, [string, string]>("SELECT data FROM events WHERE project_id=? AND session_id=? ORDER BY seq").all(projectId, id).map(row => row.data + "\n").join("")
+        : await file.exists() ? await file.text() : "";
       const state: SessionState = { id, projectId, title: "Nueva sesión", draft: "", attachments: [], messages: [], events: [], notices: [] };
       let validBytes = 0;
       const lines = source.split("\n");
@@ -97,26 +104,32 @@ export class Session {
         state.messages.splice(index, 0, repaired); repairs.push(repaired);
         if (!result && !pending.has(call.id)) state.notices.push(`Llamada interrumpida: ${call.function.name}; no se reejecutó`);
       }
-      const fd = await open(path, "a");
-      if (state.notices.some(n => n.startsWith("Último"))) await fd.truncate(validBytes);
-      const session = new Session(path, lock, token, fd, state);
+      const fd = db ? undefined : await open(path, "a");
+      if (state.notices.some(n => n.startsWith("Último"))) await fd?.truncate(validBytes);
+      const session = new Session(path, lock, token, fd, state, db);
       for (const message of repairs) await session.append({ type: "message", message });
       return session;
-    } catch (error) { await unlink(lock); throw error; }
+    } catch (error) { db?.close(true); await unlink(lock); throw error; }
   }
   append(data: EventData): Promise<void> {
     if (this.closed) return Promise.reject(new Error("Sesión cerrada"));
     const event = { ...data, version: 1 as const, projectId: this.state.projectId, id: crypto.randomUUID(), at: new Date().toISOString() };
-    this.queue = this.queue.then(async () => { await this.fd.appendFile(JSON.stringify(event) + "\n"); await this.fd.sync(); this.state.events.push(event); });
+    this.queue = this.queue.then(async () => { if (this.db) this.db.transaction(() => insertEvent(this.db!, this.state.id, event))();
+      else { await this.fd!.appendFile(JSON.stringify(event) + "\n"); await this.fd!.sync(); } this.state.events.push(event); });
     return this.queue;
   }
   async close(): Promise<void> {
     if (this.closed) return; this.closed = true;
-    try { await this.queue; } finally { await this.fd.close(); if ((await Bun.file(this.lock).json()).token === this.token) await unlink(this.lock); }
+    try { await this.queue; } finally { await this.fd?.close(); this.db?.close(true); if ((await Bun.file(this.lock).json()).token === this.token) await unlink(this.lock); }
   }
 }
 
 export async function listSessions(root: string, projectId: string): Promise<{ id: string; title: string }[]> {
+  if (isDatabase(root)) {
+    const db = await openDatabase(root);
+    try { return db.query<{ id: string; title: string }, [string]>("SELECT id,title FROM sessions WHERE project_id=? ORDER BY updated_at DESC,id").all(projectId); }
+    finally { db.close(true); }
+  }
   const folder = join(root, projectId); let files: string[];
   try { files = await readdir(folder); } catch (e) { if ((e as NodeJS.ErrnoException).code === "ENOENT") return []; throw e; }
   const result: { id: string; title: string }[] = [];
@@ -124,6 +137,37 @@ export async function listSessions(root: string, projectId: string): Promise<{ i
     const first = (await Bun.file(join(folder, name)).text()).split("\n")[0];
     try { result.push({ id: name.slice(0, -6), title: JSON.parse(first ?? "").title ?? name.slice(0, 8) }); }
     catch { result.push({ id: name.slice(0, -6), title: `${name.slice(0, 8)} (revisar)` }); }
+  }
+  return result;
+}
+
+// Read and validate old logs before committing the migration. Originals remain untouched.
+export async function legacySessions(root: string): Promise<{ id: string; events: SessionEvent[] }[]> {
+  const result: { id: string; events: SessionEvent[] }[] = [];
+  let projects;
+  try { projects = await readdir(root, { withFileTypes: true }); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return result; throw error; }
+  for (const project of projects) {
+    if (!project.isDirectory()) continue;
+    const folder = join(root, project.name);
+    for (const name of await readdir(folder)) {
+      if (!name.endsWith(".jsonl")) continue;
+      const path = join(folder, name), lock = Bun.file(`${path}.lock`);
+      if (await lock.exists()) {
+        const { pid } = await lock.json();
+        if (!Number.isSafeInteger(pid) || pid <= 0) throw new Error("Lock de sesión incompleto durante migración");
+        try { process.kill(pid, 0); throw new Error("Cerrá la instancia anterior antes de migrar a SQLite"); }
+        catch (error) { if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error; }
+      }
+      const source = await Bun.file(path).text(), lines = source.split("\n"), events: SessionEvent[] = [];
+      for (const [index, line] of lines.entries()) {
+        if (!line || index === lines.length - 1 && !source.endsWith("\n")) continue;
+        try { events.push(parseEvent(JSON.parse(line), project.name)); }
+        catch { throw new Error(`Sesión corrupta durante migración: ${project.name}/${name}, línea ${index + 1}`); }
+      }
+      if (source && !source.endsWith("\n")) events.push({ type: "notice", text: "Último registro incompleto recuperado", version: 1, projectId: project.name, id: crypto.randomUUID(), at: new Date().toISOString() });
+      result.push({ id: name.slice(0, -6), events });
+    }
   }
   return result;
 }

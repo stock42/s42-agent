@@ -3,7 +3,7 @@ import { theme } from "../theme.ts";
 import { contains, type InputEvent, type Rect } from "../types.ts";
 import { Component } from "./component.ts";
 
-export interface TabItem { id: string; label: string; busy: boolean }
+export interface TabItem { id: string; label: string; busy: boolean; activity?: string }
 type Target = { id: string; close?: boolean } | "previous" | "next" | "open";
 
 export class TabBar extends Component {
@@ -48,7 +48,7 @@ export class TabBar extends Component {
       const style = item.id === this.active() ? theme.selected : theme.menu;
       canvas.fill(rect, style);
       canvas.text(rect.x, rect.y, ` ${all.findIndex(t => t.id === item.id) + 1}:${item.label}`, style, rect.width - 4);
-      canvas.text(rect.x + rect.width - 4, rect.y, `${item.busy ? "~" : " "} × `, style, 4);
+      canvas.text(rect.x + rect.width - 4, rect.y, `${item.activity ?? (item.busy ? "~" : " ")} × `, style, 4);
     }
     canvas.text(this.bounds.x + this.bounds.width - 7, this.bounds.y, " > ", this.offset + entries.length < all.length ? theme.menu : theme.disabled);
     canvas.text(this.bounds.x + this.bounds.width - 4, this.bounds.y, " + ", theme.menuHotkey);

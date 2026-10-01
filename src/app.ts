@@ -240,7 +240,7 @@ export class App {
     this.desktop.resize(this.desktop.width, this.desktop.height);
   }
   static async open(options: AppOptions = {}): Promise<App> {
-    const paths = storagePaths(options.config), store = await ConfigStore.load(paths.config), app = new App(store, paths.sessions, process.cwd());
+    const paths = storagePaths(options.config), store = await ConfigStore.load(paths.config, paths.legacy), app = new App(store, paths.sessions, process.cwd());
     app.opening = true;
     try {
       let project: Project | undefined;
@@ -357,8 +357,8 @@ export class App {
   }
   private tabItems(): TabItem[] {
     return this.tabs.flatMap(tab => [
-      ...(tab.project ? [{ id: tab.id, label: tab.project.name, busy: tab.busy }] : []),
-      ...this.fileTabs.filter(file => file.ownerId === tab.id).map(file => ({ id: file.id, label: file.name, busy: false })),
+      ...(tab.project ? [{ id: tab.id, label: `P:${tab.project.name}`, busy: tab.busy, activity: tab.agentState ? ["|", "/", "-", "\\"][this.activityFrame] : undefined }] : []),
+      ...this.fileTabs.filter(file => file.ownerId === tab.id).map(file => ({ id: file.id, label: `F:${file.name}`, busy: false })),
     ]);
   }
   async openFile(path: string, ownerId = this.activeTab.id): Promise<void> {
@@ -602,7 +602,7 @@ export class App {
       if (changedEndpoint) configured.apiKeySecret = undefined;
       configured.baseUrl = endpoint.href.replace(/\/$/, ""); configured.apiKeyEnv = apiKeyEnv?.trim() || undefined;
       const capabilities = caps!.toLowerCase().split("/"); if (capabilities.length !== 2 || !capabilities.every(c => ["sí", "si", "yes", "no"].includes(c))) throw new Error("Capacidades: sí/no, no/no o sí/sí");
-      const saved: Model = { id: id.trim(), name: name?.trim() || id.trim(), contextWindow: Number(context), maxOutputTokens: Number(max), capabilities: { tools: capabilities[0] !== "no", images: capabilities[1] !== "no" } };
+      const saved: Model = { manual: true, id: id.trim(), name: name?.trim() || id.trim(), contextWindow: Number(context), maxOutputTokens: Number(max), capabilities: { tools: capabilities[0] !== "no", images: capabilities[1] !== "no" } };
       if (add && configured.models.some(m => m.id === saved.id)) throw new Error("Ese modelo ya está registrado");
       configured.models = [...configured.models.filter(m => m.id !== (model?.id ?? saved.id)), saved];
       validateConfig(next);
@@ -714,7 +714,7 @@ export class App {
     this.activityFrame = 0;
     this.activityTimer = setInterval(() => {
       this.activityFrame = (this.activityFrame + 1) % 4;
-      if (!this.activeFile && this.activeTab.agentState) this.desktop.invalidate();
+      if (this.tabs.some(tab => tab.agentState)) this.desktop.invalidate();
     }, 200);
     this.activityTimer.unref();
   }
@@ -774,6 +774,13 @@ export class App {
           this.desktop.invalidate();
         };
         const result = await runTurn({ project, session, provider, model, key, signal: controller.signal, ...context,
+          onModel: detected => this.change(async () => {
+            const next = structuredClone(this.store.value), configured = next.providers.find(p => p.id === provider.id && p.baseUrl === provider.baseUrl);
+            const index = configured?.models.findIndex(m => m.id === model.id && !m.manual) ?? -1;
+            if (configured && index >= 0 && JSON.stringify(configured.models[index]) !== JSON.stringify(detected)) {
+              configured.models[index] = detected; await this.store.save(next); this.showContext(tab); this.desktop.invalidate();
+            }
+          }),
           onUsage: usage => { tab.tokens = usage; this.desktop.invalidate(); },
           onState: state => { if(state==="Conectando…")resetLive();tab.status = state; tab.agentState = state === "Respondiendo…" ? "Razonando…" : state; this.desktop.invalidate(); },
           onMessage: () => { resetLive();this.showHistory(false, tab);this.desktop.invalidate(); },

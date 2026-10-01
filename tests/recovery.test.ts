@@ -14,7 +14,7 @@ async function until(check: () => boolean) {
 async function fixture(port: number, maxSteps = 30) {
   const root = await mkdtemp(join(tmpdir(), "s42-recovery-")), config = defaultConfig(), path = join(root, "config.json");
   config.providers[0]!.baseUrl = `http://127.0.0.1:${port}/v1`;
-  config.providers[0]!.models = [{ id: "fixture", name: "Fixture", contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } }];
+  config.providers[0]!.models = [{ id: "fixture", name: "Fixture", manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } }];
   config.defaults.modelId = "fixture"; config.limits.maxSteps = maxSteps;
   await Bun.write(path, JSON.stringify(config)); return { root, path };
 }

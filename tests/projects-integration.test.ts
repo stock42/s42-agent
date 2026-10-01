@@ -16,7 +16,7 @@ test('dos proyectos: endpoint/modelo, adjuntos, edit/shell, cancelación y reanu
     return new Response(`data: ${JSON.stringify({choices:[{delta,finish_reason:call?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);
   }}));
   const config=join(root,'config.json'),app=await App.open({config,cwd:folderA});
-  try{const next=structuredClone(app.store.value);next.providers=servers.map((server,i)=>({id:String(i),name:String(i),kind:'llama.cpp',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[{id:'igual',name:'Igual',contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}}]}));await app.store.save(next);
+  try{const next=structuredClone(app.store.value);next.providers=servers.map((server,i)=>({id:String(i),name:String(i),kind:'llama.cpp',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[{id:'igual',name:'Igual',manual: true, contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}}]}));await app.store.save(next);
     const a=app.project!,b=await app.store.project('B',folderB,root);
     await app.selectModel({providerId:'0',modelId:'igual'});await app.attach([join(folderA,'code.ts')]);app.view.prompt.setValue('editar y verificar A');await app.submit();await idle(app);app.view.prompt.setValue('borrador A');
     await app.switchProject(b);await app.selectModel({providerId:'1',modelId:'igual'});await app.attach([join(folderB,'code.ts')]);app.view.prompt.setValue('editar y verificar B');await app.submit();await idle(app);

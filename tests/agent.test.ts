@@ -15,6 +15,10 @@ test("tools read/search/edit exacto/write y shell con exit code real", async () 
     expect((await execute('edit',JSON.stringify({path:'a.ts',oldText:'inexistente',newText:'x'}),root,signal)).failed).toBe(true);
     await Bun.write(join(root,'duplicado'),'aaa'); expect((await execute('edit',JSON.stringify({path:'duplicado',oldText:'aa',newText:'x'}),root,signal)).failed).toBe(true); expect(await Bun.file(join(root,'duplicado')).text()).toBe('aaa');
     expect((await execute('write',JSON.stringify({path:'sub/nuevo',content:'hola'}),root,signal)).failed).toBe(false);
+    expect((await execute('write',JSON.stringify({path:'sub/nuevo',content:' á文🙂',append:true}),root,signal)).failed).toBe(false);
+    expect(await Bun.file(join(root,'sub/nuevo')).text()).toBe('hola á文🙂');
+    expect((await execute('write',JSON.stringify({path:'sub/nuevo',content:'oops',append:'yes'}),root,signal)).failed).toBe(true);
+    expect(await Bun.file(join(root,'sub/nuevo')).text()).toBe('hola á文🙂');
     const command = await execute('shell',JSON.stringify({command:'echo salida; echo error 1>&2; exit 7'}),root,signal); expect(command.failed).toBe(true); expect(command.exitCode).toBe(7); expect(command.output).toContain('error');
     expect((await execute('inventada','{}',root,signal)).failed).toBe(true);
   } finally { await rm(root,{recursive:true,force:true}); }
@@ -26,7 +30,7 @@ test("loop fixture lee, edita y verifica archivo; persiste call/result sin reeje
   const server = Bun.serve({port:0,async fetch(req){const body=await req.json() as any; expect(body.messages[0].role).toBe('system');
     const call=calls[requests++]; const delta=call?{tool_calls:[{index:0,id:`call-${requests}`,function:{name:call.name,arguments:JSON.stringify(call.args)}}]}:{content:'Cambio verificado: 4'};
     return new Response(`data: ${JSON.stringify({choices:[{delta,finish_reason:call?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);}});
-  const model:Model={id:'fixture',name:'Fixture',contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
+  const model:Model={id:'fixture',name:'Fixture',manual: true, contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
   const provider:Provider={id:'fixture',name:'Fixture',kind:'openai-compatible',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[model]};
   try {await session.append({type:'session',title:'Coding'}); session.state.messages.push({role:'user',content:'Cambiar suma'});
     await runTurn({project:{id:'project',name:'Fixture',path:root},session,provider,model,signal:new AbortController().signal,limits:defaultConfig().limits,onDelta:()=>{},onState:()=>{},onMessage:()=>{}});
@@ -73,7 +77,7 @@ test("salida abundante se drena, timeout y JSON inválido sin efectos", async ()
 test("límite del loop devuelve resultados por cada call sin ejecutar las siguientes", async () => {
   const root=await mkdtemp(join(tmpdir(),'s42-limit-')), session=await Session.open(join(root,'sessions'),'A'); let requests=0;
   const server=Bun.serve({port:0,fetch(){requests++;return new Response(`data: ${JSON.stringify({choices:[{delta:{tool_calls:[{index:0,id:`id-${requests}`,function:{name:'write',arguments:JSON.stringify({path:'count',content:String(requests)})}}]},finish_reason:'tool_calls'}]})}\n\ndata: [DONE]\n\n`);}});
-  const model:Model={id:'fixture',name:'Fixture',contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
+  const model:Model={id:'fixture',name:'Fixture',manual: true, contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
   try { await expect(runTurn({project:{id:'A',name:'A',path:root},session,provider:{id:'P',name:'P',kind:'llama.cpp',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[model]},model,signal:new AbortController().signal,limits:{...defaultConfig().limits,maxSteps:1},onDelta:()=>{},onState:()=>{},onMessage:()=>{}})).rejects.toThrow('Límite');
     expect(await Bun.file(join(root,'count')).text()).toBe('1'); expect(session.state.messages.filter(m=>m.role==='tool').length).toBe(2);
   } finally {server.stop(true);await session.close();await rm(root,{recursive:true,force:true});}

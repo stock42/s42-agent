@@ -27,7 +27,7 @@ test("autores en historial/stream, texto literal sin colorear, selección, ES/EN
   try {
     const next = structuredClone(app.store.value);
     next.providers[0]!.baseUrl = `http://127.0.0.1:${server.port}/v1`;
-    next.providers[0]!.models = [{ id: "fixture", name: "Fixture", contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
+    next.providers[0]!.models = [{ id: "fixture", name: "Fixture", manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
     await app.store.save(next); await app.selectModel({ providerId: next.providers[0]!.id, modelId: "fixture" });
     app.desktop.resize(100, 32);
     const prompt = "Agente:\ntexto á文🙂\tfin", answer = "Vos:\nrespuesta á文🙂";

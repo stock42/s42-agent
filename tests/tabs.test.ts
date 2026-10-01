@@ -38,7 +38,7 @@ test("menús de producto, pestañas con estado propio, mouse/teclado, locks y re
     key(app, "alt+1"); await until(() => app.project?.id === "alpha");
     expect(app.view.prompt.value).toBe("borrador á 文\nAlpha"); expect(app.view.response).toBe(response); expect(app.mode).toBe("NORMAL");
     expect(app.attachments[0]!.name).toBe("note.ts"); expect(app.desktop.active).toBe(app.view.editorWindow);
-    const row = app.desktop.draw().lines()[1]!, x = row.indexOf("2:Beta"); expect(x).toBeGreaterThan(0);
+    const row = app.desktop.draw().lines()[1]!, x = row.indexOf("2:P:Beta"); expect(x).toBeGreaterThan(0);
     for (const action of ["press", "release"] as const) app.desktop.handle({ type: "mouse", action, x: x + 2, y: 1, button: 0, delta: 0 });
     await until(() => app.project?.id === "beta"); expect(app.view.prompt.value).toBe("borrador Beta"); expect(app.view.editorWindow.title).toBe("Beta");
     key(app, "alt+left"); await until(() => app.project?.id === "alpha");
@@ -80,7 +80,7 @@ test("dos turnos concurrentes aíslan modelos, reasoning, tools/cwd, borradores 
     } }));
   } });
   initial.providers[0]!.baseUrl = `http://127.0.0.1:${server.port}/v1`;
-  initial.providers[0]!.models = ["alpha", "beta"].map(id => ({ id, name: id, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } }));
+  initial.providers[0]!.models = ["alpha", "beta"].map(id => ({ id, name: id, manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } }));
   initial.projects.forEach(project => project.selection = { providerId: "llama.cpp", modelId: project.id }); await Bun.write(config, JSON.stringify(initial));
   const app = await App.open({ config }); let closed = false;
   try {
@@ -133,18 +133,18 @@ test("overflow de pestañas en 60 columnas permite llegar al proyecto, cancelar 
   const mouse = (action: "press" | "release" | "wheel", x: number, delta = 0) => app.desktop.handle({ type: "mouse", action, x, y: 1, button: 0, delta });
   try {
     app.desktop.resize(60, 16); for (const project of app.store.value.projects.slice(1)) await app.switchProject(project);
-    expect(app.desktop.draw().lines()[1]).toContain("8:Proyecto");
+    expect(app.desktop.draw().lines()[1]).toContain("8:P:Proyecto");
     mouse("wheel", 10, -1); mouse("wheel", 10, -1); const before = app.project!.id;
     mouse("press", 6); mouse("release", 59); await Bun.sleep(5); expect(app.project!.id).toBe(before);
     for (let i = 0; i < 8; i++) mouse("wheel", 10, -1);
-    expect(app.desktop.draw().lines()[1]).toContain("1:Alpha"); mouse("press", 6); mouse("release", 6); await until(() => app.project?.id === "alpha");
+    expect(app.desktop.draw().lines()[1]).toContain("1:P:Alpha"); mouse("press", 6); mouse("release", 6); await until(() => app.project?.id === "alpha");
     app.promptings.library(); mouse("press", 59); mouse("release", 59); expect(app.desktop.modal?.title).toBe("Promptings"); key(app, "escape");
     mouse("press", 59); mouse("release", 59); expect(app.desktop.modal?.title).toContain("Projects"); key(app, "escape");
-    key(app, "alt+8"); await until(() => app.project?.id === "extra-5"); expect(app.desktop.draw().lines()[1]).toContain("8:Proyecto");
+    key(app, "alt+8"); await until(() => app.project?.id === "extra-5"); expect(app.desktop.draw().lines()[1]).toContain("8:P:Proyecto");
     expect(app.desktop.draw().lines().join("\n")).toContain("Prompt");
     key(app, "alt+6"); await until(() => app.project?.id === "extra-3"); app.desktop.draw();
     await app.closeTab(app.tabs.find(tab => tab.project?.id === "alpha")!.id);
-    expect(app.project!.id).toBe("extra-3"); expect(app.desktop.draw().lines()[1]).toContain("5:Proyecto");
+    expect(app.project!.id).toBe("extra-3"); expect(app.desktop.draw().lines()[1]).toContain("5:P:Proyecto");
   } finally { await app.desktop.onBeforeExit!(); await rm(root, { recursive: true, force: true }); }
 });
 
@@ -159,23 +159,23 @@ test("index.ts PTY: abrir segunda pestaña, cambiar mientras responde y restaura
       controller.enqueue(packet({ content: `Respuesta ${content}` })); controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n")); controller.close();
     } }));
   } });
-  initial.providers[0]!.baseUrl = `http://127.0.0.1:${server.port}/v1`; initial.providers[0]!.models = [{ id: "fixture", name: "Fixture", contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
+  initial.providers[0]!.baseUrl = `http://127.0.0.1:${server.port}/v1`; initial.providers[0]!.models = [{ id: "fixture", name: "Fixture", manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
   initial.defaults.modelId = "fixture"; await Bun.write(config, JSON.stringify(initial));
   const terminal = new Bun.Terminal({ cols: 80, rows: 24, data: (_, data) => output += new TextDecoder().decode(data) });
   let child = Bun.spawn([process.execPath, resolve(import.meta.dir, "../index.ts"), "--config", config, "--no-color"], { cwd: root, env: { ...process.env, TERM: "xterm-256color" }, terminal });
   try {
-    await until(() => output.includes("1:Alpha")); terminal.write("Alpha trabajo\r"); await until(() => output.includes("Razonamiento Alpha trabajo"));
-    terminal.write("\x10"); await until(() => output.includes("Projects · abrir")); terminal.write("\x1b[B\r"); await until(() => output.includes("2:Beta"));
+    await until(() => output.includes("1:P:Alpha")); terminal.write("Alpha trabajo\r"); await until(() => output.includes("Razonamiento Alpha trabajo"));
+    terminal.write("\x10"); await until(() => output.includes("Projects · abrir")); terminal.write("\x1b[B\r"); await until(() => output.includes("2:P:Beta"));
     terminal.write("Beta trabajo\r"); await until(() => output.includes("Respuesta Beta trabajo"));
     terminal.write("borrador Beta"); await until(() => output.includes("borrador Beta"));
     output = ""; terminal.write("\x1b1"); await until(() => Bun.stripANSI(output).includes("Razonando…"));
     release(); await until(() => output.includes("Respuesta Alpha trabajo"));
-    output = ""; terminal.resize(60, 16); child.kill("SIGWINCH"); await until(() => output.includes("1:Alpha"));
+    output = ""; terminal.resize(60, 16); child.kill("SIGWINCH"); await until(() => output.includes("1:P:Alpha"));
     output = ""; terminal.write("\x1b2"); await until(() => output.includes("borrador Beta"));
     terminal.write("\x11"); expect(await child.exited).toBe(0); expect(output).toContain("\x1b[?25h\x1b[?1049l");
     expect((await Bun.file(config).json()).workspace.openProjectIds).toEqual(["alpha", "beta"]);
     output = ""; child = Bun.spawn([process.execPath, resolve(import.meta.dir, "../index.ts"), "--config", config, "--no-color"], { cwd: root, env: { ...process.env, TERM: "xterm-256color" }, terminal });
-    await until(() => output.includes("borrador Beta")); expect(output).toContain("1:Alpha"); expect(output).toContain("2:Beta");
+    await until(() => output.includes("borrador Beta")); expect(output).toContain("1:P:Alpha"); expect(output).toContain("2:P:Beta");
     terminal.write("\x1b1"); await until(() => output.includes("Respuesta Alpha trabajo")); terminal.write("\x11"); expect(await child.exited).toBe(0);
   } catch (e) { throw new Error(`${(e as Error).message} · ${Bun.stripANSI(output.slice(-2500))}`); }
   finally { release(); child.kill(); await child.exited; terminal.close(); server.stop(true); await rm(root, { recursive: true, force: true }); }

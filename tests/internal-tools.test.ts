@@ -151,7 +151,7 @@ test("App integra skills internas, Markdown y WebSocket en chat persistente; cat
     const delta = call ? { tool_calls: [{ index: 0, id: `builtin-${requests}`, function: { name: call.name, arguments: JSON.stringify(call.args) } }] } : { content: "HTML y WebSocket verificados" };
     return new Response(`data: ${JSON.stringify({ choices: [{ delta, finish_reason: call ? "tool_calls" : "stop" }] })}\n\ndata: [DONE]\n\n`);
   } });
-  const config = defaultConfig(), model = { id: "fixture", name: "Fixture", contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } };
+  const config = defaultConfig(), model = { id: "fixture", name: "Fixture", manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } };
   config.providers[0]!.baseUrl = `http://127.0.0.1:${llm.port}/v1`; config.providers[0]!.models = [model]; config.defaults.modelId = model.id;
   const path = join(root, "config.json"); await Bun.write(path, JSON.stringify(config));
   const app = await App.open({ config: path, cwd: root }); let appClosed = false;

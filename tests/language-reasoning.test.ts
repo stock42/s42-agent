@@ -128,7 +128,7 @@ test("live reasoning can hide/show mid-stream without duplicated headers; tools/
   const app = await App.open({ config: join(root, "config.json"), cwd: root });
   try {
     const next = structuredClone(app.store.value); next.providers[0]!.baseUrl = `http://127.0.0.1:${server.port}/v1`;
-    next.providers[0]!.models = [{ id: "fixture", name: "Fixture", contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } }];
+    next.providers[0]!.models = [{ id: "fixture", name: "Fixture", manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } }];
     await app.store.save(next); await app.selectModel({ providerId: "llama.cpp", modelId: "fixture" });
     app.view.prompt.setValue("ask"); await app.submit(); await until(() => Boolean(controller));
     controller!.enqueue(encoder.encode(event({ reasoning_content: "thought α" }))); await until(() => app.view.response.value.includes("thought α"));
@@ -164,7 +164,7 @@ test("English forms keep CRUD action IDs and accept yes/project without changing
   const root = await mkdtemp(join(tmpdir(), "s42-language-crud-")), app = await App.open({ config: join(root, "config.json"), cwd: root });
   try {
     const next = structuredClone(app.store.value);
-    next.providers[0]!.models = [{ id: "fixture", name: "Fixture", contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } }];
+    next.providers[0]!.models = [{ id: "fixture", name: "Fixture", manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } }];
     next.mcpServers = [{ id: "server", name: "Editar", enabled: false, transport: "stdio", command: "bun", args: [] }];
     next.promptings = [{ id: "template", name: "Guardar", text: "hola {{name}}" }];
     await app.store.save(next); await app.selectModel({ providerId: "llama.cpp", modelId: "fixture" }); await app.setLanguage("en");
@@ -199,7 +199,7 @@ test("English forms keep CRUD action IDs and accept yes/project without changing
 test("configured startup metadata stays literal across languages while no-tools labels translate", async () => {
   const root = await mkdtemp(join(tmpdir(), "s42-language-context-")), path = join(root, "config.json");
   const config = defaultConfig(); config.providers[0]!.name = "Vista";
-  config.providers[0]!.models = [{ id: "configurar", name: "Configurar", contextWindow: 8192, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
+  config.providers[0]!.models = [{ id: "configurar", name: "Configurar", manual: true, contextWindow: 8192, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }];
   config.defaults.modelId = "configurar"; await Bun.write(path, JSON.stringify(config));
   const app = await App.open({ config: path, cwd: root });
   try {

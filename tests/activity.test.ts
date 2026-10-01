@@ -12,9 +12,9 @@ async function until(check: () => boolean) {
   for (let i = 0; i < 600; i++) { if (check()) return; await Bun.sleep(5); }
   throw new Error("No cambió la actividad visible");
 }
-async function fixture() {
+async function fixture(ids = ["alpha", "beta"]) {
   const root = await mkdtemp(join(tmpdir(), "s42-activity-")), config = join(root, "config.json"), initial = defaultConfig();
-  for (const id of ["alpha", "beta"]) { const path = join(root, id); await mkdir(path); initial.projects.push({ id, name: id === "alpha" ? "Alpha" : "Beta", path }); }
+  for (const id of ids) { const path = join(root, id); await mkdir(path); initial.projects.push({ id, name: id[0]!.toUpperCase() + id.slice(1), path }); }
   initial.lastProjectId = "alpha";
   const controllers = new Map<string, ReadableStreamDefaultController<Uint8Array>>();
   const server = Bun.serve({ port: 0, async fetch(req) {
@@ -22,7 +22,7 @@ async function fixture() {
     return new Response(new ReadableStream({ start(controller) { controllers.set(body.model, controller); } }), { headers: { "Content-Type": "text/event-stream" } });
   } });
   initial.providers[0]!.baseUrl = `http://127.0.0.1:${server.port}/v1`;
-  initial.providers[0]!.models = ["alpha", "beta"].map(id => ({ id, name: id, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }));
+  initial.providers[0]!.models = ids.map(id => ({ id, name: id, manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: false, images: false } }));
   initial.projects.forEach(project => project.selection = { providerId: "llama.cpp", modelId: project.id });
   await Bun.write(config, JSON.stringify(initial));
   const app = await App.open({ config });
@@ -91,4 +91,23 @@ test("actividad aislada por pestaña, títulos largos, resize, cancelación, fal
     controllers.delete("beta"); await send(app, controllers); await app.desktop.onBeforeExit!(); closed = true;
     expect(beta.busy).toBe(false); expect(beta.agentState).toBeUndefined(); let paints = 0; app.desktop.invalidate = () => paints++; await Bun.sleep(450); expect(paints).toBe(0);
   } finally { if (!closed) await app.desktop.onBeforeExit!(); server.stop(true); await rm(root, { recursive: true, force: true }); }
+});
+
+
+test("tres proyectos animan su tab mientras la vista activa es un archivo; finalización independiente", async () => {
+  const { root, app, controllers, server } = await fixture(["alpha", "beta", "gamma"]);
+  try {
+    app.desktop.resize(150, 32);
+    for (const project of app.store.value.projects) { await app.switchProject(project); await send(app, controllers); }
+    const projects = [...app.tabs]; await Bun.write(join(root, "file.ts"), "export const count = 1;"); await app.openFile(join(root, "file.ts"));
+    const tabs = () => app.desktop.draw().lines()[1]!;
+    expect(tabs()).toContain("F:file.ts");
+    for (const name of ["Alpha", "Beta", "Gamma"]) expect(tabs()).toMatch(new RegExp(`P:${name}\\s+[|/\\\\-]`));
+    const before = tabs(); await until(() => tabs() !== before);
+    expect(app.view.editorWindow.title).toBe("file.ts"); expect(app.view.response.value).toBe("export const count = 1;");
+    finish(controllers.get("alpha")!); await projects[0]!.turn;
+    expect(tabs()).not.toMatch(/P:Alpha\s+[|/\\-]/); expect(tabs()).toMatch(/P:Beta\s+[|/\\-]/); expect(tabs()).toMatch(/P:Gamma\s+[|/\\-]/);
+    finish(controllers.get("beta")!); finish(controllers.get("gamma")!); await Promise.all(projects.map(p=>p.turn));
+    expect(tabs()).not.toMatch(/P:(Alpha|Beta|Gamma)\s+[|/\\-]/);
+  } finally { await app.desktop.onBeforeExit!(); server.stop(true); await rm(root,{recursive:true,force:true}); }
 });

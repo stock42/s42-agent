@@ -5,6 +5,35 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Corregido — Coding local, actividad por pestaña y SQLite
+
+- llama.cpp consulta /props al descubrir/enviar: tools, contexto y visión reales.
+  Repara catálogos antiguos sin tools; GLM local reporta contexto 128768 frente
+  al 8192 anterior. Salida automática hasta 8192 o un cuarto del contexto;
+  modelos editados manualmente conservan sus valores. Metadata opcional con
+  timeout corto y fallback; cancelar el turno sí interrumpe.
+- Prompt exige artefactos funcionales completos en disco y razonamiento breve;
+  write agrega append=true para construir archivos por partes. Pedido exacto de
+  Tetris ejecutado con GLM-4.7-Flash: exit 0, HTML 28.696 bytes, list/write, tres
+  requests. Chrome comprobó lógica, perspectiva 3D CSS y Web Audio activo tras
+  clic nativo. Limitaciones visuales/alcance de esa muestra registradas en QA.
+- Pestañas P:proyecto/F:archivo y spinner de cada proyecto activo cada 200 ms,
+  incluso viendo otro proyecto o un archivo; finalización independiente.
+- E/S y promedio tok/s cambian durante streaming con timings_per_token de
+  llama.cpp o uso progresivo del proveedor. Snapshots sobre requests finalizadas,
+  sin contar chunks ni duplicar tokens/requests. Datos ausentes conservan N/D.
+- Persistencia global agent.sqlite con bun:sqlite, WAL, configuración y eventos
+  indexados por sesión. Importación atómica JSON/JSONL conserva originales,
+  defaults, borradores e historial; claves permanecen en Bun.secrets. Locks y
+  recuperación de proceso muerto sin repetir tools. --config JSON compatible;
+  SQLite alternativo disponible para TUI/CLI, que informa ID reanudable.
+- README/AGENTS/SPECS/TOOLS, fase 18 y QA actualizados. Typecheck correcto;
+  suite completa 161 pass/0 fail, revisión focalizada 19 pass/0 fail. TUI index.ts
+  PTY con migración XDG temporal, CLI con tools/SQLite, tres proyectos y archivo
+  visible comprobados. Config personal y cambios ajenos preservados.
+- Pull falló por main sin upstream; trabajo local, sin builds ni push.
+
+
 ### Corregido — Modelo global persistente y APIs nativas de Bun
 
 - Elegir modelo guarda sesión/proyecto/default global, heredado en nuevas

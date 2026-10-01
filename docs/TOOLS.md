@@ -8,7 +8,7 @@ el contrato para integraciones existentes. Catálogo visible en **Tools → Nati
 | Tool / módulo | Argumentos | Resultado / límites |
 | --- | --- | --- |
 | `read` / read.ts | `path`; `offset=1`, `limit=200` | UTF-8 numerado; offset en líneas desde 1 dentro del primer MiB. Lectura hasta 1 MiB y salida hasta 64 KiB con aviso de recorte. |
-| `write` / write.ts | `path`, `content` | Crea padres y crea/reemplaza texto mediante Bun.write. Devuelve ruta escrita. |
+| `write` / write.ts | `path`, `content`; `append=false` | Crea padres y crea/reemplaza texto mediante Bun.write; append=true agrega el fragmento al final con fs incluido en Bun. Devuelve ruta escrita. |
 | `edit` / edit.ts | `path`, `oldText`, `newText` | Reemplazo literal único, hasta 1 MiB. Cero/múltiples coincidencias o oldText vacío: error sin escribir. |
 | `list` / list.ts | `path="."`; `glob` opcional | Un nivel con carpetas `/`; con glob recorre archivos. Hasta 200 entradas. |
 | `find` / find.ts | `pattern`; `path="."`, `limit=200`, `includeIgnored=false` | Nombres sin distinguir mayúsculas o glob Bun. Rutas absolutas, conteos y recorte. Límite máximo 1.000. |

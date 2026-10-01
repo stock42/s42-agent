@@ -20,14 +20,15 @@ test("config local por defecto, proyectos normalizados y JSON inválido conserva
 });
 test("config global por SO, XDG/AppData, variables vacías y --config explícito", () => {
   const home = homedir();
-  expect(storagePaths(undefined, { XDG_CONFIG_HOME: "/tmp/xdg-config", XDG_STATE_HOME: "/tmp/xdg-state" }, "linux"))
-    .toEqual({ config: "/tmp/xdg-config/s42-agent/config.json", sessions: "/tmp/xdg-state/s42-agent/sessions" });
-  expect(storagePaths(undefined, { XDG_CONFIG_HOME: "", XDG_STATE_HOME: "" }, "linux").config).toBe(join(home, ".config/s42-agent/config.json"));
-  expect(storagePaths(undefined, {}, "darwin").config).toBe(join(home, "Library/Application Support/s42-agent/config.json"));
-  expect(storagePaths(undefined, { APPDATA: "/tmp/roaming", LOCALAPPDATA: "/tmp/local" }, "win32"))
-    .toEqual({ config: "/tmp/roaming/s42-agent/config.json", sessions: "/tmp/local/s42-agent/sessions" });
-  expect(storagePaths(undefined, {}, "win32").config).toBe(join(home, "AppData/Roaming/s42-agent/config.json"));
+  const linux = storagePaths(undefined, { XDG_CONFIG_HOME: "/tmp/xdg-config", XDG_STATE_HOME: "/tmp/xdg-state" }, "linux");
+  expect(linux.config).toBe("/tmp/xdg-config/s42-agent/agent.sqlite"); expect(linux.sessions).toBe(linux.config);
+  expect(linux.legacy).toEqual({ config: "/tmp/xdg-config/s42-agent/config.json", sessions: "/tmp/xdg-state/s42-agent/sessions" });
+  expect(storagePaths(undefined, { XDG_CONFIG_HOME: "", XDG_STATE_HOME: "" }, "linux").config).toBe(join(home, ".config/s42-agent/agent.sqlite"));
+  expect(storagePaths(undefined, {}, "darwin").config).toBe(join(home, "Library/Application Support/s42-agent/agent.sqlite"));
+  expect(storagePaths(undefined, { APPDATA: "/tmp/roaming", LOCALAPPDATA: "/tmp/local" }, "win32").config).toBe("/tmp/roaming/s42-agent/agent.sqlite");
+  expect(storagePaths(undefined, {}, "win32").config).toBe(join(home, "AppData/Roaming/s42-agent/agent.sqlite"));
   expect(storagePaths("/tmp/override/config.json", {}, "darwin").sessions).toBe("/tmp/override/sessions");
+  expect(storagePaths("/tmp/override/store.db").sessions).toBe("/tmp/override/store.db");
 });
 test("config anterior recupera modelo único; selección persiste en sesiones y proyectos nuevos", async () => {
   const root = await fixture(), config = join(root, "config.json"), value = defaultConfig();

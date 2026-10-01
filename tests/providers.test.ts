@@ -66,7 +66,7 @@ test("catálogo usa Bearer, metadata y modelos únicos; IDs simples siguen siend
     expect(discovered[0]).toMatchObject({ name: "Alpha disponible", contextWindow: 1048576, maxOutputTokens: 2048, capabilities: { tools: true, images: true } });
     expect(discovered[1]).toMatchObject({ maxOutputTokens: 1024, capabilities: { tools: true, images: false } });
     provider.id = "llama.cpp"; provider.kind = "llama.cpp"; provider.apiKeyEnv = undefined; provider.baseUrl += "/v1/";
-    expect((await discoverModels(provider))[2]).toMatchObject({ contextWindow: 8192, maxOutputTokens: 2048, capabilities: { tools: false, images: false } });
+    expect((await discoverModels(provider))[2]).toMatchObject({ contextWindow: 8192, maxOutputTokens: 2048, capabilities: { tools: true, images: false } });
     expect(requests[1]).toBe("/v1/models:null");
     provider.apiKeyEnv = `S42_MISSING_${crypto.randomUUID().replaceAll("-", "")}`;
     expect(await credential(provider, "explicit-session-key")).toBe("explicit-session-key"); await expect(credential(provider)).rejects.toThrow("Falta la variable");
@@ -109,7 +109,8 @@ test("DeepSeek corrige 401, guarda key en llavero y recupera modelo/clave tras r
 
 test("descubrimiento vacío/inválido y cancelación no guardan modelos ni reabren un formulario cerrado", async () => {
   const root = await fixture(), config = join(root, "config.json"); let mode = "empty", release = () => {};
-  const server = Bun.serve({ port: 0, async fetch() {
+  const server = Bun.serve({ port: 0, async fetch(req) {
+    if (new URL(req.url).pathname.endsWith("/props")) return new Response("",{status:404});
     if (mode === "empty") return Response.json({ data: [] }); if (mode === "invalid") return Response.json(null);
     await new Promise<void>(resolve => { release = resolve; }); return Response.json(catalog);
   } });
