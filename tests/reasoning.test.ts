@@ -52,6 +52,9 @@ test("chat muestra reasoning, argumentos parciales, ejecución y resultado antes
     controller!.enqueue(encoder.encode(event({tool_calls:[{index:0,id:"call-1",function:{name:"shell",arguments:'{"command":'}}]})));await until(()=>app.view.response.value.includes('{"command":'));expect(app.view.response.value).toContain("Tool call · shell");expect(app.session!.state.events.some(e=>e.type==="tool-start")).toBe(false);
     const args=JSON.stringify({command:"sleep 0.15; printf 'salida visible'"});controller!.enqueue(encoder.encode(event({tool_calls:[{index:0,function:{arguments:args.slice('{"command":'.length)}}]})));await until(()=>app.view.response.value.includes("salida visible"));expect(app.session!.state.events.some(e=>e.type==="tool-start")).toBe(false);
     controller!.enqueue(encoder.encode(event({},"tool_calls")+"data: [DONE]\n\n"));controller!.close();await until(()=>app.view.response.value.includes("Herramienta · shell · ejecutando…"));expect(app.busy).toBe(true);
+    const lines=app.desktop.draw().lines(),editor=app.view.editorWindow,prompt=app.view.promptWindow;
+    expect(lines[editor.client.y+editor.client.height-1]).toContain("Agente: Ejecutando shell…");
+    expect(lines.slice(prompt.bounds.y,prompt.bounds.y+prompt.bounds.height).join("\n")).not.toContain("Ejecutando shell…");
     app.view.prompt.setValue("siguiente borrador");await until(()=>!app.busy);
     expect(app.view.response.value).toContain("Herramienta · shell:\nOK · exit 0");expect(app.view.response.value).toContain("salida visible");expect(app.view.response.value).toContain("Ya tengo el resultado");expect(app.view.response.value).toContain("Terminé y verifiqué");expect(app.view.prompt.value).toBe("siguiente borrador");
     expect(requests[1].messages.find((m:any)=>m.role==="assistant").reasoning_content).toBe("Primero verifico á文🙂");expect(app.session!.state.messages.filter(m=>m.role==="tool")).toHaveLength(1);

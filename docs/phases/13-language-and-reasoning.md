@@ -13,6 +13,8 @@ Estado: **Completada**. Depende de 01–03 y 07–12. Requisitos R25/R26.
 - [x] F13-05. Validar cambios durante turno, tool calling, cancelación, reapertura,
   fallo de guardado, UI compacta y ausencia de edición del chat.
 - [x] F13-06. Actualizar documentación, CHANGELOG y commit local con archivos propios.
+- [x] F13-07. Animar título durante turnos y mover estado de actividad al chat,
+  conservando Prompt, ES/EN, razonamiento opcional y aislamiento por pestaña.
 
 | Evidencia | Resultado |
 | --- | --- |
@@ -20,6 +22,7 @@ Estado: **Completada**. Depende de 01–03 y 07–12. Requisitos R25/R26.
 | `bun test` | 117 tests / 24 archivos / 1519 assertions; cero fallas |
 | tests/language-reasoning.test.ts | Config/migración, inglés CRUD, teclado/mouse, pestañas, streaming y recuperación |
 | [QA](../qa/language-and-reasoning.md) / [capturas](../qa/language-reasoning-captures.txt) | index.ts en tmux 100×30/60×16; inspección visual y reapertura sin color |
+| [Actividad del agente](../qa/agent-activity.md) | Typecheck; 129 tests / 26 archivos / 2111 assertions; 7 capturas de título/estado en 100×32, 80×24 y 60×16 |
 
 SSE fixture; no inferencia real necesaria para validar preferencias de UI.
 Mouse de tests inyectado; no prueba física de mouse/drop ni otros SO.

@@ -14,6 +14,7 @@ export interface ProjectTab {
   response: TextArea; prompt: TextArea;
   panel: "editor" | "prompt"; focusedId?: string;
   tokens?: TokenUsage;
+  agentState?: string;
   live: { id: string; label: string; text: string; reasoning: boolean }[];
 }
 

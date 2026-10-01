@@ -9,6 +9,7 @@ export class Window {
   closePressed = false;
   modal = false;
   fixed = false;
+  titleSuffix = "";
   onLayout?: (client: Rect) => void;
   onDraw?: (canvas: Canvas, client: Rect) => void;
   onClose?: () => void;
@@ -47,8 +48,12 @@ export class Window {
     const frame = this.modal ? theme.dialog : active ? theme.frameActive : theme.frameInactive;
     canvas.box(this.bounds, frame);
     const titleStyle = this.modal ? theme.dialog : this.fixed || active ? theme.title : theme.inactiveTitle;
-    const titleWidth = Math.max(0, Math.min(Bun.stringWidth(this.title) + 2, this.bounds.width - (this.fixed ? 4 : 10)));
-    canvas.text(this.bounds.x + Math.floor((this.bounds.width - titleWidth) / 2), this.bounds.y, ` ${this.title} `, titleStyle, titleWidth);
+    const suffixWidth = Bun.stringWidth(this.titleSuffix);
+    const titleWidth = Math.max(0, Math.min(Bun.stringWidth(this.title) + suffixWidth + 2, this.bounds.width - (this.fixed ? 4 : 10)));
+    const titleX = this.bounds.x + Math.floor((this.bounds.width - titleWidth) / 2);
+    canvas.fill({ x: titleX, y: this.bounds.y, width: titleWidth, height: 1 }, titleStyle);
+    canvas.text(titleX, this.bounds.y, ` ${this.title}`, titleStyle, Math.max(0, titleWidth - suffixWidth - 1));
+    if (suffixWidth) canvas.text(titleX + titleWidth - suffixWidth - 1, this.bounds.y, this.titleSuffix, titleStyle, suffixWidth);
     if (!this.fixed) canvas.text(this.closeRect.x, this.closeRect.y, "[X]", this.closePressed ? theme.selected : frame);
     canvas.clipped(this.client, () => {
       this.onDraw?.(canvas, this.client);

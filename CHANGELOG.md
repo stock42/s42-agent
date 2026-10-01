@@ -5,6 +5,21 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Actividad animada en el proyecto y estado en el chat
+
+- Título del proyecto con animación ASCII durante el turno, incluso antes del
+  primer texto. Nombre intacto, indicador visible en títulos largos y estado
+  transitorio por pestaña. Timer cada 200 ms, detenido en fin/error/cancelación/
+  cierre y sin repintados de animación sobre una pestaña visible idle.
+- Estado conectando/razonando/respondiendo/tools en una fila del chat, fuera del
+  scroll. Prompt conserva modo, borrador, tokens, adjuntos y nueva línea durante
+  el turno. Razón real recibida sigue respetando Vista → Ver razonamiento.
+- Typecheck y 129 tests / 26 archivos / 2111 assertions correctos: animación sin
+  deltas, ES/EN, ocultar reasoning, scroll/foco/draft, títulos Unicode largos,
+  dos turnos, resize 60×16, fin/cancel/error/cierre e idle. Siete capturas tmux
+  desde index.ts revisadas. README/specs/AGENTS/fase13/QA actualizados.
+  Sin builds ni push; pull fallido por main sin upstream. Trabajo ajeno preservado.
+
 ### Corregido — Indicadores siempre visibles en la TUI
 
 - Prompt sin botón Enviar/Cancelar, con borrador de ancho completo. Tokens de

@@ -51,6 +51,8 @@ export class App {
   private set pasting(value: boolean) { this.activeTab.pasting = value; }
   private operations: Promise<unknown> = Promise.resolve();
   private opening = false;
+  private activityTimer?: ReturnType<typeof setInterval>;
+  private activityFrame = 0;
   private get controller() { return this.activeTab.controller; }
   private set controller(value: AbortController | undefined) { this.activeTab.controller = value; }
   private constructor(readonly store: ConfigStore, readonly sessionsPath: string, readonly cwd: string) {
@@ -71,11 +73,17 @@ export class App {
     this.desktop.onResize=(width,height)=>{resize(width,height);if(this.attachments.length && promptWindow.client.height<4){
       promptWindow.bounds.height++;promptWindow.bounds.y--;this.view.editorWindow.bounds.height--;this.desktop.floatingArea={...this.view.editorWindow.bounds};
     }};
-    this.view.editorWindow.onLayout = client => { this.view.response.bounds.y = 1; this.view.response.bounds.height = Math.max(1, client.height - 1); this.view.response.bounds.width = Math.max(1, client.width - 2); };
+    this.view.editorWindow.onLayout = client => {
+      this.view.editorWindow.titleSuffix = this.activeTab.agentState ? ` · ${["|", "/", "-", "\\"][this.activityFrame]}` : "";
+      this.view.response.bounds.y = 1; this.view.response.bounds.height = Math.max(1, client.height - 1 - Number(Boolean(this.activeTab.agentState)));
+      this.view.response.bounds.width = Math.max(1, client.width - 2);
+    };
     this.view.editorWindow.onDraw = (canvas, client) => {
       let context = this.desktop.t("No hay modelo configurado. Models → Proveedores");
       try { const { provider, model } = this.current(); context = `${provider.name} · ${model.id} · ${this.session?.state.id.slice(0, 8) ?? ""}`; } catch {}
       canvas.text(client.x + 1, client.y, context, theme.window, client.width - 2);
+      if (this.activeTab.agentState) canvas.text(client.x + 1, client.y + client.height - 1,
+        `${this.desktop.t("Agente")}: ${this.desktop.t(this.activeTab.agentState)}`, theme.window, client.width - 2);
     };
     promptWindow.onLayout = client => {
       const { prompt } = this.view;
@@ -88,7 +96,7 @@ export class App {
       if (this.attachments.length) canvas.text(client.x + 1, client.y + client.height - 2,
         this.desktop.t(`Adjuntos (${this.attachments.length}): ${this.attachments.map(a => `${a.name} ${a.size} B`).join(" · ")} · ${this.bindingLabel("attachments")}`), theme.window, client.width - 2);
       const hint=this.desktop.t("Shift+Enter: línea"), available=Math.max(1,client.width - 5 - Bun.stringWidth(hint));
-      canvas.text(client.x + 1, client.y + client.height - 1, `${this.mode} · ${this.statusText()}`, theme.window, available);
+      canvas.text(client.x + 1, client.y + client.height - 1, this.activeTab.agentState ? this.mode : `${this.mode} · ${this.statusText()}`, theme.window, available);
       canvas.text(client.x + 1 + available,client.y + client.height - 1," · "+hint,theme.window,client.width - available - 2);
     };
     this.extensions=new Extensions({desktop:this.desktop,store:this.store,cwd:this.cwd,project:()=>this.project,idle:()=>this.requireIdle(),change:task=>this.change(async()=>{this.requireIdle();await task();}),run:task=>this.run(task),task:(label,operation)=>this.task(label,operation),status:text=>{if(text.startsWith("/skill ")){this.view.prompt.setValue(text+" ");this.desktop.focus(this.view.promptWindow);}else this.status=text;this.desktop.invalidate();}});
@@ -211,6 +219,7 @@ export class App {
       let pending: Promise<unknown>; do { pending = this.operations; await pending; } while (pending !== this.operations);
       for (const tab of this.tabs) tab.controller?.abort(new Error("Turno cancelado; cerrando s42-agent"));
       await Promise.all(this.tabs.map(tab => tab.turn));
+      clearInterval(this.activityTimer); this.activityTimer = undefined;
       for (const tab of this.tabs) { await this.saveDraft(tab); await tab.session?.close(); }
     };
     this.desktop.resize(this.desktop.width, this.desktop.height);
@@ -611,6 +620,19 @@ export class App {
     try{const result=await operation(controller.signal);tab.status="Listo";return result;}catch(error){tab.status=(error as Error).message;throw error;}finally{tab.controller=undefined;tab.busy=false;this.desktop.invalidate();}
   }
   cancel(): void { this.controller?.abort(new Error("Turno cancelado; los efectos ya realizados se conservan")); }
+  private startActivity(): void {
+    if (this.activityTimer) return;
+    this.activityFrame = 0;
+    this.activityTimer = setInterval(() => {
+      this.activityFrame = (this.activityFrame + 1) % 4;
+      if (this.activeTab.agentState) this.desktop.invalidate();
+    }, 200);
+    this.activityTimer.unref();
+  }
+  private stopActivity(): void {
+    if (this.tabs.some(tab => tab.agentState)) return;
+    clearInterval(this.activityTimer); this.activityTimer = undefined;
+  }
   private async message(message: Message, tab: ProjectTab): Promise<void> { await tab.session!.append({ type: "message", message }); tab.session!.state.messages.push(message); }
   async submit(literal = false): Promise<void> {
     const tab = this.activeTab, text = tab.prompt.value;
@@ -640,6 +662,7 @@ export class App {
     const key = credential(provider, this.keys.get(provider.id));
     const controller = new AbortController(), context = structuredClone({ limits: this.store.value.limits, mcpServers: this.store.value.mcpServers, skills: this.store.value.skills });
     tab.busy = true; tab.controller = controller; tab.tokens = emptyUsage();
+    tab.agentState = "Conectando…"; this.startActivity();
     tab.prompt.setValue(""); tab.attachments=[]; tab.status = "Conectando…"; this.desktop.invalidate();
     this.desktop.resize(this.desktop.width,this.desktop.height);
     tab.turn = (async () => {
@@ -661,17 +684,17 @@ export class App {
         };
         const result = await runTurn({ project, session, provider, model, key, signal: controller.signal, ...context,
           onUsage: usage => { tab.tokens = usage; this.desktop.invalidate(); },
-          onState: state => { if(state==="Conectando…")resetLive();tab.status = state; this.desktop.invalidate(); },
+          onState: state => { if(state==="Conectando…")resetLive();tab.status = state; tab.agentState = state === "Respondiendo…" ? "Razonando…" : state; this.desktop.invalidate(); },
           onMessage: () => { resetLive();this.showHistory(false, tab);this.desktop.invalidate(); },
-          onReasoning: delta => { tab.status="Razonando…";appendLive("reasoning","Razonamiento:",delta); },
+          onReasoning: delta => { tab.status=tab.agentState="Razonando…";appendLive("reasoning","Razonamiento:",delta); },
           onToolCall: (index,call) => {
-            tab.status="Recibiendo herramientas…";const previous=calls.get(index);calls.set(index,call);
+            tab.status=tab.agentState="Recibiendo herramientas…";const previous=calls.get(index);calls.set(index,call);
             const id=`call-${index}-${call.function.name}`;
             appendLive(id,`Tool call · ${call.function.name || "recibiendo…"}${previous ? " · continuación" : ""}`,
               call.function.arguments.slice(previous?.function.arguments.length ?? 0));
           },
           onToolStart: call => { appendLive(`running-${call.id}`,`Herramienta · ${call.function.name} · ejecutando…`,""); },
-          onDelta: delta => { tab.status = "Respondiendo…";appendLive("answer","Agente:",delta); } });
+          onDelta: delta => { tab.status = tab.agentState = "Respondiendo…";appendLive("answer","Agente:",delta); } });
         tab.status = result.tokens.reported ? `Listo · E/S ${result.tokens.input ?? "N/D"}/${result.tokens.output ?? "N/D"}${result.tokens.partial ? " · parcial" : ""}` : "Listo · uso no reportado";
         await session.append({ type: "turn", state: "completed", detail: tab.status, tokens: tab.tokens });
       } catch (e) {
@@ -680,7 +703,7 @@ export class App {
         }
         tab.status = (e as Error).message; session.state.notices.push(tab.status);
         await session.append({ type: "turn", state: controller.signal.aborted ? "cancelled" : "failed", detail: tab.status, tokens: tab.tokens });
-      } finally { tab.busy = false; tab.controller = undefined; tab.live=[]; this.showHistory(false, tab); this.desktop.invalidate(); }
+      } finally { tab.busy = false; tab.controller = undefined; tab.agentState = undefined; this.stopActivity(); tab.live=[]; this.showHistory(false, tab); this.desktop.invalidate(); }
     })();
     // Keep configuration/input responsive while the request runs.
     void tab.turn.catch(e => { tab.status = `No se pudo guardar el turno: ${(e as Error).message}`; this.desktop.invalidate(); });

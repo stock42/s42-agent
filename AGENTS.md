@@ -39,6 +39,16 @@ Las plantillas también están disponibles en configuraciones anteriores sin
 reemplazar endpoints registrados. Claves de sesión tienen prioridad y no se guardan.
 Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
 read/write/edit/list/find/search/fetch/shell, Vim acotado y adjuntos por rutas ya implementados.
+Mientras un turno LLM está activo, animar el título del proyecto y mostrar
+su estado (conectando/razonando/respondiendo/tools) dentro del chat, en una fila
+reservada bajo la conversación. Prompt no muestra estados de ese turno mientras
+trabaja; conserva modo, tokens, adjuntos y hint de nueva línea. `agentState`
+por pestaña es transitorio; no guardar indicadores en mensajes/sesión. El
+timer de animación de 200 ms solo existe durante turnos y se limpia al finalizar,
+fallar/cancelar o salir; no invalidar por cada tick si la pestaña visible está
+idle. Mantener nombre del proyecto y sufijo visible incluso si el título se
+recorta. Conservar scroll/foco/borrador y ui.showReasoning para el contenido real.
+[QA](docs/qa/agent-activity.md).
 Tools nativas en **src/agent/tools/**, un módulo por herramienta y catálogo
 **Tools → Nativas**. `src/agent/tools.ts` reexporta el contrato existente.
 `find` busca nombre/glob en cualquier carpeta; `search` busca contenido.

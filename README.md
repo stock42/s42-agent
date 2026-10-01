@@ -61,6 +61,11 @@ propios. El editor central muestra el nombre del proyecto.
   permiten recorrer pestañas que no caben en el terminal.
 - `~` señala un proyecto con un turno activo. Podés enviar en otro proyecto;
   cada turno conserva su modelo, carpeta y sesión, incluso en segundo plano.
+- El título del proyecto muestra una animación durante su turno, incluso antes
+  del primer texto. El chat muestra «Agente: Razonando…», «Respondiendo…» o la
+  herramienta en ejecución en su propia fila de estado. Prompt conserva el
+  borrador, tokens y atajo de nueva línea. Terminar, cancelar o fallar detiene
+  la animación; cambiar de pestaña muestra la actividad de ese proyecto.
 - **Ctrl+C** o **Cancelar** interrumpe solo el proyecto activo. Si hay otros
   trabajando, Ctrl+C desde una pestaña inactiva no cierra el programa.
 - **×**, **Ctrl+W** o **Projects → Cerrar pestaña** guarda el borrador y libera

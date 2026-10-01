@@ -282,6 +282,22 @@ Una pantalla alternativa organizada como escritorio TUI:
    activo, cierre `×` y `+` para abrir. Flechas/rueda desplazan las pestañas cuando
    no entran; la activa se revela al cambiar de proyecto o redimensionar.
 
+Durante un turno, el título del proyecto incorpora un indicador animado
+`| / - \\` cada 200 ms, sin modificar el nombre persistido. Reservar espacio
+para el indicador al recortar nombres largos. La ventana de chat muestra una
+fila de estado bajo la conversación: conectando, «Agente: Razonando…» mientras
+espera texto/recibe reasoning, respondiendo cuando llega contenido, recepción de
+calls y ejecución de tools. La fila queda fuera del área de scroll, visible en
+60×16; Prompt conserva modo/tokens/adjuntos/hints sin el estado del LLM activo.
+El indicador de actividad no genera contenido de razonamiento: ui.showReasoning
+sigue controlando únicamente texto recibido del proveedor.
+
+Estado de actividad por pestaña, transitorio; no guardarlo en mensajes/eventos.
+Un timer compartido por aplicación durante turnos: solo invalidar si la pestaña
+visible tiene actividad. Quitar indicador y fila al terminar/cancelar/fallar;
+detener timer al quedar sin turnos o cerrar. Mantener scroll, foco y borrador
+durante ticks y cambios de pestaña. [QA](qa/agent-activity.md).
+
 El arranque normal registra/configura proyectos y conecta el endpoint elegido.
 Sin modelo, muestra el aviso en el chat y ofrece Models → Configurar modelo
 (host, puerto, ID, API key, contexto y capacidades). `--demo` conserva la demo
