@@ -217,6 +217,11 @@ al chat; una respuesta en segundo plano no reemplaza el archivo que estás leyen
 Abrir/adjuntar archivos externos no cambia el cwd de las herramientas. Las pestañas
 de archivos duran esta ejecución; las de proyectos se restauran al reiniciar.
 
+Chat y archivos incluyen números de línea en un margen separado. Corresponden
+a las líneas originales: una línea larga que ocupa varias filas no repite su
+número. El margen se adapta al scroll y al tamaño del contenido, sin modificar
+el texto del archivo ni los mensajes enviados al modelo. El Prompt no se numera.
+
 El explorador ocupa el área disponible del chat, se adapta al resize y conserva
 el prompt visible. Escribí la ruta donde buscar arriba (podés usar la raíz del
 disco), un nombre o glob como `*.ts` debajo y pulsá **Buscar** o Enter en ese

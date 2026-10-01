@@ -9,6 +9,7 @@ export const dosColors = [
 export const theme = {
   desktop: { fg: 7, bg: 4 },
   window: { fg: 7, bg: 4 },
+  lineNumber: { fg: 6, bg: 4 },
   chatUser: { fg: 11, bg: 4 },
   chatAgent: { fg: 14, bg: 4 },
   syntaxKeyword: { fg: 13, bg: 4 },
@@ -49,6 +50,7 @@ interface Palette {
 const darkStyles: ReadonlyMap<Style, Style> = new Map([
   [theme.desktop, { fg: 7, bg: 0 }],
   [theme.window, { fg: 7, bg: 4 }],
+  [theme.lineNumber, { fg: 12, bg: 4 }],
   [theme.chatUser, { fg: 11, bg: 4 }],
   [theme.chatAgent, { fg: 14, bg: 4 }],
   [theme.syntaxKeyword, { fg: 13, bg: 4 }],

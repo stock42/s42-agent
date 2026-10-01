@@ -75,6 +75,11 @@ y verificables; write append=true agrega partes sin reemplazar lo ya escrito.
 [Fase18](docs/phases/18-reliable-coding-and-sqlite.md), [QA](docs/qa/reliable-coding-and-sqlite.md).
 Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
 read/write/edit/list/find/search/fetch/shell, Vim acotado y adjuntos por rutas ya implementados.
+Chat y vistas de archivos muestran números de línea lógica en un margen separado;
+las continuaciones por wrap no repiten el número. El margen se adapta a los dígitos,
+scroll, Unicode y resize sin agregar texto a mensajes, archivos o sesiones.
+Prompt sin numeración. Estilo semántico por paleta y atenuado en monocromo.
+[Capturas reales y QA](docs/qa/line-numbers-and-real-screenshots.md).
 Etiquetas Vos/Agente con estilos semánticos distintos en historial/stream/estado:
 amarillo/cian QBasic y tonos adaptados por paleta; cuerpo neutral, selección
 prioritaria y etiquetas en negrita sin color. No insertar ANSI en mensajes/sesión.
@@ -217,8 +222,10 @@ hacer push ni crear releases sin pedido explícito.
 Presentación open source en README.md (inglés) y README.es.md; manual detallado
 conservado en docs/USAGE.es.md. CONTRIBUTING tiene variantes EN/ES. Notas de
 preview fuente v0.1.0 en docs/releases/, metadata y anuncios en docs/launch/;
-portada social JPEG/PNG en assets/github/. Las imágenes son ilustraciones de
-producto, no capturas ni validación. Mantener el benchmark histórico separado
+portada social JPEG/PNG en assets/github/. Las imágenes de campaña son ilustraciones;
+README EN/ES muestra ahora una captura real. Galería en assets/screenshots/2026-10-01/,
+capturada de index.ts en PTY con xterm.js en Chrome, sin recrear la interfaz.
+Mantener el benchmark histórico separado
 de la QA actual. CI Linux necesita Secret Service para el test PTY de API key:
 instala dbus/gnome-keyring/libsecret y usa D-Bus/llavero temporal aislado; no
 omitir ese test ni usar secretos personales. [QA de publicación](docs/qa/publication-readiness.md).

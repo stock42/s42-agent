@@ -3,13 +3,14 @@ import { theme, type Style } from "../theme.ts";
 import { graphemes, type InputEvent, type Rect } from "../types.ts";
 import { Component } from "./component.ts";
 
-interface Row { start: number; end: number }
+interface Row { start: number; end: number; line?: number }
 export interface TextFragment { text: string; style?: Style }
 
 const normalize = (text: string) => text.replace(/\r\n?/g, "\n").replace(/\t/g, "    ").replace(/[\x00-\x08\x0b-\x1f\x7f]/g, " ");
 
 export class TextArea extends Component {
   private chars: string[] = [];
+  private lineCount = 1;
   private cursor = 0;
   private anchor?: number;
   private dragging = false;
@@ -24,6 +25,7 @@ export class TextArea extends Component {
   private spans: { start: number; end: number; style: Style }[] = [];
   onSubmit?: () => void;
   readOnly = false;
+  lineNumbers = false;
   placeholder = "";
 
   constructor(id: string, bounds: Rect, value = "") { super(id, bounds); this.setValue(value); }
@@ -32,15 +34,16 @@ export class TextArea extends Component {
 
   append(text: string, style?: Style): void {
     const start = this.chars.length;
-    this.chars.push(...graphemes(normalize(text))); this.rows = undefined;
+    const added = graphemes(normalize(text));
+    this.chars.push(...added); this.lineCount += added.filter(char => char === "\n").length; this.rows = undefined;
     if (style) this.spans.push({ start, end: this.chars.length, style });
     if (this.following) { this.cursor = this.chars.length; this.reveal = true; }
   }
   private content(value: string | TextFragment[]): void {
-    this.chars = []; this.spans = []; this.rows = undefined;
+    this.chars = []; this.lineCount = 1; this.spans = []; this.rows = undefined;
     for (const fragment of typeof value === "string" ? [{ text: value }] : value) {
       const start = this.chars.length;
-      for (const char of graphemes(normalize(fragment.text))) this.chars.push(char);
+      for (const char of graphemes(normalize(fragment.text))) { this.chars.push(char); if (char === "\n") this.lineCount++; }
       if (fragment.style) this.spans.push({ start, end: this.chars.length, style: fragment.style });
     }
   }
@@ -56,19 +59,24 @@ export class TextArea extends Component {
     this.anchor = undefined; this.top = 0; this.rows = undefined; this.reveal = true; this.following = true; this.column = undefined;
   }
 
+  private get gutterWidth(): number {
+    const width = Math.max(2, String(this.lineCount).length) + 3;
+    return this.lineNumbers && this.bounds.width > width ? width : 0;
+  }
+
   private layout(): Row[] {
-    const width = Math.max(1, this.bounds.width);
+    const width = Math.max(1, this.bounds.width - this.gutterWidth);
     if (this.rows && this.rowWidth === width) return this.rows;
     if (this.rowWidth !== width && this.following) this.reveal = true;
-    const rows: Row[] = []; let start = 0; let used = 0;
+    const rows: Row[] = []; let start = 0; let used = 0; let line = 1; let number: number | undefined = 1;
     for (let index = 0; index < this.chars.length; index++) {
       const char = this.chars[index]!;
-      if (char === "\n") { rows.push({ start, end: index }); start = index + 1; used = 0; continue; }
+      if (char === "\n") { rows.push({ start, end: index, line: number }); start = index + 1; used = 0; number = ++line; continue; }
       const cells = Bun.stringWidth(char);
-      if (used && used + cells > width) { rows.push({ start, end: index }); start = index; used = 0; }
+      if (used && used + cells > width) { rows.push({ start, end: index, line: number }); start = index; used = 0; number = undefined; }
       used += cells;
     }
-    rows.push({ start, end: this.chars.length });
+    rows.push({ start, end: this.chars.length, line: number });
     if (used >= width) rows.push({ start: this.chars.length, end: this.chars.length });
     this.rowWidth = width; this.rows = rows; return rows;
   }
@@ -105,7 +113,9 @@ export class TextArea extends Component {
     this.undo.push({ value: this.value, cursor: this.cursor }); if (this.undo.length > 100) this.undo.shift();
     const [start, end] = this.selection ?? [this.cursor, this.cursor];
     const added = graphemes(normalize(text));
-    this.chars.splice(start, end - start, ...added); this.cursor = start + added.length;
+    const removed = this.chars.splice(start, end - start, ...added);
+    this.lineCount += added.filter(char => char === "\n").length - removed.filter(char => char === "\n").length;
+    this.cursor = start + added.length;
     this.anchor = undefined; this.rows = undefined; this.reveal = true; this.following = true; this.column = undefined;
   }
 
@@ -141,38 +151,44 @@ export class TextArea extends Component {
       if (start === end && start > 0) this.cursor--;
       this.replace("");
     } else if (key === "u") {
-      const previous = this.undo.pop(); if (previous) { this.chars = graphemes(previous.value); this.cursor = previous.cursor; this.rows = undefined; }
+      const previous = this.undo.pop(); if (previous) { this.chars = graphemes(previous.value); this.lineCount = 1 + this.chars.filter(char => char === "\n").length; this.cursor = previous.cursor; this.rows = undefined; }
     } else if (key !== "i") return false;
     this.reveal = true; this.following = true; this.column = undefined; return true;
   }
 
   draw(canvas: Canvas, bounds: Rect, focused: boolean): void {
     const rows = this.layout(); this.viewport(rows);
+    const gutter = this.gutterWidth, bodyWidth = Math.max(1, bounds.width - gutter);
     canvas.fill(bounds, theme.window);
     if (!this.chars.length && this.placeholder) {
-      this.placeholder.split("\n").slice(0, bounds.height).forEach((line, row) => canvas.text(bounds.x, bounds.y + row, line, theme.window, bounds.width));
+      this.placeholder.split("\n").slice(0, bounds.height).forEach((line, row) => canvas.text(bounds.x + gutter, bounds.y + row, line, theme.window, bodyWidth));
     }
     const selection = focused ? this.selection : undefined;
     let span = 0;
     for (let y = 0; y < bounds.height; y++) {
-      const row = rows[this.top + y]; if (!row) break;
+      const row = rows[this.top + y];
+      if (gutter) {
+        const label = row?.line && (this.chars.length || !this.placeholder) ? String(row.line) : "";
+        canvas.text(bounds.x, bounds.y + y, label.padStart(gutter - 3) + " │ ", theme.lineNumber, gutter);
+      }
+      if (!row) continue;
       let x = 0;
       for (let index = row.start; index < row.end; index++) {
         const char = this.chars[index]!; const width = Bun.stringWidth(char);
-        if (x + width > bounds.width) break;
+        if (x + width > bodyWidth) break;
         while (span < this.spans.length && this.spans[span]!.end <= index) span++;
         const highlight = this.spans[span];
         const style = selection && index >= selection[0] && index < selection[1] ? theme.selected
           : highlight && index >= highlight.start ? highlight.style : theme.window;
-        canvas.text(bounds.x + x, bounds.y + y, char, style, width); x += width;
+        canvas.text(bounds.x + gutter + x, bounds.y + y, char, style, width); x += width;
       }
     }
     if (focused && !this.disabled && !this.readOnly) {
       const rowIndex = this.rowAt(this.cursor, rows); const row = rows[rowIndex]!;
       const x = Bun.stringWidth(this.chars.slice(row.start, this.cursor).join("")); const y = rowIndex - this.top;
       const caret = this.chars[this.cursor] ?? (!this.chars.length ? graphemes(this.placeholder)[0] : undefined) ?? " ";
-      if (y >= 0 && y < bounds.height) canvas.text(bounds.x + x, bounds.y + y,
-        caret === "\n" ? " " : caret, theme.focused, bounds.width - x);
+      if (y >= 0 && y < bounds.height) canvas.text(bounds.x + gutter + x, bounds.y + y,
+        caret === "\n" ? " " : caret, theme.focused, bodyWidth - x);
     }
   }
 
@@ -189,7 +205,7 @@ export class TextArea extends Component {
       if (event.action === "release") { this.dragging = false; return false; }
       if (event.action !== "press" && !(event.action === "move" && this.dragging)) return false;
       const index = Math.max(0, Math.min(rows.length - 1, this.top + event.y));
-      const before = this.cursor; this.cursor = this.position(rows[index]!, event.x);
+      const before = this.cursor; this.cursor = this.position(rows[index]!, event.x - this.gutterWidth);
       if (event.action === "press") { this.anchor = this.cursor; this.dragging = true; }
       this.reveal = true; this.following = true; this.column = undefined;
       return event.action === "press" || before !== this.cursor;

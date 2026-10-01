@@ -8,9 +8,10 @@ project tabs and local LLMs — under the [MIT license](LICENSE).
 [Español](README.es.md) · [User guide](docs/USAGE.es.md) ·
 [Tools](docs/TOOLS.md) · [Contributing](CONTRIBUTING.md)
 
-<img src="assets/github/social-preview.png" alt="S42 Agent: coding with the soul of QBasic, illustrated terminal with project tabs, windows and a permanent prompt" width="960">
+<img src="assets/screenshots/2026-10-01/03-typescript-file.jpg" alt="S42 Agent running: project and file tabs, numbered TypeScript source, syntax colors and a permanent prompt" width="960">
 
-*Interface illustration from the launch campaign.*
+*Real `index.ts` execution in a Bun PTY, displayed by xterm.js in Chrome.
+[Screenshot gallery and capture details](assets/screenshots/2026-10-01/README.md).*
 
 ## Why S42 Agent?
 
@@ -21,7 +22,7 @@ together.
 
 - **QBasic-style TUI:** mouse, draggable auxiliary windows, menus and Vim-inspired shortcuts.
 - **Multiple projects:** independent sessions, drafts and models; background activity in each tab.
-- **Files at hand:** browse any folder, search filenames/globs, attach files and read HTML/CSS/JS/TS with syntax colors.
+- **Files at hand:** browse any folder, search filenames/globs, attach files and read HTML/CSS/JS/TS with syntax colors and line numbers. Chats also have a numbered margin.
 - **Local first:** llama.cpp is the default; DeepSeek and other Chat Completions-compatible providers are configurable.
 - **12 native tools:** files, content search, HTTP, commands, Markdown, WebSocket and rendered-page scraping.
 - **MCP and skills:** manage servers, enable/disable them, load internal or external skills and search skills.sh.

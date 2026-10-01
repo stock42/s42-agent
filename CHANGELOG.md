@@ -5,6 +5,19 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Números de línea y capturas de la TUI real
+
+- Margen de números de línea lógica en chats y archivos: wrap sin repetir,
+  crecimiento de dígitos, scroll/Unicode/resize, selección y sintaxis conservados.
+  Prompt sin numeración; seis paletas y monocromo. No modifica mensajes ni archivos.
+- Cinco JPEG 1680×897 de index.ts ejecutándose en Bun PTY y xterm.js/Chrome:
+  chat local GLM, explorador, TypeScript, selector de temas y About con Nord.
+  Píxeles originales y manifiesto con hashes; ilustraciones anteriores separadas.
+- README EN/ES reemplaza la portada ilustrada por captura real; manual, AGENTS
+  y QA actualizados. Typecheck correcto; suite completa 167 pass/0 fail.
+  Pull correcto, cambio ajeno de final-validation.md preservado fuera del commit.
+  Sin builds, benchmarks nuevos ni publicación externa.
+
 ### Agregado — Campaña comercial en inglés
 
 - Cinco nuevas versiones PNG 1254×1254 en assets/banners/s42-agent-launch-2026-10-01-en/:

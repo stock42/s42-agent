@@ -16,6 +16,7 @@ export async function openFileTab(path: string, ownerId: string): Promise<FileTa
   catch { binary = true; }
   const content = new TextArea("file", { x: 1, y: 1, width: 76, height: 12 });
   content.readOnly = true;
+  content.lineNumbers = true;
   const language = syntaxLanguage(path);
   content.setValue(binary ? "" : highlight(text, language), "start");
   return { id: crypto.randomUUID(), ownerId, path, name: basename(path), size: bytes.length, language, binary, content };

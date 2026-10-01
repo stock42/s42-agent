@@ -1,0 +1,76 @@
+{
+  "captureDate": "2026-10-01",
+  "sourceCommitBeforeChanges": "3b17174c54290d6a1ab8ca979a1443f4d0ba52a6",
+  "sourceIncludes": "Uncommitted line-number changes validated by 167 passing tests",
+  "entrypoint": "index.ts",
+  "runtime": "Bun 1.4.2",
+  "terminal": {
+    "pty": "Bun.Terminal",
+    "emulator": "@xterm/xterm 6.0.0",
+    "fitAddon": "@xterm/addon-fit 0.11.0",
+    "viewer": "Chrome",
+    "transport": "Local WebSocket forwards original ANSI and input",
+    "font": "DejaVu Sans Mono",
+    "fontSize": 16,
+    "lineHeight": 1.1
+  },
+  "configuration": "Temporary SQLite; user configuration untouched",
+  "language": "en",
+  "palettes": [
+    "qbasic",
+    "nord"
+  ],
+  "model": {
+    "provider": "llama.cpp",
+    "endpoint": "http://127.0.0.1:8080/v1",
+    "id": "GLM-4.7-Flash",
+    "fixture": false
+  },
+  "captureMethod": "Unmodified Computer Use browser viewport JPEG",
+  "nativeDesktopCapture": false,
+  "generatedPixels": false,
+  "overlays": false,
+  "benchmark": false,
+  "captures": [
+    {
+      "file": "01-qbasic-chat.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 897,
+      "bytes": 123759,
+      "sha256": "6f37df4bd084e9bad431661ad1913543d36060cc5a5636278aaed48da351e95e"
+    },
+    {
+      "file": "02-file-explorer.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 897,
+      "bytes": 118118,
+      "sha256": "b772c4bf94b5328ee83737bc57aae5f983969ac5a079d0790614b6770592b228"
+    },
+    {
+      "file": "03-typescript-file.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 897,
+      "bytes": 157142,
+      "sha256": "49f8a0afbb105ce5ecc8eca6c8e53706d89cf39b4724d3562b6127f22c953371"
+    },
+    {
+      "file": "04-color-themes.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 897,
+      "bytes": 171605,
+      "sha256": "6282b837bb6db6361cb1ff70f73645926d920cd7bf79938e5760282a9ad7e1c2"
+    },
+    {
+      "file": "05-about-nord.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 897,
+      "bytes": 192464,
+      "sha256": "a8f35aa0fb3dd5825402afc3f1f2c645c068a096809ca1166e36dde227b0d617"
+    }
+  ]
+}

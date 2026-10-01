@@ -21,6 +21,7 @@ export interface ProjectTab {
 export function createProjectTab(controls?: Pick<ProjectTab, "response" | "prompt">): ProjectTab {
   const response = controls?.response ?? new TextArea("response", { x: 1, y: 1, width: 76, height: 12 });
   response.readOnly = true;
+  response.lineNumbers = true;
   return { id: crypto.randomUUID(), selection: { providerId: "llama.cpp" }, status: "Listo", busy: false,
     attachments: [], mode: "INSERT", pending: "", pasting: false, rendered: new WeakMap(), panel: "prompt", live: [],
     response, prompt: controls?.prompt ?? new TextArea("draft", { x: 1, y: 1, width: 76, height: 3 }) };

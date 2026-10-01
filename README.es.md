@@ -8,9 +8,10 @@ en pestañas y soporte para modelos locales. Open source bajo [licencia MIT](LIC
 [English](README.md) · [Manual de uso](docs/USAGE.es.md) ·
 [Tools](docs/TOOLS.md) · [Contribuir](CONTRIBUTING.es.md)
 
-<img src="assets/github/social-preview.png" alt="Ilustración comercial de S42 Agent: terminal estilo QBasic con pestañas, ventanas y prompt fijo" width="960">
+<img src="assets/screenshots/2026-10-01/03-typescript-file.jpg" alt="S42 Agent ejecutándose: pestañas de proyecto y archivo, TypeScript con números de línea, sintaxis coloreada y prompt fijo" width="960">
 
-*Ilustración de la interfaz para la campaña de lanzamiento.*
+*Ejecución real de `index.ts` en una PTY de Bun, mostrada por xterm.js en Chrome.
+[Galería y detalles de captura](assets/screenshots/2026-10-01/README.md).*
 
 ## Qué tiene de especial
 
@@ -20,7 +21,7 @@ trabaja. Cada proyecto conserva su conversación, archivos, modelo y herramienta
 
 - **TUI estilo QBasic:** mouse, ventanas auxiliares movibles y atajos inspirados en Vim.
 - **Varios proyectos a la vez:** sesiones y borradores independientes, actividad visible en cada pestaña.
-- **Explorador de archivos:** cualquier carpeta, búsqueda por nombre/glob, adjuntos y colores para HTML/CSS/JS/TS.
+- **Explorador de archivos:** cualquier carpeta, búsqueda por nombre/glob, adjuntos y colores para HTML/CSS/JS/TS con números de línea. El chat también tiene un margen numerado.
 - **Modelos locales y remotos:** llama.cpp por defecto, DeepSeek precargado y endpoints compatibles.
 - **12 herramientas nativas:** leer, escribir, editar, buscar, HTTP, comandos, Markdown, WebSocket y scraping.
 - **MCP y skills:** servidores stdio/HTTP, enabled/disabled, guías internas, skills externas y búsqueda en skills.sh.
