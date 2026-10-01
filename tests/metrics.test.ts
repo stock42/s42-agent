@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SystemMonitor, cpuUsage, diskCapacity, parseNvidiaMemory, metricLines, tokenLine } from "../src/system/metrics.ts";
-import { addUsage, emptyUsage, tokensPerSecond } from "../src/agent/usage.ts";
+import { addUsage, emptyUsage, tokensPerSecond, type TokenUsage } from "../src/agent/usage.ts";
 import { App } from "../src/app.ts";
 import { ConfigStore, defaultConfig } from "../src/storage/config.ts";
 
@@ -13,9 +13,9 @@ test("métricas calculan CPU por intervalo, disco disponible y VRAM reportada si
   expect(parseNvidiaMemory("1000, 250, 750\n2000, 500, 1500")).toEqual({total:3000*1048576,used:750*1048576,free:2250*1048576});
   for(const value of ["","N/A, N/A, N/A","driver error","1000,-1,1001"])expect(parseNvidiaMemory(value)).toBeUndefined();
   const monitor=new SystemMonitor(()=>process.cwd());try{await monitor.refresh();expect(monitor.snapshot.ram!.total).toBeGreaterThan(0);expect(monitor.snapshot.disk!.free).toBeGreaterThan(0);expect(monitor.snapshot.at).toBeDefined();if(!monitor.snapshot.gpu)expect(monitor.snapshot.gpuError).toBeTruthy();}finally{await monitor.stop();}
-  const unknown={diskPath:"/path"};expect(metricLines(unknown,defaultConfig().ui.resources,60).join("\n")).toContain("VRAM: N/D");expect(tokenLine()).toBe("Tokens E/S N/D/N/D · N/D tok/s");
+  const unknown={diskPath:"/path"};expect(metricLines(unknown,defaultConfig().ui.resources,60).join("\n")).toContain("VRAM: N/D");expect(tokenLine()).toBe("Tokens E/S N/D/N/D · Prom. N/D tok/s");
   const partial=addUsage(addUsage(emptyUsage(),{prompt_tokens:12,completion_tokens:3,total_tokens:15}),undefined);
-  expect(partial).toMatchObject({input:12,output:3,total:15,requests:2,reported:1,partial:true});expect(tokenLine(partial)).toContain("12/3 · N/D tok/s (parcial)");
+  expect(partial).toMatchObject({input:12,output:3,total:15,requests:2,reported:1,partial:true});expect(tokenLine(partial)).toContain("12/3 · Prom. N/D tok/s (parcial)");
 });
 
 test("tokens suman calls y length, se aíslan por pestaña, persisten y vuelven a N/D sin reporte",async()=>{
@@ -45,14 +45,15 @@ test("tokens suman calls y length, se aíslan por pestaña, persisten y vuelven 
 });
 
 test("tok/s usa solo tokens reportados con duración, y contadores grandes caben en Prompt", () => {
-  const usage = addUsage(addUsage(emptyUsage(), { prompt_tokens: 20, completion_tokens: 10 }, 1000), { prompt_tokens: 50, completion_tokens: 30 }, 3000);
-  expect(tokensPerSecond(usage)).toBe(10);
-  expect(tokenLine(usage)).toBe("Tokens E/S 70/40 · 10.0 tok/s");
+  const usage = addUsage(addUsage(emptyUsage(), { prompt_tokens: 20, completion_tokens: 10 }, 1000), { prompt_tokens: 50, completion_tokens: 60 }, 3000);
+  // Weighted by request duration: 70 tokens / 4 s, not the mean of 10 and 20 tok/s.
+  expect(tokensPerSecond(usage)).toBe(17.5);
+  expect(tokenLine(usage)).toBe("Tokens E/S 70/70 · Prom. 17.5 tok/s");
   expect(tokensPerSecond(addUsage(emptyUsage(), { completion_tokens: 10 }))).toBeUndefined();
   expect(tokensPerSecond(addUsage(emptyUsage(), undefined, 1000))).toBeUndefined();
   expect(tokensPerSecond(addUsage(emptyUsage(), { completion_tokens: 0 }, 1000))).toBe(0);
   const partial = addUsage(addUsage(usage, { completion_tokens: 100 }), undefined, 2000);
-  expect(tokensPerSecond(partial)).toBe(10); expect(partial.partial).toBe(true);
+  expect(tokensPerSecond(partial)).toBe(17.5); expect(partial.partial).toBe(true);
   expect(Bun.stringWidth(tokenLine({ ...partial, input: Number.MAX_SAFE_INTEGER, output: Number.MAX_SAFE_INTEGER }))).toBeLessThanOrEqual(56);
 });
 
@@ -80,7 +81,13 @@ test("Vista cambia recursos con teclado y mouse sin modal, tokens fijos y prompt
     app.view.prompt.setValue("BORRADOR"); app.tabs[0]!.tokens = addUsage(emptyUsage(), { prompt_tokens: 100, completion_tokens: 20 }, 1000);
     for (const [width, height] of [[60, 16], [80, 24], [190, 50]] as const) {
       app.desktop.resize(width, height); const canvas = app.desktop.draw(), prompt = app.view.promptWindow, rect = prompt.controlRect(app.view.prompt);
-      expect(canvas.lines()[prompt.client.y]).toContain("Tokens E/S 100/20 · 20.0 tok/s");
+      expect(canvas.lines()[prompt.client.y]).toContain("Tokens E/S 100/20 · Prom. 20.0 tok/s");
+      const saved: TokenUsage = app.tabs[0]!.tokens!;
+      app.tabs[0]!.tokens = { ...saved, input: 999999, output: 999999, timedOutput: 99999, generationMs: 10000, partial: true };
+      const large = app.desktop.draw().lines()[prompt.client.y]!;
+      expect(large).toContain(tokenLine(app.tabs[0]!.tokens));
+      expect(large.startsWith("│")).toBe(true); expect(large.endsWith("│")).toBe(true);
+      app.tabs[0]!.tokens = saved;
       expect(rect.y).toBe(prompt.client.y + 1); expect(rect.y + rect.height).toBe(prompt.client.y + prompt.client.height - 1);
       const footer = app.desktop.statusLines!(); expect(footer.join(" ")).toContain("CPU: 25%"); expect(footer.join(" ")).toContain("RAM: 24.0G/25.0G"); expect(footer.join(" ")).toContain("VRAM: N/D");
       expect(prompt.bounds.y + prompt.bounds.height).toBe(height - footer.length);
@@ -95,7 +102,7 @@ test("Vista cambia recursos con teclado y mouse sin modal, tokens fijos y prompt
     for (const action of ["press", "release"] as const) app.desktop.handle({ type: "mouse", action, button: 0, delta: 0, x: x + 2, y: 7 });
     await until(() => !app.store.value.ui.resources.disk);
     for (const resource of ["ram", "gpu"] as const) await app.toggleResource(resource);
-    expect(app.desktop.statusLines!()).toEqual([]); expect(app.desktop.draw().lines().join("\n")).toContain("Tokens I/O 100/20 · 20.0 tok/s");
+    expect(app.desktop.statusLines!()).toEqual([]); expect(app.desktop.draw().lines().join("\n")).toContain("Tokens I/O 100/20 · Avg. 20.0 tok/s");
     expect(app.view.prompt.value).toBe("BORRADOR"); expect(app.desktop.active).toBe(app.view.promptWindow);
     expect(Object.keys(app.store.value.ui.resources).sort()).toEqual(["cpu", "disk", "gpu", "ram"]);
     const save = app.store.save; app.store.save = async () => { throw new Error("save failed"); };

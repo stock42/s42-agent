@@ -106,5 +106,5 @@ function count(value: number): string {
 export function tokenLine(tokens?: TokenUsage, t: (text: string) => string = text => text): string {
   const rate = tokensPerSecond(tokens);
   const number = (value?: number) => value === undefined ? t("N/D") : count(value);
-  return `${t("Tokens E/S")} ${number(tokens?.input)}/${number(tokens?.output)} · ${rate === undefined ? t("N/D") : rate >= 10000 ? count(rate) : rate.toFixed(1)} tok/s${tokens?.partial ? t(" (parcial)") : ""}`;
+  return `${t("Tokens E/S")} ${number(tokens?.input)}/${number(tokens?.output)} · ${t("Prom.")} ${rate === undefined ? t("N/D") : rate >= 10000 ? count(rate) : rate.toFixed(1)} tok/s${tokens?.partial ? t(" (parcial)") : ""}`;
 }

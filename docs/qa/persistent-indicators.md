@@ -45,3 +45,23 @@ ni se extrapola esta prueba breve a otros pedidos/proveedores.
 Los contadores se actualizan cuando el proveedor entrega usage, normalmente al
 final de cada request. No se cuentan deltas/caracteres ni se inventa un contador
 en vivo si el proveedor no informa uso. N/D sin uso/timing; parcial si falta E/S.
+
+## Etiqueta del promedio de tokens por segundo
+
+2026-10-01. Indicador explícito `Tokens E/S 1200/120 · Prom. … tok/s`
+(`Avg.` en inglés), arriba a la derecha de Prompt. Cálculo observado conservado:
+salida reportada / duración de sus requests, incluyendo red y primer token;
+excluye tools. Se actualiza al recibir usage al finalizar la request. Sin timing
+o salida reportada muestra `Prom. N/D tok/s`.
+
+Typecheck y **23 tests / 4 archivos / 499 assertions** correctos. Se verificó
+el promedio ponderado de requests con tasas distintas (10/1 s + 60/3 s =
+17,5 tok/s), contadores grandes y parcial sin recortar el promedio/marco a
+60 columnas, ES/EN, recursos ocultos, borrador, archivos y demo.
+
+[Seis capturas nuevas de tmux](average-tokens-captures.txt) desde index.ts:
+ES y EN a 100×32 antes y después de la respuesta, y resize a 60×16 con borrador
+Unicode intacto. EN sin color ni recursos. Respuesta/1200 entrada/120 salida
+de SSE fixture con 400 ms de espera; promedio numérico completo visible en las
+cuatro capturas posteriores. No es una medición de velocidad de un modelo real.
+Sin builds ni push; config/proyecto temporales y pull fallido por main sin upstream.

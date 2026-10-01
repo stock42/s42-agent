@@ -415,6 +415,7 @@ const english: Readonly<Record<string, string>> = {
   "Disco": "Disk",
   "U/L": "U/F",
   "Tokens E/S": "Tokens I/O",
+  "Prom.": "Avg.",
   " (parcial)": " (partial)",
   "/mcp /skills /skill nombre prompt · Alt+C MCP · Alt+S Skills": "/mcp /skills /skill name prompt · Alt+C MCP · Alt+S Skills",
   "Paleta: Clásica · QBasic": "Palette: Classic · QBasic",

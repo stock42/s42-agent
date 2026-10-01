@@ -188,8 +188,9 @@ tienen los permisos del usuario y efectos reales; no hay sandbox. Cancelar no
 revierte cambios ni reejecuta herramientas interrumpidas al reabrir.
 [Contratos, ejemplos y límites de cada tool](docs/TOOLS.md).
 
-El panel **Prompt** muestra siempre **tokens de entrada/salida (E/S) y tok/s**
-arriba a la derecha. No tiene botón Enviar: **Enter envía**, Shift+Enter inserta
+El panel **Prompt** muestra siempre **tokens de entrada/salida (E/S) y promedio tok/s**
+arriba a la derecha, por ejemplo `Tokens E/S 1200/120 · Prom. 28.5 tok/s`
+(`Avg.` en inglés). No tiene botón Enviar: **Enter envía**, Shift+Enter inserta
 una línea y Ctrl+C cancela. El borrador usa todo el ancho bajo los contadores.
 Tokens por turno/pestaña incluyen todas sus requests, tools y continuaciones;
 se guardan al terminar. Los contadores se actualizan al recibir el uso del

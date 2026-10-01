@@ -87,8 +87,8 @@ semánticos adaptan todas las paletas y preservan selección/monocromo.
 [Fase 15](docs/phases/15-file-tabs-and-syntax.md), [QA](docs/qa/file-tabs.md).
 CPU % y RAM/disco/VRAM usado/total aparecen en la barra inferior, sin modal.
 **Vista → CPU/RAM/Disco/VRAM: on/off** persiste cada indicador en `ui.resources`;
-config anterior muestra todos. Tokens E/S y tok/s siempre visibles arriba a la
-derecha de Prompt, sin opción de ocultarlos. Sin botón Enviar/Cancelar: Enter
+config anterior muestra todos. Tokens E/S y Prom. tok/s (Avg. en inglés) siempre
+visibles arriba a la derecha de Prompt, sin opción de ocultarlos. Sin botón Enviar/Cancelar: Enter
 envía, Shift+Enter inserta línea, Ctrl+C cancela; borrador bajo los contadores
 con todo el ancho. `src/system/metrics.ts`: muestreo cada 2 s sin
 superposición, APIs Bun/compat y DRM o nvidia-smi instalado para VRAM. N/D si

@@ -5,6 +5,16 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Mejorado — Promedio tok/s identificado en Prompt
+
+- Contador explícito `Tokens E/S … · Prom. … tok/s` arriba a la derecha;
+  `Avg.` en inglés. Promedio observado por turno conservado y N/D sin medición.
+- Typecheck y 23 tests relevantes / 499 assertions correctos: promedio ponderado
+  entre requests con tasas distintas, contadores grandes/parcial a 60 columnas,
+  ES/EN, recursos ocultos y borrador sin superposición. Seis capturas tmux desde
+  index.ts con fixture SSE; [QA](docs/qa/persistent-indicators.md).
+  Sin builds ni push; pull falló por main sin upstream. Cambios ajenos preservados.
+
 ### Agregado — Archivos en pestañas y resaltado de sintaxis
 
 - Abrir desde el explorador usa una pestaña junto al proyecto, con nombre del

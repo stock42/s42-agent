@@ -49,7 +49,7 @@ test("Enter publica la demo, conserva foco y el prompt usa todo el ancho sin bot
   desktop.handle({ type: "paste", text: "Segundo prompt" });
   expect(prompt.controls.map(control => control.id)).toEqual(["draft"]);
   expect(draft.bounds.width).toBe(prompt.client.width - 2);
-  expect(desktop.draw().lines()[prompt.client.y]).toContain("Tokens E/S N/D/N/D · N/D tok/s");
+  expect(desktop.draw().lines()[prompt.client.y]).toContain("Tokens E/S N/D/N/D · Prom. N/D tok/s");
   desktop.handle(key("enter"));
   expect(response.value).toContain("Segundo prompt"); expect(desktop.active).toBe(prompt); expect(prompt.focusedId).toBe("draft");
 });
