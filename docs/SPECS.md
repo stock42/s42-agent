@@ -43,7 +43,7 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R01 | TypeScript y Bun en todo el harness | Desarrollo, tests y compilación con Bun; ejecutable sin Node.js instalado. |
 | R02 | Simplicidad | Un paquete, un proceso, módulos pequeños y sin servicios internos obligatorios. |
 | R03 | Rapidez | Inicio y respuesta del teclado medidos por separado de la inferencia. |
-| R04 | Estabilidad | Cancelación, errores de proveedor y cierre restauran el terminal y conservan la sesión. |
+| R04 | Estabilidad | Cancelación/errores/cierre conservan sesión y terminal; límite de salida solicita etapas pequeñas. |
 | R05 | TUI en color estilo QBasic | Paleta clásica por defecto, grises y verdes configurables; menú superior, ventanas con bordes/títulos y barra de atajos, legibles con y sin color. |
 | R06 | Múltiples proyectos | CRUD mediante nombre/carpeta y pestañas con borradores, sesiones y turnos independientes. |
 | R07 | Buenos atajos y experiencia Vim | Modos INSERT/NORMAL, navegación y acciones documentadas, sin conflictos entre modos. |
@@ -246,7 +246,7 @@ Una pantalla alternativa organizada como escritorio TUI:
    **Vista** y **Ayuda**, con desplegables. Archivo agrupa explorador/adjuntos/salir;
    Projects, registro/sesiones/pestañas; Models, proveedores/modelos; Promptings,
    biblioteca/nuevo/guardar borrador; Tools, MCP/Skills; Vista, paneles/paleta/Vim.
-   Ayuda muestra atajos. Sin acciones de prueba en el harness normal.
+   Ayuda muestra atajos y About. Sin acciones de prueba en el harness normal.
 2. Editor central con el **nombre del proyecto centrado en su marco superior**,
    como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
    allí en solo lectura, con selección y scroll; no abrir una ventana de chat independiente.
@@ -603,11 +603,22 @@ manualmente. El default de proveedor es `llama.cpp` aun antes de elegir modelo.
 - Nunca ejecutar argumentos parciales ni JSON inválido.
 - Conservar texto/razonamiento parcial y distinguir cancelación, desconexión y fin
   correcto. No persistir llamadas incompletas como llamadas ejecutables.
+- Tipar `finish_reason: length` en CompletionError y recuperar dentro del loop:
+  guardar el parcial, descartar calls truncadas, pedir plan breve/primera etapa
+  pendiente y continuar con etapas pequeñas en el chat. No elevar max_tokens ni
+  cambiar el proveedor. El contexto conserva las tools ya realizadas.
+- La instrucción de etapa se inserta una vez al comienzo de esa etapa; después
+  siguen assistant/tool/results en orden. No reenviarla tras cada herramienta.
+  Un sufijo interno de continuación se oculta incluso en SSE fragmentado y se
+  retira antes de guardar el texto. Si el modelo indica más etapas, pedir la
+  siguiente; si termina, cerrar normalmente. maxSteps acota requests adicionales;
+  cancelación/contexto/HTTP/timeout conservan sus errores y no disparan recuperación.
 - Timeouts iniciales: conexión/primer evento hasta 120 s e inactividad del stream
   hasta 120 s, configurables para equipos locales lentos. No limitar por defecto
   la duración total mientras el servidor siga emitiendo datos.
 - Informar 401, 404, 429, 5xx, modelo ausente y contexto excedido de forma accionable.
-- Sin fallback cloud ni reintento automático de un turno con posibles efectos.
+- Sin fallback cloud ni replay automático de herramientas al recuperar una
+  respuesta truncada. Otras fallas no reintentan el turno.
 - Mostrar tokens/velocidad solo si el proveedor los reporta. Un dato ausente no
   equivale a cero; cualquier estimación se identifica como aproximada.
 
@@ -1098,3 +1109,26 @@ documentan concurrencia, aislamiento, restauración, controles y menús a 60×16
 [Publicación](PUBLISHING.md) describe los pasos externos: push, visibilidad,
 CI remota y releases. Preparar estos archivos no realiza esos pasos ni demuestra
 compatibilidad adicional por SO. No se crean nuevos binarios en esta iteración.
+
+## 20. Recuperación por etapas, About y origen del catálogo
+
+La recuperación se activa solo ante el límite de salida tipado, conserva el
+pedido original y todos los resultados previos, y solicita respuestas/argumentos
+acotados. El modelo decide el contenido de las etapas; el harness solicita la
+siguiente cuando su respuesta indica que queda trabajo. Los prompts de control
+son temporales: no se guardan como mensajes escritos por el usuario. Sus notices
+y los mensajes reales sí se guardan. Continuar no implica repetir acciones previas.
+
+Ayuda → About muestra exactamente `Powered by César Casas.`, `MIT.`,
+`S42 Agent.` y `Version: <package.json.version>`. Reutiliza el modal de información,
+con lectura/scroll/cierre y prompt fijo visible incluso en 60×16.
+
+El buscador consulta directamente `https://skills.sh/api/search?q=...&limit=20`,
+con fetch Bun. Muestra origen `https://skills.sh` en búsqueda/resultados y el
+enlace de cada skill en Ver origen. No usa inferencia, búsquedas GitHub como
+reemplazo del catálogo ni npm/npx. La instalación posterior mantiene el flujo
+explícito existente. [CLI oficial](https://github.com/vercel-labs/skills/blob/main/src/find.ts).
+
+[Fase11](phases/11-staged-recovery-and-about.md), [QA](qa/staged-recovery.md):
+fixtures de longitud/cancelación, GLM real con primer corte provocado, About y
+búsqueda real de skills.sh; fuente Bun, sin builds nuevos.

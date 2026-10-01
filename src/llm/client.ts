@@ -3,7 +3,7 @@ import type { Model, Provider } from "../storage/config.ts";
 
 export interface ToolDefinition { type: "function"; function: { name: string; description: string; parameters: Record<string, unknown> } }
 export interface Completion { message: Message; usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }; finishReason?: string }
-export class CompletionError extends Error { constructor(message: string, readonly partial: Message) { super(message); } }
+export class CompletionError extends Error { constructor(message: string, readonly partial: Message, readonly finishReason?: string) { super(message); } }
 
 export class SSEParser {
   private decoder = new TextDecoder(); private buffer = ""; private lines: string[] = [];
@@ -90,10 +90,13 @@ export async function complete(options: { provider: Provider; model: Model; mess
     }
     if (!done) { parser.end(); if (!finishReason) throw new Error("El stream se desconectó sin completar la respuesta"); }
     if (controller.signal.aborted) throw controller.signal.reason;
-    if (finishReason === "length") throw new Error("El modelo alcanzó el límite de salida; respuesta incompleta");
+    if (finishReason === "length") throw new CompletionError("El modelo alcanzó el límite de salida; respuesta incompleta", partial(), "length");
     const message = partial();
     if (message.tool_calls?.some(c => !c.id || !c.function.name) || new Set(message.tool_calls?.map(c => c.id)).size !== (message.tool_calls?.length ?? 0)) throw new Error("Tool calls incompletas o IDs duplicados");
     return { message, usage, finishReason };
-  } catch (e) { throw new CompletionError(controller.signal.aborted ? (controller.signal.reason as Error)?.message ?? "Cancelado" : (e as Error).message, partial()); }
+  } catch (e) {
+    if (e instanceof CompletionError && !controller.signal.aborted) throw e;
+    throw new CompletionError(controller.signal.aborted ? (controller.signal.reason as Error)?.message ?? "Cancelado" : (e as Error).message, partial());
+  }
   finally { clearTimeout(timer!); options.signal.removeEventListener("abort", relay); await reader?.cancel().catch(() => {}); }
 }

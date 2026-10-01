@@ -1,0 +1,133 @@
+{
+  "at": "2026-10-01T18:20:34.227Z",
+  "bun": "1.4.2",
+  "platform": "linux",
+  "model": "GLM-4.7-Flash",
+  "base": "http://127.0.0.1:8080/v1",
+  "scenario": "Proxy baja solo el primer max_tokens a 64 para reproducir length; continuaciones usan el presupuesto configurado de 1024. Proyectos/config temporales.",
+  "durationMs": 5937,
+  "status": "Listo · uso no reportado",
+  "requests": [
+    {
+      "number": 1,
+      "maxTokens": 64,
+      "finishReasons": [
+        "length"
+      ]
+    },
+    {
+      "number": 2,
+      "maxTokens": 1024,
+      "stage": 1,
+      "finishReasons": [
+        "tool_calls"
+      ]
+    },
+    {
+      "number": 3,
+      "maxTokens": 1024,
+      "finishReasons": [
+        "tool_calls"
+      ]
+    },
+    {
+      "number": 4,
+      "maxTokens": 1024,
+      "finishReasons": [
+        "stop"
+      ]
+    }
+  ],
+  "files": {
+    "first": "Bun",
+    "second": "QBasic"
+  },
+  "notices": [
+    "Límite de salida alcanzado; conservando el parcial y dividiendo el pedido en etapas pequeñas.",
+    "Etapa 1 · recuperando respuesta"
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Creá first.txt con el texto Bun, y second.txt con el texto QBasic. Hacelo en dos etapas pequeñas: primero first.txt y luego second.txt. Usá herramientas reales. Al finalizar confirmá en una frase."
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "reasoning_content": "El usuario quiere que cree dos archivos en dos etapas:\n1. Primero crear first.txt con el texto \"Bun\"\n2. Luego crear second.txt con el texto \"QBasic\"\n3. Confirmar al final con una frase\n\nSegún las instrucciones del proyecto, debo crear solo estos dos archivos"
+    },
+    {
+      "role": "assistant",
+      "content": "# Etapa 1\n\nPlan: Crear el archivo first.txt con el contenido \"Bun\". Escribo todo el contenido en una sola llamada a write, que es una operación atómica y eficiente para archivos pequeños.</think>Voy a crear `first.txt` con el texto \"Bun\".",
+      "reasoning_content": "El usuario quiere que cree dos archivos en dos etapas:\n1. Primero crear first.txt con el texto \"Bun\"\n2. Luego crear second.txt con el texto \"QBasic\"\n3. Confirmar al final con una frase\n\nSegún las instrucciones del proyecto, debo crear solo estos dos archivos.\n\nAhora el usuario está solicitando una respuesta con límite de tokens. Voy a dividir en etapas:\n\nEtapa 1: Crear first.txt con el texto \"Bun\"\nEtapa 2: Crear second.txt con el texto \"QBasic\"\nEtapa 3: Confirmar con una frase\n\nVoy a empezar con la primera etapa.",
+      "tool_calls": [
+        {
+          "id": "p6nbPfvBIFP4wKAULx0qXMg0VUhXKpIM",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"path\":\"/tmp/s42-real-stages-mwxXuA/first.txt\",\"content\":\"Bun\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "p6nbPfvBIFP4wKAULx0qXMg0VUhXKpIM",
+      "content": "{\"output\":\"Instrucciones aplicables:\\n/tmp/s42-real-stages-mwxXuA/AGENTS.md:\\nProyecto temporal de QA. Creá solo first.txt y second.txt. No ejecutes comandos ni cambies otros archivos.\\n\\nEscrito: /tmp/s42-real-stages-mwxXuA/first.txt\",\"failed\":false,\"durationMs\":0}"
+    },
+    {
+      "role": "assistant",
+      "content": "`first.txt` creado con \"Bun\". Ahora creo `second.txt` con \"QBasic\".",
+      "reasoning_content": "El archivo first.txt se creó correctamente con el contenido \"Bun\". Ahora voy a continuar con la etapa 2, que es crear second.txt con el texto \"QBasic\".",
+      "tool_calls": [
+        {
+          "id": "PV15ydGdPayvDu9OFQzpRuj6fCEAyP6G",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"path\":\"/tmp/s42-real-stages-mwxXuA/second.txt\",\"content\":\"QBasic\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "PV15ydGdPayvDu9OFQzpRuj6fCEAyP6G",
+      "content": "{\"output\":\"Instrucciones aplicables:\\n/tmp/s42-real-stages-mwxXuA/AGENTS.md:\\nProyecto temporal de QA. Creá solo first.txt y second.txt. No ejecutes comandos ni cambies otros archivos.\\n\\nEscrito: /tmp/s42-real-stages-mwxXuA/second.txt\",\"failed\":false,\"durationMs\":1}"
+    },
+    {
+      "role": "assistant",
+      "content": "Ambos archivos creados. Ahora confirmo: first.txt contiene \"Bun\" y second.txt contiene \"QBasic\".",
+      "reasoning_content": "Perfecto, ahora ya he creado ambos archivos. Ahora debo confirmar con una frase al usuario sobre el resultado final. El pedido original era: \"Hacelo en dos etapas pequeñas: primero first.txt y luego second.txt. Usá herramientas reales. Al finalizar confirmá en una frase.\"\n\nYa creé primero first.txt y luego second.txt. Ahora debo confirmar con una frase. No necesito ejecutar más herramientas."
+    }
+  ],
+  "skills": {
+    "source": "https://skills.sh/api/search",
+    "query": "react",
+    "count": 20,
+    "top": [
+      {
+        "id": "mattpocock/skills/tdd",
+        "source": "mattpocock/skills",
+        "skillId": "tdd",
+        "name": "tdd",
+        "installs": 998323
+      },
+      {
+        "id": "vercel-labs/agent-skills/vercel-react-best-practices",
+        "source": "vercel-labs/agent-skills",
+        "skillId": "vercel-react-best-practices",
+        "name": "vercel-react-best-practices",
+        "installs": 761642
+      },
+      {
+        "id": "open.feishu.cn/lark-event",
+        "source": "open.feishu.cn",
+        "skillId": "lark-event",
+        "name": "lark-event",
+        "installs": 738368
+      }
+    ]
+  }
+}

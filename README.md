@@ -45,7 +45,7 @@ bun run index.ts --help
 | Promptings | Biblioteca, nueva plantilla y guardar el prompt actual. |
 | Tools | CRUD/activación de MCP, registro/activación de Skills y buscador skills.sh. |
 | Vista | Respuestas/prompt, foco, auxiliares, paletas y modo Vim. |
-| Ayuda | Atajos, mouse y comandos. |
+| Ayuda | Atajos, mouse, comandos y About con autor, MIT y versión. |
 
 El agente abre directamente este espacio de trabajo. El laboratorio de componentes
 se ejecuta aparte con `bun run index.ts --demo`.
@@ -160,6 +160,15 @@ El chat muestra razonamiento solo cuando el proveedor envía `reasoning_content`
 o `reasoning`. Muestra argumentos parciales de tool calls, ejecución y resultados;
 solo ejecuta llamadas completas. Selección, scroll y lectura permanecen disponibles.
 
+Si el modelo alcanza el límite de salida, el agente conserva la respuesta parcial
+y le pide dividir el pedido en etapas pequeñas. Cada etapa aparece en el chat;
+las siguientes se solicitan mientras el modelo indique trabajo pendiente. Se
+conservan la sesión, modelo y presupuesto de tokens; las herramientas ya realizadas
+no se vuelven a ejecutar automáticamente y las calls truncadas se descartan.
+**Ctrl+C** cancela la etapa activa. El límite de pasos también acota las
+continuaciones; al agotarlo, el avance queda guardado para un pedido más pequeño.
+Errores HTTP, desconexión o timeout se informan sin reintentar el turno.
+
 ### MCP
 
 **Tools → MCP** o **Alt+C** permite listar, agregar, editar, eliminar del registro,
@@ -180,7 +189,9 @@ un catálogo breve y carga el cuerpo mediante la tool skill.
 `/skill nombre pedido` invoca sus instrucciones explícitamente.
 
 **Buscar en skills.sh** muestra nombre, origen e instalaciones; permite instalar
-desde GitHub para el proyecto o globalmente. Requiere Git y conserva carpeta,
+desde GitHub para el proyecto o globalmente. La búsqueda consulta directamente
+[https://skills.sh](https://skills.sh) mediante su API de catálogo; no usa un LLM
+para inventar resultados. Requiere Git para instalar y conserva carpeta,
 recursos y licencias. No requiere npm/npx/Node. Instalar o cargar instrucciones
 no ejecuta scripts; quitar el registro conserva los archivos.
 
@@ -207,6 +218,9 @@ No se asignan acciones a F1–F12.
 **Verdes**. **Vista → Activar / desactivar Vim** configura el modo. Se respetan
 `NO_COLOR`, `--no-color` y `--no-mouse`; RGB con `COLORTERM=truecolor`, fallback
 ANSI16 para otros terminales. Renderer por filas modificadas, sin frames idle.
+
+**Ayuda → About** muestra `Powered by César Casas.`, `MIT.`, `S42 Agent.` y
+`Version: 0.1.0`. La versión se toma de package.json, como `--version`.
 
 Comandos: `/help`, `/projects`, `/models`, `/providers`, `/sessions`, `/files`,
 `/new`, `/promptings`, `/mcp`, `/skills`, `/skill nombre pedido`, `/attach ruta`,
@@ -261,6 +275,7 @@ desde la fuente en Linux con PTY y fixtures. Hay evidencia previa de GLM real;
 mouse/drop físicos y runtime macOS/Windows/arm64 siguen pendientes.
 
 [QA de pestañas/menús](docs/qa/project-tabs.md), [QA integral](docs/qa/final-validation.md),
+[recuperación/About/skills.sh](docs/qa/staged-recovery.md),
 [fases](docs/phases/README.md), [CHANGELOG](CHANGELOG.md).
 
 Para contribuir: [CONTRIBUTING.md](CONTRIBUTING.md). Preparación de publicación:

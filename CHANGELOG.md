@@ -5,6 +5,23 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Recuperación por etapas, About y catálogo directo
+
+- Límite de salida length tipado: conserva texto/reasoning parcial y pide al
+  mismo modelo dividir el pedido en etapas pequeñas, con entregas en el chat.
+  Calls truncadas descartadas, presupuesto conservado, maxSteps y cancelación
+  vigentes. No se reintentan HTTP/timeout ni se reproducen tools ya realizadas.
+- Guía insertada al comenzar cada etapa, manteniendo assistant/tool/results;
+  sufijo de continuación oculto durante SSE y antes de persistir texto. Corregida
+  una repetición detectada en GLM real al reenviar la guía tras cada herramienta.
+- Ayuda → About: Powered by César Casas., MIT., S42 Agent. y versión real desde
+  package.json. Buscador/resultados muestran https://skills.sh; consulta directa
+  al catálogo /api/search comprobada desde helper y TUI, con 20 resultados reales.
+- Typecheck y 105 tests correctos (21 archivos, 1285 assertions), GLM real con
+  primer corte provocado y dos archivos escritos; tmux 80×24/60×16 inspeccionado.
+  Fase11, specs, README, AGENTS y QA actualizados. Sin builds nuevos. Pull fallido
+  por main sin upstream; commit local, sin push.
+
 ### Agregado — Pestañas, menús de producto y preparación MIT
 
 - Menús Archivo/Projects/Models/Promptings/Tools/Vista/Ayuda; Promptings tiene

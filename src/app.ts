@@ -17,6 +17,7 @@ import { readdir } from "node:fs/promises";
 import { FileExplorer } from "./ui/components/file-explorer.ts";
 import { TabBar } from "./ui/components/tab-bar.ts";
 import { createProjectTab, type ProjectTab } from "./project-tab.ts";
+import { version } from "../package.json";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
 export class App {
@@ -133,7 +134,10 @@ export class App {
           this.status = `Vim ${next.ui.vimMode ? "activado" : "desactivado"}`;
         }) },
       ] },
-      { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", run: () => this.desktop.onHelp() }] },
+      { label: "Ayuda", hotkey: "y", align: "right", items: [
+        { label: "Atajos y mouse", run: () => this.desktop.onHelp() },
+        { label: "About", run: () => info(this.desktop, "About", ["Powered by César Casas.", "MIT.", "S42 Agent.", `Version: ${version}`]) },
+      ] },
     );
     const actionLabels:Record<Action,string>={projects:"Abrir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",explorer:"Explorador de archivos",mcp:"MCP · servidores",skills:"Skills · registradas",promptings:"Biblioteca",help:"Atajos y mouse"};
     for(const menu of this.desktop.menu.menus) for(const item of menu.items) {

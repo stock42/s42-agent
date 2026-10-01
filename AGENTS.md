@@ -39,6 +39,12 @@ Las plantillas también están disponibles en configuraciones anteriores sin
 reemplazar endpoints registrados. Claves de sesión tienen prioridad y no se guardan.
 Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
 read/list/search/write/edit/shell, Vim acotado y adjuntos por rutas ya implementados.
+Si el proveedor termina por `finish_reason: length`, conservar texto/reasoning
+parcial y solicitar etapas pequeñas automáticamente. `src/agent/stages.ts`
+mantiene una instrucción al comienzo de cada etapa; no repetirla tras cada tool.
+Las continuaciones conservan proyecto, presupuesto, historial y efectos realizados;
+descartan calls truncadas, respetan maxSteps y Ctrl+C. No tratar HTTP/timeout/
+cancelación como límite de salida. [QA](docs/qa/staged-recovery.md).
 **Projects** pide solo **Name/Folder**, con selector de carpeta. **Ctrl+E** abre el
 explorador: padre, raíz o ruta libre, preview de solo lectura y adjuntos fuera del
 proyecto. El chat muestra reasoning emitido por el proveedor, argumentos de tool
@@ -64,6 +70,9 @@ RGB y fallback ANSI16; `NO_COLOR`/`--no-color`/`ui.color: "never"` siguen vigent
 Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
 Menús de producto: Archivo, Projects, Models, Promptings, Tools, Vista y Ayuda.
+**Ayuda → About** muestra Powered by César Casas., MIT., S42 Agent. y Version
+tomada de package.json. El buscador consulta directamente **https://skills.sh**
+mediante `/api/search`, sin proveedor LLM; búsqueda/resultados muestran ese origen.
 El laboratorio y sus menús de prueba solo aparecen con `--demo`.
 Una pestaña por proyecto; cada una conserva sesión, modelo, borrador, adjuntos,
 modo Vim, foco y scroll. Se pueden ejecutar turnos simultáneos en proyectos
@@ -79,7 +88,7 @@ CI fuente Linux con Bun 1.4.2. `package.json` conserva `private: true` porque no
 se publica un paquete npm. [Publicación](docs/PUBLISHING.md): no cambiar visibilidad,
 hacer push ni crear releases sin pedido explícito.
 
-Fases 02/03/07/08/09/10 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09/10/11 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.

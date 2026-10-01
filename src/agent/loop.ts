@@ -4,7 +4,8 @@ import type { Model, Project, Provider, Config, McpServer, Skill } from "../stor
 import type { Session } from "../storage/sessions.ts";
 import { McpConnections } from "../mcp/client.ts";
 import { SkillCatalog } from "../skills/index.ts";
-import { complete } from "../llm/client.ts";
+import { complete, CompletionError, type Completion } from "../llm/client.ts";
+import { stageReply, stageRequest, stageStream } from "./stages.ts";
 import { execute, instructions, toolDefinitions } from "./tools.ts";
 
 export async function runTurn(options: { project: Project; session: Session; provider: Provider; model: Model; key?: string; signal: AbortSignal;
@@ -26,20 +27,50 @@ export async function runTurn(options: { project: Project; session: Session; pro
   const guidance = await instructions(project.path);
   const system: Message = { role: "system", content: `Sos un agente de coding. Trabajás en ${project.path}. Usá herramientas para leer, cambiar y verificar archivos. Informá resultados reales y errores. Las herramientas tienen efectos reales y no existe sandbox. Respetá las instrucciones del proyecto.\n\n${guidance}\n\n${skills.guidance}\n\n${explicit?`Skill invocada ${explicit.name} (base directory: ${dirname(explicit.path)}):\n${explicit.body}`:""}` };
   let usage: number | undefined;
+  let stage = 0;
+  let stageStart = 0;
   for (let step = 0; ; step++) {
     signal.throwIfAborted(); options.onState("Conectando…");
     const tools = model.capabilities.tools ? [...toolDefinitions,...(skills.entries.length?[skills.definition]:[]),...await mcp.definitions(signal)] : undefined;
-    const messages = [system, ...session.state.messages];
+    const history = session.state.messages;
+    const messages: Message[] = stage
+      ? [system, ...history.slice(0, stageStart), { role: "user", content: stageRequest(stage, model.maxOutputTokens) }, ...history.slice(stageStart)]
+      : [system, ...history];
     let images = 0;
     const estimated = messages.map(m => ({...m, content:Array.isArray(m.content)?m.content.map(p=>p.type==='image_url'?(images++,{type:'image_url',image_url:{url:'[image]'}}):p):m.content}));
     const approximateTokens = Math.ceil(Buffer.byteLength(JSON.stringify({ messages:estimated, tools })) / 4) + images * 1024;
     if (approximateTokens + model.maxOutputTokens > model.contextWindow) throw new Error(`Contexto estimado excedido (${approximateTokens} tokens aprox.). Usá /new.`);
     options.onState("Respondiendo…");
-    const result = await complete({ ...options, messages, tools, firstEventMs: options.limits.firstEventMs, idleMs: options.limits.idleMs });
+    const stream = stage ? stageStream(options.onDelta) : undefined;
+    let result: Completion;
+    try {
+      result = await complete({ ...options, messages, tools, onDelta: stream?.push ?? options.onDelta,
+        firstEventMs: options.limits.firstEventMs, idleMs: options.limits.idleMs });
+    } catch (error) {
+      stream?.end();
+      if (stage && error instanceof CompletionError && typeof error.partial.content === "string") error.partial.content = stageReply(error.partial.content).text;
+      if (!(error instanceof CompletionError) || error.finishReason !== "length" || signal.aborted) throw error;
+      const { tool_calls: _discarded, ...partial } = error.partial;
+      if (typeof partial.content === "string" && stage) partial.content = stageReply(partial.content).text;
+      if (partial.content || partial.reasoning_content || partial.reasoning) await save(partial);
+      await notice("Límite de salida alcanzado; conservando el parcial y dividiendo el pedido en etapas pequeñas.");
+      if (step >= options.limits.maxSteps) throw new Error("Límite de etapas alcanzado; el avance quedó guardado. Continuá con un pedido más pequeño.");
+      stage ||= 1;
+      stageStart = session.state.messages.length;
+      await notice(`Etapa ${stage} · recuperando respuesta`);
+      continue;
+    }
+    stream?.end();
     usage = result.usage?.total_tokens;
     const calls = result.message.tool_calls ?? [];
+    const reply = stage && typeof result.message.content === "string" ? stageReply(result.message.content) : undefined;
+    if (reply) result.message.content = reply.text;
     await save(result.message);
-    if (!calls.length) return { usage };
+    if (!calls.length) {
+      if (!reply?.more) return { usage };
+      if (step >= options.limits.maxSteps) throw new Error("Límite de etapas alcanzado; el avance quedó guardado. Continuá con un pedido más pequeño.");
+      stage++; stageStart = session.state.messages.length; await notice(`Etapa ${stage} · continuando el pedido`); continue;
+    }
     let aborted: Error | undefined;
     for (const call of calls) {
       const stopped = signal.aborted || step >= options.limits.maxSteps || !model.capabilities.tools;

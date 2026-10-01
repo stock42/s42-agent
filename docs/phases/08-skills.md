@@ -8,7 +8,7 @@ Estado: **Completada**. Depende de 02/04.
   enabled/disabled. No ejecutar scripts al registrar o instalar.
 - [x] F08-03. Catálogo resumido en el contexto; carga completa mediante tool skill
   e invocación /skill nombre prompt. Solo skills habilitadas del proyecto/globales.
-- [x] F08-04. Menú Skills (Alt+S), /skills y buscador skills.sh mediante fetch Bun
+- [x] F08-04. Tools → Skills (Alt+S), /skills y buscador skills.sh mediante fetch Bun
   a /api/search; mostrar nombre, origen e instalaciones.
 - [x] F08-05. Instalación explícita desde repositorios GitHub reconocidos: copiar
   carpeta completa y recursos, conservar licencias, registrar origen y scope.
@@ -30,3 +30,6 @@ Fuentes: [Agent Skills](https://agentskills.io/specification),
 Búsqueda e instalación real: [skills-catalog.json](../qa/skills-catalog.json),
 repo oficial vercel-labs/agent-skills, carpeta con reglas preservada y eliminada
 tras QA; scripts sin ejecutar. La skill QA del agente se invocó con GLM real.
+
+[Fase 11](11-staged-recovery-and-about.md) vuelve a comprobar la consulta directa
+a https://skills.sh y muestra el origen completo en búsqueda/resultados de la TUI.

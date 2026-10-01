@@ -1,10 +1,11 @@
-import {test,expect} from 'bun:test';
+import {test,expect,spyOn} from 'bun:test';
 import {mkdtemp,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {App} from '../src/app.ts';
 import {defaultConfig} from '../src/storage/config.ts';
 import {Input} from '../src/ui/components/input.ts';
+import {version} from '../package.json';
 const key=(app:App,key:string)=>app.desktop.handle({type:'key',key});
 async function until(check:()=>boolean){for(let i=0;i<500;i++){if(check())return;await Bun.sleep(5);}throw new Error('Timeout Extensions UI');}
 test('MCP CRUD y skill registro/toggle/removal, compact menu mouse and modal save focus',async()=>{
@@ -48,4 +49,22 @@ test('completed background tasks restore status and a closed search form does no
  try{expect(await app.task('Buscando…',async()=>42)).toBe(42);expect(app.status).toBe('Listo');expect(app.busy).toBe(false);await expect(app.task('Conectando…',async()=>{throw new Error('network failed');})).rejects.toThrow('network failed');expect(app.status).toBe('network failed');
  const {form}=await import('../src/ui/dialogs.ts');let release:()=>void=()=>{},opened=false;const wait=new Promise<void>(resolve=>release=resolve);form(app.desktop,'Buscar',[{label:'query',value:'bun'}],async()=>{await wait;return ()=>{opened=true;};});const modal=app.desktop.modal!;modal.focusedId='save';key(app,'enter');key(app,'escape');release();await Bun.sleep(5);expect(opened).toBe(false);expect(app.desktop.modal).toBeUndefined();
  }finally{await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}
+});
+
+test('Ayuda → About usa versión del paquete y conserva prompt en 60x16; buscador usa el sitio skills.sh',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'s42-about-search-')),app=await App.open({config:join(root,'config.json'),cwd:root});
+ const original=globalThis.fetch;let target:URL|undefined;
+ const fetch=spyOn(globalThis,'fetch').mockImplementation(Object.assign(async(input:Parameters<typeof original>[0],options?:Parameters<typeof original>[1])=>{
+  const url=new URL(input instanceof Request?input.url:String(input));if(url.origin!=='https://skills.sh')return original(input,options);
+  target=url;return Response.json({skills:[{id:'vercel-labs/agent-skills/vercel-react-best-practices',name:'vercel-react-best-practices',skillId:'vercel-react-best-practices',source:'vercel-labs/agent-skills',installs:100}]});
+ },{preconnect:original.preconnect}));
+ try{app.desktop.resize(60,16);app.view.prompt.setValue('Borrador conservado');
+ const header=app.desktop.draw().lines()[0]!,x=header.indexOf('Ayuda');for(const action of ['press','release'] as const)app.desktop.handle({type:'mouse',action,x,y:0,button:0,delta:0});
+ key(app,'down');key(app,'enter');expect(app.desktop.modal?.title).toBe('About');const screen=app.desktop.draw().lines().join('\n');
+ for(const text of ['Powered by César Casas.','MIT.','S42 Agent.',`Version: ${version}`,'Borrador conservado'])expect(screen).toContain(text);
+ key(app,'escape');expect(app.view.prompt.value).toBe('Borrador conservado');app.extensions.search();expect(app.desktop.modal?.title).toBe('Buscar · https://skills.sh');
+ const modal=app.desktop.modal!,input=modal.controls.find(c=>c instanceof Input) as Input;input.setValue('react + bun');modal.focusedId='save';key(app,'enter');await until(()=>app.desktop.modal?.title==='https://skills.sh · resultados');
+ expect(target!.origin).toBe('https://skills.sh');expect(target!.pathname).toBe('/api/search');expect(target!.searchParams.get('q')).toBe('react + bun');expect(target!.searchParams.get('limit')).toBe('20');
+ key(app,'enter');key(app,'enter');expect(app.desktop.draw().lines().join('\n')).toContain('https://skills.sh/');expect(app.view.prompt.value).toBe('Borrador conservado');
+ }finally{fetch.mockRestore();await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}
 });
