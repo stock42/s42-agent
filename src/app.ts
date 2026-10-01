@@ -348,7 +348,7 @@ export class App {
   })); }
   async task<T>(label:string,operation:(signal:AbortSignal)=>Promise<T>):Promise<T>{
     this.requireIdle();this.controller=new AbortController();this.busy=true;this.view.send.label="Cancelar";this.status=label;this.desktop.invalidate();
-    try{return await operation(this.controller.signal);}finally{this.controller=undefined;this.busy=false;this.view.send.label="Enviar";this.desktop.invalidate();}
+    try{const result=await operation(this.controller.signal);this.status="Listo";return result;}catch(error){this.status=(error as Error).message;throw error;}finally{this.controller=undefined;this.busy=false;this.view.send.label="Enviar";this.desktop.invalidate();}
   }
   cancel(): void { this.controller?.abort(new Error("Turno cancelado; los efectos ya realizados se conservan")); }
   private async message(message: Message): Promise<void> { await this.session!.append({ type: "message", message }); this.session!.state.messages.push(message); }

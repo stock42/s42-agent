@@ -5,6 +5,13 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Corregido — Estado de operaciones auxiliares
+
+- Búsqueda/probe/instalación restablecen Listo al finalizar y conservan el error
+  en el estado cuando fallan. Cerrar un formulario durante búsqueda impide que
+  sus resultados reabran un modal después de la operación.
+- Regresión UI y typecheck; pull sin upstream, commit local.
+
 ### Corregido — Menús largos en terminal compacto
 
 - Models ahora desplaza sus opciones dentro del área superior: flechas,

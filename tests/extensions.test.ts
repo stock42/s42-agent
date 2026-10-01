@@ -42,3 +42,10 @@ test('long Models menu scrolls with keys and wheel without covering the fixed pr
  app.desktop.handle({type:'mouse',action:'wheel',x:25,y:4,button:0,delta:-1});expect(promptRows()).toEqual(baseline);key(app,'escape');expect(app.desktop.menu.opened).toBe(-1);
  }finally{await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}
 });
+
+test('completed background tasks restore status and a closed search form does not reopen results',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'s42-task-ui-')),app=await App.open({config:join(root,'config.json'),cwd:root});
+ try{expect(await app.task('Buscando…',async()=>42)).toBe(42);expect(app.status).toBe('Listo');expect(app.busy).toBe(false);await expect(app.task('Conectando…',async()=>{throw new Error('network failed');})).rejects.toThrow('network failed');expect(app.status).toBe('network failed');
+ const {form}=await import('../src/ui/dialogs.ts');let release:()=>void=()=>{},opened=false;const wait=new Promise<void>(resolve=>release=resolve);form(app.desktop,'Buscar',[{label:'query',value:'bun'}],async()=>{await wait;return ()=>{opened=true;};});const modal=app.desktop.modal!;modal.focusedId='save';key(app,'enter');key(app,'escape');release();await Bun.sleep(5);expect(opened).toBe(false);expect(app.desktop.modal).toBeUndefined();
+ }finally{await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}
+});
