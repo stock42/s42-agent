@@ -65,7 +65,7 @@ mantiene el laboratorio QBasic. `--demo` abre la demo sin persistencia ni provee
 | Explorador de archivos | Ctrl+E o Archivo → Explorador de archivos |
 | Cambiar panel | Ctrl+N o clic; Tab en NORMAL cambia prompt/conversación |
 | Foco de controles | Tab / Shift+Tab o clic |
-| Menú | Escape desde NORMAL; desde INSERT pasa primero a NORMAL; Alt+A/P/M/V/Y o clic |
+| Menú | Escape desde NORMAL; desde INSERT pasa primero a NORMAL; Alt+A/P/M/C/S/V/Y o clic |
 | Menú/modal | Flechas, Enter, Escape; tienen prioridad sobre Vim |
 | Selector | j/k o flechas, Enter; mouse y rueda |
 | Seleccionar texto | Ctrl+A, Shift+flechas, arrastre; la respuesta sigue en solo lectura |
@@ -78,8 +78,8 @@ Espacio seguido de `p/m/s/e/f/?` abre proyectos/modelos/sesiones/explorador/adju
 Ayuda permite activar/desactivar Vim; `ui.vimMode` también puede configurarse en JSON.
 
 Comandos: `/help`, `/projects`, `/providers`, `/models`, `/sessions`, `/files`, `/new`,
-`/attach ruta`, `/detach`, `/quit`. Tab completa comandos y una ruta de `/attach`
-con candidato único. Los comandos de la aplicación no se envían al modelo.
+`/mcp`, `/skills`, `/skill nombre prompt`, `/attach ruta`, `/detach`, `/quit`. Tab completa comandos y una ruta de `/attach`
+con candidato único. /skill se envía como invocación; los demás comandos de la aplicación no se envían al modelo.
 No se asignan acciones a F1–F12.
 
 Bindings opcionales, asociados a acciones conocidas, con colisiones rechazadas:
@@ -193,3 +193,37 @@ pequeños. No hay dependencias de runtime externas.
 
 Distribución queda para una entrega explícita. Los scripts `build` y `bench:tui`
 conservan el hito inicial de la demo; no representan un binario actualizado del agente.
+
+
+## MCP
+
+**MCP** (Alt+C) administra servidores: alta stdio/HTTP, listado, edición,
+eliminación del registro y enabled/disabled. Elegir un servidor permite probar
+la conexión y ver sus herramientas. /mcp abre el listado.
+
+Stdio: Name, Command, Args como array JSON, Cwd opcional absoluto y Env refs
+como mapa JSON de variable del servidor a variable existente del entorno.
+Ejemplo: command `bun`, args `["/ruta/servidor-mcp.ts"]`, envRefs
+`{"TOKEN":"MI_TOKEN"}`. HTTP: Name, URL completa (incluye puerto/path /mcp)
+y nombre opcional de variable API key Bearer. No se guardan claves literales.
+
+Las herramientas MCP habilitadas se agregan a las nativas por turno, con nombres
+únicos. El chat conserva conexión/progreso, calls/resultados y errores. Ctrl+C
+cancela HTTP y stdio; cerrar termina servidores iniciados por el harness.
+Soporta tools de MCP 2026-07-28 y negociación legacy; no anuncia sampling,
+elicitation, OAuth ni interfaces de resources/prompts. [QA](docs/qa/mcp-and-skills.md).
+
+## Skills
+
+**Skills** (Alt+S) permite registrar una carpeta o SKILL.md existente, global o
+para el proyecto; listar, ver, habilitar/deshabilitar y quitar del registro.
+`name`/`description` se leen con Bun.YAML; name coincide con la carpeta.
+El modelo recibe un catálogo breve y carga el cuerpo con la herramienta skill.
+`/skill nombre pedido` invoca explícitamente sus instrucciones antes de responder.
+
+**Buscar en skills.sh** consulta el catálogo desde Bun, muestra origen e
+instalaciones y permite instalar una skill para el proyecto o globalmente.
+Instalar requiere Git en PATH y copia la carpeta completa, scripts/assets/references
+y licencias a `skills/` junto a config.json. No requiere npm/npx/Node. Un origen
+sin owner/repo GitHub ofrece su enlace y puede registrarse localmente. Quitar del
+registro conserva los archivos. Instalar o cargar instrucciones no ejecuta scripts.

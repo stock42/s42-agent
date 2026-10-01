@@ -19,7 +19,7 @@ export function info(desktop: Desktop, title: string, lines: string[], parent?: 
 }
 
 export interface Field { label: string; value: string; browse?: (value: string, select: (value: string) => void, parent: Window) => void }
-export function form(desktop: Desktop, title: string, fields: Field[], save: (values: string[]) => Promise<void>): void {
+export function form(desktop: Desktop, title: string, fields: Field[], save: (values: string[]) => Promise<void|(()=>void)>): void {
   if (desktop.modal) return;
   const area = desktop.floatingArea ?? { y: 1, height: desktop.height - 2 };
   const height = Math.min(10,area.height);
@@ -38,7 +38,7 @@ export function form(desktop: Desktop, title: string, fields: Field[], save: (va
   });
   const accept = new Button("save", { x: 36, y: 0, width: 16, height: 1 }, "Guardar", () => {
     if (saving) return; saving = true; accept.disabled = true; error = "Guardando…"; desktop.invalidate();
-    void save(inputs.map(input => input.value)).then(() => desktop.close(window), e => { error = (e as Error).message; }).finally(() => { saving = false; accept.disabled = false; desktop.invalidate(); });
+    void save(inputs.map(input => input.value)).then(next => {desktop.close(window);next?.();}, e => { error = (e as Error).message; }).finally(() => { saving = false; accept.disabled = false; desktop.invalidate(); });
   });
   window.onLayout = client => {
     inputs.forEach((input, index) => { input.bounds.y = 1 + index % 3; input.bounds.width = Math.max(1, client.width - 21); });

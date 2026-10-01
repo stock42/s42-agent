@@ -5,6 +5,22 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — MCP y skills
+
+- Menús MCP/Skills, CRUD de servidores stdio/Streamable HTTP y enabled/disabled;
+  prueba de conexión, JSON-RPC moderno/legacy, auth por variable, paginación,
+  progreso, namespace estable, cancelación y cierre por turno.
+- Skills SKILL.md con YAML nativo, scope global/proyecto, enabled/disabled,
+  catálogo progresivo, tool skill e invocación /skill; buscador skills.sh e
+  instalación explícita desde GitHub conservando carpeta/recursos/licencias.
+- Config v1 migrada sin romper datos previos; notices de MCP/skills durables y
+  calls/results visibles en chat. Header completo a 60×16, sin teclas F.
+- Terminación de árboles con taskkill en Windows implementada; runtime Windows
+  pendiente. Descendientes Linux comprobados, sin repetir efectos al reabrir.
+- Typecheck y 8 casos nuevos (51 assertions) pasan; suite anterior ampliada 77
+  casos pasa. Fases 07/08, specs y QA documentadas. Pull falla por main sin
+  upstream; commit local, sin push, archivos preexistentes excluidos.
+
 ### Agregado — Explorador, Projects y eventos en el chat
 
 - Componente FileExplorer: navegación fuera del proyecto mediante padre, raíz o

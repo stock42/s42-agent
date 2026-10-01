@@ -1,20 +1,34 @@
+import { dirname } from "node:path";
 import type { Message, ToolCall } from "./messages.ts";
-import type { Model, Project, Provider, Config } from "../storage/config.ts";
+import type { Model, Project, Provider, Config, McpServer, Skill } from "../storage/config.ts";
 import type { Session } from "../storage/sessions.ts";
+import { McpConnections } from "../mcp/client.ts";
+import { SkillCatalog } from "../skills/index.ts";
 import { complete } from "../llm/client.ts";
 import { execute, instructions, toolDefinitions } from "./tools.ts";
 
 export async function runTurn(options: { project: Project; session: Session; provider: Provider; model: Model; key?: string; signal: AbortSignal;
-  limits: Config["limits"]; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
+  limits: Config["limits"]; mcpServers?:McpServer[]; skills?:Skill[]; onNotice?:(text:string)=>void; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
   onToolStart?: (call: ToolCall) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number }> {
   const { session, project, signal, model } = options;
   const save = async (message: Message) => { await session.append({ type: "message", message }); session.state.messages.push(message); options.onMessage(); };
+  const mcp=new McpConnections(),skills=new SkillCatalog();
+  const notice=async(text:string)=>{await session.append({type:"notice",text});session.state.notices.push(text);options.onNotice?.(text);options.onMessage();};
+  const pendingNotices:Promise<void>[]=[];const progress=(text:string)=>{const pending=notice(text);pendingNotices.push(pending);void pending.catch(()=>{});};
+  try {
+  await skills.open(options.skills??[],project.id,progress);
+  if(model.capabilities.tools)await mcp.open(options.mcpServers??[],project.path,signal,progress,options.limits.shellTimeoutMs);
+  await Promise.all(pendingNotices);
+  const user=session.state.messages.findLast(m=>m.role==="user");const content=typeof user?.content==="string"?user.content:user?.content?.filter(p=>p.type==="text").map(p=>p.text).join("\n")??"";
+  const invoked=/^\/skill\s+(\S+)/.exec(content)?.[1];const explicit=invoked?skills.entries.find(s=>s.name===invoked):undefined;
+  if(invoked && !explicit)throw new Error(`Skill no disponible: ${invoked}`);
+  if(explicit)await notice(`Skill ${explicit.name}: instrucciones cargadas por pedido`);
   const guidance = await instructions(project.path);
-  const system: Message = { role: "system", content: `Sos un agente de coding. Trabajás en ${project.path}. Usá herramientas para leer, cambiar y verificar archivos. Informá resultados reales y errores. Las herramientas tienen efectos reales y no existe sandbox. Respetá las instrucciones del proyecto.\n\n${guidance}` };
+  const system: Message = { role: "system", content: `Sos un agente de coding. Trabajás en ${project.path}. Usá herramientas para leer, cambiar y verificar archivos. Informá resultados reales y errores. Las herramientas tienen efectos reales y no existe sandbox. Respetá las instrucciones del proyecto.\n\n${guidance}\n\n${skills.guidance}\n\n${explicit?`Skill invocada ${explicit.name} (base directory: ${dirname(explicit.path)}):\n${explicit.body}`:""}` };
   let usage: number | undefined;
   for (let step = 0; ; step++) {
     signal.throwIfAborted(); options.onState("Conectando…");
-    const tools = model.capabilities.tools ? toolDefinitions : undefined;
+    const tools = model.capabilities.tools ? [...toolDefinitions,...(skills.entries.length?[skills.definition]:[]),...await mcp.definitions(signal)] : undefined;
     const messages = [system, ...session.state.messages];
     let images = 0;
     const estimated = messages.map(m => ({...m, content:Array.isArray(m.content)?m.content.map(p=>p.type==='image_url'?(images++,{type:'image_url',image_url:{url:'[image]'}}):p):m.content}));
@@ -35,7 +49,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
         await session.append({ type: "tool-start", callId: call.id, name: call.function.name, arguments: call.function.arguments });
         options.onState(`Ejecutando ${call.function.name}…`);
         options.onToolStart?.(call);
-        const tool = await execute(call.function.name, call.function.arguments, project.path, signal, options.limits.shellTimeoutMs);
+        const tool = call.function.name==="skill" ? await skills.execute(call.function.arguments,signal) : mcp.has(call.function.name) ? await mcp.execute(call.function.name,call.function.arguments,signal) : await execute(call.function.name, call.function.arguments, project.path, signal, options.limits.shellTimeoutMs);
         failed = tool.failed; output = JSON.stringify(tool);
         if (signal.aborted) aborted = new Error("Turno cancelado; los efectos ya realizados se conservan");
       }
@@ -44,4 +58,5 @@ export async function runTurn(options: { project: Project; session: Session; pro
     }
     if (aborted) throw aborted;
   }
+  }finally{await mcp.close();await Promise.all(pendingNotices);}
 }

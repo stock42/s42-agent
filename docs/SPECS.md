@@ -55,6 +55,8 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R14 | Documentación de trabajo | Specs, fases, AGENTS y CHANGELOG coherentes con el estado real. |
 | R15 | Mouse como interacción principal disponible | Clic en controles, foco, rueda y arrastre de ventanas comprobados en terminal real. |
 | R16 | Componentes visuales TUI reutilizables | Botones, ventanas con título/cierre, menús con desplegables y controles comparten render e input. |
+| R18 | MCP configurable | CRUD de servidores stdio/HTTP, enabled/disabled, tools visibles y cancelables en el loop. |
+| R19 | Skills | Registro global/proyecto de SKILL.md, activación, carga progresiva, búsqueda e instalación desde skills.sh. |
 | R17 | Viabilidad de la TUI primero | Demo de componentes ejecutable y validada antes de integrar proveedores o tools del agente. |
 
 ### Decisiones iniciales para mantenerlo pequeño
@@ -76,8 +78,8 @@ La primera versión será una implementación propia pequeña; no un fork comple
 
 ### Fuera de la primera versión
 
-Interfaz web, daemon, sincronización cloud, colaboración entre agentes, MCP,
-plugins, marketplace, RAG, índices vectoriales, LSP, editor completo, instalación
+Interfaz web, daemon, sincronización cloud, colaboración entre agentes,
+plugins, marketplace (excepto el buscador de skills solicitado), RAG, índices vectoriales, LSP, editor completo, instalación
 o descarga de modelos y administración automática de `llama-server`.
 
 Los protocolos nativos de otros proveedores, OAuth de suscripciones, OCR y
@@ -929,3 +931,31 @@ instrucciones de trabajo para este repositorio.
 [núcleo](https://github.com/earendil-works/pi/blob/ed8b3bcc194c8263ec8bec3f337053ae73866da1/packages/agent/README.md),
 [modelos](https://github.com/earendil-works/pi/blob/ed8b3bcc194c8263ec8bec3f337053ae73866da1/packages/coding-agent/docs/models.md),
 [atajos](https://github.com/earendil-works/pi/blob/ed8b3bcc194c8263ec8bec3f337053ae73866da1/packages/coding-agent/docs/keybindings.md).
+
+
+## 17. MCP y skills (alcance agregado por el usuario)
+
+MCP tiene menú propio para CRUD y enabled/disabled. Transportes stdio y Streamable
+HTTP, tools/list/tools/call y progreso; namespace estable por servidor/herramienta,
+sin colisiones con tools nativas. Datos en config v1 con migración de arrays vacíos.
+Las conexiones duran un turno; errores visibles, cancelación y cierre garantizados
+al salir. No repetir automáticamente calls interrumpidas con posibles efectos.
+
+Protocolo actual 2026-07-28: server/discover, metadata por request, HTTP
+Mcp-Method/Mcp-Name y parámetros x-mcp-header. Legacy initialize y session ID
+para las versiones soportadas. Alcance tools; no anunciar capacidades cliente
+opcionales no implementadas. [Contrato MCP](https://modelcontextprotocol.io/specification/2026-07-28).
+
+Skills: registro SKILL.md global o por proyecto, enabled/disabled, YAML nativo,
+catálogo de nombre/description y body bajo demanda mediante tool skill. Invocación
+explícita /skill nombre prompt carga instrucciones antes del request. Se conserva
+base directory para recursos relativos. No ejecutar scripts por instalar/cargar.
+SKILL.md hasta 256 KiB; estimación de contexto incluye las instrucciones cargadas.
+
+Buscador usa https://skills.sh/api/search con query/limit, contrato del CLI oficial
+de Vercel. Resultados con nombre/origen/instalaciones/enlace. Instalación elegida
+por el usuario: clonar repo GitHub con Git, copiar carpeta y assets/references/
+scripts, conservar licencias y registrar origen. Orígenes sin repo identificable
+se consultan por enlace y registro local. [Agent Skills](https://agentskills.io/specification),
+[CLI oficial](https://github.com/vercel-labs/skills/blob/main/src/find.ts),
+[YAML Bun](https://bun.sh/docs/runtime/yaml).

@@ -7,8 +7,11 @@ import { bindings, type Bindings } from "../ui/bindings.ts";
 export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string }
 export interface Model { id: string; name: string; contextWindow: number; maxOutputTokens: number; capabilities: { tools: boolean; images: boolean } }
 export interface Provider { id: string; name: string; kind: "llama.cpp" | "openai-compatible"; baseUrl: string; apiKeyEnv?: string; models: Model[] }
+export interface McpServer { id:string; name:string; enabled:boolean; transport:"stdio"|"http"; command?:string; args?:string[]; cwd?:string; envRefs?:Record<string,string>; url?:string; apiKeyEnv?:string }
+export interface Skill { id:string; name:string; path:string; enabled:boolean; projectId?:string; source?:string }
 export interface Config {
   version: 1; projects: Project[]; providers: Provider[];
+  mcpServers: McpServer[]; skills: Skill[];
   defaults: Selection & { projectId?: string }; lastProjectId?: string;
   ui: { vimMode: boolean; color: "auto" | "never"; bindings?: Bindings };
   limits: { maxSteps: number; shellTimeoutMs: number; firstEventMs: number; idleMs: number };
@@ -25,7 +28,7 @@ export function storagePaths(configPath?: string, env = process.env, platform = 
 }
 
 export function defaultConfig(): Config {
-  return { version: 1, projects: [], providers: [{ id: "llama.cpp", name: "Local · llama.cpp", kind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", models: [] }],
+  return { version: 1, projects: [], mcpServers:[], skills:[], providers: [{ id: "llama.cpp", name: "Local · llama.cpp", kind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", models: [] }],
     defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto" },
     limits: { maxSteps: 30, shellTimeoutMs: 120000, firstEventMs: 120000, idleMs: 120000 } };
 }
@@ -48,6 +51,19 @@ export function validateConfig(value: unknown): Config {
     if (!unique(p.models.map(m => m.id))) throw new Error(`Modelos duplicados: ${p.name}`);
   }
   if (!unique(c.projects.map(p => p.id)) || !unique(c.projects.map(p => p.path)) || !unique(c.providers.map(p => p.id))) throw new Error("IDs o carpetas duplicados en config");
+  c.mcpServers ??=[];c.skills ??=[];
+  if(!Array.isArray(c.mcpServers)||!Array.isArray(c.skills))throw new Error("MCP/skills inválidos en config");
+  const envName=(v:unknown)=>typeof v==="string" && /^[A-Za-z_][A-Za-z0-9_]*$/.test(v);
+  for(const server of c.mcpServers){
+    if(!server || !text(server.id)||!text(server.name)||typeof server.enabled!=="boolean"||!["stdio","http"].includes(server.transport))throw new Error("Servidor MCP inválido");
+    if(server.transport==="stdio" && (!text(server.command)||!Array.isArray(server.args)||!server.args.every(a=>typeof a==="string")))throw new Error("MCP stdio requiere command y args JSON");
+    if(server.cwd!==undefined && !isAbsolute(server.cwd))throw new Error("MCP cwd debe ser absoluto");
+    if(server.envRefs!==undefined && (!server.envRefs || Array.isArray(server.envRefs)||typeof server.envRefs!=="object"||!Object.entries(server.envRefs).every(([key,value])=>envName(key)&&envName(value))))throw new Error("MCP envRefs debe mapear nombres de variables");
+    if(server.apiKeyEnv!==undefined && !envName(server.apiKeyEnv))throw new Error("Variable API key MCP inválida");
+    if(server.transport==="http"){let url:URL;try{url=new URL(server.url!);}catch{throw new Error("URL MCP inválida");}if(!["http:","https:"].includes(url.protocol))throw new Error("URL MCP requiere http/https");}
+  }
+  for(const skill of c.skills)if(!skill || !text(skill.id)||!text(skill.name)||!text(skill.path)||!isAbsolute(skill.path)||typeof skill.enabled!=="boolean"||(skill.projectId!==undefined&&!c.projects.some(p=>p.id===skill.projectId)))throw new Error("Skill inválida");
+  if(!unique(c.mcpServers.map(s=>s.id))||!unique(c.skills.map(s=>s.id))||!unique(c.skills.map(s=>s.path)))throw new Error("MCP/skills duplicados");
   c.limits ??= defaultConfig().limits;
   if (![c.limits.maxSteps, c.limits.shellTimeoutMs, c.limits.firstEventMs, c.limits.idleMs].every(positive)) throw new Error("Límites inválidos en config");
   bindings(c.ui.bindings);

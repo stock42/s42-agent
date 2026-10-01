@@ -37,6 +37,11 @@ read/list/search/write/edit/shell, Vim acotado y adjuntos por rutas ya implement
 explorador: padre, raíz o ruta libre, preview de solo lectura y adjuntos fuera del
 proyecto. El chat muestra reasoning emitido por el proveedor, argumentos de tool
 calls en recepción, inicio y resultados; conserva reasoning al cancelar/reabrir.
+**MCP** (Alt+C, /mcp) administra servidores stdio/HTTP con CRUD, enabled/disabled,
+prueba de conexión y tools en el loop. **Skills** (Alt+S, /skills) registra SKILL.md,
+scopes global/proyecto, activación, búsqueda skills.sh e instalación desde GitHub
+(Git externo). /skill nombre prompt invoca instrucciones; cargar no ejecuta scripts.
+Módulos nuevos: `src/mcp/`, `src/skills/`, `src/ui/extensions.ts`.
 Módulos: `src/app.ts`, `src/ui/`, `src/agent/`, `src/llm/` y `src/storage/`.
 Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
@@ -45,8 +50,7 @@ pendientes; fase 06 integra QA fuente y documentación, con distribución diferi
 Evidencia actual: [explorador/chat](docs/qa/explorer-and-reasoning.md), [agente MVP](docs/qa/agent-mvp.md), [apariencia QBasic](docs/qa/qbasic-style.md),
 [layout](docs/qa/workspace.md) y [Shift+Enter](docs/qa/shift-enter.md).
 Fixtures y eventos inyectados no prueban inferencia real, mouse físico ni drop
-real. Linux es el entorno de QA; Windows aún necesita terminación de procesos
-hijos. No afirmar compatibilidad con otros SO por usar APIs multiplataforma.
+real. Linux es el entorno de QA; Windows tiene taskkill de árboles implementado; falta validar su runtime. No afirmar compatibilidad con otros SO por usar APIs multiplataforma.
 
 ## Preferencias globales del usuario
 

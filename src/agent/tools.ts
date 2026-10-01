@@ -1,3 +1,4 @@
+import { killTree } from "./process.ts";
 import { mkdir, readdir, stat } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import type { ToolDefinition } from "../llm/client.ts";
@@ -53,16 +54,17 @@ async function shell(command: string, cwd: string, timeoutMs: number, signal: Ab
   const cmd = process.platform === "win32" ? [process.env.ComSpec ?? "cmd.exe", "/d", "/s", "/c", command] : [process.env.SHELL ?? "/bin/sh", "-c", command];
   const child = Bun.spawn(cmd, { cwd, detached: true, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
   let timedOut = false;
-  const kill = (kind: NodeJS.Signals) => { try { process.platform === "win32" ? child.kill(kind) : process.kill(-child.pid, kind); } catch (e) { if ((e as NodeJS.ErrnoException).code !== "ESRCH") throw e; } };
+  let killing:Promise<void>|undefined;
+  const kill = () => killing ??= killTree(child);
   // Kill the group, including descendants holding stdout/stderr open.
-  const abort = () => kill("SIGKILL"); signal.addEventListener("abort", abort, { once: true });
+  const abort = () => { void kill().catch(()=>{}); }; signal.addEventListener("abort", abort, { once: true });
   if (signal.aborted) abort();
-  const timer = setTimeout(() => { timedOut = true; kill("SIGKILL"); }, timeoutMs);
+  const timer = setTimeout(() => { timedOut = true; abort(); }, timeoutMs);
   try {
     const [out, err, exitCode] = await Promise.all([capture(child.stdout), capture(child.stderr), child.exited]);
     const truncated = out.truncated || err.truncated || Buffer.byteLength(out.text + err.text) > 65536;
     return { output: JSON.stringify({ stdout: clip(out.text, 30000), stderr: clip(err.text, 30000), exitCode, timedOut, cancelled: signal.aborted, truncated }), failed: exitCode !== 0 || timedOut || signal.aborted, exitCode, durationMs: Math.round(performance.now() - started), truncated };
-  } finally { clearTimeout(timer); signal.removeEventListener("abort", abort); kill("SIGKILL"); }
+  } finally { clearTimeout(timer); signal.removeEventListener("abort", abort); await kill(); }
 }
 export async function execute(name: string, raw: string, cwd: string, signal: AbortSignal, shellTimeoutMs = 120000): Promise<ToolResult> {
   const started = performance.now();

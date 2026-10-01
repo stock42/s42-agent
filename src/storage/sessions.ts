@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { Message, Selection } from "../agent/messages.ts";
 
 export type EventData =
+  | { type: "notice"; text: string }
   | { type: "session"; title: string }
   | { type: "selection"; selection: Selection }
   | { type: "draft"; text: string; attachments: string[] }
@@ -17,6 +18,7 @@ function parseEvent(value: unknown, projectId: string): SessionEvent {
   const e = value as SessionEvent;
   if (!e || e.version !== 1 || typeof e.id !== "string" || e.projectId !== projectId || typeof e.at !== "string") throw new Error("Evento de sesión inválido");
   switch (e.type) {
+    case "notice": if(typeof e.text==="string")return e;break;
     case "session": if (typeof e.title === "string") return e; break;
     case "selection": if (e.selection && typeof e.selection.providerId === "string" && (e.selection.modelId === undefined || typeof e.selection.modelId === "string")) return e; break;
     case "draft": if (typeof e.text === "string" && Array.isArray(e.attachments) && e.attachments.every(p => typeof p === "string")) return e; break;
@@ -62,6 +64,7 @@ export class Session {
       }
       const pending = new Map<string, string>();
       for (const e of state.events) {
+        if(e.type==="notice")state.notices.push(e.text);
         if (e.type === "session") state.title = e.title;
         if (e.type === "draft") { state.draft = e.text; state.attachments = e.attachments; }
         if (e.type === "selection") state.selection = e.selection;

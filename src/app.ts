@@ -1,3 +1,4 @@
+import { Extensions } from "./ui/extensions.ts";
 import { basename, dirname, resolve, sep } from "node:path";
 import { ConfigStore, normalizeFolder, storagePaths, type Project, type Provider, type Model } from "./storage/config.ts";
 import { Session, listSessions } from "./storage/sessions.ts";
@@ -26,6 +27,7 @@ export class App {
   busy = false;
   readonly keys = new Map<string, string>();
   attachments: Attachment[] = [];
+  readonly extensions:Extensions;
   mode: "INSERT" | "NORMAL" = "INSERT";
   private pending = "";
   private pasting = false;
@@ -56,6 +58,7 @@ export class App {
       canvas.text(client.x + 1 + available,client.y + client.height - 1," · "+hint,theme.window,client.width - available - 2);
     };
     const demo = createDemoPanels(this.desktop);
+    this.extensions=new Extensions({desktop:this.desktop,store:this.store,cwd:this.cwd,project:()=>this.project,idle:()=>this.requireIdle(),change:task=>this.change(async()=>{this.requireIdle();await task();}),run:task=>this.run(task),task:(label,operation)=>this.task(label,operation),status:text=>{if(text.startsWith("/skill ")){this.view.prompt.setValue(text+" ");this.desktop.focus(this.view.promptWindow);}else this.status=text;this.desktop.invalidate();}});
     this.desktop.menu.menus.splice(0, this.desktop.menu.menus.length,
       { label: "Archivo", items: [
         { label: "Explorador de archivos", run: () => this.explore() },
@@ -81,6 +84,7 @@ export class App {
         { label: "Default del proyecto", run: () => this.run(() => this.saveProjectDefault()) },
         { label: "Quitar proveedor", run: () => this.removeProvider() },
       ] },
+      ...this.extensions.menus,
       { label: "Ventanas", items: [
         { label: "Respuestas", run: () => this.desktop.focus(this.view.editorWindow) },
         { label: "Prompt", run: () => this.desktop.focus(promptWindow) },
@@ -99,7 +103,7 @@ export class App {
       "Enter enviar · Shift+Enter nueva línea", ...Object.entries(bindings(this.store.value.ui.bindings).global).map(([action,key])=>`${key}: ${action}`), "Ctrl+C: cancelar turno · Ctrl+Q: salir",
       "Esc: INSERT → NORMAL → menú; modal: cerrar", "NORMAL: h/j/k/l w/b 0/$ · i/a/I/A · x dd u", "Conversación: j/k Ctrl+D/U gg/G; solo lectura",
       ...Object.entries(bindings(this.store.value.ui.bindings).normal).map(([action,key])=>`${key}: ${action}`), "Ctrl+N: cambiar panel",
-      "Comandos: /help /projects /models /providers", "/sessions /files /new /attach ruta /detach /quit",
+      "Comandos: /help /projects /models /providers", "/sessions /files /new /attach ruta /detach /quit", "/mcp /skills /skill nombre prompt · Alt+C MCP · Alt+S Skills",
     ]);
     this.desktop.onShortcut = event => {
       if (event.type !== "key") return false;
@@ -111,7 +115,7 @@ export class App {
         this.desktop.focus(this.desktop.active === promptWindow ? this.view.editorWindow : promptWindow); promptWindow.focusedId = prompt.id; this.pending = ""; return true;
       }
       if(event.key==="tab" && this.desktop.active===promptWindow && promptWindow.focusedId===prompt.id && this.mode==="INSERT") {
-        const text=prompt.value, commands=["/help","/projects","/providers","/models","/sessions","/files","/new","/attach","/detach","/quit"];
+        const text=prompt.value, commands=["/help","/projects","/providers","/models","/sessions","/files","/mcp","/skills","/skill","/new","/attach","/detach","/quit"];
         if(/^\/[a-z]*$/.test(text)) {const matches=commands.filter(c=>c.startsWith(text));if(matches.length){prompt.setValue(matches[0]!);return true;}}
         if(text.startsWith("/attach ")) {this.run(async()=>{const raw=text.slice(8),path=resolve(this.project?.path??this.cwd,raw);const entries=await readdir(dirname(path),{withFileTypes:true});const prefix=basename(path);const candidates=entries.filter(e=>e.name.startsWith(prefix));
           if(candidates.length===1) prompt.setValue(`/attach ${JSON.stringify((raw.slice(0,raw.length-prefix.length)+candidates[0]!.name)+(candidates[0]!.isDirectory()?sep:""))}`);
@@ -183,7 +187,7 @@ export class App {
   }
   removeProject(): void {
     choose(this.desktop, "Quitar proyecto del registro", this.store.value.projects.map(value => ({ label: value.name, value })), project => this.run(async () => {
-      this.requireIdle(); const next = structuredClone(this.store.value); next.projects = next.projects.filter(p => p.id !== project.id); if (next.lastProjectId === project.id) delete next.lastProjectId;
+      this.requireIdle(); const next = structuredClone(this.store.value); next.projects = next.projects.filter(p => p.id !== project.id);next.skills=next.skills.filter(s=>s.projectId!==project.id); if (next.lastProjectId === project.id) delete next.lastProjectId;
       await this.store.save(next);
       if (this.project?.id === project.id) { await this.saveDraft(); await this.session?.close(); this.session = undefined; this.project = undefined; this.view.prompt.setValue(""); this.view.response.setValue(""); this.view.editorWindow.title = "s42-agent"; this.showContext(); }
     }));
@@ -342,6 +346,10 @@ export class App {
   detach(): void { choose(this.desktop,"Quitar adjunto",this.attachments.map(value=>({label:`${value.path} · ${value.size} B`,value})),a=>this.run(async()=>{
     this.attachments=this.attachments.filter(item=>item!==a); this.desktop.resize(this.desktop.width,this.desktop.height); await this.saveDraft(); this.status="Adjunto quitado"; this.desktop.invalidate();
   })); }
+  async task<T>(label:string,operation:(signal:AbortSignal)=>Promise<T>):Promise<T>{
+    this.requireIdle();this.controller=new AbortController();this.busy=true;this.view.send.label="Cancelar";this.status=label;this.desktop.invalidate();
+    try{return await operation(this.controller.signal);}finally{this.controller=undefined;this.busy=false;this.view.send.label="Enviar";this.desktop.invalidate();}
+  }
   cancel(): void { this.controller?.abort(new Error("Turno cancelado; los efectos ya realizados se conservan")); }
   private async message(message: Message): Promise<void> { await this.session!.append({ type: "message", message }); this.session!.state.messages.push(message); }
   async submit(): Promise<void> {
@@ -351,8 +359,13 @@ export class App {
     }
     const dropped=this.project && await pastedPaths(text,this.project.path);
     if(dropped) {this.requireIdle();await this.attach(dropped);this.view.prompt.setValue("");await this.saveDraft();return;}
-    if (text.startsWith("/")) {
-      const commands: Record<string, () => void> = { "/projects": () => this.projects(), "/models": () => this.models(), "/providers": () => this.providers(), "/sessions": () => this.sessions(), "/files":()=>this.explore(), "/new": () => this.run(() => this.newSession()), "/help": () => this.desktop.onHelp(), "/attach":()=>this.attachmentMenu(), "/detach":()=>this.detach(), "/quit": () => this.desktop.onExit() };
+    if(text.startsWith("/skill ")){
+      const name=text.trim().split(/\s+/)[1];const skill=this.store.value.skills.find(s=>s.name===name && s.enabled && (!s.projectId||s.projectId===this.project?.id));
+      if(!skill)throw new Error("Skill no habilitada para este proyecto. Abrí Skills.");
+      if(text.trim()===`/skill ${name}`){this.view.prompt.setValue(`/skill ${name} `);this.status="Agregá el pedido y pulsá Enter";return;}
+    }
+    if (text.startsWith("/") && !text.startsWith("/skill ")) {
+      const commands: Record<string, () => void> = { "/mcp":()=>this.extensions.servers(),"/skills":()=>this.extensions.skills(),"/projects": () => this.projects(), "/models": () => this.models(), "/providers": () => this.providers(), "/sessions": () => this.sessions(), "/files":()=>this.explore(), "/new": () => this.run(() => this.newSession()), "/help": () => this.desktop.onHelp(), "/attach":()=>this.attachmentMenu(), "/detach":()=>this.detach(), "/quit": () => this.desktop.onExit() };
       const action = commands[text.trim()]; if (!action) throw new Error("Comando desconocido. /help"); this.view.prompt.setValue(""); action(); return;
     }
     this.requireIdle(); if (!text.trim() && !this.attachments.length) return;
@@ -378,7 +391,7 @@ export class App {
           if(section!==id){this.view.response.append(`\n\n${label}\n`);section=id;}
           this.view.response.append(delta);this.desktop.invalidate();
         };
-        const result = await runTurn({ project: this.project!, session, provider, model, key, signal: this.controller!.signal, limits: this.store.value.limits,
+        const result = await runTurn({ project: this.project!, session, provider, model, key, signal: this.controller!.signal, limits: this.store.value.limits,mcpServers:structuredClone(this.store.value.mcpServers),skills:structuredClone(this.store.value.skills),
           onState: state => { if(state==="Conectando…")resetLive();this.status = state; this.desktop.invalidate(); },
           onMessage: () => { this.showHistory(false);resetLive();this.desktop.invalidate(); },
           onReasoning: delta => { this.status="Razonando…";appendLive("reasoning","Razonamiento:",delta); },
