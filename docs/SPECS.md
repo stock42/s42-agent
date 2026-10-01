@@ -1,7 +1,9 @@
 # s42-agent — Especificaciones
 
-Fecha: 2026-10-01. Estado: layout QBasic del agente desde `index.ts`, con editor
-central y prompt fijo; el harness de coding/LLMs sigue pendiente.
+Fecha: 2026-10-01. Estado: harness QBasic desde `index.ts`, con respuesta en solo
+lectura y prompt fijo. Proyectos/sesiones, Models, streaming, coding, Vim y
+adjuntos implementados y comprobados con fixtures/PTY. Inferencia real, mouse/drop
+físicos y distribución siguen pendientes. [QA del agente](qa/agent-mvp.md).
 [Apariencia actual](qa/qbasic-style.md), [layout/edición](qa/workspace.md),
 [demo inicial](qa/tui-demo.md).
 
@@ -124,11 +126,12 @@ CLI → aplicación → TUI
 ```
 
 Estructura acordada: `index.ts` raíz como único entrypoint y componentes dentro
-de `src/ui/components/`. La UI existe; agente, LLM y storage son objetivos futuros.
+de `src/ui/components/`. TUI, agente, LLM y persistencia están implementados.
 
 ```text
 index.ts                   argumentos y arranque de demo/harness
 src/
+  app.ts                   composición del harness y configuración TUI
   ui/
     terminal.ts            lifecycle y frames por demanda
     input-parser.ts        teclado, paste y mouse
@@ -137,10 +140,9 @@ src/
     desktop.ts             foco, capas y captura
     demo.ts                composición de la demo inicial
     components/            window, button, input, select-list, menu
-  agent/                   objetivo: ciclo, mensajes y herramientas
-  llm/                     objetivo: requests y parser SSE
-  storage/                 objetivo: configuración, proyectos y sesiones
-  attachments/             objetivo: rutas y preparación de adjuntos
+  agent/                   loop, mensajes, tools y adjuntos
+  llm/                     Chat Completions y SSE
+  storage/                 configuración, proyectos y sesiones
 tests/                     pruebas de comportamiento y fixtures
 scripts/                   build y mediciones en TypeScript/Bun
 docs/SPECS.md
@@ -220,7 +222,7 @@ Con esa evidencia se determina la viabilidad antes de integrar el agente.
 
 Una pantalla alternativa organizada como escritorio TUI:
 
-1. Menú superior: Archivo, Proyectos, Modelos, Ventanas y Ayuda, con desplegables.
+1. Menú superior: Archivo, Proyectos, **Models**, Ventanas y Ayuda, con desplegables.
 2. Editor central con el **nombre del proyecto centrado en su marco superior**,
    como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
    allí en solo lectura, con selección y scroll; no abrir una ventana de chat independiente.
@@ -230,10 +232,10 @@ Una pantalla alternativa organizada como escritorio TUI:
 4. Contexto visible: proyecto, proveedor/modelo y sesión en la ventana principal.
 5. Barra inferior: INSERT/NORMAL, foco, actividad, uso disponible y atajos.
 
-La demo actual toma nombre/path de la carpeta de ejecución y usa una respuesta
-identificada como demostración, sin LLM. Registrar/configurar varios proyectos
-y conectar proveedores sigue en fases 02/03. Demo → Componentes conserva el
-laboratorio. Los inputs no agregan corchetes; botones con etiqueta centrada y
+El arranque normal registra/configura proyectos y conecta el endpoint elegido.
+Sin modelo, muestra el aviso en el chat y ofrece Models → Configurar modelo
+(host, puerto, ID, API key, contexto y capacidades). `--demo` conserva la demo
+sin persistencia/LLM; Ventanas → Componentes abre el laboratorio en el harness. Los inputs no agregan corchetes; botones con etiqueta centrada y
 estado por color/video inverso/tenue, sin combinar marcadores de foco/presión.
 Los marcos conservan esquinas unidas a la cabecera y sombras de una celda solo
 en ventanas flotantes.
@@ -413,6 +415,7 @@ proyectos ni inventar reglas Git para el repositorio del usuario.
   mediante archivo temporal más rename en la misma carpeta.
 - Nunca crear `.env.local`. Los secretos se obtienen de variables de entorno ya
   configuradas; la configuración solo guarda el nombre de la variable.
+- La API key ingresada en Models vive solo en memoria durante esa ejecución.
 - Las sesiones no guardan cabeceras HTTP ni valores de credenciales.
 
 No habrá configuración ejecutable, evaluación de JavaScript ni comandos para
@@ -590,7 +593,8 @@ Incluir instrucciones aplicables, historial coherente, mensaje del usuario,
 adjuntos y resultados de herramientas. No adjuntar recursivamente toda la carpeta.
 
 Reservar `maxOutputTokens` dentro del contexto configurado. La estimación de
-entrada sin tokenizador del modelo es aproximada; prevalece el límite reportado
+entrada sin tokenizador del modelo es aproximada (bytes de texto/4 más reserva
+de 1024 tokens por imagen); prevalece el límite reportado
 por el servidor. Recortar resultados de herramientas de forma explícita, mantener
 pares tool call/result y nunca eliminar silenciosamente mensajes del usuario.
 Cuando no alcance el contexto, informar y permitir `/new`; no llamar otro modelo

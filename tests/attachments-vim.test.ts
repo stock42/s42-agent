@@ -48,3 +48,9 @@ test('rutas absolutas sin paste adjuntan al primer Enter, prompt compacto visibl
     app.desktop.resize(60,16);const screen=app.desktop.draw().lines().join('\n');expect(screen).toContain('Adjuntos (1)');expect(screen).toContain('INSERT');expect(screen).toContain('Enviar');await app.desktop.onBeforeExit!();
   }finally{await rm(root,{recursive:true,force:true});}
 });
+test('ayuda completa navegable y cambios de modelo durante turno rechazados',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'s42-help-')),app=await App.open({config:join(root,'config.json'),cwd:root});
+  try{app.desktop.resize(60,16);app.desktop.onHelp();let found=false;for(let i=0;i<8;i++){if(app.desktop.draw().lines().join('\n').includes('/detach /quit'))found=true;app.desktop.handle({type:'key',key:'pagedown'});}expect(found).toBe(true);app.desktop.handle({type:'key',key:'escape'});
+    app.busy=true;await expect(app.newSession()).rejects.toThrow('turno activo');app.busy=false;await app.desktop.onBeforeExit!();
+  }finally{await rm(root,{recursive:true,force:true});}
+});

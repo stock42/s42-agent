@@ -190,3 +190,19 @@ cierre de cada tarea e incluirlo en su commit.
   tras los últimos ajustes. PTY configura Models, lee/edita/verifica, cancela y
   reabre borrador. Endpoints fixture independientes y HTTP/idle probados.
 - Pull previo sin upstream. Sin prueba de modelo real, drop físico ni nuevos builds.
+
+### Actualizado — QA integrada y documentación del harness
+
+- README, SPECS, AGENTS e índice/fases distinguen implementación, fixtures,
+  terminal y pendientes reales; guía de primer uso con Models, llama-server
+  externo, configuración, atajos, adjuntos y límites.
+- Ayuda desplazable en 60×16, labels de bindings coherentes y ayuda CLI del
+  agente. Capturas tmux de chat sin modelo, Models, lectura fixture y adjuntos.
+- Integración de A/B: endpoints/model ID/adjuntos, edit/shell, cancelación,
+  borradores e historial reabierto sin mezcla entre proyectos.
+- Typecheck correcto; 62 tests pasan, 0 fallan (11 archivos, 573 assertions).
+  Ajustes posteriores de labels/prefijos Vim validados con las suites pertinentes.
+- Fase 02 completada. Fases de LLM/coding/drop/distribución conservan abiertos
+  modelo real, mouse/drop físicos, matriz de SO, prueba prolongada y binarios.
+- Git pull volvió a fallar por falta de upstream; se preservó trabajo ajeno
+  y se hicieron commits locales. No se hizo push ni build de binarios.

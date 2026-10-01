@@ -2,13 +2,14 @@
 
 Fuente de requisitos: [SPECS.md](../SPECS.md). Fecha: 2026-10-01.
 
-Estado actual: demo QBasic implementada desde `index.ts`, con componentes en
-`src/ui/components/`. La fase 00 está **En curso**, con experiencia de mouse,
-teclado y layout comprobada en PTY/tmux; falta mouse físico. La fase 01 está
-**En curso**: editor central con proyecto y prompt fijo, adelantados a solicitud
-del usuario; streaming/Markdown pendientes. Fases 02–06 pendientes.
-[Apariencia actual](../qa/qbasic-style.md), [layout/edición](../qa/workspace.md),
-[evidencia inicial](../qa/tui-demo.md).
+Estado actual: harness persistente desde `index.ts`, con TUI QBasic, respuesta
+read-only y prompt fijo. Fase 02 completada; 01/03/04/05 implementadas con fixtures
+pero conservan validaciones externas pendientes. Fase 06 tiene QA fuente/documentación
+avanzadas; binarios y benchmarks diferidos por prioridad del usuario.
+[QA actual del agente](../qa/agent-mvp.md), [apariencia](../qa/qbasic-style.md).
+
+Pendientes concretos: modelo real con tools, mouse/drop físicos y matriz de SO.
+Los checks de implementación no sustituyen esos criterios de cierre.
 
 | Fase | Archivo | Depende de | Resultado | Requisitos |
 | --- | --- | --- | --- | --- |

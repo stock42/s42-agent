@@ -27,25 +27,22 @@ Construir y comprobar los componentes visuales con mouse/teclado antes de los
 proveedores LLM y tools del agente; la configuración Bun y el binario mínimo
 se preparan dentro de ese hito. Después, reutilizar los componentes en el harness.
 
-Estado actual: demo QBasic implementada en el **`index.ts` raíz**, único punto
-de entrada del agente. Abre editor central con nombre de proyecto y prompt fijo;
-respuestas de demostración en el editor, sin proveedor conectado. El laboratorio
-de componentes sigue en Demo → Componentes. La UI está en `src/ui/`, con controles
-reutilizables en
-`src/ui/components/`. Bun y sus tipos: 1.4.2; TypeScript: 7.0.2. Existen scripts
-`dev`, `typecheck`, `test`, `build` y `bench:tui`; no hay dependencias de runtime.
-El agente, el registro persistente de proyectos, los proveedores y los adjuntos
-siguen pendientes; el contexto visual inicial usa nombre/path de la carpeta actual.
+Estado actual: harness desde **`index.ts` raíz**, único entrypoint. `bun run dev`
+abre proyectos/sesiones persistentes; **Models** configura host, puerto, ID del
+modelo y API key (en memoria o nombre de variable). Sin modelo elegido, el chat
+lo indica y no envía requests. `--demo` conserva el laboratorio sin persistencia.
+Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
+read/list/search/write/edit/shell, Vim acotado y adjuntos por rutas ya implementados.
+Módulos: `src/app.ts`, `src/ui/`, `src/agent/`, `src/llm/` y `src/storage/`.
+Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
-La fase 00 está **En curso**: demo comprobada con PTY/tmux; falta validar mouse
-físico en un terminal gráfico. El primer binario Linux x64 corresponde al hito
-inicial; la comprobación de un host sin Bun/Node pertenece a distribución.
-La fase 01 está **En curso** por pedido del usuario: layout y edición multilínea
-implementados; streaming y Markdown pendientes.
-Evidencia actual: [apariencia QBasic](docs/qa/qbasic-style.md) y
-[layout/edición](docs/qa/workspace.md), [Shift+Enter](docs/qa/shift-enter.md); hito inicial:
-[docs/qa/tui-demo.md](docs/qa/tui-demo.md). Actualizar este estado al
-desarrollar; eventos inyectados no cierran la prueba manual.
+Fase 02 completada. Fases 00/01/03/04/05 en curso por validaciones externas
+pendientes; fase 06 integra QA fuente y documentación, con distribución diferida.
+Evidencia actual: [agente MVP](docs/qa/agent-mvp.md), [apariencia QBasic](docs/qa/qbasic-style.md),
+[layout](docs/qa/workspace.md) y [Shift+Enter](docs/qa/shift-enter.md).
+Fixtures y eventos inyectados no prueban inferencia real, mouse físico ni drop
+real. Linux es el entorno de QA; Windows aún necesita terminación de procesos
+hijos. No afirmar compatibilidad con otros SO por usar APIs multiplataforma.
 
 ## Preferencias globales del usuario
 

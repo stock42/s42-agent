@@ -3,7 +3,7 @@ import { ConfigStore, normalizeFolder, storagePaths, type Project, type Provider
 import { Session, listSessions } from "./storage/sessions.ts";
 import type { Message, Selection } from "./agent/messages.ts";
 import { createWorkspaceView } from "./ui/workspace.ts";
-import { choose, form } from "./ui/dialogs.ts";
+import { choose, form, info } from "./ui/dialogs.ts";
 import { createDemoPanels } from "./ui/demo.ts";
 import { theme } from "./ui/theme.ts";
 import { CompletionError, credential, discoverModels } from "./llm/client.ts";
@@ -49,7 +49,7 @@ export class App {
     promptWindow.onLayout = client => { promptLayout(client); if (this.attachments.length) prompt.bounds.height = Math.max(1, prompt.bounds.height - 1); };
     promptWindow.onDraw = (canvas, client) => {
       if (this.attachments.length) canvas.text(client.x + 1, client.y + client.height - 2,
-        `Adjuntos (${this.attachments.length}): ${this.attachments.map(a => `${a.name} ${a.size} B`).join(" · ")} · Ctrl+F`, theme.window, client.width - 2);
+        `Adjuntos (${this.attachments.length}): ${this.attachments.map(a => `${a.name} ${a.size} B`).join(" · ")} · ${this.bindingLabel("attachments")}`, theme.window, client.width - 2);
       const hint="Shift+Enter: línea", available=Math.max(1,client.width - 5 - Bun.stringWidth(hint));
       canvas.text(client.x + 1, client.y + client.height - 1, `${this.mode} · ${this.status}`, theme.window, available);
       canvas.text(client.x + 1 + available,client.y + client.height - 1," · "+hint,theme.window,client.width - available - 2);
@@ -89,14 +89,20 @@ export class App {
       ] },
       { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", run: () => this.desktop.onHelp() }, {label:"Activar / desactivar Vim",run:()=>this.run(async()=>{ const next=structuredClone(this.store.value); next.ui.vimMode=!next.ui.vimMode; await this.store.save(next); this.mode="INSERT"; this.pending="";this.status=`Vim ${next.ui.vimMode ? "activado" : "desactivado"}`; })}] },
     );
-    this.desktop.onHelp = () => demo.dialog("Ayuda · " + this.mode, [
+    const actionLabels:Record<Action,string>={projects:"Elegir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",help:"Atajos y mouse"};
+    for(const menu of this.desktop.menu.menus) for(const item of menu.items) {
+      const action=(Object.keys(actionLabels) as Action[]).find(action=>actionLabels[action]===item.label);if(action)item.shortcut=this.bindingLabel(action);
+    }
+    this.desktop.onHelp = () => info(this.desktop,"Ayuda · " + this.mode, [
       "Enter enviar · Shift+Enter nueva línea", ...Object.entries(bindings(this.store.value.ui.bindings).global).map(([action,key])=>`${key}: ${action}`), "Ctrl+C: cancelar turno · Ctrl+Q: salir",
       "Esc: INSERT → NORMAL → menú; modal: cerrar", "NORMAL: h/j/k/l w/b 0/$ · i/a/I/A · x dd u", "Conversación: j/k Ctrl+D/U gg/G; solo lectura",
-      "Leader: Espacio + p/m/s/f/? · Ctrl+N panel", "Comandos: /help /projects /models /providers", "/sessions /new /attach ruta /detach /quit",
+      ...Object.entries(bindings(this.store.value.ui.bindings).normal).map(([action,key])=>`${key}: ${action}`), "Ctrl+N: cambiar panel",
+      "Comandos: /help /projects /models /providers", "/sessions /new /attach ruta /detach /quit",
     ]);
     this.desktop.onShortcut = event => {
       if (event.type !== "key") return false;
       if (event.key === "ctrl+c" && this.busy) { this.cancel(); return true; }
+      if(["escape","tab","shift+tab","ctrl+n","ctrl+w"].includes(event.key))this.pending="";
       if (this.desktop.modal || this.desktop.menu.opened >= 0) return false;
       if (event.key === "escape" && this.store.value.ui.vimMode && this.mode === "INSERT" && this.desktop.active === promptWindow && promptWindow.focusedId === prompt.id) { this.mode = "NORMAL"; this.pending = ""; return true; }
       if (event.key === "tab" && this.mode === "NORMAL" && this.desktop.active?.fixed) {
@@ -115,7 +121,7 @@ export class App {
     };
     this.desktop.onControlInput = event => this.input(event);
     this.desktop.footer=()=>this.mode==="NORMAL" ? "i Insertar  Tab Panel  Espacio Leader  Esc Menú  ^Q Salir"
-      : this.desktop.active===promptWindow && this.store.value.ui.vimMode ? "Enter Enviar  Esc NORMAL  ^N Panel  ^F Adjuntos  ^Q Salir" : "Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir";
+      : this.desktop.active===promptWindow && this.store.value.ui.vimMode ? `Enter Enviar  Esc NORMAL  ^N Panel  ${this.bindingLabel("attachments").replace("Ctrl+","^")} Adjuntos  ^Q Salir` : "Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir";
     this.desktop.onBeforeExit = async () => { this.cancel(); let pending: Promise<unknown>; do { pending=this.operations; await pending; } while(pending!==this.operations); await this.turn; await this.saveDraft(); await this.session?.close(); };
   }
   static async open(options: AppOptions = {}): Promise<App> {
@@ -269,6 +275,7 @@ export class App {
   private action(action: Action): void {
     ({projects:()=>this.projects(),models:()=>this.models(),providers:()=>this.providers(),sessions:()=>this.sessions(),attachments:()=>this.attachmentMenu(),help:()=>this.desktop.onHelp()})[action]();
   }
+  private bindingLabel(action:Action):string{return bindings(this.store.value.ui.bindings).global[action]!.replace(/^(ctrl|alt)\+([a-z])$/,(_match,mod,key)=>(mod==="ctrl"?"Ctrl":"Alt")+"+"+key.toUpperCase());}
   private input(event: InputEvent): boolean {
     if (this.desktop.modal) return false;
     const control = this.desktop.active?.controls.find(c=>c.id===this.desktop.active?.focusedId);

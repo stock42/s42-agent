@@ -25,7 +25,7 @@ function session(args: string[] = [], cmd = command) {
 describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "entrypoint Bun en PTY", () => {
   test("no TTY y ayuda devuelven mensajes limpios", async () => {
     const help = Bun.spawn([...command, "--help"], { cwd: "/tmp", env, stdout: "pipe", stderr: "pipe" });
-    expect(await new Response(help.stdout).text()).toContain("Demo TUI estilo QBasic"); expect(await help.exited).toBe(0);
+    expect(await new Response(help.stdout).text()).toContain("TUI estilo QBasic"); expect(await help.exited).toBe(0);
     const noTTY = Bun.spawn(command, { cwd: "/tmp", env, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
     const error = await new Response(noTTY.stderr).text();
     expect(error).toContain("terminal interactivo"); expect(error).not.toContain("\x1b"); expect(await noTTY.exited).toBe(1);

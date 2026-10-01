@@ -32,7 +32,7 @@ su verificación, con eventos visibles, resultados persistidos y cancelación.
 - [x] F04-10. Renderizar estados de tools y turnos sin mezclar fallas con éxito.
 - [ ] F04-11. Ejecutar escenarios fixture y una tarea real con modelo local apto
   para tool calling, registrando el diff y su verificación.
-- [ ] F04-12. Repetir el flujo desde el entrypoint Bun, actualizar evidencia y CHANGELOG
+- [x] F04-12. Repetir el flujo desde el entrypoint Bun, actualizar evidencia y CHANGELOG
   y hacer el commit de cada tarea completada.
 
 ## Escenarios de aceptación

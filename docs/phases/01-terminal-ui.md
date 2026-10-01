@@ -15,7 +15,7 @@ otra TUI.
 
 - [x] F01-01. Reutilizar `index.ts` como entrypoint del harness, terminal, renderer,
   input, foco y componentes de fase 00; conservar la demo como prueba de controles.
-- [x] F01-02. Componer menús Archivo/Proyectos/Modelos/Ventanas/Ayuda y la ventana
+- [x] F01-02. Componer menús Archivo/Proyectos/Models/Ventanas/Ayuda y la ventana
   principal, con contexto del proyecto/modelo/sesión y barra inferior de atajos.
 - [x] F01-03. Crear editor multilínea INSERT con cursor, borrado, Enter, Shift+Enter y pegado
   multilínea; evitar envíos producidos por caracteres dentro de un paste.

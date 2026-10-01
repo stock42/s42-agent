@@ -22,7 +22,7 @@ export function parseArgs(args: string[]): AppOptions & { demo: boolean; color: 
 if (import.meta.main) {
   const args = Bun.argv.slice(2);
   if (args.includes("--help") || args.includes("-h")) {
-    console.log(`s42-agent ${version} · Demo TUI estilo QBasic
+    console.log(`s42-agent ${version} · TUI estilo QBasic
 
 Uso: s42-agent [--config archivo] [--project nombre | --cwd carpeta]
 
@@ -38,13 +38,13 @@ Uso: s42-agent [--config archivo] [--project nombre | --cwd carpeta]
   --provider   Elegir proveedor registrado
   --model      Elegir ID real del modelo
 
-Enter: enviar demo · Shift+Enter: nueva línea · Esc: menú
+Enter: enviar · Shift+Enter: nueva línea · Esc: NORMAL/menú
 Tab: foco · Ctrl+N: panel · Alt+Y: ayuda · Ctrl+Q: salir`);
   } else if (args.includes("--version")) console.log(version);
   else {
     try {
       const options = parseArgs(args);
-      if (!process.stdin.isTTY || !process.stdout.isTTY || process.env.TERM === "dumb") throw new Error("La demo necesita un terminal interactivo. Usa --help para ver las opciones.");
+      if (!process.stdin.isTTY || !process.stdout.isTTY || process.env.TERM === "dumb") throw new Error("s42-agent necesita un terminal interactivo. Usa --help para ver las opciones.");
       const app = options.demo ? undefined : await App.open(options);
       await runTerminal(app?.desktop ?? createWorkspace(), { color: options.color && process.env.NO_COLOR === undefined && app?.store.value.ui.color !== "never", mouse: options.mouse });
     } catch (error) {

@@ -4,6 +4,19 @@ import { SelectList } from "./components/select-list.ts";
 import { Window } from "./components/window.ts";
 import type { Desktop } from "./desktop.ts";
 import { theme } from "./theme.ts";
+import { TextArea } from "./components/text-area.ts";
+
+export function info(desktop: Desktop, title: string, lines: string[]): void {
+  if(desktop.modal)return;
+  const area=desktop.floatingArea ?? {y:1,height:desktop.height-2},height=Math.min(13,area.height);
+  const window=new Window(`info-${crypto.randomUUID()}`,title,{x:Math.max(0,(desktop.width-58)>>1),y:area.y+Math.max(0,(area.height-height)>>1),width:58,height});window.modal=true;
+  const text=new TextArea("info",{x:1,y:0,width:54,height:8});text.readOnly=true;text.setValue(lines.join("\n"),"start");
+  const close=new Button("close",{x:1,y:0,width:15,height:1},"Aceptar",()=>desktop.close(window));
+  const handle=text.handle.bind(text);text.handle=event=>event.type==="key" && event.key==="enter" ? (desktop.close(window),true):handle(event);
+  window.controls.push(text,close);window.onLayout=client=>{text.bounds.width=client.width-2;text.bounds.height=Math.max(1,client.height-2);close.bounds.y=client.height-1;};
+  window.onDraw=(canvas,client)=>canvas.text(client.x+1,client.y+client.height-2,"↑/↓ PgUp/PgDn o rueda · Esc cerrar",theme.dialog,client.width-2);
+  desktop.add(window);
+}
 
 export interface Field { label: string; value: string }
 export function form(desktop: Desktop, title: string, fields: Field[], save: (values: string[]) => Promise<void>): void {

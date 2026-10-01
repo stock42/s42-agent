@@ -1,8 +1,11 @@
 # Fase 06 — Validación integrada, rendimiento y distribución
 
-Estado: **Pendiente**. Dependencias: fases [00](00-tui-viability.md) a
+Estado: **En curso**. Dependencias: fases [00](00-tui-viability.md) a
 [05](05-vim-and-attachments.md). Requisitos: R01–R17.
 Contratos: SPECS §12, §13 y §14.
+
+Prioridad del usuario: QA y documentación desde Bun. Builds, benchmarks de
+distribución y targets quedan diferidos; no cerrar esta fase por fixtures.
 
 ## Objetivo
 
@@ -11,9 +14,9 @@ ejecutados en las plataformas que se declaren soportadas.
 
 ## Tareas
 
-- [ ] F06-01. Ejecutar typecheck y suites de comportamiento/integración con
+- [x] F06-01. Ejecutar typecheck y suites de comportamiento/integración con
   `bun:test`; distinguir casos reales, fixtures, skips y fallas.
-- [ ] F06-02. Completar el recorrido de dos proyectos: seleccionar modelo, adjuntar,
+- [x] F06-02. Completar el recorrido fixture de dos proyectos: seleccionar modelo, adjuntar,
   solicitar una edición, verificarla, cancelar otro turno, cerrar y reanudar.
 - [ ] F06-03. Ejecutar 50 ciclos de apertura/cancelación/cierre, una sesión fixture
   de 30 min y fallas de red, disco, resize y comandos con descendientes.
@@ -30,7 +33,8 @@ ejecutados en las plataformas que se declaren soportadas.
   publicar solo la compatibilidad comprobada. Registrar lo pendiente sin ocultarlo.
 - [ ] F06-09. Completar README con instalación del binario, proyectos, configuración,
   servidor local externo, modelos, atajos, adjuntos y solución de errores reales.
-- [ ] F06-10. Conciliar SPECS, fases, AGENTS y CHANGELOG con la implementación final,
+  README fuente completo; instalación/uso del binario actualizado pendiente.
+- [x] F06-10. Conciliar SPECS, fases, AGENTS y CHANGELOG con la implementación final,
   sus limitaciones y los comandos que existen; hacer el commit de cada tarea.
 
 Esta fase prepara artefactos de distribución. Publicarlos en un remoto, crear una
@@ -59,7 +63,10 @@ a partir de un build o commit.
 
 | Tarea/caso | Artefacto o comando | Resultado y entorno |
 | --- | --- | --- |
-| — | — | Pendiente; no ejecutado. |
+| Fuente / integración | `bun run typecheck`; `bun test` | Ver [QA actual](../qa/agent-mvp.md): TUI/stream/tools/adjuntos y persistencia fixture. |
+| Dos proyectos | `bun test tests/projects-integration.test.ts` | A/B con endpoints y adjuntos distintos, edit/shell, cancelación, borradores y reanudación; no se mezclan carpetas/modelos/historial. |
+| Pantallas | [Capturas tmux](../qa/agent-mvp-captures.txt) | Sin modelo, Models compacto, Markdown fixture y adjuntos a 60×16. Sin mouse/drop físicos. |
+| Distribución | Diferida por pedido del usuario | Binario histórico corresponde a la demo; no se compiló de nuevo el harness. |
 
 | Target | Compilado | Ejecutado sin Bun/Node | Terminal/drop | Estado |
 | --- | --- | --- | --- | --- |
