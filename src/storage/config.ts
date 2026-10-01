@@ -3,6 +3,7 @@ import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { homedir } from "node:os";
 import type { Selection } from "../agent/messages.ts";
 import { bindings, type Bindings } from "../ui/bindings.ts";
+import { palettes, type PaletteId } from "../ui/theme.ts";
 
 export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string }
 export interface Model { id: string; name: string; contextWindow: number; maxOutputTokens: number; capabilities: { tools: boolean; images: boolean } }
@@ -13,7 +14,7 @@ export interface Config {
   version: 1; projects: Project[]; providers: Provider[];
   mcpServers: McpServer[]; skills: Skill[];
   defaults: Selection & { projectId?: string }; lastProjectId?: string;
-  ui: { vimMode: boolean; color: "auto" | "never"; bindings?: Bindings };
+  ui: { vimMode: boolean; color: "auto" | "never"; palette: PaletteId; bindings?: Bindings };
   limits: { maxSteps: number; shellTimeoutMs: number; firstEventMs: number; idleMs: number };
 }
 
@@ -29,7 +30,7 @@ export function storagePaths(configPath?: string, env = process.env, platform = 
 
 export function defaultConfig(): Config {
   return { version: 1, projects: [], mcpServers:[], skills:[], providers: [{ id: "llama.cpp", name: "Local · llama.cpp", kind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", models: [] }],
-    defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto" },
+    defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto", palette: "qbasic" },
     limits: { maxSteps: 30, shellTimeoutMs: 120000, firstEventMs: 120000, idleMs: 120000 } };
 }
 const text = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
@@ -38,6 +39,8 @@ export function validateConfig(value: unknown): Config {
   const c = value as Config;
   if (!c || c.version !== 1 || !Array.isArray(c.projects) || !Array.isArray(c.providers) || !c.defaults || !text(c.defaults.providerId)
     || !c.ui || typeof c.ui.vimMode !== "boolean" || !["auto", "never"].includes(c.ui.color)) throw new Error("Configuración v1 inválida");
+  if (c.ui.palette === undefined) c.ui.palette = "qbasic";
+  if (typeof c.ui.palette !== "string" || !Object.hasOwn(palettes, c.ui.palette)) throw new Error("Paleta inválida: usá qbasic, grayscale o green");
   const unique = (values: string[]) => new Set(values).size === values.length;
   for (const p of c.projects) if (!p || !text(p.id) || !text(p.name) || !text(p.path) || !isAbsolute(p.path)
     || (p.selection && (!text(p.selection.providerId) || (p.selection.modelId !== undefined && !text(p.selection.modelId))))) throw new Error("Proyecto inválido en config");

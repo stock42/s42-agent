@@ -6,7 +6,7 @@ import type { Message, Selection, ToolCall } from "./agent/messages.ts";
 import { createWorkspaceView } from "./ui/workspace.ts";
 import { choose, form, info } from "./ui/dialogs.ts";
 import { createDemoPanels } from "./ui/demo.ts";
-import { theme } from "./ui/theme.ts";
+import { palettes, theme, type PaletteId } from "./ui/theme.ts";
 import { CompletionError, credential, discoverModels } from "./llm/client.ts";
 import { runTurn } from "./agent/loop.ts";
 import { markdownText } from "./ui/markdown.ts";
@@ -36,6 +36,7 @@ export class App {
   private controller?: AbortController;
   private rendered = new WeakMap<Message, string>();
   private constructor(readonly store: ConfigStore, readonly sessionsPath: string, readonly cwd: string) {
+    this.desktop.palette = store.value.ui.palette;
     const { prompt, send, promptWindow } = this.view;
     const resize=this.desktop.onResize!;
     this.desktop.onResize=(width,height)=>{resize(width,height);if(this.attachments.length && promptWindow.client.height<3){
@@ -89,6 +90,7 @@ export class App {
         { label: "Respuestas", run: () => this.desktop.focus(this.view.editorWindow) },
         { label: "Prompt", run: () => this.desktop.focus(promptWindow) },
         { label: "Adjuntos", shortcut: "Ctrl+F", run: () => this.attachmentMenu() },
+        { label: "Paleta de colores", run: () => this.colorPalette() },
         { label: "Componentes", run: demo.components },
         { label: "Siguiente", shortcut: "Ctrl+N", run: () => this.desktop.cycle() },
         { label: "Cerrar auxiliar", shortcut: "Ctrl+W", run: () => this.desktop.close() },
@@ -148,6 +150,15 @@ export class App {
   }
   private change(work: () => Promise<void>): Promise<void> {
     const pending=this.operations.then(work); this.operations=pending.catch(()=>{}); return pending;
+  }
+  colorPalette(): void {
+    const ids = Object.keys(palettes) as PaletteId[], current = this.store.value.ui.palette;
+    choose(this.desktop, "Paleta de colores", ids.map(value => ({ label: `${palettes[value].label}${value === current ? " (actual)" : ""}`, value })), value => this.run(async () => {
+      const next = structuredClone(this.store.value); next.ui.palette = value;
+      await this.store.save(next);
+      this.desktop.palette = value; this.status = `Paleta: ${palettes[value].label}`;
+      this.desktop.invalidate();
+    }), ids.indexOf(current));
   }
   private requireIdle(): void { if (this.busy) throw new Error("Hay un turno activo: cancelalo antes de cambiar de contexto"); }
   private async saveDraft(): Promise<void> {

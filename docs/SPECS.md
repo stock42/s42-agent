@@ -43,7 +43,7 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R02 | Simplicidad | Un paquete, un proceso, módulos pequeños y sin servicios internos obligatorios. |
 | R03 | Rapidez | Inicio y respuesta del teclado medidos por separado de la inferencia. |
 | R04 | Estabilidad | Cancelación, errores de proveedor y cierre restauran el terminal y conservan la sesión. |
-| R05 | TUI en color estilo QBasic | Escritorio azul, menú superior, ventanas con bordes/títulos y barra de atajos, legibles con y sin color. |
+| R05 | TUI en color estilo QBasic | Paleta clásica por defecto, grises y verdes configurables; menú superior, ventanas con bordes/títulos y barra de atajos, legibles con y sin color. |
 | R06 | Múltiples proyectos | Alta, edición, selección y baja del registro mediante nombre y carpeta. |
 | R07 | Buenos atajos y experiencia Vim | Modos INSERT/NORMAL, navegación y acciones documentadas, sin conflictos entre modos. |
 | R08 | Drag & drop de archivos | Rutas entregadas por el terminal se convierten en adjuntos visibles antes del envío. |
@@ -140,7 +140,7 @@ src/
     terminal.ts            lifecycle y frames por demanda
     input-parser.ts        teclado, paste y mouse
     canvas.ts              celdas, clipping y renderer
-    theme.ts               paleta QBasic
+    theme.ts               estilos QBasic y paletas clásica/grises/verdes
     desktop.ts             foco, capas y captura
     demo.ts                composición de la demo inicial
     components/            window, button, input, text-area, select-list, menu, file-explorer
@@ -175,11 +175,19 @@ cancelación. El cliente LLM no imprime directamente al terminal.
 **Decisión confirmada por el usuario:** estética QBasic en toda la UI, con mouse
 y ventanas que simulan una interfaz de escritorio dentro del terminal.
 
-- Fondo azul clásico, texto claro, barras grises y selección contrastante.
+- Fondo azul clásico, texto claro, barras grises y selección contrastante por defecto.
 - Bordes de caracteres, títulos y control de cierre `[×]`/`[X]` reconocible.
 - Ventanas superpuestas, foco visible y menús en la cabecera con desplegables.
 - Botones con estados normal, enfocado, presionado y deshabilitado.
-- Barra inferior con atajos y estado; paleta semántica única centralizada.
+- Barra inferior con atajos y estado; estilos y paletas centralizados.
+
+**Ventanas → Paleta de colores** configura tres opciones: **Clásica · QBasic**,
+**Blanco y negro · Grises** y **Verdes**. `ui.palette` guarda `qbasic`, `grayscale`
+o `green`; los archivos existentes sin el campo conservan QBasic. La opción actual
+queda seleccionada al abrir. Elegir con teclado/mouse repinta toda la TUI en vivo,
+sin cambiar borrador, sesión o foco del prompt; Escape descarta la elección.
+La escala de grises usa tonos neutros, no equivale a desactivar color.
+[Validación desde fuente](qa/color-palettes.md).
 
 No es una interfaz gráfica del sistema operativo: todas las ventanas y controles
 se dibujan en celdas de un único terminal. El estilo no exige reproducir las
@@ -294,7 +302,7 @@ visitada al formulario sin perder Name ni el borrador de la conversación.
   invade su marco ni controles vecinos, incluso con texto ancho.
 - Detectar capacidad de color y respetar `NO_COLOR` y `TERM=dumb`; acompañar los
   colores con texto. Con `TERM=dumb`, mostrar el requisito de un terminal ANSI.
-  Implementación actual: paleta DOS RGB si `COLORTERM` indica `truecolor` o
+  Implementación actual: paleta elegida en RGB si `COLORTERM` indica `truecolor` o
   `24bit`; fallback a 16 colores ANSI en los demás casos. El fallback depende de
   la paleta del emulador. No modificar su paleta global ni fijar su tipografía.
 - Soportar al menos 80×24 y degradar a un layout compacto en 60×16 sin perder el
@@ -501,7 +509,7 @@ Ejemplo ilustrativo: los paths y el modelo deben sustituirse por valores reales.
     "providerId": "llama.cpp",
     "modelId": "local-coder"
   },
-  "ui": { "vimMode": true, "color": "auto" }
+  "ui": { "vimMode": true, "color": "auto", "palette": "qbasic" }
 }
 ```
 

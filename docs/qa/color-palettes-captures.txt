@@ -1,0 +1,95 @@
+=== Clásica · QBasic · 80×24 ===
+  Archivo   Projects   Models   MCP   Skills   Ventanas                  Ayuda
+┌───────────────────────────────── s42-agent ──────────────────────────────────┐
+│ No hay modelo configurado. Models → Configurar modelo                        │
+│ /tmp/s42-palettes-preview-xhMnHO                                             │
+│                                                                              │
+│ No hay modelo configurado. Abrí Models → Configurar modelo.                  │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────── Prompt ───────────────────────────────────┐
+│ Describe los archivos del proyecto                              < Enviar >   │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│ INSERT · No hay modelo configurado. Abrí Models → Confi · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────┘
+ Enter Enviar  Esc NORMAL  ^N Panel  ^F Adjuntos  ^Q Salir
+
+=== Blanco y negro · Grises · 80×24 ===
+  Archivo   Projects   Models   MCP   Skills   Ventanas                  Ayuda
+┌───────────────────────────────── s42-agent ──────────────────────────────────┐
+│ No hay modelo configurado. Models → Configurar modelo                        │
+│ /tmp/s42-palettes-preview-xhMnHO                                             │
+│                                                                              │
+│ No hay modelo configurado. Abrí Models → Configurar modelo.                  │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────── Prompt ───────────────────────────────────┐
+│ Describe los archivos del proyecto                              < Enviar >   │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│ INSERT · Paleta: Blanco y negro · Grises                · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────┘
+ Enter Enviar  Esc NORMAL  ^N Panel  ^F Adjuntos  ^Q Salir
+
+=== Verdes · 80×24 ===
+  Archivo   Projects   Models   MCP   Skills   Ventanas                  Ayuda
+┌───────────────────────────────── s42-agent ──────────────────────────────────┐
+│ No hay modelo configurado. Models → Configurar modelo                        │
+│ /tmp/s42-palettes-preview-xhMnHO                                             │
+│                                                                              │
+│ No hay modelo configurado. Abrí Models → Configurar modelo.                  │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────── Prompt ───────────────────────────────────┐
+│ Describe los archivos del proyecto                              < Enviar >   │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│ INSERT · Paleta: Verdes                                 · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────┘
+ Enter Enviar  Esc NORMAL  ^N Panel  ^F Adjuntos  ^Q Salir
+
+=== Selector de paleta · Verdes actual · 60×16 ===
+  Archivo  Projects  Models  MCP  Skills  Ventanas   Ayuda
+┌┌────────────────── Paleta de colores ───────────────[X]─┐┐
+││┌──────────────────────────────────────────────────────┐│
+│││Clásica · QBasic                                      ││
+│││Blanco y negro · Grises                               ││
+│││Verdes (actual)                                       ││
+│││                                                      ││
+│││                                                      ││
+││└──────────────────────────────────────────────────────┘│
+││   < Elegir >                                           │
+└└────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│ Describe los archivos del proyecto          < Enviar >   │
+│ INSERT · Paleta: Verdes             · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ Tab Foco  Enter Aceptar  Esc Cerrar  ^Q Salir

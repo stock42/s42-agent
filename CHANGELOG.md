@@ -5,6 +5,19 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Tres paletas configurables
+
+- Ventanas → Paleta de colores: Clásica · QBasic (actual/default), Blanco y negro
+  · Grises y Verdes. Selector por teclado/mouse con opción actual marcada;
+  aplicación inmediata y persistencia en `ui.palette`, sin perder el borrador.
+- Colores para toda la UI, variantes RGB/ANSI16, contraste en controles y barra
+  inferior; configuraciones anteriores conservan QBasic. NO_COLOR y el modo sin
+  color mantienen su comportamiento. Las instancias no comparten la selección.
+- Typecheck y 86 tests fuente correctos; entrypoint/PTY y capturas tmux 80×24 /
+  60×16 verifican cambio en vivo, reinicio y prompt visible. Specs/AGENTS/fase 01,
+  README y QA actualizados. Sin builds. Pull fallido por main sin upstream;
+  commit local, sin push.
+
 ### Completado — Ensayo prolongado de estabilidad
 
 - Soak real de 30 minutos: 1800.009 s, 60 ciclos (20 completos, 20 cancelados

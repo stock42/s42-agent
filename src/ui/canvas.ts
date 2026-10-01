@@ -1,5 +1,5 @@
 import { contains, graphemes, intersect, type Rect } from "./types.ts";
-import { dosColors, theme, type Style } from "./theme.ts";
+import { palettes, theme, type PaletteId, type Style } from "./theme.ts";
 
 export interface Cell { text: string; style: Style; width: number }
 
@@ -7,7 +7,7 @@ export class Canvas {
   readonly cells: Cell[][];
   private clip: Rect;
 
-  constructor(readonly width: number, readonly height: number) {
+  constructor(readonly width: number, readonly height: number, readonly palette: PaletteId = "qbasic") {
     this.clip = { x: 0, y: 0, width, height };
     this.cells = Array.from({ length: height }, () =>
       Array.from({ length: width }, () => ({ text: " ", style: theme.desktop, width: 1 })));
@@ -66,9 +66,12 @@ export class Canvas {
   }
 }
 
-function ansi(style: Style, trueColor: boolean): string {
-  if (trueColor) return `\x1b[38;2;${dosColors[style.fg]};48;2;${dosColors[style.bg]}m`;
-  return `\x1b[${style.fg < 8 ? 30 + style.fg : 90 + style.fg - 8};${style.bg < 8 ? 40 + style.bg : 100 + style.bg - 8}m`;
+function ansi(style: Style, trueColor: boolean, palette: PaletteId): string {
+  const colors = palettes[palette];
+  const resolved = style === theme.footer ? colors.footer : style;
+  if (trueColor) return `\x1b[38;2;${colors.colors[resolved.fg]};48;2;${colors.colors[resolved.bg]}m`;
+  const fg = colors.ansi[resolved.fg]!, bg = colors.ansi[resolved.bg]!;
+  return `\x1b[${fg < 8 ? 30 + fg : 90 + fg - 8};${bg < 8 ? 40 + bg : 100 + bg - 8}m`;
 }
 
 export class Renderer {
@@ -76,7 +79,7 @@ export class Renderer {
   private size = "";
 
   frame(canvas: Canvas, color = true, trueColor = false): string {
-    const size = `${canvas.width}:${canvas.height}:${color}:${trueColor}`;
+    const size = `${canvas.width}:${canvas.height}:${color}:${trueColor}:${canvas.palette}`;
     let output = size !== this.size ? "\x1b[2J" : "";
     if (size !== this.size) this.previous = [];
     this.size = size;
@@ -89,7 +92,7 @@ export class Renderer {
         const inverted = cell.style === theme.focused || cell.style === theme.selected || cell.style === theme.selectedHotkey || cell.style === theme.menuSelection;
         const mnemonic = cell.style === theme.menuHotkey || cell.style === theme.selectedHotkey;
         const dim = cell.style === theme.disabled || cell.style === theme.inactiveTitle;
-        const code = color ? ansi(cell.style, trueColor) : (inverted ? "\x1b[7m" : "\x1b[27m") + (mnemonic ? "\x1b[4m" : "\x1b[24m") + (dim ? "\x1b[2m" : "\x1b[22m");
+        const code = color ? ansi(cell.style, trueColor, canvas.palette) : (inverted ? "\x1b[7m" : "\x1b[27m") + (mnemonic ? "\x1b[4m" : "\x1b[24m") + (dim ? "\x1b[2m" : "\x1b[22m");
         if (code !== current) { line += code; current = code; }
         line += cell.text;
       }

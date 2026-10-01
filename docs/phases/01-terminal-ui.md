@@ -36,6 +36,9 @@ otra TUI.
   actualizar CHANGELOG y hacer el commit de cada tarea completada.
 - [x] F01-11. Integrar explorador fuera del proyecto, padre/raíz/ruta escrita,
   preview de solo lectura y picker modal con prompt visible en 60×16.
+- [x] F01-12. Configurar paletas clásica QBasic, escala de grises y verdes,
+  selección por teclado/mouse, aplicación en vivo y persistencia sin perder foco,
+  sesión o borrador; conservar RGB/ANSI16 y modo sin color.
 
 ## Escenarios de aceptación
 
@@ -69,6 +72,7 @@ real complementa los tests de secuencias ANSI.
 | Fuente Bun | `bun run typecheck`, `bun test` | 40 casos: input limpio, edición, envío, foco, scroll, restricciones de paneles, teclado extendido, color, monocromo y cleanup. Sin build de binarios. |
 | Agente fuente | `bun test tests/app-terminal.test.ts tests/llm.test.ts` | Models y contexto de sesión, streaming, cancelación y recuperación fixture. Markdown básico con callbacks Bun. Mouse físico pendiente; modelo real comprobado en QA integral. |
 | Explorador y eventos | [QA actual](../qa/explorer-and-reasoning.md) | Carpeta hermana, raíz, preview, modales anidados, 60×16 y chat progresivo desde index.ts/PTY/tmux. |
+| Paletas configurables | [QA de paletas](../qa/color-palettes.md), [capturas tmux](../qa/color-palettes-captures.txt) | Cambio en vivo, configuración anterior, reinicio, contraste de controles, fallback ANSI16 y NO_COLOR; selector sobre el prompt en 60×16. |
 
 ## Cierre
 

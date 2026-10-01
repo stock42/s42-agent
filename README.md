@@ -88,6 +88,7 @@ Bindings opcionales, asociados a acciones conocidas, con colisiones rechazadas:
 "ui": {
   "vimMode": true,
   "color": "auto",
+  "palette": "qbasic",
   "bindings": {
     "global": { "projects": "ctrl+g" },
     "normal": { "projects": "leader+g" }
@@ -184,8 +185,16 @@ edición y bun test, razonamiento, cancelación y reapertura. Pendientes externo
 mouse/drop físicos y ejecución macOS/Windows/arm64. Descendientes Linux comprobados; taskkill implementado en Windows, con ejecución
 en destino pendiente.
 
-La apariencia usa azul DOS, gris y turquesa. `COLORTERM=truecolor`/`24bit` activa
-RGB; de otro modo usa ANSI16. Respeta `NO_COLOR`, `--no-color` y `TERM=dumb`.
+**Ventanas → Paleta de colores** permite elegir **Clásica · QBasic** (la actual,
+predeterminada), **Blanco y negro · Grises** o **Verdes**, por mouse o teclado.
+Se aplica inmediatamente a toda la TUI y queda guardada para el próximo inicio.
+En JSON: `ui.palette` admite `qbasic`, `grayscale` o `green`; los archivos anteriores
+sin ese campo conservan QBasic. Cambiar colores conserva el borrador y la sesión.
+
+`COLORTERM=truecolor`/`24bit` activa RGB; de otro modo usa variantes ANSI16
+de la paleta elegida. Respeta `NO_COLOR`, `--no-color`, `ui.color: "never"` y
+`TERM=dumb`. La escala de grises conserva tonos de fondo, selección y controles;
+desactivar color usa los atributos de foco/selección del terminal.
 Sin TTY devuelve un mensaje limpio. Renderer por filas modificadas, sin frames idle.
 
 `index.ts` es el entrypoint; `src/app.ts` compone persistencia/LLM/tools con

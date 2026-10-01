@@ -43,6 +43,9 @@ scopes global/proyecto, activación, búsqueda skills.sh e instalación desde Gi
 (Git externo). /skill nombre prompt invoca instrucciones; cargar no ejecuta scripts.
 Módulos nuevos: `src/mcp/`, `src/skills/`, `src/ui/extensions.ts`.
 Módulos: `src/app.ts`, `src/ui/`, `src/agent/`, `src/llm/` y `src/storage/`.
+**Ventanas → Paleta de colores** cambia toda la TUI en vivo y guarda `ui.palette`:
+`qbasic` (actual/default), `grayscale` (escala de grises) o `green` (gama de verdes).
+RGB y fallback ANSI16; `NO_COLOR`/`--no-color`/`ui.color: "never"` siguen vigentes.
 Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
 Fases 02/03/07/08 completadas. 00/01/04/05 tienen implementación y QA fuente,
@@ -82,6 +85,9 @@ artefactos ni hacer push sin pedido explícito.
 - Usar las capturas de QBasic suministradas como guía: azul DOS, marcos finos,
   títulos centrados en pestañas grises, Ayuda a la derecha, menús con selección
   negra y barra inferior turquesa. Conservar atajos sin teclas F.
+- Conservar QBasic como paleta predeterminada y ofrecer las variantes de grises
+  y verdes solicitadas. Los colores se resuelven por escritorio, conservando
+  componentes, foco, layout y texto al cambiar la selección.
 - Enter envía el prompt; Shift+Enter es el atajo principal para nueva línea.
   Ctrl+J se conserva como alternativa de compatibilidad si el terminal no
   distingue Shift+Enter. Mostrar Shift+Enter en la UI y la ayuda.

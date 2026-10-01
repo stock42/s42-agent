@@ -2,7 +2,7 @@ import { Canvas } from "./canvas.ts";
 import type { Component } from "./components/component.ts";
 import { MenuBar } from "./components/menu.ts";
 import { Window } from "./components/window.ts";
-import { theme } from "./theme.ts";
+import { theme, type PaletteId } from "./theme.ts";
 import { contains, type InputEvent, type Rect } from "./types.ts";
 
 type Capture = { window: Window; control: Component } | { window: Window; close: true }
@@ -12,6 +12,7 @@ export class Desktop {
   readonly windows: Window[] = [];
   active?: Window;
   status = "Demo de componentes · Bun";
+  palette: PaletteId = "qbasic";
   onExit: () => void = () => {};
   onHelp: () => void = () => {};
   invalidate: () => void = () => {};
@@ -171,7 +172,7 @@ export class Desktop {
   }
 
   draw(): Canvas {
-    const canvas = new Canvas(this.width, this.height);
+    const canvas = new Canvas(this.width, this.height, this.palette);
     if (this.width < 60 || this.height < 16) {
       canvas.text(1, 1, "Terminal pequeño: mínimo 60 × 16", theme.window, this.width - 2);
       canvas.text(1, 3, "Ctrl+Q para salir", theme.window, this.width - 2);

@@ -54,7 +54,7 @@ export function form(desktop: Desktop, title: string, fields: Field[], save: (va
   refresh(); desktop.add(window);
 }
 
-export function choose<T>(desktop: Desktop, title: string, entries: { label: string; value: T }[], select: (value: T) => void): void {
+export function choose<T>(desktop: Desktop, title: string, entries: { label: string; value: T }[], select: (value: T) => void, selected = 0): void {
   if (desktop.modal) return;
   const area = desktop.floatingArea ?? { y: 1, height: desktop.height - 2 };
   const height = Math.min(13,area.height);
@@ -68,4 +68,5 @@ export function choose<T>(desktop: Desktop, title: string, entries: { label: str
   window.controls.push(list, accept);
   window.onLayout = client => { list.bounds.width = client.width; list.bounds.height = Math.max(3, client.height - 1); accept.bounds.y = client.height - 1; };
   desktop.add(window);
+  list.setItems(entries.map(e => e.label), selected);
 }
