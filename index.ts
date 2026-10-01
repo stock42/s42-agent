@@ -33,14 +33,15 @@ Uso: s42-agent [--config archivo] [--project nombre | --cwd carpeta]
   --help       Mostrar ayuda
   --demo       Abrir la demo sin datos persistentes ni proveedor
   --config     Configuración JSON; sesiones junto al archivo
-  --project    Proyecto registrado por nombre o ID
-  --cwd        Registrar/elegir carpeta de proyecto
+  --project    Abrir proyecto registrado por nombre o ID
+  --cwd        Abrir/registrar carpeta de proyecto
   --session    Reabrir sesión por ID
   --provider   Elegir proveedor registrado
   --model      Elegir ID real del modelo
 
 Enter: enviar · Shift+Enter: nueva línea · Esc: NORMAL/menú
-Tab: foco · Ctrl+N: panel · Alt+Y: ayuda · Ctrl+Q: salir`);
+Tab: foco · Ctrl+N: panel · Alt+←/→: pestañas · Alt+1…9: proyecto
+Alt+T: promptings · Alt+Y: ayuda · Ctrl+W: cerrar · Ctrl+Q: salir`);
   } else if (args.includes("--version")) console.log(version);
   else {
     try {

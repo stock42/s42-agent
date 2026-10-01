@@ -28,7 +28,8 @@ mediante archivos locales legibles y recuperables.
 - [x] F02-08. Detectar intento de abrir una misma sesión para escritura desde dos
   instancias. Probar también recuperación después de un cierre inesperado.
 - [x] F02-09. Persistir borrador al cambiar sesión/proyecto y cerrar normalmente.
-  Prohibir cambio de proyecto en turno activo, conservando el borrador actual.
+  Prohibir reemplazar la sesión de un proyecto con turno activo, conservando
+  su borrador; permitir activar otros proyectos mediante pestañas de fase 10.
 - [x] F02-10. Cargar instrucciones AGENTS aplicables sin mezclar proyectos y sin
   inventar políticas Git para las carpetas registradas.
 - [x] F02-11. Validar config, sesiones y proyectos desde el entrypoint Bun. Registrar
@@ -67,3 +68,6 @@ mediante archivos locales legibles y recuperables.
 
 Dos proyectos operables, sesiones reanudables y recuperación comprobada, sin
 DB ni servicio adicional y sin depender del cwd global del proceso.
+
+[Fase 10](10-project-tabs-and-open-source.md) amplía este flujo con pestañas,
+turnos por proyecto, restauración de abiertas/activa y liberación de locks al cerrar.

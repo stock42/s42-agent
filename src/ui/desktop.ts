@@ -2,6 +2,7 @@ import { Canvas } from "./canvas.ts";
 import type { Component } from "./components/component.ts";
 import { MenuBar } from "./components/menu.ts";
 import { Window } from "./components/window.ts";
+import type { TabBar } from "./components/tab-bar.ts";
 import { theme, type PaletteId } from "./theme.ts";
 import { contains, type InputEvent, type Rect } from "./types.ts";
 
@@ -22,6 +23,7 @@ export class Desktop {
   footer?: () => string;
   onResize?: (width: number, height: number) => void;
   floatingArea?: Rect;
+  tabs?: TabBar;
   private capture?: Capture;
 
   constructor(readonly menu: MenuBar, public width = 80, public height = 24) { menu.resize(width, height); }
@@ -56,6 +58,7 @@ export class Desktop {
   resize(width: number, height: number): void {
     this.width = Math.max(1, width); this.height = Math.max(1, height); this.menu.resize(this.width, this.height);
     this.onResize?.(this.width, this.height);
+    if (this.tabs) this.tabs.bounds.width = this.width;
     this.menu.resize(this.width,this.floatingArea?Math.min(this.height,this.floatingArea.y+this.floatingArea.height):this.height);
     for (const window of this.windows) { this.fit(window); window.onLayout?.(window.client); this.ensureFocus(window); }
   }
@@ -125,6 +128,7 @@ export class Desktop {
       }
       return false;
     }
+    if (!this.modal && this.menu.opened < 0 && this.tabs?.handle(event)) return true;
     if (event.type === "key") {
       if (event.key === "alt+y" && !this.modal) { this.cancelCapture(); this.menu.close(); this.onHelp(); return true; }
       if (event.key === "ctrl+n" && !this.modal) { this.menu.close(); this.cycle(); return true; }
@@ -186,6 +190,7 @@ export class Desktop {
         else window.draw(canvas, window === this.active);
       }
     });
+    this.tabs?.draw(canvas);
     this.menu.draw(canvas);
     const footer = this.height - 1;
     canvas.fill({ x: 0, y: footer, width: this.width, height: 1 }, theme.footer);

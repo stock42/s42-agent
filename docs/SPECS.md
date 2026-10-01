@@ -1,11 +1,12 @@
 # s42-agent — Especificaciones
 
 Fecha: 2026-10-01. Estado: harness QBasic desde `index.ts`, con respuesta en solo
-lectura y prompt fijo. Proyectos/sesiones, Models, streaming, coding, Vim y
-adjuntos implementados y comprobados con fixtures/PTY. Inferencia real, mouse/drop
-físicos y distribución siguen pendientes. Explorador libre, Projects Name/Folder
-y reasoning/tool calls visibles implementados. [QA actual](qa/explorer-and-reasoning.md),
-[QA del agente](qa/agent-mvp.md).
+lectura y prompt fijo. Proyectos/sesiones/pestañas, Models, streaming, coding, Vim,
+adjuntos, MCP/Skills y Promptings implementados con fixtures/PTY. GLM local real
+y distribución Linux x64 tienen evidencia previa; mouse/drop físicos y runtime
+macOS/Windows/arm64 siguen pendientes. Menús de producto y preparación MIT listos.
+[QA actual](qa/project-tabs.md), [QA integral](qa/final-validation.md),
+[GLM real](qa/local-llm.md), [QA del agente](qa/agent-mvp.md).
 [Apariencia actual](qa/qbasic-style.md), [layout/edición](qa/workspace.md),
 [demo inicial](qa/tui-demo.md).
 
@@ -44,7 +45,7 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R03 | Rapidez | Inicio y respuesta del teclado medidos por separado de la inferencia. |
 | R04 | Estabilidad | Cancelación, errores de proveedor y cierre restauran el terminal y conservan la sesión. |
 | R05 | TUI en color estilo QBasic | Paleta clásica por defecto, grises y verdes configurables; menú superior, ventanas con bordes/títulos y barra de atajos, legibles con y sin color. |
-| R06 | Múltiples proyectos | Alta, edición, selección y baja del registro mediante nombre y carpeta. |
+| R06 | Múltiples proyectos | CRUD mediante nombre/carpeta y pestañas con borradores, sesiones y turnos independientes. |
 | R07 | Buenos atajos y experiencia Vim | Modos INSERT/NORMAL, navegación y acciones documentadas, sin conflictos entre modos. |
 | R08 | Drag & drop de archivos | Rutas entregadas por el terminal se convierten en adjuntos visibles antes del envío. |
 | R09 | Proveedores y modelos configurables | Registrar endpoints y modelos, elegirlos y guardar defaults. |
@@ -59,11 +60,13 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R18 | MCP configurable | CRUD de servidores stdio/HTTP, enabled/disabled, tools visibles y cancelables en el loop. |
 | R19 | Skills | Registro global/proyecto de SKILL.md, activación, carga progresiva, búsqueda e instalación desde skills.sh. |
 | R20 | Promptings reutilizables | CRUD con nombre/texto multilínea y preguntas por cada `{{metavar_name}}` al cargar o ejecutar con el modelo actual. |
+| R21 | Preparación open source | MIT, README reproducible, contribución, metadata y CI fuente; publicación como acción separada. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
 - Un repositorio y un paquete ESM. No monorepo ni framework de agentes.
-- Un agente activo y un turno de usuario a la vez; herramientas secuenciales.
+- Un turno activo por proyecto; proyectos distintos pueden trabajar a la vez.
+  Herramientas secuenciales dentro de cada turno.
 - Configuración JSON y sesiones JSONL en disco. Sin base de datos inicial.
 - TUI propia estilo QBasic, con ANSI, mouse y las APIs incluidas en Bun.
 - Construir primero los componentes visuales y una demo de viabilidad sin LLM;
@@ -137,6 +140,7 @@ de `src/ui/components/`. TUI, agente, LLM y persistencia están implementados.
 index.ts                   argumentos y arranque de demo/harness
 src/
   app.ts                   composición del harness y configuración TUI
+  project-tab.ts           estado y controles independientes por proyecto abierto
   prompts.ts               extracción y sustitución literal de metavariables
   ui/
     terminal.ts            lifecycle y frames por demanda
@@ -146,7 +150,7 @@ src/
     desktop.ts             foco, capas y captura
     demo.ts                composición de la demo inicial
     promptings.ts           CRUD y preguntas de metavariables
-    components/            window, button, input, text-area, select-list, menu, file-explorer
+    components/            window, button, input, text-area, select-list, menu, tab-bar, file-explorer
   agent/                   loop, mensajes, tools y adjuntos
   llm/                     Chat Completions y SSE
   storage/                 configuración, proyectos y sesiones
@@ -184,7 +188,7 @@ y ventanas que simulan una interfaz de escritorio dentro del terminal.
 - Botones con estados normal, enfocado, presionado y deshabilitado.
 - Barra inferior con atajos y estado; estilos y paletas centralizados.
 
-**Ventanas → Paleta de colores** configura tres opciones: **Clásica · QBasic**,
+**Vista → Paleta de colores** configura tres opciones: **Clásica · QBasic**,
 **Blanco y negro · Grises** y **Verdes**. `ui.palette` guarda `qbasic`, `grayscale`
 o `green`; los archivos existentes sin el campo conservan QBasic. La opción actual
 queda seleccionada al abrir. Elegir con teclado/mouse repinta toda la TUI en vivo,
@@ -238,7 +242,11 @@ Con esa evidencia se determina la viabilidad antes de integrar el agente.
 
 Una pantalla alternativa organizada como escritorio TUI:
 
-1. Menú superior: Archivo, **Projects**, **Models**, Ventanas y Ayuda, con desplegables.
+1. Menú superior: **Archivo**, **Projects**, **Models**, **Promptings**, **Tools**,
+   **Vista** y **Ayuda**, con desplegables. Archivo agrupa explorador/adjuntos/salir;
+   Projects, registro/sesiones/pestañas; Models, proveedores/modelos; Promptings,
+   biblioteca/nuevo/guardar borrador; Tools, MCP/Skills; Vista, paneles/paleta/Vim.
+   Ayuda muestra atajos. Sin acciones de prueba en el harness normal.
 2. Editor central con el **nombre del proyecto centrado en su marco superior**,
    como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
    allí en solo lectura, con selección y scroll; no abrir una ventana de chat independiente.
@@ -247,11 +255,15 @@ Una pantalla alternativa organizada como escritorio TUI:
    Enter/Enviar envía explícitamente; Shift+Enter inserta una línea y pegar no envía.
 4. Contexto visible: proyecto, proveedor/modelo y sesión en la ventana principal.
 5. Barra inferior: INSERT/NORMAL, foco, actividad, uso disponible y atajos.
+6. Fila de pestañas debajo del menú: nombre de cada proyecto, marca `~` de turno
+   activo, cierre `×` y `+` para abrir. Flechas/rueda desplazan las pestañas cuando
+   no entran; la activa se revela al cambiar de proyecto o redimensionar.
 
 El arranque normal registra/configura proyectos y conecta el endpoint elegido.
 Sin modelo, muestra el aviso en el chat y ofrece Models → Configurar modelo
 (host, puerto, ID, API key, contexto y capacidades). `--demo` conserva la demo
-sin persistencia/LLM; Ventanas → Componentes abre el laboratorio en el harness. Los inputs no agregan corchetes; botones con etiqueta centrada y
+sin persistencia/LLM, como único acceso al laboratorio de componentes.
+Los inputs no agregan corchetes; botones con etiqueta centrada y
 estado por color/video inverso/tenue, sin combinar marcadores de foco/presión.
 Los marcos conservan esquinas unidas a la cabecera y sombras de una celda solo
 en ventanas flotantes.
@@ -376,17 +388,21 @@ Al salir, restaurar la pila Kitty y el valor inicial de modifyOtherKeys.
 | --- | --- | --- |
 | Escritorio | Escape | Abrir barra de menús cuando no lo consume un editor Vim. |
 | Escritorio | Alt+Y | Abrir ayuda; también disponible desde el menú Ayuda. |
-| Escritorio | Ctrl+N / Ctrl+W | Cambiar / cerrar ventana. |
+| Escritorio | Ctrl+N | Cambiar panel o ventana. |
+| Escritorio | Ctrl+W | Cerrar auxiliar; desde un panel fijo, cerrar la pestaña del proyecto idle. |
 | Ventana/diálogo | Tab / Shift+Tab | Recorrer controles enfocados. |
 | Menú/diálogo | Escape | Cerrar menú o diálogo antes de cambiar modo Vim. |
-| Global | Ctrl+C | Cancelar el turno activo; si está inactivo, cerrar guardando el borrador. |
-| Global | Ctrl+P | Seleccionar proyecto. |
+| Global | Ctrl+C | Cancelar el turno de la pestaña activa; idle puede salir si ninguna otra trabaja. |
+| Global | Ctrl+Q | Cancelar todos los turnos, guardar borradores y cerrar sesiones/terminal. |
+| Global | Ctrl+P | Abrir proyecto en una pestaña o activar la ya abierta. |
+| Global | Alt+← / Alt+→ | Activar pestaña anterior/siguiente. |
+| Global | Alt+1…9 | Activar proyecto por número visible en su pestaña. |
 | Global | Ctrl+O | Seleccionar modelo del proveedor activo. |
 | Global | Ctrl+B | Seleccionar/configurar proveedor. |
 | Global | Ctrl+R | Seleccionar una sesión del proyecto activo. |
 | Global | Ctrl+F | Agregar o quitar adjuntos por ruta. |
 | Global | Ctrl+E | Abrir explorador de archivos y carpetas, incluyendo fuera del proyecto. |
-| Global | Alt+T | Abrir biblioteca de promptings; también Archivo → Promptings. |
+| Global | Alt+T | Abrir biblioteca; también Promptings → Biblioteca. |
 | INSERT | Escape | Entrar a NORMAL cuando Vim está habilitado. |
 | INSERT | Enter | Enviar el borrador; si acaba de reconocer rutas sin marcadores, primero adjuntarlas. |
 | INSERT | Shift+Enter | Insertar salto de línea; Ctrl+J como alternativa de compatibilidad. |
@@ -428,7 +444,14 @@ internamente. Folder admite escritura o selección mediante Explorar.
   Un nombre ambiguo requiere seleccionar el ID; no elegir uno silenciosamente.
 - Recordar el último proyecto utilizado. Si no hay proyectos, mostrar el alta.
 - Mantener conversación y borrador separados por sesión/proyecto.
-- No permitir cambiar de proyecto durante un turno activo: cancelarlo o esperar.
+- Abrir una pestaña por proyecto. Cambiar de pestaña conserva controles, foco,
+  scroll/selección, undo del borrador, adjuntos, modo Vim, modelo y sesión.
+- Permitir turnos simultáneos en proyectos distintos. Cada stream, reasoning,
+  tool, resultado y cancelación actualiza solo su proyecto de origen.
+- Cerrar una pestaña idle guarda su borrador y libera el lock; no quita el
+  registro. Un turno activo bloquea cierre/cambio de sesión de su propia pestaña.
+- Restaurar pestañas y proyecto activo al iniciar; cerrar todas deja el espacio
+  vacío hasta abrir otro proyecto. Modales bloquean cambios por mouse/atajos.
 - Todas las herramientas reciben el `cwd` del proyecto de forma explícita; no
   usar `process.chdir()` como estado global compartido.
 - Quitar un proyecto del registro no borra su carpeta ni sus sesiones.
@@ -453,6 +476,12 @@ proyectos ni inventar reglas Git para el repositorio del usuario.
   override explícito; si fue eliminada, se solicita elegir otra.
 - Configuración versionada con `version: 1`. Validar antes de guardar y escribir
   mediante archivo temporal más rename en la misma carpeta.
+- `workspace?: { openProjectIds: string[] }` conserva IDs existentes, únicos y en
+  orden; `lastProjectId` indica la activa y cada proyecto su `lastSessionId`.
+  Sin workspace, abrir el último/default/primer proyecto como antes. `[]` mantiene
+  todas cerradas; un proyecto explícito de CLI se abre igualmente. Restaurar no
+  reejecuta tools; si una sesión está bloqueada, liberar las ya abiertas durante
+  ese intento y conservar la configuración para corregir el bloqueo.
 - Nunca crear `.env.local`. Los secretos se obtienen de variables de entorno ya
   configuradas; la configuración solo guarda el nombre de la variable.
 - La API key ingresada en Models vive solo en memoria durante esa ejecución.
@@ -619,8 +648,11 @@ Estados: `idle → requesting → streaming → executing-tools → requesting`,
 `completed`, `cancelled` o `failed`, y luego vuelta a `idle`. El resultado del
 turno se conserva aunque la aplicación permita iniciar otro.
 
-Un turno inmoviliza proyecto, sesión, proveedor y modelo. El usuario puede
-cancelarlo y seguir editando un borrador, pero no enviar otro concurrentemente.
+Un turno captura proyecto, sesión, proveedor y modelo de su pestaña. El usuario
+puede editar un borrador y cambiar de pestaña mientras continúa; cada proyecto
+admite un turno activo. Ctrl+C cancela solo el actual; Ctrl+Q aborta todos, espera
+su cierre y guarda cada sesión. Completar en segundo plano no roba foco ni
+reemplaza el borrador, historial o estado del proyecto visible.
 
 ### Herramientas iniciales
 
@@ -1024,7 +1056,7 @@ vacíos, ID estable y único; configuraciones anteriores sin el campo usan `[]`.
 El registro se guarda por el mecanismo atómico existente, sin archivos nuevos
 de configuración ni separación artificial por proveedor/proyecto.
 
-- **Archivo → Promptings**, Alt+T, /promptings y NORMAL Espacio+t abren el CRUD.
+- **Promptings → Biblioteca**, Alt+T, /promptings y NORMAL Espacio+t abren el CRUD.
   **Guardar prompt actual** crea una plantilla desde el borrador. Formulario
   con nombre y editor multilínea; lectura/edición y eliminación desde el listado.
 - Texto con `{{metavar_name}}`: letras ASCII, números y `_`, inicial letra o `_`;
@@ -1046,3 +1078,23 @@ de configuración ni separación artificial por proveedor/proyecto.
 Implementación: `src/prompts.ts`, `src/ui/promptings.ts`, configuración y App.
 [Fase09](phases/09-promptings.md), [QA](qa/promptings.md): tests fuente, payload
 SSE de fixture y capturas tmux; sin pruebas adicionales de binarios o mouse físico.
+
+## 19. Pestañas, organización y preparación open source
+
+Las pestañas reutilizan los paneles fijos y los componentes existentes. Su estado
+vive en `src/project-tab.ts`; `TabBar` maneja render, clipping, overflow y mouse.
+App activa controles de la pestaña elegida; el loop recibe un contexto por turno.
+No se crean procesos extra, un framework de ventanas nuevo ni dependencias de
+runtime para habilitar proyectos simultáneos.
+
+Licencia MIT en `LICENSE`, metadata de repositorio/homepage/issues en package.json
+y documentación reproducible en README/CONTRIBUTING. Plantillas GitHub para bugs
+y PR; CI Linux con Bun 1.4.2, install frozen, typecheck y tests fuente. No requiere
+API keys ni un modelo activo. Mantener `private: true` para evitar publicación npm
+incidental; este campo no controla la visibilidad de GitHub.
+
+[Fase10](phases/10-project-tabs-and-open-source.md) y [QA](qa/project-tabs.md)
+documentan concurrencia, aislamiento, restauración, controles y menús a 60×16.
+[Publicación](PUBLISHING.md) describe los pasos externos: push, visibilidad,
+CI remota y releases. Preparar estos archivos no realiza esos pasos ni demuestra
+compatibilidad adicional por SO. No se crean nuevos binarios en esta iteración.

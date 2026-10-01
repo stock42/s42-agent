@@ -52,7 +52,7 @@ test("TUI CRUD persistente, guardar borrador, Enter/Shift+Enter, mouse y cancela
   const app = await App.open({ config, cwd: root }); let closed = false;
   try {
     app.desktop.resize(60, 16); app.view.prompt.setValue("Revisá {{archivo}} en {{lenguaje}} y {{archivo}}.");
-    app.desktop.menu.menus[0]!.items.find(i => i.label === "Guardar prompt actual")!.run();
+    app.desktop.menu.menus.find(menu => menu.label === "Promptings")!.items.find(i => i.label === "Guardar prompt actual")!.run();
     expect(field<TextArea>(app, "text").value).toBe(app.view.prompt.value);
     key(app, "enter"); expect(app.desktop.modal!.focusedId).toBe("text"); key(app, "enter");
     await until(() => app.desktop.draw().lines().join("\n").includes("Escribí un nombre"));

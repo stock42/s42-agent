@@ -11,7 +11,7 @@ export interface ProjectContext { name: string; path: string }
 
 export function createWorkspace(project?: ProjectContext): Desktop { return createWorkspaceView(project).desktop; }
 
-export function createWorkspaceView(project: ProjectContext = { name: basename(process.cwd()) || process.cwd(), path: process.cwd() }) {
+export function createWorkspaceView(project: ProjectContext = { name: basename(process.cwd()) || process.cwd(), path: process.cwd() }, demoMode = true) {
   const desktop = new Desktop(new MenuBar([]));
   const editorWindow = new Window("editor", project.name, { x: 0, y: 1, width: 80, height: 15 });
   const promptWindow = new Window("prompt", "Prompt", { x: 0, y: 16, width: 80, height: 7 });
@@ -41,14 +41,16 @@ export function createWorkspaceView(project: ProjectContext = { name: basename(p
     `${submitted ? "Respuesta demo" : "Demo sin LLM"} · Enter enviar · Shift+Enter nueva línea`, theme.window, client.width - 2);
 
   desktop.onResize = (width, height) => {
-    const available = Math.max(4, height - 2); const promptHeight = height >= 20 ? 7 : 4;
+    const top = desktop.tabs ? 2 : 1;
+    const available = Math.max(4, height - top - 1); const promptHeight = height >= 20 ? 7 : 4;
     const editorHeight = Math.max(2, available - promptHeight);
-    Object.assign(editorWindow.bounds, { x: 0, y: 1, width, height: editorHeight });
-    Object.assign(promptWindow.bounds, { x: 0, y: 1 + editorHeight, width, height: Math.max(2, available - editorHeight) });
+    Object.assign(editorWindow.bounds, { x: 0, y: top, width, height: editorHeight });
+    Object.assign(promptWindow.bounds, { x: 0, y: top + editorHeight, width, height: Math.max(2, available - editorHeight) });
     desktop.floatingArea = { ...editorWindow.bounds };
   };
   desktop.resize(desktop.width, desktop.height);
   desktop.add(editorWindow); desktop.add(promptWindow);
+  if (!demoMode) return { desktop, editorWindow, promptWindow, response: editor, prompt, send };
   const demo = createDemoPanels(desktop);
   const help = () => demo.dialog("Ayuda", [
     "Enter: enviar · Shift+Enter: nueva línea.", "Ctrl+N: cambiar entre paneles.", "Tab / Shift+Tab: foco · Esc: menú.",

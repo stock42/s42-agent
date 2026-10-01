@@ -5,6 +5,26 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Pestañas, menús de producto y preparación MIT
+
+- Menús Archivo/Projects/Models/Promptings/Tools/Vista/Ayuda; Promptings tiene
+  biblioteca/nuevo/guardar borrador, Tools agrupa MCP/Skills y Vista reúne
+  preferencias visuales. Sin acciones de laboratorio salvo `--demo`.
+- Pestañas por proyecto con modelo, sesión, borrador, adjuntos, modo Vim,
+  foco/scroll y streaming propios. Mouse, Alt+←/→, Alt+1…9, apertura/cierre y
+  overflow; prompt fijo y cabecera completa en 60 columnas.
+- Turnos simultáneos entre proyectos, cwd/tools/respuestas aislados y Ctrl+C
+  sobre la activa. Ctrl+Q cancela todos; cierre guarda borrador/libera lock.
+  Restauración durable de pestañas/activa, incluida recuperación de un intento
+  fallido por lock externo sin perder la configuración.
+- README reorganizado, MIT, metadata pública, CONTRIBUTING, plantillas GitHub,
+  .gitignore y CI fuente Linux/Bun 1.4.2; publicación documentada por separado.
+- Install frozen, typecheck y 101 tests fuente correctos (20 archivos, 1167
+  assertions), streams concurrentes y entrada real index.ts en PTY; capturas
+  tmux 80×24/60×16 inspeccionadas. Exportación limpia con install/typecheck/help,
+  YAML/metadata/enlaces revisados. Fase10, specs, AGENTS y QA actualizados.
+  Sin builds nuevos. Pull fallido por main sin upstream; commit local, sin push.
+
 ### Agregado — CRUD de promptings con metavariables
 
 - Archivo → Promptings, Alt+T, /promptings y NORMAL Espacio+t: biblioteca global

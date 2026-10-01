@@ -21,7 +21,8 @@ export class MenuBar {
   private header(index: number): Rect {
     const menu = this.menus[index]!; const width = Bun.stringWidth(menu.label) + 2;
     const required=1+this.menus.reduce((sum,m)=>sum+Bun.stringWidth(m.label)+3,0);
-    const spacing=required>this.width?2:3;
+    const compact = 1 + this.menus.reduce((sum, m) => sum + Bun.stringWidth(m.label) + 2, 0);
+    const spacing = required > this.width ? (compact > this.width ? 1 : 2) : 3;
     return { x: menu.align === "right" ? this.width - width - 1
       : 1 + this.menus.slice(0, index).filter(menu => menu.align !== "right").reduce((sum, menu) => sum + Bun.stringWidth(menu.label) + spacing, 0),
       y: 0, width, height: 1 };

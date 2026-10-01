@@ -63,7 +63,9 @@ test('entrypoint: Projects Name/Folder, picker, explorador externo, reasoning y 
     write('\x05');await until(()=>text.includes('Explorador de archivos'));write('\x1b[F');await until(()=>text.includes('externo.ts'));expect(text).toContain('Prompt');
     text='';write('\x1b');await until(()=>text.includes('Fixture · fixture'));
     text='';terminal.resize(80,24);child.kill('SIGWINCH');await until(()=>text.includes('Prompt'));
-    write('mostrar eventos\r');await until(()=>text.includes('Resultado fixture visible'));expect(text).toContain('Razonamiento:');expect(text).toContain('Tool call · list');expect(text).toContain('Herramienta · list');expect(requests).toBe(2);
+    write('mostrar eventos\r');await until(()=>text.includes('Resultado fixture visible'));expect(text).toContain('Razonamiento:');expect(text).toContain('Tool call · list');
+    // The project-tab row leaves one less chat row; scroll to inspect the tool-result heading.
+    write('\x1b[<64;10;8M');await until(()=>text.includes('Herramienta · list'));expect(requests).toBe(2);
     write('\x11');expect(await child.exited).toBe(0);expect(text).toContain('\x1b[?1049l');
   } catch(e){throw new Error((e as Error).message+' · '+text.slice(-3000).replace(/\x1b\[[0-?]*[ -/]*[@-~]/g,''));}
   finally {child.kill();terminal.close();server.stop(true);await rm(root,{recursive:true,force:true});}

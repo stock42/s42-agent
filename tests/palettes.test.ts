@@ -76,7 +76,7 @@ test("selector por menú/teclado/mouse persiste, marca actual y conserva prompt/
   const key = (key: string) => app.desktop.handle({ type: "key", key });
   try {
     app.desktop.resize(60, 16); app.view.prompt.setValue("borrador\ncon á文");
-    const menu = app.desktop.menu.menus.find(menu => menu.label === "Ventanas")!;
+    const menu = app.desktop.menu.menus.find(menu => menu.label === "Vista")!;
     menu.items.find(item => item.label === "Paleta de colores")!.run!();
     let list = app.desktop.modal!.controls[0] as SelectList;
     expect(list.selected).toBe(0); expect(list.items[0]).toContain("(actual)");
@@ -108,7 +108,7 @@ test("index.ts en PTY cambia paletas en vivo, reabre en ANSI16 y respeta NO_COLO
   const env = { ...process.env, TERM: "xterm-256color", COLORTERM: "truecolor", NO_COLOR: undefined };
   let child = Bun.spawn([process.execPath, index, "--config", config, "--cwd", root], { cwd: root, env, terminal });
   const openPalette = async () => {
-    text = ""; terminal.write("\x1bv" + "\x1b[B".repeat(3) + "\r");
+    text = ""; terminal.write("\x1bv" + "\x1b[B".repeat(2) + "\r");
     await until(() => text.includes("Blanco y negro"));
   };
   try {

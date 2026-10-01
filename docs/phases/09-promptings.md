@@ -4,7 +4,7 @@ Estado: **Completada**. Depende de 01–04. Requisito R20, solicitado por el usu
 
 - [x] F09-01. Persistir biblioteca global `promptings` con id/nombre/texto;
   migrar configuraciones anteriores y rechazar registros inválidos sin sobrescribir.
-- [x] F09-02. CRUD TUI desde Archivo, Alt+T, /promptings y NORMAL Espacio+t;
+- [x] F09-02. CRUD TUI desde Promptings → Biblioteca, Alt+T, /promptings y NORMAL Espacio+t;
   crear también desde el borrador actual, con nombre y texto multilínea.
 - [x] F09-03. Extraer nombres únicos `{{metavar_name}}` por orden de aparición;
   reemplazar una sola vez, literalmente, conservando la plantilla original.
@@ -26,3 +26,7 @@ QA usa config/proyectos temporales. El proveedor es un fixture local; este cambi
 no incluye nueva inferencia real ni pruebas de binarios. Clic/release se inyectan;
 las capturas de celdas de tmux no prueban mouse físico del emulador del usuario.
 Pull intentado y fallido por main sin upstream; commit local sin push.
+
+La [fase 10](10-project-tabs-and-open-source.md) mueve la biblioteca desde Archivo
+al menú principal Promptings. La evidencia de arriba corresponde al cierre de
+fase 09; la nueva organización se comprueba en la QA de fase 10.

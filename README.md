@@ -1,111 +1,229 @@
 # s42-agent
 
-Harness de coding **TypeScript/Bun**, con TUI estilo QBasic, mouse y cero
-dependencias de runtime. El editor central muestra la conversación en **solo
-lectura**; el panel **Prompt** permanece visible debajo.
+A coding harness built with Bun, a QBasic-style terminal interface and support
+for local LLMs. Open source under the [MIT license](LICENSE).
 
-## Ejecutar
+Un agente de coding pequeño, rápido y estable, escrito en **TypeScript/Bun**,
+con mouse, colores y cero dependencias de runtime externas. La conversación es
+de solo lectura y el prompt queda siempre visible. Cada proyecto tiene su pestaña
+y puede seguir trabajando mientras usás otro.
 
-Bun **1.4.2**, terminal ANSI de al menos **60×16**; recomendado 80×24.
+## Empezar
+
+Necesitás **Bun 1.4.2** y un terminal ANSI de al menos **60×16**; recomendado
+80×24. El servidor LLM se configura aparte.
 
 ```bash
+git clone https://github.com/stock42/s42-agent.git
+cd s42-agent
 bun install --frozen-lockfile
 bun run dev
 ```
 
-En el primer inicio, **Projects** pide solamente **Name** y **Folder**. El botón
-**Explorar** permite elegir la carpeta navegando el filesystem. Abrir
-**Models → Proveedores** (Ctrl+B) ofrece dos proveedores precargados:
+1. Registrá un proyecto en **Projects → Agregar proyecto**: solo **Name** y
+   **Folder**. **Explorar** permite elegir la carpeta con mouse o teclado.
+2. Abrí **Models → Proveedores** y elegí **llama.cpp** o **DeepSeek**. Completá
+   la configuración, consultá el catálogo y seleccioná el modelo.
+3. Escribí en **Prompt**. **Enter** envía; **Shift+Enter** agrega una línea.
+4. La respuesta, el razonamiento recibido y las llamadas/resultados de herramientas
+   aparecen en el chat del proyecto. **Ctrl+C** cancela su turno.
 
-| Proveedor | Endpoint inicial | Credencial |
+```bash
+bun run index.ts --cwd /ruta/proyecto
+bun run index.ts --project nombre
+bun run index.ts --config /ruta/config.json
+bun run index.ts --help
+```
+
+## Menús
+
+| Menú | Qué contiene |
+| --- | --- |
+| Archivo | Explorador de archivos, adjuntos y salida. |
+| Projects | Abrir/agregar/editar/quitar proyectos, sesiones y pestañas. |
+| Models | Proveedores, catálogo, selección/configuración de modelos y defaults. |
+| Promptings | Biblioteca, nueva plantilla y guardar el prompt actual. |
+| Tools | CRUD/activación de MCP, registro/activación de Skills y buscador skills.sh. |
+| Vista | Respuestas/prompt, foco, auxiliares, paletas y modo Vim. |
+| Ayuda | Atajos, mouse y comandos. |
+
+El agente abre directamente este espacio de trabajo. El laboratorio de componentes
+se ejecuta aparte con `bun run index.ts --demo`.
+
+## Proyectos y pestañas
+
+**Projects → Abrir proyecto**, **Ctrl+P** o **+** en la barra abre otra pestaña.
+Elegir un proyecto que ya está abierto vuelve a su pestaña. Hay una por proyecto,
+con conversación/sesión, borrador, adjuntos, modelo, modo Vim y posición de lectura
+propios. El editor central muestra el nombre del proyecto.
+
+- Cambiá con clic, **Alt+←/→** o **Alt+1…9**. Las flechas y la rueda de la barra
+  permiten recorrer pestañas que no caben en el terminal.
+- `~` señala un proyecto con un turno activo. Podés enviar en otro proyecto;
+  cada turno conserva su modelo, carpeta y sesión, incluso en segundo plano.
+- **Ctrl+C** o **Cancelar** interrumpe solo el proyecto activo. Si hay otros
+  trabajando, Ctrl+C desde una pestaña inactiva no cierra el programa.
+- **×**, **Ctrl+W** o **Projects → Cerrar pestaña** guarda el borrador y libera
+  su sesión. Cancelá un turno activo antes de cerrar esa pestaña. Ctrl+W sobre
+  un diálogo/auxiliar cierra esa ventana.
+- **Nueva sesión** y **Sesiones** cambian el historial de la pestaña actual.
+  Requieren que ese proyecto esté inactivo; otros proyectos pueden seguir respondiendo.
+- Las pestañas abiertas y el proyecto activo se restauran al iniciar. Cerrar todas
+  deja el espacio vacío; el registro de proyectos, carpetas e historiales se conserva.
+- **Ctrl+Q** cancela los turnos de todos los proyectos, guarda borradores y sale.
+
+## Proveedores y modelos
+
+| Proveedor precargado | Endpoint inicial | Credencial |
 | --- | --- | --- |
-| llama.cpp | `http://127.0.0.1:8080/v1` | Sin clave por defecto. |
+| llama.cpp — default | `http://127.0.0.1:8080/v1` | Sin clave inicialmente. |
 | DeepSeek | `https://api.deepseek.com` | API key de sesión o `DEEPSEEK_API_KEY`. |
 
-Elegir el proveedor abre su configuración con host/puerto ya cargados. En
-DeepSeek, ingresar la clave y **Guardar** consulta el catálogo `/models` y abre
-la lista para elegir un modelo con teclado o mouse. No hace falta escribir el ID.
-llama.cpp también consulta su servidor al guardar. El descubrimiento se inicia
-por esa acción, no al arrancar la TUI; la selección anterior se conserva hasta
-elegir un modelo. Un error de conexión/clave queda en el formulario para corregirlo.
+**Models → Proveedores** permite editar host, puerto y credencial. Guardar uno de
+estos presets consulta `/models` y abre el catálogo para elegir el modelo. Los
+errores de conexión o autenticación quedan en el formulario. El catálogo se consulta
+por esa acción, sin requests al iniciar. No se inventan IDs de modelos.
 
-**Models → Nuevo proveedor** ofrece esas mismas plantillas y **Otro proveedor**
-para configuración manual. Los registros previos conservan sus endpoints/modelos;
-si falta una plantilla, aparece disponible para registrarla explícitamente.
-Sin un modelo seleccionado, el chat muestra **No hay modelo configurado**.
+**Nuevo proveedor** ofrece los presets y **Otro proveedor** para endpoints
+compatibles con Chat Completions. La clave escrita vive en memoria durante la
+ejecución; para reutilizarla se guarda el nombre de una variable de entorno.
+No se crean `.env.local` ni se guardan claves en las sesiones.
 
-**Models → Configurar modelo** conserva el formulario manual de tres páginas,
-recorridas con Tab y Siguiente:
+**Configurar modelo** permite indicar ID/nombre, endpoint/puerto, credencial,
+contexto, máximo de salida y capacidades `Tools / imágenes` (`sí/no`, `no/no` o
+`sí/sí`). Habilitá herramientas solo si el modelo y su chat template las soportan.
+Los valores configurados se conservan al redescubrir el catálogo. DeepSeek usa
+la [API oficial de modelos](https://api-docs.deepseek.com/api/list-models/).
 
-1. ID real del modelo, nombre y host/URL base (incluyendo `/v1` si el servidor lo exige).
-2. Puerto, API key para esta ejecución o nombre de su variable de entorno.
-3. Contexto, máximo de salida y `Tools / imágenes`: `sí/no`, `no/no` o `sí/sí`.
+La elección es por pestaña/sesión; se pueden guardar defaults globales o del
+proyecto. Un historial con imágenes requiere un modelo que las acepte o una
+sesión nueva. Sin modelo seleccionado, el chat lo indica y conserva el borrador.
 
-llama.cpp sigue siendo el default. **Models → Descubrir /models** actualiza la
-lista del proveedor activo. El catálogo aporta nombres, contexto y modalidades
-cuando están disponibles; la salida inicial se limita a 2048 tokens o al límite
-menor reportado. DeepSeek admite tools según su API oficial; para llama.cpp y
-otros endpoints, habilitarlas manualmente solo si el modelo/template las soporta.
-Los valores configurados de modelos existentes se conservan al consultar de nuevo.
-[Contrato de descubrimiento DeepSeek](https://api-docs.deepseek.com/api/list-models/).
-La API key escrita en el formulario vive en memoria y tiene prioridad durante
-esa ejecución sobre la variable configurada;
-para reusar credenciales se guarda solo el nombre de una variable de entorno.
-No se crean archivos `.env.local` ni se guardan claves/cabeceras en las sesiones.
+### Servidor llama.cpp
 
-Models permite agregar/quitar modelos y proveedores, editar host/puerto y guardar
-el default global o del proyecto. Un cambio de modelo conserva el historial;
-si contiene imágenes, exige un modelo con esa capacidad o una sesión nueva.
-
-## Servidor local externo
-
-El harness no descarga modelos ni inicia `llama-server`. Ejemplo para un GGUF
-ya disponible:
+El agente no descarga modelos ni inicia el servidor. Para un GGUF disponible:
 
 ```bash
 llama-server -m /ruta/modelo.gguf --host 127.0.0.1 --port 8080 --alias local-coder --jinja
 ```
 
-Registrar `local-coder` en Models, con el contexto de ese servidor. El tool calling
-puede requerir un chat template compatible: consultar la
-[documentación oficial de llama.cpp](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md).
-Este ejemplo no implica una prueba realizada con ese modelo.
+Elegí `local-coder` desde el catálogo y configurá los límites de tu servidor.
+El tool calling requiere un template compatible; consultá el
+[servidor oficial de llama.cpp](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md).
 
-## Trabajo y atajos
+## Promptings con metavariables
 
-El menú Projects administra nombre/carpeta. Archivo crea y reabre sesiones por
-proyecto; conserva borradores y el contenido enviado. Ventanas → Componentes
-mantiene el laboratorio QBasic. `--demo` abre la demo sin persistencia ni proveedor.
+**Promptings → Biblioteca**, **Alt+T** o `/promptings` abre el CRUD de plantillas.
+Cada prompting tiene nombre y texto multilínea; **Guardar prompt actual** toma el
+borrador como texto inicial. La biblioteca es global, disponible en todos los proyectos.
 
-| Acción | Teclado / mouse |
+```text
+Revisá {{archivo}} en {{lenguaje}}.
+Usá este contexto:
+{{contexto}}
+Incluí {{archivo}} en el resumen.
+```
+
+Elegí **Cargar en el editor** para revisar o **Ejecutar con modelo actual** para
+enviar. La TUI pregunta una vez por cada nombre distinto, en orden de aparición.
+**Anterior/Siguiente** conservan respuestas; **Enter** avanza/aplica,
+**Shift+Enter** agrega línea y **Esc** cancela sin cambiar el borrador.
+
+Los nombres usan letras ASCII, números y `_`, empezando con letra o `_`; también
+se acepta `{{ archivo }}`. Los valores pueden ser vacíos, Unicode o multilínea.
+La sustitución es literal, de una sola pasada: `$&` y `{{otra}}` dentro de un valor
+se conservan. La plantilla guarda sus metavariables; el texto resuelto queda en
+el borrador/historial habitual. En el editor, Enter en Nombre pasa al texto y
+Enter en Texto guarda.
+
+## Archivos, chat y herramientas
+
+**Archivo → Explorador** o **Ctrl+E** permite navegar por padre, raíz y rutas
+escritas, incluyendo fuera del proyecto. Enter/doble clic abre carpetas o previews
+de texto en solo lectura; rueda, flechas y `h/j/k/l` navegan. Preview hasta 64 KiB;
+los binarios muestran su tipo. Adjuntar no cambia el cwd de las herramientas.
+
+Pegar/arrastrar rutas prepara adjuntos. **Ctrl+F** o `/attach ruta` permite revisar,
+agregar o quitar. En terminales sin bracketed paste, el primer Enter reconoce rutas
+existentes y adjunta; el siguiente envía. Los bloques de código quedan como texto.
+Texto UTF-8 hasta 1 MiB; PNG/JPEG/WebP hasta 5 MiB si el modelo acepta imágenes.
+Máximo 10 archivos y 10 MiB incluyendo base64. Si un adjunto cambia, revisar su
+versión actualizada antes de volver a enviar. El historial conserva lo enviado.
+
+Las herramientas nativas son **read/list/search/write/edit/shell**. Edit exige
+una coincidencia exacta única; shell devuelve stdout/stderr, duración y exit code.
+Se leen instrucciones AGENTS del proyecto y sus subcarpetas. Las herramientas
+tienen los permisos del usuario y efectos reales; no hay sandbox. Cancelar no
+revierte cambios ni reejecuta herramientas interrumpidas al reabrir.
+
+El chat muestra razonamiento solo cuando el proveedor envía `reasoning_content`
+o `reasoning`. Muestra argumentos parciales de tool calls, ejecución y resultados;
+solo ejecuta llamadas completas. Selección, scroll y lectura permanecen disponibles.
+
+### MCP
+
+**Tools → MCP** o **Alt+C** permite listar, agregar, editar, eliminar del registro,
+habilitar/deshabilitar y probar servidores. Stdio: nombre, command, args JSON,
+cwd opcional y referencias a variables de entorno. HTTP: nombre, URL y variable
+de API key opcional. Las tools habilitadas se cargan por turno; conexión, calls,
+resultados y errores aparecen en el chat del proyecto correspondiente.
+
+MCP stdio requiere el comando del servidor instalado. Se soportan tools y
+negociación de protocolo; sampling, elicitation, OAuth y resources/prompts no están
+implementados. [Contrato y QA](docs/qa/mcp-and-skills.md).
+
+### Skills
+
+**Tools → Skills** o **Alt+S** registra carpetas/SKILL.md globales o por proyecto,
+permite leerlas, activarlas/desactivarlas y quitar el registro. El modelo recibe
+un catálogo breve y carga el cuerpo mediante la tool skill.
+`/skill nombre pedido` invoca sus instrucciones explícitamente.
+
+**Buscar en skills.sh** muestra nombre, origen e instalaciones; permite instalar
+desde GitHub para el proyecto o globalmente. Requiere Git y conserva carpeta,
+recursos y licencias. No requiere npm/npx/Node. Instalar o cargar instrucciones
+no ejecuta scripts; quitar el registro conserva los archivos.
+
+## Teclado y apariencia
+
+| Acción | Atajo |
 | --- | --- |
-| Enviar | Enter o Enviar |
-| Nueva línea | Shift+Enter; Ctrl+J si el terminal no distingue el modificador |
-| Cancelar turno / descubrimiento | Ctrl+C o Cancelar; conserva efectos ya realizados |
-| Elegir proyecto / modelo / proveedor / sesión | Ctrl+P / Ctrl+O / Ctrl+B / Ctrl+R |
-| Adjuntos | Ctrl+F o Ventanas → Adjuntos |
-| Explorador de archivos | Ctrl+E o Archivo → Explorador de archivos |
-| Biblioteca de promptings | Alt+T o Archivo → Promptings |
-| Cambiar panel | Ctrl+N o clic; Tab en NORMAL cambia prompt/conversación |
-| Foco de controles | Tab / Shift+Tab o clic |
-| Menú | Escape desde NORMAL; desde INSERT pasa primero a NORMAL; Alt+A/P/M/C/S/V/Y o clic |
-| Menú/modal | Flechas, Enter, Escape; tienen prioridad sobre Vim |
-| Selector | j/k o flechas, Enter; mouse y rueda |
-| Seleccionar texto | Ctrl+A, Shift+flechas, arrastre; la respuesta sigue en solo lectura |
-| Ayuda | Alt+Y o menú Ayuda |
-| Cerrar auxiliar / salir | Ctrl+W o `[X]` / Ctrl+Q; Ctrl+C sale cuando está idle |
+| Enviar / nueva línea | Enter / Shift+Enter; Ctrl+J como alternativa. |
+| Proyecto / modelo / proveedor / sesión | Ctrl+P / Ctrl+O / Ctrl+B / Ctrl+R. |
+| Pestaña anterior/siguiente / selección directa | Alt+←/→ / Alt+1…9. |
+| Adjuntos / explorador | Ctrl+F / Ctrl+E. |
+| Promptings / MCP / Skills | Alt+T / Alt+C / Alt+S. |
+| Cambiar panel / foco | Ctrl+N / Tab o Shift+Tab; también clic. |
+| Menú / ayuda | Esc desde NORMAL / Alt+Y. |
+| Cerrar pestaña o auxiliar / salir | Ctrl+W / Ctrl+Q. |
 
-Vim arranca en **INSERT**. En NORMAL, el prompt admite `h/j/k/l`, `w/b`, `0/$`,
-`i/a/I/A`, `x`, `dd` y `u`. En la conversación: `j/k`, Ctrl+D/U, `gg/G`.
-Espacio seguido de `p/m/s/e/f/c/k/t/?` abre proyectos/modelos/sesiones/explorador/adjuntos/MCP/skills/promptings/ayuda.
-Ayuda permite activar/desactivar Vim; `ui.vimMode` también puede configurarse en JSON.
-
-Comandos: `/help`, `/projects`, `/providers`, `/models`, `/sessions`, `/files`, `/new`,
-`/mcp`, `/skills`, `/skill nombre prompt`, `/promptings`, `/attach ruta`, `/detach`, `/quit`. Tab completa comandos y una ruta de `/attach`
-con candidato único. /skill se envía como invocación; los demás comandos de la aplicación no se envían al modelo.
+Vim inicia en **INSERT**. Esc pasa a NORMAL; en el prompt: `h/j/k/l`, `w/b`,
+`0/$`, `i/a/I/A`, `x`, `dd`, `u`. En el chat: `j/k`, Ctrl+D/U, `gg/G` para scroll.
+Espacio seguido de `p/m/s/e/f/c/k/t/?` abre proyecto/modelo/sesión/explorador/
+adjuntos/MCP/Skills/Promptings/ayuda. Menús/modales tienen prioridad sobre Vim.
 No se asignan acciones a F1–F12.
 
-Bindings opcionales, asociados a acciones conocidas, con colisiones rechazadas:
+**Vista → Paleta de colores** cambia en vivo y guarda **QBasic**, **Grises** o
+**Verdes**. **Vista → Activar / desactivar Vim** configura el modo. Se respetan
+`NO_COLOR`, `--no-color` y `--no-mouse`; RGB con `COLORTERM=truecolor`, fallback
+ANSI16 para otros terminales. Renderer por filas modificadas, sin frames idle.
+
+Comandos: `/help`, `/projects`, `/models`, `/providers`, `/sessions`, `/files`,
+`/new`, `/promptings`, `/mcp`, `/skills`, `/skill nombre pedido`, `/attach ruta`,
+`/detach`, `/quit`. Tab completa comandos y rutas de `/attach` con candidato único.
+
+## Configuración y persistencia
+
+Linux respeta XDG: config en `~/.config/s42-agent/config.json` y sesiones en
+`~/.local/state/s42-agent/sessions/`. macOS usa `~/Library/Application Support/s42-agent/`;
+Windows, APPDATA/LOCALAPPDATA. Con `--config`, sesiones en `sessions/` junto al JSON.
+
+Configuración: proyectos/proveedores/modelos, MCP/Skills/Promptings, defaults,
+`workspace.openProjectIds`, `lastProjectId`, paleta y bindings. Las sesiones JSONL
+guardan mensajes, selección, borrador y eventos, con un lock por sesión.
+`--provider`, `--model` y `--session` permiten selecciones explícitas al iniciar.
+
+Bindings opcionales por acción conocida, con colisiones rechazadas:
 
 ```json
 "ui": {
@@ -119,225 +237,31 @@ Bindings opcionales, asociados a acciones conocidas, con colisiones rechazadas:
 }
 ```
 
-Las acciones configurables son `projects`, `models`, `providers`, `sessions`,
-`attachments`, `explorer`, `mcp`, `skills`, `promptings` y `help`. Los atajos de lifecycle/foco/edición permanecen reservados.
+Acciones: `projects`, `models`, `providers`, `sessions`, `attachments`, `explorer`,
+`mcp`, `skills`, `promptings`, `help`. Atajos de edición/foco/lifecycle permanecen
+reservados. Límites iniciales: 30 pasos y 120 s para shell/primer evento/inactividad.
+El contexto se estima sin tokenizador; prevalece el límite del servidor.
 
-## Promptings reutilizables
+Bun hereda el entorno y puede cargar archivos existentes; `--cwd` fija la carpeta
+de las tools, sin cambiar el directorio global del proceso. Para usar solo variables
+exportadas: `bun run --no-env-file index.ts`. [Specs](docs/SPECS.md).
 
-**Archivo → Promptings**, **Alt+T** o `/promptings` abre la biblioteca. Permite
-crear, ver/editar y eliminar plantillas con nombre y texto multilínea. **Archivo →
-Guardar prompt actual** toma el borrador como texto inicial. Se guardan en
-`promptings` dentro del JSON de configuración y están disponibles en todos los
-proyectos.
-
-```text
-Revisá {{archivo}} en {{lenguaje}}.
-Usá este contexto:
-{{contexto}}
-Incluí {{archivo}} en el resumen.
-```
-
-Elegí **Cargar en el editor** para revisar el resultado o **Ejecutar con modelo
-actual** para enviarlo. La TUI pregunta por cada metavariable distinta, en orden
-de aparición; **Anterior/Siguiente** conservan los valores. `archivo` se pregunta
-una sola vez en el ejemplo. Valores vacíos y multilínea están permitidos:
-**Shift+Enter** agrega una línea, **Enter** avanza o aplica y **Esc** cancela sin
-cambiar el borrador. En el editor de plantillas, Enter en Nombre pasa al texto;
-Enter en Texto guarda. Tab y mouse recorren los controles.
-
-Los nombres de metavariables usan letras ASCII, números y `_`, comenzando con
-letra o `_`; también se acepta `{{ archivo }}`. La sustitución es literal y de una
-sola pasada: pegar `$&` o `{{otra}}` como valor los conserva. La plantilla mantiene
-sus metavariables; los valores quedan en el borrador/historial habitual de la
-sesión. Si falta un modelo al ejecutar, el texto completo permanece en el prompt.
-[Validación y capturas de terminal](docs/qa/promptings.md).
-
-## Explorador y chat
-
-El explorador parte del proyecto y permite salir de él: **Subir**, **Raíz** o una
-ruta escrita en el input y **Ir**. Muestra carpetas, archivos, ocultos y enlaces.
-Enter/doble clic abre una carpeta o una vista previa de texto en solo lectura;
-flecha izquierda/Backspace sube, `h/j/k/l` navega y la rueda desplaza el listado.
-La vista previa se limita a 64 KiB; los binarios muestran su tipo sin interpretarse
-como texto. **Adjuntar** prepara un archivo, incluso fuera del proyecto, sin enviar
-el prompt ni cambiar la carpeta de trabajo. En Projects, **Elegir folder** devuelve
-la carpeta visitada y conserva el nombre escrito en el formulario.
-
-El chat muestra **Razonamiento** cuando el proveedor lo envía en
-`reasoning_content` o `reasoning`. Los argumentos de **Tool call** aparecen durante
-su recepción; luego se muestra la herramienta ejecutándose y su resultado, error,
-duración y exit code disponible. Solo se ejecutan llamadas completas. La respuesta
-y el razonamiento recibido se guardan con la sesión, también ante cancelación o
-desconexión; una llamada incompleta no se ejecuta ni se registra como ejecutable.
-
-El servidor debe exponer ese razonamiento: [llama.cpp](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)
-documenta `reasoning_content`, y [vLLM](https://docs.vllm.ai/en/latest/features/reasoning_outputs/)
-documenta `reasoning`. No se genera un razonamiento ficticio cuando no viene en
-el stream. [QA del explorador/chat](docs/qa/explorer-and-reasoning.md).
-
-## Adjuntos
-
-Pegar/arrastrar rutas entregadas por el terminal prepara adjuntos **sin inferencia**.
-En terminales sin bracketed paste, usar INSERT: el primer Enter sobre una línea
-completa de rutas existentes adjunta; el siguiente envía. `/attach` y Ctrl+F
-sirven como alternativa. Los bloques de código permanecen como texto.
-
-Texto UTF-8 hasta 1 MiB; PNG/JPEG/WebP hasta 5 MiB con un modelo que admita imágenes.
-Máximo 10 archivos y 10 MiB incluyendo base64. No se incluyen carpetas, PDFs ni
-archivos comprimidos. Ctrl+F muestra rutas/tamaños y permite quitar adjuntos.
-Si un archivo cambia antes de enviar, se actualiza el borrador y se pide revisar
-antes de pulsar Enter otra vez. El historial conserva los bytes/texto enviados.
-
-## Configuración y límites
-
-```bash
-bun run index.ts --cwd /ruta/proyecto
-bun run index.ts --project nombre
-bun run index.ts --config /ruta/config.json
-bun run index.ts --help
-bun run index.ts --no-color --no-mouse
-bun run index.ts --demo
-```
-
-Linux: config en `~/.config/s42-agent/config.json` y sesiones en
-`~/.local/state/s42-agent/sessions/`, respetando XDG. macOS usa
-`~/Library/Application Support/s42-agent/`; Windows, APPDATA/LOCALAPPDATA.
-Con `--config`, las sesiones quedan en `sessions/` junto a ese archivo.
-`--provider`, `--model` y `--session` permiten selecciones explícitas.
-
-El proceso hereda el entorno y el comportamiento de carga de Bun al iniciarse;
-`--cwd` fija el proyecto de las tools, sin cambiar el directorio global del proceso.
-Bun puede cargar archivos de entorno existentes. Para usar solamente variables
-exportadas: `bun run --no-env-file index.ts`. Consultar
-[variables de entorno en Bun](https://bun.com/docs/runtime/environment-variables).
-No se modificó `bunfig.toml`; el smoke del binario utiliza un entorno mínimo,
-sin ficheros de configuración del checkout.
-
-El loop dispone de read/list/search/write/edit/shell, instrucciones AGENTS raíz y
-subcarpetas y resultados por llamada. Edit requiere una coincidencia exacta única.
-Shell no toma stdin de la TUI; informa stdout/stderr, duración y exit code.
-Las tools tienen los permisos del usuario y **efectos reales**; no hay sandbox.
-No se hacen acciones Git automáticas salvo instrucciones de la tarea/proyecto.
-
-Config `limits`: 30 pasos, shell/primer evento/inactividad de 120 s inicialmente.
-El contexto se estima sin tokenizador: bytes de texto/4 y reserva aproximada de
-1024 tokens por imagen. El límite del servidor prevalece; `/new` inicia otro
-historial. Cancelar no revierte cambios; una tool interrumpida no se repite al reabrir.
-
-## Validación y estado
+## Desarrollo y distribución
 
 ```bash
 bun run typecheck
 bun test
+bun run build             # Opcional: compila el binario del host en dist/s42-agent.
 ```
 
-[Specs](docs/SPECS.md), [fases](docs/phases/README.md) y
-[evidencia del agente](docs/qa/agent-mvp.md). Streaming y coding se comprobaron
-con fixtures y [GLM-4.7-Flash real](docs/qa/local-llm.md), incluyendo MCP/skill,
-edición y bun test, razonamiento, cancelación y reapertura. Pendientes externos:
-mouse/drop físicos y ejecución macOS/Windows/arm64. Descendientes Linux comprobados; taskkill implementado en Windows, con ejecución
-en destino pendiente.
+El binario contiene el runtime Bun; el servidor/modelo LLM y los programas que
+usen shell/MCP siguen siendo externos. `build:targets` genera otros targets, pero
+cross-compilar no demuestra que corran en destino. La TUI y las pestañas se validan
+desde la fuente en Linux con PTY y fixtures. Hay evidencia previa de GLM real;
+mouse/drop físicos y runtime macOS/Windows/arm64 siguen pendientes.
 
-**Ventanas → Paleta de colores** permite elegir **Clásica · QBasic** (la actual,
-predeterminada), **Blanco y negro · Grises** o **Verdes**, por mouse o teclado.
-Se aplica inmediatamente a toda la TUI y queda guardada para el próximo inicio.
-En JSON: `ui.palette` admite `qbasic`, `grayscale` o `green`; los archivos anteriores
-sin ese campo conservan QBasic. Cambiar colores conserva el borrador y la sesión.
+[QA de pestañas/menús](docs/qa/project-tabs.md), [QA integral](docs/qa/final-validation.md),
+[fases](docs/phases/README.md), [CHANGELOG](CHANGELOG.md).
 
-`COLORTERM=truecolor`/`24bit` activa RGB; de otro modo usa variantes ANSI16
-de la paleta elegida. Respeta `NO_COLOR`, `--no-color`, `ui.color: "never"` y
-`TERM=dumb`. La escala de grises conserva tonos de fondo, selección y controles;
-desactivar color usa los atributos de foco/selección del terminal.
-Sin TTY devuelve un mensaje limpio. Renderer por filas modificadas, sin frames idle.
-
-`index.ts` es el entrypoint; `src/app.ts` compone persistencia/LLM/tools con
-`src/ui/components/`. `src/llm`, `src/agent` y `src/storage` mantienen contratos
-pequeños. No hay dependencias de runtime externas.
-
-Distribución local del harness disponible; no hay release publicada.
-
-## Binario y QA
-
-```bash
-bun run build             # target del host en dist/s42-agent
-bun run build:targets     # Linux x64/arm64, macOS x64/arm64, Windows x64
-```
-
-Artefactos locales `dist/s42-agent-0.1.0-<target>` (Windows .exe), versión Bun
-y checksums en `dist/build-targets.json` y `dist/build-targets.sha256`.
-Linux x64 ejecutado fuera del checkout con PATH sin Bun/Node: configuración,
-sesión, streaming fixture, MCP, YAML/skill, edit, shell y cierre. Otros targets
-están **compilados, con runtime pendiente**; no se declaran soportados todavía.
-
-Instalación Linux x64 desde los artefactos generados localmente:
-
-```bash
-cd dist
-sha256sum --check build-targets.sha256
-mkdir -p ~/.local/bin
-install -m 755 s42-agent-0.1.0-linux-x64 ~/.local/bin/s42-agent
-~/.local/bin/s42-agent --version
-~/.local/bin/s42-agent --cwd /ruta/proyecto
-```
-
-No necesita Bun/Node para ejecutar la TUI. El servidor LLM sigue siendo externo.
-Shell requiere el shell/programas usados por la tarea; instalar skills requiere
-Git y los servidores MCP stdio requieren su propio comando instalado.
-
-```bash
-bun run qa:stress        # 50 ciclos; permisos/resize/cancelación/cleanup
-bun run qa:soak          # 30 minutos, fuente PTY, errores HTTP y cancelación
-bun run qa:llm -- http://127.0.0.1:8080/v1
-bun run qa:skills        # catálogo real, instalación temporal de Vercel
-bun run build:compare   # normal/minify+sourcemap/bytecode
-bun run bench:tui -- dist/s42-agent-0.1.0-linux-x64
-bun run smoke:binary -- dist/s42-agent-0.1.0-linux-x64
-```
-
-QA real usa archivos/config temporales y no modifica tu configuración personal.
-qa:llm es un escenario de GLM con contexto 32768 y tools; Models del producto
-permite otros IDs/capacidades. Bench/stress/soak actuales usan PTY y /proc de Linux.
-Las métricas miden bytes recibidos en PTY y excluyen pintura gráfica e inferencia.
-[Validación integral](docs/qa/final-validation.md).
-
-Errores: endpoint caído o ID incorrecto → revisar Models/base URL y /models;
-contexto excedido → /new o contexto real del servidor; key ausente → exportar
-la variable configurada; EACCES → usar un directorio de config escribible;
-MCP command/args → probar conexión y revisar command instalado/args JSON;
-Shift+Enter no distinguible → Ctrl+J; menú largo → flechas/páginas/rueda;
-lock vivo → cerrar la otra instancia o crear otra sesión. No borrar datos
-para ocultar una corrupción: el harness informa el archivo/registro afectado.
-
-
-## MCP
-
-**MCP** (Alt+C) administra servidores: alta stdio/HTTP, listado, edición,
-eliminación del registro y enabled/disabled. Elegir un servidor permite probar
-la conexión y ver sus herramientas. /mcp abre el listado.
-
-Stdio: Name, Command, Args como array JSON, Cwd opcional absoluto y Env refs
-como mapa JSON de variable del servidor a variable existente del entorno.
-Ejemplo: command `bun`, args `["/ruta/servidor-mcp.ts"]`, envRefs
-`{"TOKEN":"MI_TOKEN"}`. HTTP: Name, URL completa (incluye puerto/path /mcp)
-y nombre opcional de variable API key Bearer. No se guardan claves literales.
-
-Las herramientas MCP habilitadas se agregan a las nativas por turno, con nombres
-únicos. El chat conserva conexión/progreso, calls/resultados y errores. Ctrl+C
-cancela HTTP y stdio; cerrar termina servidores iniciados por el harness.
-Soporta tools de MCP 2026-07-28 y negociación legacy; no anuncia sampling,
-elicitation, OAuth ni interfaces de resources/prompts. [QA](docs/qa/mcp-and-skills.md).
-
-## Skills
-
-**Skills** (Alt+S) permite registrar una carpeta o SKILL.md existente, global o
-para el proyecto; listar, ver, habilitar/deshabilitar y quitar del registro.
-`name`/`description` se leen con Bun.YAML; name coincide con la carpeta.
-El modelo recibe un catálogo breve y carga el cuerpo con la herramienta skill.
-`/skill nombre pedido` invoca explícitamente sus instrucciones antes de responder.
-
-**Buscar en skills.sh** consulta el catálogo desde Bun, muestra origen e
-instalaciones y permite instalar una skill para el proyecto o globalmente.
-Instalar requiere Git en PATH y copia la carpeta completa, scripts/assets/references
-y licencias a `skills/` junto a config.json. No requiere npm/npx/Node. Un origen
-sin owner/repo GitHub ofrece su enlace y puede registrarse localmente. Quitar del
-registro conserva los archivos. Instalar o cargar instrucciones no ejecuta scripts.
+Para contribuir: [CONTRIBUTING.md](CONTRIBUTING.md). Preparación de publicación:
+[PUBLISHING.md](docs/PUBLISHING.md). Licencia: [MIT](LICENSE).

@@ -4,6 +4,15 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "description": "A Bun coding harness with a QBasic-style terminal UI, project tabs and local LLM support.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stock42/s42-agent.git"
+  },
+  "homepage": "https://github.com/stock42/s42-agent#readme",
+  "bugs": { "url": "https://github.com/stock42/s42-agent/issues" },
+  "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "bun run index.ts",
     "typecheck": "bun ./node_modules/typescript/bin/tsc --noEmit",

@@ -15,6 +15,7 @@ export interface Config {
   version: 1; projects: Project[]; providers: Provider[];
   mcpServers: McpServer[]; skills: Skill[]; promptings: Prompting[];
   defaults: Selection & { projectId?: string }; lastProjectId?: string;
+  workspace?: { openProjectIds: string[] };
   ui: { vimMode: boolean; color: "auto" | "never"; palette: PaletteId; bindings?: Bindings };
   limits: { maxSteps: number; shellTimeoutMs: number; firstEventMs: number; idleMs: number };
 }
@@ -78,6 +79,9 @@ export function validateConfig(value: unknown): Config {
   if (c.promptings === undefined) c.promptings = [];
   if (!Array.isArray(c.promptings) || c.promptings.some(p => !p || !text(p.id) || !text(p.name) || !text(p.text))) throw new Error("Prompting inválido: requiere id, name y text");
   if (!unique(c.promptings.map(p => p.id))) throw new Error("IDs de promptings duplicados");
+  if (c.workspace !== undefined && (!c.workspace || !Array.isArray(c.workspace.openProjectIds)
+    || !c.workspace.openProjectIds.every(id => text(id) && c.projects.some(p => p.id === id))
+    || !unique(c.workspace.openProjectIds))) throw new Error("Pestañas inválidas en config");
   c.limits ??= defaultConfig().limits;
   if (![c.limits.maxSteps, c.limits.shellTimeoutMs, c.limits.firstEventMs, c.limits.idleMs].every(positive)) throw new Error("Límites inválidos en config");
   bindings(c.ui.bindings);

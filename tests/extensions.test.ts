@@ -10,7 +10,7 @@ async function until(check:()=>boolean){for(let i=0;i<500;i++){if(check())return
 test('MCP CRUD y skill registro/toggle/removal, compact menu mouse and modal save focus',async()=>{
  const root=await mkdtemp(join(tmpdir(),'s42-ext-ui-')),app=await App.open({config:join(root,'config.json'),cwd:root});
  const save=async(values:string[])=>{const modal=app.desktop.modal!;const inputs=modal.controls.filter(c=>c instanceof Input) as Input[];values.forEach((value,i)=>inputs[i]!.setValue(value));modal.focusedId='save';key(app,'enter');await until(()=>!app.desktop.modal);};
- try{app.desktop.resize(60,16);const header=app.desktop.draw().lines()[0]!;for(const name of ['Projects','Models','MCP','Skills','Ayuda'])expect(header).toContain(name);
+ try{app.desktop.resize(60,16);const header=app.desktop.draw().lines()[0]!;for(const name of ['Projects','Models','Promptings','Tools','Vista','Ayuda'])expect(header).toContain(name);
  key(app,"alt+c");expect(app.desktop.modal!.title).toContain("MCP");key(app,"escape");
  app.extensions.serverForm('http');await save(['Local MCP','http://127.0.0.1:3000/mcp','']);expect(app.store.value.mcpServers[0]!.enabled).toBe(true);
  app.extensions.servers();key(app,'enter');key(app,'down');key(app,'enter');await until(()=>!app.store.value.mcpServers[0]!.enabled);

@@ -6,7 +6,6 @@ import { Session, listSessions } from "./storage/sessions.ts";
 import type { Message, Selection, ToolCall } from "./agent/messages.ts";
 import { createWorkspaceView } from "./ui/workspace.ts";
 import { choose, form, info } from "./ui/dialogs.ts";
-import { createDemoPanels } from "./ui/demo.ts";
 import { palettes, theme, type PaletteId } from "./ui/theme.ts";
 import { CompletionError, credential, discoverModels } from "./llm/client.ts";
 import { runTurn } from "./agent/loop.ts";
@@ -16,30 +15,44 @@ import { bindings, type Action } from "./ui/bindings.ts";
 import type { InputEvent } from "./ui/types.ts";
 import { readdir } from "node:fs/promises";
 import { FileExplorer } from "./ui/components/file-explorer.ts";
+import { TabBar } from "./ui/components/tab-bar.ts";
+import { createProjectTab, type ProjectTab } from "./project-tab.ts";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
 export class App {
-  readonly view = createWorkspaceView({ name: "s42-agent", path: "" });
+  readonly view = createWorkspaceView({ name: "s42-agent", path: "" }, false);
   readonly desktop = this.view.desktop;
-  project?: Project;
-  session?: Session;
-  selection: Selection = { providerId: "llama.cpp" };
-  status = "Listo";
-  busy = false;
+  readonly tabs: ProjectTab[] = [createProjectTab(this.view)];
+  private activeTab = this.tabs[0]!;
+  get project() { return this.activeTab.project; }
+  get session() { return this.activeTab.session; }
+  get selection() { return this.activeTab.selection; }
+  set selection(value: Selection) { this.activeTab.selection = value; }
+  get status() { return this.activeTab.status; }
+  set status(value: string) { this.activeTab.status = value; }
+  get busy() { return this.activeTab.busy; }
+  set busy(value: boolean) { this.activeTab.busy = value; }
   readonly keys = new Map<string, string>();
-  attachments: Attachment[] = [];
+  get attachments() { return this.activeTab.attachments; }
+  set attachments(value: Attachment[]) { this.activeTab.attachments = value; }
   readonly extensions:Extensions;
   readonly promptings: Promptings;
-  mode: "INSERT" | "NORMAL" = "INSERT";
-  private pending = "";
-  private pasting = false;
+  get mode() { return this.activeTab.mode; }
+  set mode(value: "INSERT" | "NORMAL") { this.activeTab.mode = value; }
+  private get pending() { return this.activeTab.pending; }
+  private set pending(value: string) { this.activeTab.pending = value; }
+  private get pasting() { return this.activeTab.pasting; }
+  private set pasting(value: boolean) { this.activeTab.pasting = value; }
   private operations: Promise<unknown> = Promise.resolve();
-  private turn?: Promise<void>;
-  private controller?: AbortController;
-  private rendered = new WeakMap<Message, string>();
+  private opening = false;
+  private get controller() { return this.activeTab.controller; }
+  private set controller(value: AbortController | undefined) { this.activeTab.controller = value; }
   private constructor(readonly store: ConfigStore, readonly sessionsPath: string, readonly cwd: string) {
     this.desktop.palette = store.value.ui.palette;
-    const { prompt, send, promptWindow } = this.view;
+    const { promptWindow } = this.view;
+    this.bindTab(this.activeTab);
+    this.desktop.tabs = new TabBar(() => this.tabs.filter(t => t.project).map(t => ({ id: t.id, label: t.project!.name, busy: t.busy })),
+      () => this.activeTab.id, id => this.run(() => this.activateTab(id)), id => this.run(() => this.closeTab(id)), () => this.projects());
     const resize=this.desktop.onResize!;
     this.desktop.onResize=(width,height)=>{resize(width,height);if(this.attachments.length && promptWindow.client.height<3){
       promptWindow.bounds.height++;promptWindow.bounds.y--;this.view.editorWindow.bounds.height--;this.desktop.floatingArea={...this.view.editorWindow.bounds};
@@ -50,9 +63,11 @@ export class App {
       try { const { provider, model } = this.current(); context = `${provider.name} · ${model.id} · ${this.session?.state.id.slice(0, 8) ?? ""}`; } catch {}
       canvas.text(client.x + 1, client.y, context, theme.window, client.width - 2);
     };
-    prompt.onSubmit = () => this.run(() => this.submit()); send.onClick = () => this.busy ? this.cancel() : this.run(() => this.submit());
-    const promptLayout = promptWindow.onLayout!;
-    promptWindow.onLayout = client => { promptLayout(client); if (this.attachments.length) prompt.bounds.height = Math.max(1, prompt.bounds.height - 1); };
+    promptWindow.onLayout = client => {
+      const { prompt, send } = this.view;
+      prompt.bounds.width = Math.max(1, client.width - 18); prompt.bounds.height = Math.max(1, client.height - 1 - (this.attachments.length ? 1 : 0));
+      send.bounds.x = Math.max(1, client.width - 15);
+    };
     promptWindow.onDraw = (canvas, client) => {
       if (this.attachments.length) canvas.text(client.x + 1, client.y + client.height - 2,
         `Adjuntos (${this.attachments.length}): ${this.attachments.map(a => `${a.name} ${a.size} B`).join(" · ")} · ${this.bindingLabel("attachments")}`, theme.window, client.width - 2);
@@ -60,7 +75,6 @@ export class App {
       canvas.text(client.x + 1, client.y + client.height - 1, `${this.mode} · ${this.status}`, theme.window, available);
       canvas.text(client.x + 1 + available,client.y + client.height - 1," · "+hint,theme.window,client.width - available - 2);
     };
-    const demo = createDemoPanels(this.desktop);
     this.extensions=new Extensions({desktop:this.desktop,store:this.store,cwd:this.cwd,project:()=>this.project,idle:()=>this.requireIdle(),change:task=>this.change(async()=>{this.requireIdle();await task();}),run:task=>this.run(task),task:(label,operation)=>this.task(label,operation),status:text=>{if(text.startsWith("/skill ")){this.view.prompt.setValue(text+" ");this.desktop.focus(this.view.promptWindow);}else this.status=text;this.desktop.invalidate();}});
     this.promptings = new Promptings({ desktop: this.desktop, store: this.store, idle: () => this.requireIdle(),
       change: work => this.change(work), run: work => this.run(work), load: (text, execute) => this.loadPrompting(text, execute),
@@ -68,17 +82,19 @@ export class App {
     this.desktop.menu.menus.splice(0, this.desktop.menu.menus.length,
       { label: "Archivo", items: [
         { label: "Explorador de archivos", run: () => this.explore() },
-        { label: "Nueva sesión", run: () => this.run(() => this.newSession()) },
-        { label: "Sesiones", shortcut: "Ctrl+R", run: () => this.sessions() },
-        { label: "Promptings", run: () => this.promptings.library() },
-        { label: "Guardar prompt actual", run: () => this.promptings.editor(undefined, prompt.value) },
+        { label: "Adjuntos", run: () => this.attachmentMenu() },
         { label: "Salir", shortcut: "Ctrl+Q", run: () => this.desktop.onExit() },
       ] },
       { label: "Projects", hotkey: "p", items: [
-        { label: "Elegir proyecto", shortcut: "Ctrl+P", run: () => this.projects() },
+        { label: "Abrir proyecto", shortcut: "Ctrl+P", run: () => this.projects() },
         { label: "Agregar proyecto", run: () => this.projectForm() },
         { label: "Editar proyecto", run: () => this.projectForm(this.project) },
         { label: "Quitar del registro", run: () => this.removeProject() },
+        { label: "Nueva sesión", run: () => this.run(() => this.newSession()) },
+        { label: "Sesiones", shortcut: "Ctrl+R", run: () => this.sessions() },
+        { label: "Pestaña anterior", shortcut: "Alt+←", run: () => this.cycleTab(-1) },
+        { label: "Pestaña siguiente", shortcut: "Alt+→", run: () => this.cycleTab(1) },
+        { label: "Cerrar pestaña", shortcut: "Ctrl+W", run: () => this.run(() => this.closeTab(this.activeTab.id)) },
       ] },
       { label: "Models", hotkey: "m", items: [
         { label: "Elegir modelo", shortcut: "Ctrl+O", run: () => this.models() },
@@ -92,19 +108,34 @@ export class App {
         { label: "Default del proyecto", run: () => this.run(() => this.saveProjectDefault()) },
         { label: "Quitar proveedor", run: () => this.removeProvider() },
       ] },
-      ...this.extensions.menus,
-      { label: "Ventanas", items: [
+      { label: "Promptings", hotkey: "t", items: [
+        { label: "Biblioteca", run: () => this.promptings.library() },
+        { label: "Nuevo prompting", run: () => this.promptings.editor() },
+        { label: "Guardar prompt actual", run: () => this.promptings.editor(undefined, this.view.prompt.value) },
+      ] },
+      { label: "Tools", hotkey: "o", items: [
+        { label: "MCP · servidores", run: () => this.extensions.servers() },
+        { label: "MCP · agregar stdio", run: () => this.extensions.serverForm("stdio") },
+        { label: "MCP · agregar HTTP", run: () => this.extensions.serverForm("http") },
+        { label: "Skills · registradas", run: () => this.extensions.skills() },
+        { label: "Skills · registrar SKILL.md", run: () => this.extensions.skillForm() },
+        { label: "Skills · buscar en skills.sh", run: () => this.extensions.search() },
+      ] },
+      { label: "Vista", items: [
         { label: "Respuestas", run: () => this.desktop.focus(this.view.editorWindow) },
         { label: "Prompt", run: () => this.desktop.focus(promptWindow) },
-        { label: "Adjuntos", shortcut: "Ctrl+F", run: () => this.attachmentMenu() },
         { label: "Paleta de colores", run: () => this.colorPalette() },
-        { label: "Componentes", run: demo.components },
-        { label: "Siguiente", shortcut: "Ctrl+N", run: () => this.desktop.cycle() },
+        { label: "Cambiar panel", shortcut: "Ctrl+N", run: () => this.desktop.cycle() },
         { label: "Cerrar auxiliar", shortcut: "Ctrl+W", run: () => this.desktop.close() },
+        { label: "Activar / desactivar Vim", run: () => this.run(async () => {
+          const next = structuredClone(this.store.value); next.ui.vimMode = !next.ui.vimMode;
+          await this.store.save(next); for (const tab of this.tabs) { tab.mode = "INSERT"; tab.pending = ""; }
+          this.status = `Vim ${next.ui.vimMode ? "activado" : "desactivado"}`;
+        }) },
       ] },
-      { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", run: () => this.desktop.onHelp() }, {label:"Activar / desactivar Vim",run:()=>this.run(async()=>{ const next=structuredClone(this.store.value); next.ui.vimMode=!next.ui.vimMode; await this.store.save(next); this.mode="INSERT"; this.pending="";this.status=`Vim ${next.ui.vimMode ? "activado" : "desactivado"}`; })}] },
+      { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", run: () => this.desktop.onHelp() }] },
     );
-    const actionLabels:Record<Action,string>={projects:"Elegir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",explorer:"Explorador de archivos",mcp:"Servidores / CRUD",skills:"Skills registradas",promptings:"Promptings",help:"Atajos y mouse"};
+    const actionLabels:Record<Action,string>={projects:"Abrir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",explorer:"Explorador de archivos",mcp:"MCP · servidores",skills:"Skills · registradas",promptings:"Biblioteca",help:"Atajos y mouse"};
     for(const menu of this.desktop.menu.menus) for(const item of menu.items) {
       const action=(Object.keys(actionLabels) as Action[]).find(action=>actionLabels[action]===item.label);if(action)item.shortcut=this.bindingLabel(action);
     }
@@ -113,13 +144,22 @@ export class App {
       "Esc: INSERT → NORMAL → menú; modal: cerrar", "NORMAL: h/j/k/l w/b 0/$ · i/a/I/A · x dd u", "Conversación: j/k Ctrl+D/U gg/G; solo lectura",
       ...Object.entries(bindings(this.store.value.ui.bindings).normal).map(([action,key])=>`${key}: ${action}`), "Ctrl+N: cambiar panel",
       "Comandos: /help /projects /models /providers", "/sessions /files /new /attach ruta /detach /quit", "/mcp /skills /skill nombre prompt · Alt+C MCP · Alt+S Skills",
-      "/promptings: biblioteca · Archivo: guardar prompt actual",
+      "/promptings: biblioteca · menú Promptings: guardar borrador",
+      "Alt+←/→: pestaña · Alt+1…9: proyecto · Ctrl+W: cerrar",
+      "~ en pestaña: turno activo · Ctrl+C cancela la actual",
     ]);
     this.desktop.onShortcut = event => {
       if (event.type !== "key") return false;
+      const { prompt } = this.view;
       if (event.key === "ctrl+c" && this.busy) { this.cancel(); return true; }
+      if (event.key === "ctrl+c" && this.tabs.some(tab => tab.busy)) { this.status = "Hay proyectos trabajando: elegí su pestaña para cancelar, o Ctrl+Q para salir"; return true; }
       if(["escape","tab","shift+tab","ctrl+n","ctrl+w"].includes(event.key))this.pending="";
       if (this.desktop.modal || this.desktop.menu.opened >= 0) return false;
+      if (event.key === "alt+left" || event.key === "alt+right") { this.cycleTab(event.key === "alt+right" ? 1 : -1); return true; }
+      if (/^alt\+[1-9]$/.test(event.key)) {
+        const tab = this.tabs.filter(t => t.project)[Number(event.key.slice(4)) - 1]; if (tab) this.run(() => this.activateTab(tab.id)); return true;
+      }
+      if (event.key === "ctrl+w" && this.desktop.active?.fixed) { this.run(() => this.closeTab(this.activeTab.id)); return true; }
       if (event.key === "escape" && this.store.value.ui.vimMode && this.mode === "INSERT" && this.desktop.active === promptWindow && promptWindow.focusedId === prompt.id) { this.mode = "NORMAL"; this.pending = ""; return true; }
       if (event.key === "tab" && this.mode === "NORMAL" && this.desktop.active?.fixed) {
         this.desktop.focus(this.desktop.active === promptWindow ? this.view.editorWindow : promptWindow); promptWindow.focusedId = prompt.id; this.pending = ""; return true;
@@ -138,23 +178,43 @@ export class App {
     this.desktop.onControlInput = event => this.input(event);
     this.desktop.footer=()=>this.mode==="NORMAL" ? "i Insertar  Tab Panel  Espacio Leader  Esc Menú  ^Q Salir"
       : this.desktop.active===promptWindow && this.store.value.ui.vimMode ? `Enter Enviar  Esc NORMAL  ^N Panel  ${this.bindingLabel("attachments").replace("Ctrl+","^")} Adjuntos  ^Q Salir` : "Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir";
-    this.desktop.onBeforeExit = async () => { this.cancel(); let pending: Promise<unknown>; do { pending=this.operations; await pending; } while(pending!==this.operations); await this.turn; await this.saveDraft(); await this.session?.close(); };
+    this.desktop.onBeforeExit = async () => {
+      for (const tab of this.tabs) tab.controller?.abort(new Error("Turno cancelado; cerrando s42-agent"));
+      let pending: Promise<unknown>; do { pending = this.operations; await pending; } while (pending !== this.operations);
+      for (const tab of this.tabs) tab.controller?.abort(new Error("Turno cancelado; cerrando s42-agent"));
+      await Promise.all(this.tabs.map(tab => tab.turn));
+      for (const tab of this.tabs) { await this.saveDraft(tab); await tab.session?.close(); }
+    };
+    this.desktop.resize(this.desktop.width, this.desktop.height);
   }
   static async open(options: AppOptions = {}): Promise<App> {
     const paths = storagePaths(options.config), store = await ConfigStore.load(paths.config), app = new App(store, paths.sessions, process.cwd());
-    let project: Project | undefined;
-    if (options.cwd) {
-      const path = await normalizeFolder(options.cwd, app.cwd);
-      project = store.value.projects.find(p => p.path === path) ?? await store.project(basename(path), path, app.cwd);
-    } else if (options.project) project = store.resolveProject(options.project);
-    else project = store.value.projects.find(p => p.id === (store.value.lastProjectId ?? store.value.defaults.projectId)) ?? store.value.projects[0];
-    if (project) await app.switchProject(project, options.session);
-    if (options.provider || options.model) await app.selectModel({ providerId: options.provider ?? app.selection.providerId, modelId: options.model ?? app.selection.modelId });
-    app.showContext(); if (!project) app.projectForm();
-    return app;
+    app.opening = true;
+    try {
+      let project: Project | undefined;
+      if (options.cwd) {
+        const path = await normalizeFolder(options.cwd, app.cwd);
+        project = store.value.projects.find(p => p.path === path) ?? await store.project(basename(path), path, app.cwd);
+      } else if (options.project) project = store.resolveProject(options.project);
+      else project = store.value.projects.find(p => p.id === (store.value.lastProjectId ?? store.value.defaults.projectId)) ?? store.value.projects[0];
+      const restore = store.value.workspace?.openProjectIds.slice();
+      for (const id of restore ?? []) {
+        const saved = store.value.projects.find(p => p.id === id); if (saved) await app.switchProject(saved);
+      }
+      if (project && (options.cwd || options.project || restore === undefined || restore.includes(project.id))) await app.switchProject(project, options.session);
+      if (options.provider || options.model) await app.selectModel({ providerId: options.provider ?? app.selection.providerId, modelId: options.model ?? app.selection.modelId });
+      app.opening = false;
+      if (app.tabs.some(tab => tab.project) || restore !== undefined) await app.saveWorkspace();
+      app.showContext(); if (!store.value.projects.length) app.projectForm();
+      return app;
+    } catch (error) {
+      for (const tab of app.tabs) await tab.session?.close().catch(() => {});
+      throw error;
+    }
   }
   run(work: () => Promise<unknown>): void {
-    this.operations = this.operations.then(work).catch(e => { this.status = (e as Error).message; this.showContext(); this.desktop.invalidate(); });
+    const tab = this.activeTab;
+    this.operations = this.operations.then(work).catch(e => { tab.status = (e as Error).message; this.showContext(tab); this.desktop.invalidate(); });
   }
   private change(work: () => Promise<void>): Promise<void> {
     const pending=this.operations.then(work); this.operations=pending.catch(()=>{}); return pending;
@@ -168,9 +228,9 @@ export class App {
       this.desktop.invalidate();
     }), ids.indexOf(current));
   }
-  private requireIdle(): void { if (this.busy) throw new Error("Hay un turno activo: cancelalo antes de cambiar de contexto"); }
-  private async saveDraft(): Promise<void> {
-    if (this.session) await this.session.append({ type: "draft", text: this.view.prompt.value, attachments: this.attachments.map(a => a.path) });
+  private requireIdle(tab = this.activeTab): void { if (tab.busy) throw new Error("Hay un turno activo: cancelalo antes de cambiar de contexto"); }
+  private async saveDraft(tab = this.activeTab): Promise<void> {
+    if (tab.session) await tab.session.append({ type: "draft", text: tab.prompt.value, attachments: tab.attachments.map(a => a.path) });
   }
   private async loadPrompting(text: string, execute: boolean): Promise<void> {
     this.requireIdle();
@@ -181,28 +241,82 @@ export class App {
     if (execute) await this.submit(true);
   }
   async switchProject(project: Project, id?: string): Promise<void> {
-    this.requireIdle(); await normalizeFolder(project.path, this.cwd);
-    id ??= project.lastSessionId;
-    if (this.project?.id === project.id && this.session?.state.id === id) return;
-    const next = await Session.open(this.sessionsPath, project.id, id);
-    try { if (!next.state.events.length) await next.append({ type: "session", title: new Date().toLocaleString("es") }); await this.saveDraft(); await this.session?.close(); }
+    await normalizeFolder(project.path, this.cwd);
+    const existing = this.tabs.find(tab => tab.project?.id === project.id);
+    if (existing && (id === undefined || existing.session?.state.id === id)) {
+      existing.project = project; await this.activateTab(existing.id); return;
+    }
+    if (existing?.busy) throw new Error(`${project.name}: cancelá el turno antes de cambiar de sesión`);
+    const tab = existing ?? this.tabs.find(tab => !tab.project) ?? createProjectTab();
+    const next = await Session.open(this.sessionsPath, project.id, id ?? project.lastSessionId);
+    try { if (!next.state.events.length) await next.append({ type: "session", title: new Date().toLocaleString("es") }); await this.saveDraft(tab); await tab.session?.close(); }
     catch (e) { await next.close(); throw e; }
-    this.project = project; this.session = next;
-    this.attachments = [];
-    for (const path of next.state.attachments) try { this.attachments.push(await snapshot(path, project.path)); } catch (e) { next.state.notices.push(`Adjunto ${path}: ${(e as Error).message}`); }
-    this.mode = "INSERT"; this.pending = "";
-    this.desktop.resize(this.desktop.width,this.desktop.height);
-    this.selection = next.state.selection ?? project.selection ?? this.store.value.defaults;
-    this.view.prompt.setValue(next.state.draft); this.view.editorWindow.title = project.name;
-    const config = structuredClone(this.store.value); config.lastProjectId = project.id;
-    config.projects.find(p => p.id === project.id)!.lastSessionId = next.state.id; project.lastSessionId = next.state.id;
-    await this.store.save(config);
-    this.status="Listo";this.showHistory(); this.showContext(); this.desktop.focus(this.view.promptWindow); this.desktop.invalidate();
+    tab.project = project; tab.session = next; tab.attachments = [];
+    for (const path of next.state.attachments) try { tab.attachments.push(await snapshot(path, project.path)); } catch (e) { next.state.notices.push(`Adjunto ${path}: ${(e as Error).message}`); }
+    tab.mode = "INSERT"; tab.pending = ""; tab.panel = "prompt"; tab.focusedId = tab.prompt.id;
+    tab.selection = structuredClone(next.state.selection ?? project.selection ?? this.store.value.defaults);
+    tab.prompt.setValue(next.state.draft); tab.rendered = new WeakMap(); tab.status = "Listo";
+    project.lastSessionId = next.state.id;
+    this.bindTab(tab); if (!this.tabs.includes(tab)) this.tabs.push(tab);
+    this.showHistory(true, tab); this.showContext(tab);
+    await this.activateTab(tab.id);
+  }
+  private bindTab(tab: ProjectTab): void {
+    tab.prompt.onSubmit = () => this.run(() => this.submit());
+    tab.send.onClick = () => tab.busy ? tab.controller?.abort(new Error("Turno cancelado; los efectos ya realizados se conservan")) : this.run(() => this.submit());
+  }
+  private displayTab(tab: ProjectTab): void {
+    this.activeTab = tab;
+    this.view.response = tab.response; this.view.prompt = tab.prompt; this.view.send = tab.send;
+    this.view.editorWindow.controls.splice(0, this.view.editorWindow.controls.length, tab.response);
+    this.view.promptWindow.controls.splice(0, this.view.promptWindow.controls.length, tab.prompt, tab.send);
+    this.view.editorWindow.title = tab.project?.name ?? "s42-agent";
+    if (!this.desktop.modal) for (const window of [...this.desktop.windows]) if (!window.fixed) this.desktop.close(window);
+    this.desktop.resize(this.desktop.width, this.desktop.height);
+    const panel = tab.panel === "editor" ? this.view.editorWindow : this.view.promptWindow;
+    panel.focusedId = tab.focusedId; this.desktop.focus(panel);
+    this.showContext(tab); this.desktop.invalidate();
+  }
+  private async saveWorkspace(): Promise<void> {
+    if (this.opening) return;
+    const next = structuredClone(this.store.value);
+    next.workspace = { openProjectIds: this.tabs.flatMap(tab => tab.project ? [tab.project.id] : []) };
+    if (this.project) next.lastProjectId = this.project.id; else delete next.lastProjectId;
+    for (const tab of this.tabs) {
+      const project = next.projects.find(p => p.id === tab.project?.id);
+      if (project && tab.session) project.lastSessionId = tab.session.state.id;
+    }
+    await this.store.save(next);
+  }
+  async activateTab(id: string): Promise<void> {
+    const tab = this.tabs.find(tab => tab.id === id); if (!tab) return;
+    const previous = this.activeTab;
+    if (tab !== previous) {
+      previous.panel = this.desktop.active === this.view.editorWindow ? "editor" : "prompt";
+      previous.focusedId = previous.panel === "editor" ? this.view.editorWindow.focusedId : this.view.promptWindow.focusedId;
+      await this.saveDraft(previous);
+    }
+    this.displayTab(tab); await this.saveWorkspace();
+  }
+  cycleTab(direction: number): void {
+    const tabs = this.tabs.filter(tab => tab.project), index = tabs.indexOf(this.activeTab);
+    if (tabs.length) { const tab = tabs[(index + direction + tabs.length) % tabs.length]!; this.run(() => this.activateTab(tab.id)); }
+  }
+  async closeTab(id = this.activeTab.id): Promise<void> {
+    const index = this.tabs.findIndex(tab => tab.id === id), tab = this.tabs[index]; if (!tab) return;
+    if (tab.busy) throw new Error(`${tab.project?.name ?? "Proyecto"}: cancelá el turno antes de cerrar la pestaña`);
+    await this.saveDraft(tab); await tab.session?.close(); this.tabs.splice(index, 1);
+    if (!this.tabs.length) { const empty = createProjectTab(); this.bindTab(empty); this.tabs.push(empty); }
+    if (this.activeTab === tab) this.displayTab(this.tabs[Math.min(index, this.tabs.length - 1)]!);
+    await this.saveWorkspace(); this.desktop.invalidate();
   }
   async newSession(): Promise<void> { this.requireIdle(); if (!this.project) { this.projectForm(); return; } await this.switchProject(this.project, crypto.randomUUID()); }
-  projects(): void { choose(this.desktop, "Projects", this.store.value.projects.map(value => ({ label: `${value.name} · ${value.path}`, value })), p => this.run(() => this.switchProject(p))); }
+  projects(): void {
+    if (!this.store.value.projects.length) { this.projectForm(); return; }
+    choose(this.desktop, "Projects · abrir", this.store.value.projects.map(value => ({ label: `${this.tabs.some(t => t.project?.id === value.id) ? "[abierto] " : ""}${value.name} · ${value.path}`, value })), p => this.run(() => this.switchProject(p)));
+  }
   projectForm(project?: Project): void {
-    if (this.busy) { this.status = "Cancelá el turno antes de editar proyectos"; return; }
+    if (project && this.tabs.some(tab => tab.project?.id === project.id && tab.busy)) { this.status = "Cancelá el turno antes de editar proyectos"; return; }
     form(this.desktop, project ? "Projects · editar" : "Projects · nuevo", [{ label: "Name", value: project?.name ?? basename(this.cwd) }, {
       label: "Folder", value: project?.path ?? this.cwd, browse: (value,select,parent) => {
         const explorer=new FileExplorer(this.desktop,this.cwd,{parent,initialPath:value,pickFolder:select}); this.run(()=>explorer.show());
@@ -214,29 +328,31 @@ export class App {
   }
   removeProject(): void {
     choose(this.desktop, "Quitar proyecto del registro", this.store.value.projects.map(value => ({ label: value.name, value })), project => this.run(async () => {
-      this.requireIdle(); const next = structuredClone(this.store.value); next.projects = next.projects.filter(p => p.id !== project.id);next.skills=next.skills.filter(s=>s.projectId!==project.id); if (next.lastProjectId === project.id) delete next.lastProjectId;
+      const tab = this.tabs.find(tab => tab.project?.id === project.id);
+      if (tab) await this.closeTab(tab.id);
+      const next = structuredClone(this.store.value); next.projects = next.projects.filter(p => p.id !== project.id);next.skills=next.skills.filter(s=>s.projectId!==project.id); if (next.lastProjectId === project.id) delete next.lastProjectId;
+      if (next.workspace) next.workspace.openProjectIds = next.workspace.openProjectIds.filter(id => id !== project.id);
       await this.store.save(next);
-      if (this.project?.id === project.id) { await this.saveDraft(); await this.session?.close(); this.session = undefined; this.project = undefined; this.view.prompt.setValue(""); this.view.response.setValue(""); this.view.editorWindow.title = "s42-agent"; this.showContext(); }
     }));
   }
   sessions(): void { this.run(async () => { if (!this.project) { this.projectForm(); return; } const project = this.project;
     choose(this.desktop, "Sesiones", (await listSessions(this.sessionsPath, project.id)).map(value => ({ label: `${value.title} · ${value.id.slice(0, 8)}`, value })), s => this.run(() => this.switchProject(project, s.id))); }); }
-  current(): { provider: Provider; model: Model } {
-    const provider = this.store.value.providers.find(p => p.id === this.selection.providerId), model = provider?.models.find(m => m.id === this.selection.modelId);
+  current(tab = this.activeTab): { provider: Provider; model: Model } {
+    const provider = this.store.value.providers.find(p => p.id === tab.selection.providerId), model = provider?.models.find(m => m.id === tab.selection.modelId);
     if (!provider || !model) throw new Error("No hay modelo configurado. Abrí Models → Proveedores."); return { provider, model };
   }
-  showContext(): void {
+  showContext(tab = this.activeTab): void {
     let selected = "No hay modelo configurado. Abrí Models → Proveedores.";
-    try { const { provider, model } = this.current(); selected = `${provider.name} · ${model.id}${model.capabilities.tools ? "" : " · sin tools"}`; } catch {}
-    this.view.response.placeholder = `${this.project?.path ?? "Registrá un proyecto en Projects → Agregar proyecto."}\n\n${selected}`;
-    if (!this.session?.state.messages.length && this.status === "Listo") this.status = selected;
+    try { const { provider, model } = this.current(tab); selected = `${provider.name} · ${model.id}${model.capabilities.tools ? "" : " · sin tools"}`; } catch {}
+    tab.response.placeholder = `${tab.project?.path ?? "Abrí un proyecto en Projects o registrá uno con Name y Folder."}\n\n${selected}`;
+    if (!tab.session?.state.messages.length && tab.status === "Listo") tab.status = selected;
     this.desktop.invalidate();
   }
-  showHistory(reset = true): void {
-    const messages = this.session?.state.messages ?? [];
+  showHistory(reset = true, tab = this.activeTab): void {
+    const messages = tab.session?.state.messages ?? [];
     const names = new Map(messages.flatMap(m => m.tool_calls?.map(call => [call.id, call.function.name] as const) ?? []));
     const text = messages.map(m => {
-      let cached = this.rendered.get(m); if (cached !== undefined) return cached;
+      let cached = tab.rendered.get(m); if (cached !== undefined) return cached;
       let content = typeof m.content === "string" ? m.content : m.content?.map(part => part.type === "text" ? part.text : "[Imagen adjunta guardada en la sesión]").join("\n");
       if(m.role==="tool" && typeof content==="string") try {
         const result=JSON.parse(content);if(typeof result.output==="string" && typeof result.failed==="boolean") {
@@ -249,9 +365,9 @@ export class App {
       const sections=[reasoning ? "Razonamiento:\n"+reasoning : "", m.role === "assistant" ? markdownText(content ?? "") : content ?? "",
         m.tool_calls?.map(c => `Tool call · ${c.function.name}\n${c.function.arguments}`).join("\n\n") ?? ""].filter(Boolean);
       cached = `${label}:\n${sections.join("\n\n")}`;
-      this.rendered.set(m, cached); return cached;
-    }).join("\n\n") + (this.session?.state.notices.length ? "\n\n" + this.session.state.notices.join("\n") : "");
-    if (reset) this.view.response.setValue(text, "end"); else this.view.response.update(text);
+      tab.rendered.set(m, cached); return cached;
+    }).join("\n\n") + (tab.session?.state.notices.length ? "\n\n" + tab.session.state.notices.join("\n") : "");
+    if (reset) tab.response.setValue(text, "end"); else tab.response.update(text);
   }
   async selectModel(selection: Selection): Promise<void> { this.requireIdle(); const old = this.selection; this.selection = selection;
     try { const {model} = this.current(); if (!model.capabilities.images && hasImages(this.session?.state.messages ?? [])) throw new Error("La sesión contiene imágenes: elegí un modelo con imágenes o creá /new"); await this.session?.append({ type: "selection", selection }); if (this.session) this.session.state.selection = selection; }
@@ -333,14 +449,15 @@ export class App {
     this.requireIdle();
     const key=credential(provider,sessionKey ?? this.keys.get(provider.id));
     if (provider.id === "deepseek" && !key) throw new Error("Ingresá una API key de DeepSeek o su variable de entorno");
-    this.controller=new AbortController();this.busy=true;this.view.send.label="Cancelar";
-    this.status = `Consultando modelos de ${provider.name}…`; this.desktop.invalidate();
+    const tab = this.activeTab, controller = new AbortController();
+    tab.controller = controller; tab.busy = true; tab.send.label = "Cancelar";
+    tab.status = `Consultando modelos de ${provider.name}…`; this.desktop.invalidate();
     try {
-      const models = await discoverModels(provider, key, AbortSignal.any([this.controller.signal,AbortSignal.timeout(this.store.value.limits.firstEventMs)]));
+      const models = await discoverModels(provider, key, AbortSignal.any([controller.signal,AbortSignal.timeout(this.store.value.limits.firstEventMs)]));
       if (!models.length) throw new Error(`${provider.name}: no hay modelos disponibles`);
-      this.status = `${models.length} modelos disponibles · elegí uno`; return models;
-    } catch (error) { this.status = (error as Error).message; throw error; }
-    finally {this.busy=false;this.controller=undefined;this.view.send.label="Enviar";this.desktop.invalidate();}
+      tab.status = `${models.length} modelos disponibles · elegí uno`; return models;
+    } catch (error) { tab.status = (error as Error).message; throw error; }
+    finally {tab.busy=false;tab.controller=undefined;tab.send.label="Enviar";this.desktop.invalidate();}
   }
   async discover(): Promise<void> {
     this.requireIdle(); const provider = this.store.value.providers.find(p => p.id === this.selection.providerId); if (!provider) throw new Error("Elegí un proveedor");
@@ -376,7 +493,7 @@ export class App {
       this.pending=""; const action=Object.entries(bindings(this.store.value.ui.bindings).normal).find(([,binding])=>binding===`leader+${key}`)?.[0] as Action|undefined;
       if (action) this.action(action); return true;
     }
-    if (key === " ") { this.pending="leader"; this.status="Leader: p proyecto · m modelo · s sesión · e archivos · f adjunto · c MCP · k skills · ? ayuda"; return true; }
+    if (key === " ") { this.pending="leader"; this.status="Leader: p proyecto · m modelo · s sesión · e archivos · f adjunto · c MCP · k skills · t promptings · ? ayuda"; return true; }
     const prior=this.pending; this.pending="";
     if (control === this.view.response) {
       if (prior==='g' && key==='g') return this.view.response.vim('gg');
@@ -409,13 +526,14 @@ export class App {
     this.attachments=this.attachments.filter(item=>item!==a); this.desktop.resize(this.desktop.width,this.desktop.height); await this.saveDraft(); this.status="Adjunto quitado"; this.desktop.invalidate();
   })); }
   async task<T>(label:string,operation:(signal:AbortSignal)=>Promise<T>):Promise<T>{
-    this.requireIdle();this.controller=new AbortController();this.busy=true;this.view.send.label="Cancelar";this.status=label;this.desktop.invalidate();
-    try{const result=await operation(this.controller.signal);this.status="Listo";return result;}catch(error){this.status=(error as Error).message;throw error;}finally{this.controller=undefined;this.busy=false;this.view.send.label="Enviar";this.desktop.invalidate();}
+    this.requireIdle(); const tab = this.activeTab, controller = new AbortController();
+    tab.controller=controller;tab.busy=true;tab.send.label="Cancelar";tab.status=label;this.desktop.invalidate();
+    try{const result=await operation(controller.signal);tab.status="Listo";return result;}catch(error){tab.status=(error as Error).message;throw error;}finally{tab.controller=undefined;tab.busy=false;tab.send.label="Enviar";this.desktop.invalidate();}
   }
   cancel(): void { this.controller?.abort(new Error("Turno cancelado; los efectos ya realizados se conservan")); }
-  private async message(message: Message): Promise<void> { await this.session!.append({ type: "message", message }); this.session!.state.messages.push(message); }
+  private async message(message: Message, tab: ProjectTab): Promise<void> { await tab.session!.append({ type: "message", message }); tab.session!.state.messages.push(message); }
   async submit(literal = false): Promise<void> {
-    const text = this.view.prompt.value;
+    const tab = this.activeTab, text = tab.prompt.value;
     if (!literal && text.startsWith("/attach ")) {
       const raw=text.slice(8), paths=await pastedPaths(raw,this.project?.path ?? this.cwd) ?? parsePaths(raw); if(!paths) throw new Error("Ruta inválida"); await this.attach(paths); this.view.prompt.setValue(""); return;
     }
@@ -423,59 +541,60 @@ export class App {
     if(dropped) {this.requireIdle();await this.attach(dropped);this.view.prompt.setValue("");await this.saveDraft();return;}
     if(!literal && text.startsWith("/skill ")){
       const name=text.trim().split(/\s+/)[1];const skill=this.store.value.skills.find(s=>s.name===name && s.enabled && (!s.projectId||s.projectId===this.project?.id));
-      if(!skill)throw new Error("Skill no habilitada para este proyecto. Abrí Skills.");
+      if(!skill)throw new Error("Skill no habilitada para este proyecto. Abrí Tools → Skills.");
       if(text.trim()===`/skill ${name}`){this.view.prompt.setValue(`/skill ${name} `);this.status="Agregá el pedido y pulsá Enter";return;}
     }
     if (!literal && text.startsWith("/") && !text.startsWith("/skill ")) {
       const commands: Record<string, () => void> = { "/promptings":()=>this.promptings.library(), "/mcp":()=>this.extensions.servers(),"/skills":()=>this.extensions.skills(),"/projects": () => this.projects(), "/models": () => this.models(), "/providers": () => this.providers(), "/sessions": () => this.sessions(), "/files":()=>this.explore(), "/new": () => this.run(() => this.newSession()), "/help": () => this.desktop.onHelp(), "/attach":()=>this.attachmentMenu(), "/detach":()=>this.detach(), "/quit": () => this.desktop.onExit() };
       const action = commands[text.trim()]; if (!action) throw new Error("Comando desconocido. /help"); this.view.prompt.setValue(""); action(); return;
     }
-    this.requireIdle(); if (!text.trim() && !this.attachments.length) return;
-    if (!this.project || !this.session) throw new Error("Registrá o elegí un proyecto antes de enviar");
-    const { provider, model } = this.current(), session = this.session;
+    this.requireIdle(tab); if (!text.trim() && !tab.attachments.length) return;
+    if (!tab.project || !tab.session) throw new Error("Registrá o elegí un proyecto antes de enviar");
+    const { provider, model } = this.current(tab), session = tab.session, project = tab.project;
     if(!model.capabilities.images && hasImages(session.state.messages)) throw new Error("La sesión contiene imágenes; elegí otro modelo o /new");
-    const refreshed=await Promise.all(this.attachments.map(a=>snapshot(a.path,this.project!.path)));
-    const changed=refreshed.some((a,i)=>a.hash!==this.attachments[i]!.hash); this.attachments=refreshed;
-    validateAttachments(this.attachments,model.capabilities.images);
+    const refreshed=await Promise.all(tab.attachments.map(a=>snapshot(a.path,project.path)));
+    const changed=refreshed.some((a,i)=>a.hash!==tab.attachments[i]!.hash); tab.attachments=refreshed;
+    validateAttachments(tab.attachments,model.capabilities.images);
     if(changed) {this.desktop.invalidate();throw new Error("Un adjunto cambió: vista actualizada. Revisá Ctrl+F y pulsá Enter de nuevo.");}
-    const content=contentWithAttachments(text,this.attachments);
+    const content=contentWithAttachments(text,tab.attachments);
     const key = credential(provider, this.keys.get(provider.id));
-    this.busy = true; this.controller = new AbortController(); this.view.send.label = "Cancelar";
-    this.view.prompt.setValue(""); this.attachments=[]; this.status = "Conectando…"; this.desktop.invalidate();
+    const controller = new AbortController(), context = structuredClone({ limits: this.store.value.limits, mcpServers: this.store.value.mcpServers, skills: this.store.value.skills });
+    tab.busy = true; tab.controller = controller; tab.send.label = "Cancelar";
+    tab.prompt.setValue(""); tab.attachments=[]; tab.status = "Conectando…"; this.desktop.invalidate();
     this.desktop.resize(this.desktop.width,this.desktop.height);
-    this.turn = (async () => {
+    tab.turn = (async () => {
       try {
-        await this.message({ role: "user", content }); await this.saveDraft(); this.showHistory(false);
+        await this.message({ role: "user", content }, tab); await this.saveDraft(tab); this.showHistory(false, tab);
         let section="";
         const calls=new Map<number,ToolCall>();
         const resetLive=()=>{section="";calls.clear();};
         const appendLive=(id:string,label:string,delta:string)=>{
-          if(section!==id){this.view.response.append(`\n\n${label}\n`);section=id;}
-          this.view.response.append(delta);this.desktop.invalidate();
+          if(section!==id){tab.response.append(`\n\n${label}\n`);section=id;}
+          tab.response.append(delta);this.desktop.invalidate();
         };
-        const result = await runTurn({ project: this.project!, session, provider, model, key, signal: this.controller!.signal, limits: this.store.value.limits,mcpServers:structuredClone(this.store.value.mcpServers),skills:structuredClone(this.store.value.skills),
-          onState: state => { if(state==="Conectando…")resetLive();this.status = state; this.desktop.invalidate(); },
-          onMessage: () => { this.showHistory(false);resetLive();this.desktop.invalidate(); },
-          onReasoning: delta => { this.status="Razonando…";appendLive("reasoning","Razonamiento:",delta); },
+        const result = await runTurn({ project, session, provider, model, key, signal: controller.signal, ...context,
+          onState: state => { if(state==="Conectando…")resetLive();tab.status = state; this.desktop.invalidate(); },
+          onMessage: () => { this.showHistory(false, tab);resetLive();this.desktop.invalidate(); },
+          onReasoning: delta => { tab.status="Razonando…";appendLive("reasoning","Razonamiento:",delta); },
           onToolCall: (index,call) => {
-            this.status="Recibiendo herramientas…";const previous=calls.get(index);calls.set(index,call);
+            tab.status="Recibiendo herramientas…";const previous=calls.get(index);calls.set(index,call);
             const id=`call-${index}-${call.function.name}`;
             appendLive(id,`Tool call · ${call.function.name || "recibiendo…"}${previous ? " · continuación" : ""}`,
               call.function.arguments.slice(previous?.function.arguments.length ?? 0));
           },
           onToolStart: call => { appendLive(`running-${call.id}`,`Herramienta · ${call.function.name} · ejecutando…`,""); },
-          onDelta: delta => { this.status = "Respondiendo…";appendLive("answer","Agente:",delta); } });
-        this.status = result.usage !== undefined ? `Listo · ${result.usage} tokens` : "Listo · uso no reportado";
-        await session.append({ type: "turn", state: "completed", detail: this.status });
+          onDelta: delta => { tab.status = "Respondiendo…";appendLive("answer","Agente:",delta); } });
+        tab.status = result.usage !== undefined ? `Listo · ${result.usage} tokens` : "Listo · uso no reportado";
+        await session.append({ type: "turn", state: "completed", detail: tab.status });
       } catch (e) {
         if (e instanceof CompletionError && (e.partial.content || e.partial.reasoning_content || e.partial.reasoning)) {
-          const {tool_calls: _incomplete, ...partial}=e.partial; await this.message(partial);
+          const {tool_calls: _incomplete, ...partial}=e.partial; await this.message(partial, tab);
         }
-        this.status = (e as Error).message; session.state.notices.push(this.status);
-        await session.append({ type: "turn", state: this.controller!.signal.aborted ? "cancelled" : "failed", detail: this.status });
-      } finally { this.busy = false; this.controller = undefined; this.view.send.label = "Enviar"; this.showHistory(false); this.desktop.invalidate(); }
+        tab.status = (e as Error).message; session.state.notices.push(tab.status);
+        await session.append({ type: "turn", state: controller.signal.aborted ? "cancelled" : "failed", detail: tab.status });
+      } finally { tab.busy = false; tab.controller = undefined; tab.send.label = "Enviar"; this.showHistory(false, tab); this.desktop.invalidate(); }
     })();
     // Keep configuration/input responsive while the request runs.
-    void this.turn.catch(e => { this.status = `No se pudo guardar el turno: ${(e as Error).message}`; this.desktop.invalidate(); });
+    void tab.turn.catch(e => { tab.status = `No se pudo guardar el turno: ${(e as Error).message}`; this.desktop.invalidate(); });
   }
 }

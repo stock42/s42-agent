@@ -15,7 +15,7 @@ otra TUI.
 
 - [x] F01-01. Reutilizar `index.ts` como entrypoint del harness, terminal, renderer,
   input, foco y componentes de fase 00; conservar la demo como prueba de controles.
-- [x] F01-02. Componer menús Archivo/Projects/Models/MCP/Skills/Ventanas/Ayuda y la ventana
+- [x] F01-02. Componer menús Archivo/Projects/Models/Promptings/Tools/Vista/Ayuda y la ventana
   principal, con contexto del proyecto/modelo/sesión y barra inferior de atajos.
 - [x] F01-03. Crear editor multilínea INSERT con cursor, borrado, Enter, Shift+Enter y pegado
   multilínea; evitar envíos producidos por caracteres dentro de un paste.
@@ -80,3 +80,6 @@ TUI del harness estilo QBasic usable con fixtures, mouse y teclado, limpieza del
 terminal verificada desde la fuente. La equivalencia del binario se verifica en
 distribución. El subconjunto
 Vim acordado se incorpora en fase 05 sin interceptar input de menús/modales.
+
+La organización actual de menús y pestañas se completa en
+[fase 10](10-project-tabs-and-open-source.md); sus capturas verifican el nuevo layout.
