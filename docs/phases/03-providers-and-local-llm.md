@@ -1,6 +1,6 @@
 # Fase 03 — Proveedores, modelos y streaming con llama.cpp
 
-Estado: **En curso**. Dependencias: [01](01-terminal-ui.md),
+Estado: **Completada**. Dependencias: [01](01-terminal-ui.md),
 [02](02-projects-and-sessions.md). Requisitos: R09, R10.
 Contratos: SPECS §7 y §8.
 
@@ -27,7 +27,7 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
   y selecciones en sesión; no persistir claves ni cabeceras de autenticación.
 - [x] F03-08. Probar endpoints fixture independientes para dos proveedores, con
   defaults distintos, errores HTTP y streams truncados.
-- [ ] F03-09. Validar streaming/cancelación con `llama-server` y un GGUF real. Anotar
+- [x] F03-09. Validar streaming/cancelación con `llama-server` y un GGUF real. Anotar
   versiones, modelo, template y contexto; documentar cómo iniciar el servidor.
 - [x] F03-10. Repetir el flujo desde el entrypoint Bun. Registrar evidencia, actualizar
   CHANGELOG y hacer el commit de cada tarea completada.
@@ -65,3 +65,6 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
 
 Configuración múltiple y streaming/cancelación con fixtures y servidor local
 real. Un protocolo adicional requiere una decisión de alcance independiente.
+
+Validación real: [GLM-4.7-Flash](../qa/local-llm.md), streaming/reasoning, tools,
+cancelación parcial y reapertura; servidor del usuario sin modificar.

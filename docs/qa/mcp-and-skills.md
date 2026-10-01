@@ -28,4 +28,6 @@ resultado, sin repetir su efecto. Las rutas de scripts se resuelven contra la
 carpeta de la skill; instalar/cargar no ejecuta esos scripts.
 
 Errores del catálogo, cancelación y orígenes no GitHub tienen mensajes explícitos.
-Validación externa de búsqueda/instalación se agrega al finalizarla.
+Búsqueda/instalación real en [skills-catalog.json](skills-catalog.json), con
+recursos preservados en carpeta temporal. MCP+skill y edición/verificación con
+GLM real: [QA](local-llm.md).

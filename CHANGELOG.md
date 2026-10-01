@@ -5,6 +5,18 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Validado — GLM local, MCP y catálogo real
+
+- Endpoint provisto por el usuario: GLM-4.7-Flash GGUF Q4_K_XL, contexto 32768.
+  Skill invocada, read/MCP/edit/shell reales, suma corregida y bun test exit0;
+  verificación independiente exit0. Reasoning real, cancelación parcial y
+  reapertura comprobados. Config/archivos temporales, servidor intacto.
+- Búsqueda e instalación real de una skill de Vercel en directorio temporal,
+  preservando recursos; sin ejecutar sus scripts ni tocar skills personales.
+- Scripts reproducibles y evidencia con versiones/template/settings. Fase 03
+  completada, F04-11 y fase 08 cerradas. Matriz de procesos por SO aún pendiente.
+- Pull sin upstream; commit local, sin publicación remota.
+
 ### Agregado — MCP y skills
 
 - Menús MCP/Skills, CRUD de servidores stdio/Streamable HTTP y enabled/disabled;

@@ -30,7 +30,7 @@ su verificación, con eventos visibles, resultados persistidos y cancelación.
 - [x] F04-09. Implementar preparación de contexto, instrucciones AGENTS, recorte
   explícito de tool output y manejo del límite, manteniendo pares call/result.
 - [x] F04-10. Renderizar estados de tools y turnos sin mezclar fallas con éxito.
-- [ ] F04-11. Ejecutar escenarios fixture y una tarea real con modelo local apto
+- [x] F04-11. Ejecutar escenarios fixture y una tarea real con modelo local apto
   para tool calling, registrando el diff y su verificación.
 - [x] F04-12. Repetir el flujo desde el entrypoint Bun, actualizar evidencia y CHANGELOG
   y hacer el commit de cada tarea completada.
@@ -71,3 +71,7 @@ su verificación, con eventos visibles, resultados persistidos y cancelación.
 Un modelo local realiza lectura, edición y verificación real; errores, cancelación
 y recuperación funcionan. Las tools siguen corriendo con los permisos del usuario,
 sin un sandbox implícito ni acciones Git automáticas no solicitadas.
+
+Coding real completado con [GLM-4.7-Flash](../qa/local-llm.md), skill y MCP en
+el mismo loop. F04-08: cancelación/descendientes Linux verificados; Windows
+implementado con taskkill, ejecución en Windows/macOS pendiente.
