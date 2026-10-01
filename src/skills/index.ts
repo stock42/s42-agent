@@ -7,14 +7,14 @@ import type {ToolResult} from '../agent/tools.ts';
 import {killTree} from '../agent/process.ts';
 
 export interface LoadedSkill {name:string;description:string;path:string;body:string;source?:string}
-export async function readSkill(path:string):Promise<LoadedSkill>{
+export async function readSkill(path:string,requireMatchingFolder=true):Promise<LoadedSkill>{
   path=await realpath(path);if((await stat(path)).isDirectory())path=join(path,'SKILL.md');
   const file=Bun.file(path);if(file.size>262144)throw new Error('SKILL.md excede 256 KiB');
   const text=(await file.text()).replace(/^\uFEFF/,'').replace(/\r\n/g,'\n');
   const match=/^---\n([\s\S]*?)\n---(?:\n|$)/.exec(text);if(!match)throw new Error('SKILL.md requiere frontmatter YAML');
   const meta=Bun.YAML.parse(match[1]!) as {name?:unknown;description?:unknown};
   if(!meta||typeof meta.name!=='string'||!meta.name||meta.name.length>64||!/^\p{Ll}[\p{Ll}\p{N}-]*$/u.test(meta.name)||meta.name.endsWith('-')||meta.name.includes('--'))throw new Error('Nombre de skill inválido');
-  if(basename(dirname(path))!==meta.name)throw new Error('El name de SKILL.md debe coincidir con su carpeta');
+  if(requireMatchingFolder && basename(dirname(path))!==meta.name)throw new Error('El name de SKILL.md debe coincidir con su carpeta');
   if(typeof meta.description!=='string'||!meta.description.trim()||meta.description.length>1024)throw new Error('Skill requiere description (hasta 1024 caracteres)');
   return {name:meta.name,description:meta.description.trim(),path,body:text.slice(match[0].length).trim()};
 }
@@ -49,7 +49,7 @@ export async function installSkill(result:SkillResult,destination:string,signal:
     const abort=()=>{void killTree(child).catch(()=>{});};signal.addEventListener('abort',abort,{once:true});if(signal.aborted)abort();const timer=setTimeout(abort,120000);let exit:number,stderr:string;
     try{[exit,stderr]=await Promise.all([child.exited,new Response(child.stderr).text()]);}finally{clearTimeout(timer);signal.removeEventListener('abort',abort);await killTree(child);}
     signal.throwIfAborted();if(exit!==0)throw new Error(`Git clone falló: ${stderr.slice(-500)}`);
-    const matches:LoadedSkill[]=[];const glob=new Bun.Glob('**/SKILL.md');for await(const path of glob.scan({cwd:join(temp,'repo'),absolute:true,onlyFiles:true})){try{const skill=await readSkill(path);if(skill.name===result.skillId||basename(dirname(path))===result.skillId)matches.push(skill);}catch{}}
+    const matches:LoadedSkill[]=[];const glob=new Bun.Glob('**/SKILL.md');for await(const path of glob.scan({cwd:join(temp,'repo'),absolute:true,onlyFiles:true})){try{const skill=await readSkill(path,false);if(skill.name===result.skillId||basename(dirname(path))===result.skillId)matches.push(skill);}catch{}}
     if(matches.length!==1)throw new Error(matches.length?'Skill ambigua en el repositorio':'No se encontró la skill del catálogo en el repositorio');
     const selected=matches[0]!;copied=join(resolve(destination),crypto.randomUUID());await mkdir(copied,{recursive:true});const target=join(copied,selected.name);await cp(dirname(selected.path),target,{recursive:true});
     const license=new Bun.Glob('{LICENSE*,COPYING*,NOTICE*}');for await(const path of license.scan({cwd:join(temp,'repo'),absolute:true,onlyFiles:true}))await cp(path,join(copied,basename(path)));

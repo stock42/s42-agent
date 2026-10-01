@@ -31,3 +31,9 @@ Errores del catálogo, cancelación y orígenes no GitHub tienen mensajes explí
 Búsqueda/instalación real en [skills-catalog.json](skills-catalog.json), con
 recursos preservados en carpeta temporal. MCP+skill y edición/verificación con
 GLM real: [QA](local-llm.md).
+
+Catálogo real: web-design-guidelines instaló correctamente; vercel-react-best-
+practices expuso un alias (name vercel-react-best-practices, carpeta react-best-
+practices). El instalador ahora identifica por metadata y normaliza la carpeta
+de destino al name. Nueva prueba real pasó y conservó rules/AGENTS.md/README.md.
+El registro local sigue comprobando name/carpeta según la especificación.

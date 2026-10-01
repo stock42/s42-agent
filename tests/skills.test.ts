@@ -7,7 +7,7 @@ test('native YAML frontmatter, progressive loading, disabled/project isolation a
  const root=await mkdtemp(join(tmpdir(),'s42-skills-')),path=join(root,'bun-guide');await mkdir(path);await Bun.write(join(path,'SKILL.md'),'---\nname: bun-guide\ndescription: >\n  Build with Bun.\n  Use native APIs.\n---\nRead scripts/check.ts and report actual results.');
  try{const loaded=await readSkill(path);expect(loaded.description).toContain('Build with Bun. Use native APIs.');const catalog=new SkillCatalog(),notices:string[]=[];
  await catalog.open([{id:'1',name:'bun-guide',path,enabled:true},{id:'2',name:'missing',path:join(root,'missing'),enabled:false},{id:'3',name:'other',path:join(root,'missing'),enabled:true,projectId:'B'}],'A',t=>notices.push(t));expect(catalog.entries).toHaveLength(1);expect(notices).toEqual([]);expect(catalog.guidance).not.toContain('scripts/check');const result=await catalog.execute('{"name":"bun-guide"}',new AbortController().signal);expect(result.output).toContain(path);expect(result.output).toContain('scripts/check');expect((await catalog.execute('{"name":"missing"}',new AbortController().signal)).failed).toBe(true);
- await Bun.write(join(path,'SKILL.md'),'---\nname: wrong\ndescription: test\n---\nbody');await expect(readSkill(path)).rejects.toThrow('carpeta');}
+ await Bun.write(join(path,'SKILL.md'),'---\nname: wrong\ndescription: test\n---\nbody');await expect(readSkill(path)).rejects.toThrow('carpeta');expect((await readSkill(path,false)).name).toBe('wrong');}
  finally{await rm(root,{recursive:true,force:true});}
 });
 test('skills.sh search contract, URL encoded queries, error/cancel, unsupported install origin',async()=>{

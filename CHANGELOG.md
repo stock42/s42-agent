@@ -5,6 +5,16 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Corregido — Alias de skills en el catálogo
+
+- Una segunda instalación real falló porque Vercel publica el name
+  vercel-react-best-practices dentro de react-best-practices. El instalador
+  identifica el frontmatter y normaliza la carpeta de destino al name;
+  el registro local conserva la validación del formato.
+- Repetida la instalación real: se conservaron reglas, AGENTS.md y recursos;
+  evidencia actualizada. Sin ejecución de scripts. Typecheck y tests pertinentes
+  pasan. Pull sin upstream; corrección y evidencia en commit local.
+
 ### Validado — GLM local, MCP y catálogo real
 
 - Endpoint provisto por el usuario: GLM-4.7-Flash GGUF Q4_K_XL, contexto 32768.
