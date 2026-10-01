@@ -10,7 +10,7 @@ import { Input } from "../src/ui/components/input.ts";
 import { SelectList } from "../src/ui/components/select-list.ts";
 import { TextArea } from "../src/ui/components/text-area.ts";
 import { FileExplorer } from "../src/ui/components/file-explorer.ts";
-import { metricDetails } from "../src/system/metrics.ts";
+import { tokenLine } from "../src/system/metrics.ts";
 
 async function until(check: () => boolean) {
   for (let i = 0; i < 600; i++) { if (check()) return; await Bun.sleep(5); }
@@ -49,13 +49,13 @@ test("View keyboard/mouse: switch language, translate surfaces, persist and pres
       app.view.prompt.setValue("Guardar\nmi prompt á文🙂");
       await message(app, { role: "user", content: "Ayuda" });
       await message(app, { role: "assistant", content: "Respuesta sin traducir: Enviar", reasoning: "pensamiento íntegro" }); app.showHistory();
-      key(app, "alt+v"); for (let i = 0; i < 4; i++) key(app, "down"); key(app, "enter");
+      key(app, "alt+v"); for (let i = 0; i < 7; i++) key(app, "down"); key(app, "enter");
       expect(app.desktop.modal!.title).toBe("Language");
       expect((app.desktop.modal!.controls[0] as SelectList).items[0]).toContain("(actual)");
       key(app, "down"); key(app, "enter"); await until(() => app.desktop.language === "en");
       expect((await Bun.file(config).json()).ui.language).toBe("en");
       expect(screen(app)).toContain("File"); expect(screen(app)).toContain("View"); expect(screen(app)).toContain("Help");
-      expect(screen(app)).toContain("< Send >"); expect(screen(app)).toContain("Shift+Enter: newline");
+      expect(screen(app)).not.toContain("< Send >"); expect(screen(app)).toContain("Shift+Enter: newline");
       expect(screen(app)).toContain("Disk"); expect(screen(app)).toContain("Tokens I/O");
       expect(app.view.response.value).toContain("You:\nAyuda"); expect(app.view.response.value).toContain("Agent:");
       expect(app.view.response.value).toContain("Reasoning:\npensamiento íntegro");
@@ -66,7 +66,7 @@ test("View keyboard/mouse: switch language, translate surfaces, persist and pres
       const x = app.desktop.draw().lines()[0]!.indexOf("View") + 1;
       const mouse = (action: "press" | "release", y: number) => app.desktop.handle({ type: "mouse", action, button: 0, delta: 0, x, y });
       mouse("press", 0); mouse("release", 0); expect(app.desktop.menu.opened).toBe(5);
-      expect(screen(app)).toContain("Show reasoning: on"); mouse("press", 7); mouse("release", 7);
+      expect(screen(app)).toContain("Show reasoning: on"); mouse("press", 10); mouse("release", 10);
       await until(() => !app.store.value.ui.showReasoning);
       expect(app.view.response.value).not.toContain("pensamiento íntegro"); expect(app.view.response.value).toContain("Respuesta sin traducir");
       app.projectForm(); expect(screen(app)).toContain("Projects · new"); expect(screen(app)).toContain("Folder"); expect(screen(app)).toContain("< Browse >"); expect(screen(app)).toContain("< Save >"); key(app, "escape");
@@ -82,11 +82,11 @@ test("View keyboard/mouse: switch language, translate surfaces, persist and pres
       const explorer = new FileExplorer(app.desktop, root); await explorer.show(); expect(screen(app)).toContain("File explorer"); expect(screen(app)).toContain("< Search >"); expect(screen(app)).toContain("< Root >");
       explorer.list.selected = explorer.entries.findIndex(entry => entry.name === "Ayuda"); await explorer.openSelected();
       expect(app.desktop.modal!.title).toBe("Ayuda"); expect((app.desktop.modal!.controls[0] as TextArea).value).toContain("Guardar\nArchivo\ntexto del usuario"); expect((app.desktop.modal!.controls[0] as TextArea).value).toContain("read-only"); key(app, "escape"); key(app, "escape");
-      expect(metricDetails(app.metrics.snapshot, undefined, app.desktop.t).join("\n")).not.toContain("entrada");
-      app.desktop.resize(60, 16); expect(screen(app).split("\n")[0]).toContain("Help"); expect(screen(app)).toContain("< Send >");
+      expect(tokenLine(undefined, app.desktop.t)).not.toContain("entrada");
+      app.desktop.resize(60, 16); expect(screen(app).split("\n")[0]).toContain("Help"); expect(screen(app)).not.toContain("< Send >");
       app.language(); key(app, "home"); key(app, "escape"); expect(app.desktop.language).toBe("en"); // Cancel leaves preference intact.
       app.language(); key(app, "home"); key(app, "enter"); await until(() => app.desktop.language === "es");
-      expect(screen(app)).toContain("Ayuda"); expect(screen(app)).toContain("< Enviar >"); expect(app.view.response.value).toContain("Agente:");
+      expect(screen(app)).toContain("Ayuda"); expect(screen(app)).not.toContain("< Enviar >"); expect(app.view.response.value).toContain("Agente:");
       await app.setLanguage("en");
     } finally { await other.desktop.onBeforeExit!(); }
   } finally { await app.desktop.onBeforeExit!(); }

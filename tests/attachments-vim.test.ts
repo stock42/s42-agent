@@ -45,7 +45,7 @@ test('snapshot, cambio antes de enviar y payload enviado conservado tras borrar 
 test('rutas absolutas sin paste adjuntan al primer Enter, prompt compacto visible',async()=>{
   const root=await mkdtemp(join(tmpdir(),'s42-fallback-')),app=await App.open({config:join(root,'config.json'),cwd:root});
   try{const path=join(root,'archivo con espacio.txt');await Bun.write(path,'texto');app.view.prompt.setValue(path);await app.submit();expect(app.attachments.length).toBe(1);expect(app.view.prompt.value).toBe('');expect(app.session!.state.messages.length).toBe(0);
-    app.desktop.resize(60,16);const screen=app.desktop.draw().lines().join('\n');expect(screen).toContain('Adjuntos (1)');expect(screen).toContain('INSERT');expect(screen).toContain('Enviar');await app.desktop.onBeforeExit!();
+    app.desktop.resize(60,16);const screen=app.desktop.draw().lines().join('\n');expect(screen).toContain('Adjuntos (1)');expect(screen).toContain('INSERT');expect(screen).toContain('tok/s');expect(screen).not.toContain('< Enviar >');await app.desktop.onBeforeExit!();
   }finally{await rm(root,{recursive:true,force:true});}
 });
 test('ayuda completa navegable y cambios de modelo durante turno rechazados',async()=>{

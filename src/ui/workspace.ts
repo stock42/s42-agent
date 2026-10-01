@@ -1,5 +1,5 @@
 import { basename } from "node:path";
-import { Button } from "./components/button.ts";
+import { tokenLine } from "../system/metrics.ts";
 import { MenuBar } from "./components/menu.ts";
 import { TextArea } from "./components/text-area.ts";
 import { Window } from "./components/window.ts";
@@ -19,7 +19,7 @@ export function createWorkspaceView(project: ProjectContext = { name: basename(p
   const editor = new TextArea("response", { x: 1, y: 0, width: 76, height: 13 });
   editor.readOnly = true;
   editor.placeholder = `La respuesta aparecerá en este editor.\n\n${project.path}\n\nEscribí tu prompt en el panel inferior.`;
-  const prompt = new TextArea("draft", { x: 1, y: 0, width: 60, height: 4 });
+  const prompt = new TextArea("draft", { x: 1, y: 1, width: 76, height: 3 });
   let submitted = false;
 
   const submit = () => {
@@ -30,20 +30,22 @@ export function createWorkspaceView(project: ProjectContext = { name: basename(p
     desktop.focus(promptWindow); promptWindow.focusedId = prompt.id;
   };
   prompt.onSubmit = submit;
-  const send = new Button("send", { x: 63, y: 0, width: 14, height: 1 }, "Enviar", submit);
-  editorWindow.controls.push(editor); promptWindow.controls.push(prompt, send);
+  editorWindow.controls.push(editor); promptWindow.controls.push(prompt);
   editorWindow.onLayout = (client) => { editor.bounds.width = Math.max(1, client.width - 2); editor.bounds.height = Math.max(1, client.height); };
   promptWindow.onLayout = (client) => {
-    prompt.bounds.width = Math.max(1, client.width - 18); prompt.bounds.height = Math.max(1, client.height - 1);
-    send.bounds.x = Math.max(1, client.width - 15);
+    prompt.bounds.width = Math.max(1, client.width - 2); prompt.bounds.height = Math.max(1, client.height - 2);
   };
-  promptWindow.onDraw = (canvas, client) => canvas.text(client.x + 1, client.y + client.height - 1,
-    `${submitted ? "Respuesta demo" : "Demo sin LLM"} · Enter enviar · Shift+Enter nueva línea`, theme.window, client.width - 2);
+  promptWindow.onDraw = (canvas, client) => {
+    const tokens = tokenLine(undefined, desktop.t);
+    canvas.text(client.x + client.width - 1 - Bun.stringWidth(tokens), client.y, tokens, theme.window);
+    canvas.text(client.x + 1, client.y + client.height - 1,
+      `${submitted ? "Respuesta demo" : "Demo sin LLM"} · Enter enviar · Shift+Enter nueva línea`, theme.window, client.width - 2);
+  };
 
   desktop.onResize = (width, height) => {
     const top = desktop.tabs ? 2 : 1;
     const extraStatusRows = Math.max(0, (desktop.statusLines?.().length ?? 0) - 1);
-    const available = Math.max(4, height - top - 1 - extraStatusRows); const promptHeight = height >= 20 ? 7 : 4;
+    const available = Math.max(4, height - top - 1 - extraStatusRows); const promptHeight = height >= 20 ? 7 : 5;
     const editorHeight = Math.max(2, available - promptHeight);
     Object.assign(editorWindow.bounds, { x: 0, y: top, width, height: editorHeight });
     Object.assign(promptWindow.bounds, { x: 0, y: top + editorHeight, width, height: Math.max(2, available - editorHeight) });
@@ -51,7 +53,7 @@ export function createWorkspaceView(project: ProjectContext = { name: basename(p
   };
   desktop.resize(desktop.width, desktop.height);
   desktop.add(editorWindow); desktop.add(promptWindow);
-  if (!demoMode) return { desktop, editorWindow, promptWindow, response: editor, prompt, send };
+  if (!demoMode) return { desktop, editorWindow, promptWindow, response: editor, prompt };
   const demo = createDemoPanels(desktop);
   const help = () => demo.dialog("Ayuda", [
     "Enter: enviar · Shift+Enter: nueva línea.", "Ctrl+N: cambiar entre paneles.", "Tab / Shift+Tab: foco · Esc: menú.",
@@ -72,5 +74,5 @@ export function createWorkspaceView(project: ProjectContext = { name: basename(p
     ] },
     { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", shortcut: "Alt+Y", run: help }] },
   );
-  return { desktop, editorWindow, promptWindow, response: editor, prompt, send };
+  return { desktop, editorWindow, promptWindow, response: editor, prompt };
 }

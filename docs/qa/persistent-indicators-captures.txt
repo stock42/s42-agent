@@ -1,0 +1,136 @@
+100×32
+  Archivo   Projects   Models   Promptings   Tools   Vista                                   Ayuda
+ <  1:Proyecto QA    ×                                                                        >  +
+┌────────────────────────────────────────── Proyecto QA ───────────────────────────────────────────┐
+│ Local · llama.cpp · fixture · 01aea6dd                                                           │
+│ Vos:                                                                                             │
+│ Hola fixture                                                                                     │
+│                                                                                                  │
+│ Agente:                                                                                          │
+│ Respuesta de fixture local: prompt recibido.                                                     │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────── Prompt ─────────────────────────────────────────────┐
+│                                                                Tokens E/S 1200/120 · 298.9 tok/s │
+│ BORRADOR                                                                                         │
+│                                                                                                  │
+│                                                                                                  │
+│ INSERT · Listo · E/S 1200/120                                               · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+ CPU: 10% · RAM: 28.9G/62.3G · Disco: 747.3G/953.9G · VRAM: N/D
+
+
+80×24
+  Archivo   Projects   Models   Promptings   Tools   Vista               Ayuda
+ <  1:Proyecto QA    ×                                                    >  +
+┌──────────────────────────────── Proyecto QA ─────────────────────────────────┐
+│ Local · llama.cpp · fixture · 01aea6dd                                       │
+│ Vos:                                                                         │
+│ Hola fixture                                                                 │
+│                                                                              │
+│ Agente:                                                                      │
+│ Respuesta de fixture local: prompt recibido.                                 │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────── Prompt ───────────────────────────────────┐
+│                                            Tokens E/S 1200/120 · 298.9 tok/s │
+│ BORRADOR                                                                     │
+│                                                                              │
+│                                                                              │
+│ INSERT · Listo · E/S 1200/120                           · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────┘
+ CPU: 10% · RAM: 28.9G/62.3G · Disco: 747.3G/953.9G · VRAM: N/D
+
+
+60×16
+  Archivo Projects Models Promptings Tools Vista     Ayuda
+ <  1:Proyecto QA    ×                                >  +
+┌────────────────────── Proyecto QA ───────────────────────┐
+│ Local · llama.cpp · fixture · 01aea6dd                   │
+│ Hola fixture                                             │
+│                                                          │
+│ Agente:                                                  │
+│ Respuesta de fixture local: prompt recibido.             │
+└──────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│                        Tokens E/S 1200/120 · 298.9 tok/s │
+│ BORRADOR                                                 │
+│ INSERT · Listo · E/S 1200/120       · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ CPU: 10% · RAM: 28.9G/62.3G · Disco: 747.3G/953.9G
+ VRAM: N/D
+
+
+60×16 CPU oculto
+  Archivo Projects Models Promptings Tools Vista     Ayuda
+ <  1:Proyecto QA    ×                                >  +
+┌────────────────────── Proyecto QA ───────────────────────┐
+│ Local · llama.cpp · fixture · 01aea6dd                   │
+│ Vos:                                                     │
+│ Hola fixture                                             │
+│                                                          │
+│ Agente:                                                  │
+│ Respuesta de fixture local: prompt recibido.             │
+└──────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│                        Tokens E/S 1200/120 · 298.9 tok/s │
+│ BORRADOR                                                 │
+│ INSERT · Listo · E/S 1200/120       · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ RAM: 28.9G/62.3G · Disco: 747.3G/953.9G · VRAM: N/D
+
+
+60×16 Explorador
+  Archivo Projects Models Promptings Tools Vista     Ayuda
+ <  1:Proyecto QA    ×                                >  +
+┌┌──────────────── Explorador de archivos ────────────[X]─┐┐
+││/tmp/s42-resources-I4jHEt                        < Ir > │
+││Nombre o glob (*.ts) · busca desde la ruta   < Buscar > │
+││[D] ../                                                 │
+││[D] sessions/                                           │
+││[F] archivo.txt                                         │
+││< Subir >  < Raíz >  < Abrir >           < Adjuntar >   │
+└└────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│                        Tokens E/S 1200/120 · 298.9 tok/s │
+│ BORRADOR                                                 │
+│ INSERT · Listo · E/S 1200/120       · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ RAM: 28.9G/62.3G · Disco: 747.3G/953.9G · VRAM: N/D
+
+
+60×16 Adjuntos
+  Archivo Projects Models Promptings Tools Vista     Ayuda
+ <  1:Proyecto QA    ×                                >  +
+┌────────────────────── Proyecto QA ───────────────────────┐
+│ Local · llama.cpp · fixture · 01aea6dd                   │
+│ Hola fixture                                             │
+│                                                          │
+│ Agente:                                                  │
+│ Respuesta de fixture local: prompt recibido.             │
+└──────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│                        Tokens E/S 1200/120 · 298.9 tok/s │
+│                                                          │
+│ Adjuntos (1): archivo.txt 15 B · Ctrl+F                  │
+│ INSERT · 1 adjuntos preparados; Ent · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ RAM: 28.9G/62.3G · Disco: 747.3G/953.9G · VRAM: N/D

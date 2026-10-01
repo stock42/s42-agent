@@ -44,7 +44,7 @@ bun run index.ts --help
 | Models | Proveedores, catálogo, selección/configuración de modelos y defaults. |
 | Promptings | Biblioteca, nueva plantilla y guardar el prompt actual. |
 | Tools | Catálogo nativo, CRUD/activación de MCP, Skills y buscador skills.sh. |
-| Vista | Respuestas/prompt, recursos y tokens, foco, auxiliares, paletas, idioma, razonamiento y modo Vim. |
+| Vista | Respuestas/prompt, indicadores CPU/RAM/disco/VRAM, foco, auxiliares, paletas, idioma, razonamiento y modo Vim. |
 | Ayuda | Atajos, mouse, comandos y About con autor, MIT y versión. |
 
 El agente abre directamente este espacio de trabajo. El laboratorio de componentes
@@ -171,18 +171,27 @@ tienen los permisos del usuario y efectos reales; no hay sandbox. Cancelar no
 revierte cambios ni reejecuta herramientas interrumpidas al reabrir.
 [Contratos, ejemplos y límites de cada tool](docs/TOOLS.md).
 
-La barra inferior muestra **CPU, RAM, disco y VRAM usados/libres (U/L)**, más
-**tokens de entrada/salida (E/S)** del último turno de la pestaña. El uso del LLM
-suma todas sus requests, tools y continuaciones; se guarda al terminar el turno.
-Un conteo incompleto aparece como parcial, y un valor no reportado como **N/D**.
-Los tokens vienen del proveedor; no se estiman contando caracteres.
+El panel **Prompt** muestra siempre **tokens de entrada/salida (E/S) y tok/s**
+arriba a la derecha. No tiene botón Enviar: **Enter envía**, Shift+Enter inserta
+una línea y Ctrl+C cancela. El borrador usa todo el ancho bajo los contadores.
+Tokens por turno/pestaña incluyen todas sus requests, tools y continuaciones;
+se guardan al terminar. Los contadores se actualizan al recibir el uso del
+proveedor, normalmente al finalizar cada request. No se cuentan caracteres ni
+deltas SSE como tokens. Conteo incompleto → parcial; dato ausente → **N/D**.
+Cantidades grandes se abrevian (`k`, `M`, etc.); la sesión conserva cifras exactas.
+Tok/s es el promedio observado: salida reportada dividida por tiempo de las
+requests con salida reportada, incluyendo red/primer token y excluyendo tools.
 
-**Vista → Recursos y tokens** explica las unidades y el origen. CPU/RAM/disco
-usan APIs incluidas en Bun, con muestras cada 2 segundos. Disco corresponde al
-volumen del proyecto; libre es el espacio disponible para el usuario. VRAM usa
-contadores Linux DRM o, cuando está instalado, `nvidia-smi` vía Bun.spawn. Si
-el SO/driver no informa VRAM, muestra N/D y su motivo; no instala drivers ni
-programas. En GPU integrada puede no existir un contador de memoria dedicada.
+La barra inferior muestra **CPU: % · RAM: usado/total · Disco: usado/total ·
+VRAM: usado/total**, en GiB/MiB (`G`/`M`). Se distribuye en las filas necesarias
+sin tapar el prompt. **Vista → CPU/RAM/Disco/VRAM: on/off** configura cada
+indicador y guarda `ui.resources`. Los tokens permanecen visibles incluso
+ocultando todos los recursos; no existe una opción para ocultarlos.
+CPU/RAM/disco usan APIs incluidas en Bun, con muestras cada 2 segundos. Disco
+corresponde al volumen del proyecto. VRAM usa contadores Linux DRM o, cuando
+está instalado, `nvidia-smi` vía Bun.spawn. Si el SO/driver no informa VRAM,
+muestra N/D; no instala drivers ni programas. En GPU integrada puede no existir
+un contador de memoria dedicada. [Validación](docs/qa/persistent-indicators.md).
 
 El chat muestra razonamiento cuando el proveedor envía `reasoning_content`
 o `reasoning` y **Vista → Ver razonamiento** está en **on** (predeterminado).
@@ -314,6 +323,7 @@ Bindings opcionales por acción conocida, con colisiones rechazadas:
   "palette": "qbasic",
   "language": "es",
   "showReasoning": true,
+  "resources": { "cpu": true, "ram": true, "disk": true, "gpu": true },
   "bindings": {
     "global": { "projects": "ctrl+g" },
     "normal": { "projects": "leader+g" }

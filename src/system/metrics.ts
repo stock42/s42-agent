@@ -1,7 +1,8 @@
 import { cpus, freemem, totalmem } from "node:os";
 import { readdir, statfs } from "node:fs/promises";
 import { join } from "node:path";
-import type { TokenUsage } from "../agent/usage.ts";
+import { tokensPerSecond, type TokenUsage } from "../agent/usage.ts";
+import type { ResourceIndicators } from "../storage/config.ts";
 
 export interface Capacity { used: number; free: number; total: number }
 export interface SystemMetrics { cpu?: Capacity; ram?: Capacity; disk?: Capacity; diskPath: string; gpu?: Capacity; gpuSource?: string; gpuError?: string; at?: string }
@@ -79,19 +80,31 @@ export class SystemMonitor {
   async stop(): Promise<void> { clearInterval(this.timer); this.timer=undefined; this.controller.abort(); await this.pending; }
 }
 export function size(bytes: number): string { return bytes >= 1073741824 ? `${(bytes / 1073741824).toFixed(1)}G` : `${Math.round(bytes / 1048576)}M`; }
-const capacity = (value?: Capacity) => value ? `${size(value.used)}/${size(value.free)}` : "N/D";
-export function metricLines(metrics: SystemMetrics, tokens: TokenUsage | undefined, width: number, t: (text: string) => string = text => text): string[] {
-  const system = `${t("U/L")} · CPU ${metrics.cpu ? `${Math.round(metrics.cpu.used)}%/${Math.round(metrics.cpu.free)}%` : t("N/D")} · RAM ${t(capacity(metrics.ram))} · ${t("Disco")} ${t(capacity(metrics.disk))}`;
-  const usage = `VRAM ${t(capacity(metrics.gpu))} · ${t("Tokens E/S")} ${tokens?.input ?? t("N/D")}/${tokens?.output ?? t("N/D")}${tokens?.partial ? t(" (parcial)") : ""}`;
-  return width >= 120 ? [system + " · " + usage] : [system, usage];
+const capacity = (value?: Capacity) => value ? `${size(value.used)}/${size(value.total)}` : "N/D";
+export function metricLines(metrics: SystemMetrics, visible: ResourceIndicators, width: number, t: (text: string) => string = text => text): string[] {
+  const values = [
+    visible.cpu ? `CPU: ${metrics.cpu ? `${Math.round(metrics.cpu.used)}%` : t("N/D")}` : "",
+    visible.ram ? `RAM: ${t(capacity(metrics.ram))}` : "",
+    visible.disk ? `${t("Disco")}: ${t(capacity(metrics.disk))}` : "",
+    visible.gpu ? `VRAM: ${t(capacity(metrics.gpu))}` : "",
+  ].filter(Boolean);
+  const lines: string[] = [];
+  for (const value of values) {
+    const last = lines.at(-1);
+    if (last && Bun.stringWidth(last + " · " + value) <= width - 2) lines[lines.length - 1] = last + " · " + value;
+    else lines.push(value);
+  }
+  return lines;
 }
-export function metricDetails(metrics: SystemMetrics, tokens?: TokenUsage, t: (text: string) => string = text => text): string[] {
-  return ["U/L = usado/libre · E/S = entrada/salida", "CPU: porcentaje del sistema entre muestras cada 2 s.",
-    `RAM: ${capacity(metrics.ram)} · memoria física del sistema.`, `Disco: ${capacity(metrics.disk)} · volumen de ${metrics.diskPath}`,
-    "Disco libre: disponible para este usuario; puede haber bloques reservados.",
-    `VRAM: ${capacity(metrics.gpu)} · ${t(metrics.gpuSource ?? metrics.gpuError ?? "pendiente")}`,
-    `Tokens: ${tokens?.input ?? "N/D"} entrada / ${tokens?.output ?? "N/D"} salida.`,
-    `Último turno de esta pestaña: ${tokens?.reported ?? 0}/${tokens?.requests ?? 0} requests con uso reportado.`,
-    "Se suman tools y continuaciones; no se estiman valores faltantes.", ...(tokens?.partial ? ["Conteo parcial: algún request no reportó entrada o salida."] : []),
-    "G/M son GiB/MiB · N/D = sin medición disponible.", `Última muestra: ${metrics.at ?? t("pendiente")}`].map(line => t(line).replaceAll("N/D", t("N/D")));
+function count(value: number): string {
+  if (value < 10000) return String(value);
+  const units = ["", "k", "M", "G", "T", "P"];
+  let unit = 0;
+  while (value >= 1000 && unit < units.length - 1) { value /= 1000; unit++; }
+  return `${value.toFixed(1)}${units[unit]}`;
+}
+export function tokenLine(tokens?: TokenUsage, t: (text: string) => string = text => text): string {
+  const rate = tokensPerSecond(tokens);
+  const number = (value?: number) => value === undefined ? t("N/D") : count(value);
+  return `${t("Tokens E/S")} ${number(tokens?.input)}/${number(tokens?.output)} · ${rate === undefined ? t("N/D") : rate >= 10000 ? count(rate) : rate.toFixed(1)} tok/s${tokens?.partial ? t(" (parcial)") : ""}`;
 }

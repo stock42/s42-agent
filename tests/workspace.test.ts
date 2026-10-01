@@ -40,16 +40,17 @@ test("paneles fijos conservan proyecto y prompt visibles al cerrar o arrastrar",
   desktop.focus(editor); expect(desktop.draw().lines().join("\n")).toContain("La respuesta aparecerá en este editor.");
 });
 
-test("Enter y clic en Enviar publican la respuesta demo en el editor y devuelven el foco", () => {
+test("Enter publica la demo, conserva foco y el prompt usa todo el ancho sin botón Enviar", () => {
   const { desktop, prompt, draft, response } = panels();
   desktop.handle({ type: "paste", text: "  Hola á 文 🙂\nSegunda línea\n" });
   expect(response.value).toBe(""); desktop.handle(key("enter"));
   expect(response.value).toContain("Respuesta de demostración · Mi proyecto");
   expect(response.value).toContain("  Hola á 文 🙂\nSegunda línea\n"); expect(draft.value).toBe("");
   desktop.handle({ type: "paste", text: "Segundo prompt" });
-  const send = prompt.controlRect(prompt.controls[1]!);
-  desktop.handle(mouse(send.x + 2, send.y)); expect(response.value).not.toContain("Segundo prompt");
-  desktop.handle(mouse(send.x + 2, send.y, "release"));
+  expect(prompt.controls.map(control => control.id)).toEqual(["draft"]);
+  expect(draft.bounds.width).toBe(prompt.client.width - 2);
+  expect(desktop.draw().lines()[prompt.client.y]).toContain("Tokens E/S N/D/N/D · N/D tok/s");
+  desktop.handle(key("enter"));
   expect(response.value).toContain("Segundo prompt"); expect(desktop.active).toBe(prompt); expect(prompt.focusedId).toBe("draft");
 });
 

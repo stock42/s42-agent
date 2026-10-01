@@ -30,7 +30,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
   const system: Message = { role: "system", content: agentPrompt({ cwd: project.path, tools: model.capabilities.tools, projectInstructions: guidance, externalSkills: skills.guidance,
     invokedSkill: explicit ? `Skill invocada ${explicit.name} (base directory: ${dirname(explicit.path)}):\n${explicit.body}` : undefined }) };
   let tokens = emptyUsage();
-  const recordUsage = (usage?: ProviderUsage) => { tokens=addUsage(tokens,usage); options.onUsage?.(tokens); };
+  const recordUsage = (usage: ProviderUsage | undefined, durationMs: number) => { tokens=addUsage(tokens,usage,durationMs); options.onUsage?.(tokens); };
   let stage = 0;
   let stageStart = 0;
   for (let step = 0; ; step++) {
@@ -47,11 +47,12 @@ export async function runTurn(options: { project: Project; session: Session; pro
     options.onState("Respondiendo…");
     const stream = stage ? stageStream(options.onDelta) : undefined;
     let result: Completion;
+    const started = performance.now();
     try {
       result = await complete({ ...options, messages, tools, onDelta: stream?.push ?? options.onDelta,
         firstEventMs: options.limits.firstEventMs, idleMs: options.limits.idleMs });
     } catch (error) {
-      recordUsage(error instanceof CompletionError ? error.usage : undefined);
+      recordUsage(error instanceof CompletionError ? error.usage : undefined, performance.now() - started);
       stream?.end();
       if (stage && error instanceof CompletionError && typeof error.partial.content === "string") error.partial.content = stageReply(error.partial.content).text;
       if (!(error instanceof CompletionError) || error.finishReason !== "length" || signal.aborted) throw error;
@@ -65,8 +66,8 @@ export async function runTurn(options: { project: Project; session: Session; pro
       await notice(`Etapa ${stage} · recuperando respuesta`);
       continue;
     }
+    recordUsage(result.usage, performance.now() - started);
     stream?.end();
-    recordUsage(result.usage);
     const calls = result.message.tool_calls ?? [];
     const reply = stage && typeof result.message.content === "string" ? stageReply(result.message.content) : undefined;
     if (reply) result.message.content = reply.text;

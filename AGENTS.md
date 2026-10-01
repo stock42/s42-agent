@@ -63,12 +63,18 @@ arriba/abajo cuando hay espacio; en terminales pequeñas prioriza los controles.
 Incluye Buscar por nombre/glob desde
 la ruta superior, resultados con ubicación, Cancelar, preview y adjuntos;
 no sigue enlaces en búsquedas, cuenta carpetas inaccesibles y limita a 1000.
-CPU/RAM/disco/VRAM U/L y tokens E/S aparecen en la barra inferior; detalle en
-**Vista → Recursos y tokens**. `src/system/metrics.ts`: muestreo cada 2 s sin
+CPU % y RAM/disco/VRAM usado/total aparecen en la barra inferior, sin modal.
+**Vista → CPU/RAM/Disco/VRAM: on/off** persiste cada indicador en `ui.resources`;
+config anterior muestra todos. Tokens E/S y tok/s siempre visibles arriba a la
+derecha de Prompt, sin opción de ocultarlos. Sin botón Enviar/Cancelar: Enter
+envía, Shift+Enter inserta línea, Ctrl+C cancela; borrador bajo los contadores
+con todo el ancho. `src/system/metrics.ts`: muestreo cada 2 s sin
 superposición, APIs Bun/compat y DRM o nvidia-smi instalado para VRAM. N/D si
 falta contador; nunca inventar cero. Tokens del proveedor acumulados por turno/
 pestaña, incluidas tools/etapas/length, persistidos en evento turn opcional;
-parcial cuando falta uso. `src/agent/usage.ts`; [QA](docs/qa/native-tools.md).
+parcial cuando falta uso. Tok/s usa salida reportada/tiempo real de esas requests,
+incluye red/primer token y excluye tools. N/D sin uso/tiempo; no contar chunks.
+`src/agent/usage.ts`; [QA](docs/qa/persistent-indicators.md).
 La demo no muestrea recursos: cero bytes idle históricos aplican a `--demo`.
 Si el proveedor termina por `finish_reason: length`, conservar texto/reasoning
 parcial y solicitar etapas pequeñas automáticamente. `src/agent/stages.ts`

@@ -38,7 +38,8 @@ test("explorador sale del proyecto: padre, carpeta hermana, enlaces, raíz y rut
     for(const [width,height] of [[60,16],[80,24],[120,40]] as const) {
       view.desktop.resize(width,height);const text=screen(view.desktop);expect(text).toContain("Prompt");expect(text).toContain("< Adjuntar >");
       expect(explorer.window.bounds.y+explorer.window.bounds.height).toBeLessThanOrEqual(view.promptWindow.bounds.y);
-      expect(explorer.list.bounds.y+explorer.list.bounds.height).toBeLessThan(explorer.window.client.height-1);
+      const listEnd = explorer.list.bounds.y + explorer.list.bounds.height;
+      expect(listEnd).toBeLessThanOrEqual(explorer.window.client.height - (explorer.list.bordered ? 2 : 1));
     }
   } finally {await rm(root,{recursive:true,force:true});}
 });

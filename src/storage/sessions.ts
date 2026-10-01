@@ -29,7 +29,8 @@ function parseEvent(value: unknown, projectId: string): SessionEvent {
     case "tool-result": if (typeof e.callId === "string" && typeof e.output === "string" && typeof e.failed === "boolean") return e; break;
     case "turn": if (["completed", "cancelled", "failed"].includes(e.state) && typeof e.detail === "string"
       && (e.tokens === undefined || e.tokens && [e.tokens.requests, e.tokens.reported].every(v => Number.isSafeInteger(v) && v >= 0)
-        && typeof e.tokens.partial === "boolean" && [e.tokens.input, e.tokens.output, e.tokens.total].every(v => v === undefined || Number.isSafeInteger(v) && v >= 0))) return e;
+        && typeof e.tokens.partial === "boolean" && [e.tokens.input, e.tokens.output, e.tokens.total, e.tokens.timedOutput].every(v => v === undefined || Number.isSafeInteger(v) && v >= 0)
+        && (e.tokens.generationMs === undefined || Number.isFinite(e.tokens.generationMs) && e.tokens.generationMs > 0))) return e;
   }
   throw new Error("Evento de sesión inválido");
 }

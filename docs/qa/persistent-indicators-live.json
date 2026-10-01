@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-01T19:56:50.959Z",
+  "endpoint": "http://127.0.0.1:8080/v1",
+  "model": "GLM-4.7-Flash",
+  "tokens": {
+    "requests": 1,
+    "reported": 1,
+    "partial": false,
+    "input": 151,
+    "output": 92,
+    "total": 243,
+    "timedOutput": 92,
+    "generationMs": 881.17906
+  },
+  "tokensPerSecond": 104.40556769472029,
+  "status": "Listo · E/S 151/92",
+  "rateDefinition": "reported output tokens / complete request elapsed time; includes first-token latency, excludes tool execution",
+  "surface": "App.submit with real provider; terminal captures use a separate local SSE fixture"
+}

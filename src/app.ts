@@ -1,7 +1,7 @@
 import { Extensions } from "./ui/extensions.ts";
 import { Promptings } from "./ui/promptings.ts";
 import { basename, dirname, resolve, sep } from "node:path";
-import { ConfigStore, defaultProviders, normalizeFolder, storagePaths, validateConfig, type Project, type Provider, type Model } from "./storage/config.ts";
+import { ConfigStore, defaultProviders, normalizeFolder, storagePaths, validateConfig, type Project, type Provider, type Model, type ResourceIndicators } from "./storage/config.ts";
 import { Session, listSessions } from "./storage/sessions.ts";
 import type { Message, Selection, ToolCall } from "./agent/messages.ts";
 import { createWorkspaceView } from "./ui/workspace.ts";
@@ -18,7 +18,7 @@ import { FileExplorer } from "./ui/components/file-explorer.ts";
 import { TabBar } from "./ui/components/tab-bar.ts";
 import { createProjectTab, type ProjectTab } from "./project-tab.ts";
 import { showAbout } from "./ui/about.ts";
-import { SystemMonitor, metricDetails, metricLines } from "./system/metrics.ts";
+import { SystemMonitor, metricLines, tokenLine } from "./system/metrics.ts";
 import { nativeTools } from "./agent/tools.ts";
 import { emptyUsage } from "./agent/usage.ts";
 import type { Language } from "./ui/i18n.ts";
@@ -57,14 +57,18 @@ export class App {
     this.desktop.palette = store.value.ui.palette;
     this.desktop.language = store.value.ui.language;
     this.metrics = new SystemMonitor(() => this.project?.path ?? this.cwd);
-    this.desktop.statusLines = () => metricLines(this.metrics.snapshot, this.activeTab.tokens, this.desktop.width, this.desktop.t);
-    this.desktop.onStart = () => this.metrics.start(() => this.desktop.invalidate());
+    this.desktop.statusLines = () => metricLines(this.metrics.snapshot, this.store.value.ui.resources, this.desktop.width, this.desktop.t);
+    this.desktop.onStart = () => this.metrics.start(() => {
+      const rows = Math.max(1, this.desktop.statusLines!().length);
+      if (this.view.promptWindow.bounds.y + this.view.promptWindow.bounds.height !== this.desktop.height - rows) this.desktop.resize(this.desktop.width, this.desktop.height);
+      this.desktop.invalidate();
+    });
     const { promptWindow } = this.view;
     this.bindTab(this.activeTab);
     this.desktop.tabs = new TabBar(() => this.tabs.filter(t => t.project).map(t => ({ id: t.id, label: t.project!.name, busy: t.busy })),
       () => this.activeTab.id, id => this.run(() => this.activateTab(id)), id => this.run(() => this.closeTab(id)), () => this.projects());
     const resize=this.desktop.onResize!;
-    this.desktop.onResize=(width,height)=>{resize(width,height);if(this.attachments.length && promptWindow.client.height<3){
+    this.desktop.onResize=(width,height)=>{resize(width,height);if(this.attachments.length && promptWindow.client.height<4){
       promptWindow.bounds.height++;promptWindow.bounds.y--;this.view.editorWindow.bounds.height--;this.desktop.floatingArea={...this.view.editorWindow.bounds};
     }};
     this.view.editorWindow.onLayout = client => { this.view.response.bounds.y = 1; this.view.response.bounds.height = Math.max(1, client.height - 1); this.view.response.bounds.width = Math.max(1, client.width - 2); };
@@ -74,11 +78,13 @@ export class App {
       canvas.text(client.x + 1, client.y, context, theme.window, client.width - 2);
     };
     promptWindow.onLayout = client => {
-      const { prompt, send } = this.view;
-      prompt.bounds.width = Math.max(1, client.width - 18); prompt.bounds.height = Math.max(1, client.height - 1 - (this.attachments.length ? 1 : 0));
-      send.bounds.x = Math.max(1, client.width - 15);
+      const { prompt } = this.view;
+      prompt.bounds.y = 1; prompt.bounds.width = Math.max(1, client.width - 2);
+      prompt.bounds.height = Math.max(1, client.height - 2 - (this.attachments.length ? 1 : 0));
     };
     promptWindow.onDraw = (canvas, client) => {
+      const tokens = tokenLine(this.activeTab.tokens, this.desktop.t);
+      canvas.text(client.x + client.width - 1 - Bun.stringWidth(tokens), client.y, tokens, theme.window);
       if (this.attachments.length) canvas.text(client.x + 1, client.y + client.height - 2,
         this.desktop.t(`Adjuntos (${this.attachments.length}): ${this.attachments.map(a => `${a.name} ${a.size} B`).join(" · ")} · ${this.bindingLabel("attachments")}`), theme.window, client.width - 2);
       const hint=this.desktop.t("Shift+Enter: línea"), available=Math.max(1,client.width - 5 - Bun.stringWidth(hint));
@@ -136,7 +142,10 @@ export class App {
         { label: "Respuestas", run: () => this.desktop.focus(this.view.editorWindow) },
         { label: "Prompt", run: () => this.desktop.focus(promptWindow) },
         { label: "Paleta de colores", run: () => this.colorPalette() },
-        { label: "Recursos y tokens", run: () => info(this.desktop, this.desktop.t("Recursos y tokens"), metricDetails(this.metrics.snapshot, this.activeTab.tokens, this.desktop.t)) },
+        ...(["cpu", "ram", "disk", "gpu"] as const).map(key => ({
+          label: `${this.resourceLabel(key)}: ${store.value.ui.resources[key] ? "on" : "off"}`,
+          run: () => this.run(() => this.toggleResource(key)),
+        })),
         { label: "Language", run: () => this.language() },
         { label: `Ver razonamiento: ${store.value.ui.showReasoning ? "on" : "off"}`, run: () => this.run(() => this.toggleReasoning()) },
         { label: "Cambiar panel", shortcut: "Ctrl+N", run: () => this.desktop.cycle() },
@@ -266,6 +275,17 @@ export class App {
     item.label = `Ver razonamiento: ${next.ui.showReasoning ? "on" : "off"}`;
     this.refreshPresentation();
   }
+  private resourceLabel(key: keyof ResourceIndicators): string {
+    return { cpu: "CPU", ram: "RAM", disk: "Disco", gpu: "VRAM" }[key];
+  }
+  async toggleResource(key: keyof ResourceIndicators): Promise<void> {
+    const next = structuredClone(this.store.value); next.ui.resources[key] = !next.ui.resources[key];
+    await this.store.save(next);
+    const label = this.resourceLabel(key);
+    const item = this.desktop.menu.menus.find(menu => menu.label === "Vista")!.items.find(item => item.label.startsWith(label + ":"))!;
+    item.label = `${label}: ${next.ui.resources[key] ? "on" : "off"}`;
+    this.desktop.resize(this.desktop.width, this.desktop.height); this.desktop.invalidate();
+  }
   private refreshPresentation(): void {
     for (const tab of this.tabs) {
       tab.rendered = new WeakMap(); this.showHistory(false, tab); this.showContext(tab);
@@ -308,15 +328,13 @@ export class App {
     await this.activateTab(tab.id);
   }
   private bindTab(tab: ProjectTab): void {
-    tab.send.translate = this.desktop.t;
     tab.prompt.onSubmit = () => this.run(() => this.submit());
-    tab.send.onClick = () => tab.busy ? tab.controller?.abort(new Error("Turno cancelado; los efectos ya realizados se conservan")) : this.run(() => this.submit());
   }
   private displayTab(tab: ProjectTab): void {
     this.activeTab = tab;
-    this.view.response = tab.response; this.view.prompt = tab.prompt; this.view.send = tab.send;
+    this.view.response = tab.response; this.view.prompt = tab.prompt;
     this.view.editorWindow.controls.splice(0, this.view.editorWindow.controls.length, tab.response);
-    this.view.promptWindow.controls.splice(0, this.view.promptWindow.controls.length, tab.prompt, tab.send);
+    this.view.promptWindow.controls.splice(0, this.view.promptWindow.controls.length, tab.prompt);
     this.view.editorWindow.title = tab.project?.name ?? "s42-agent";
     if (!this.desktop.modal) for (const window of [...this.desktop.windows]) if (!window.fixed) this.desktop.close(window);
     this.desktop.resize(this.desktop.width, this.desktop.height);
@@ -512,14 +530,14 @@ export class App {
     const key=credential(provider,sessionKey ?? this.keys.get(provider.id));
     if (provider.id === "deepseek" && !key) throw new Error("Ingresá una API key de DeepSeek o su variable de entorno");
     const tab = this.activeTab, controller = new AbortController();
-    tab.controller = controller; tab.busy = true; tab.send.label = "Cancelar";
+    tab.controller = controller; tab.busy = true;
     tab.status = `Consultando modelos de ${provider.name}…`; this.desktop.invalidate();
     try {
       const models = await discoverModels(provider, key, AbortSignal.any([controller.signal,AbortSignal.timeout(this.store.value.limits.firstEventMs)]));
       if (!models.length) throw new Error(`${provider.name}: no hay modelos disponibles`);
       tab.status = `${models.length} modelos disponibles · elegí uno`; return models;
     } catch (error) { tab.status = (error as Error).message; throw error; }
-    finally {tab.busy=false;tab.controller=undefined;tab.send.label="Enviar";this.desktop.invalidate();}
+    finally {tab.busy=false;tab.controller=undefined;this.desktop.invalidate();}
   }
   async discover(): Promise<void> {
     this.requireIdle(); const provider = this.store.value.providers.find(p => p.id === this.selection.providerId); if (!provider) throw new Error("Elegí un proveedor");
@@ -589,8 +607,8 @@ export class App {
   })); }
   async task<T>(label:string,operation:(signal:AbortSignal)=>Promise<T>):Promise<T>{
     this.requireIdle(); const tab = this.activeTab, controller = new AbortController();
-    tab.controller=controller;tab.busy=true;tab.send.label="Cancelar";tab.status=label;this.desktop.invalidate();
-    try{const result=await operation(controller.signal);tab.status="Listo";return result;}catch(error){tab.status=(error as Error).message;throw error;}finally{tab.controller=undefined;tab.busy=false;tab.send.label="Enviar";this.desktop.invalidate();}
+    tab.controller=controller;tab.busy=true;tab.status=label;this.desktop.invalidate();
+    try{const result=await operation(controller.signal);tab.status="Listo";return result;}catch(error){tab.status=(error as Error).message;throw error;}finally{tab.controller=undefined;tab.busy=false;this.desktop.invalidate();}
   }
   cancel(): void { this.controller?.abort(new Error("Turno cancelado; los efectos ya realizados se conservan")); }
   private async message(message: Message, tab: ProjectTab): Promise<void> { await tab.session!.append({ type: "message", message }); tab.session!.state.messages.push(message); }
@@ -621,7 +639,7 @@ export class App {
     const content=contentWithAttachments(text,tab.attachments);
     const key = credential(provider, this.keys.get(provider.id));
     const controller = new AbortController(), context = structuredClone({ limits: this.store.value.limits, mcpServers: this.store.value.mcpServers, skills: this.store.value.skills });
-    tab.busy = true; tab.controller = controller; tab.send.label = "Cancelar"; tab.tokens = emptyUsage();
+    tab.busy = true; tab.controller = controller; tab.tokens = emptyUsage();
     tab.prompt.setValue(""); tab.attachments=[]; tab.status = "Conectando…"; this.desktop.invalidate();
     this.desktop.resize(this.desktop.width,this.desktop.height);
     tab.turn = (async () => {
@@ -662,7 +680,7 @@ export class App {
         }
         tab.status = (e as Error).message; session.state.notices.push(tab.status);
         await session.append({ type: "turn", state: controller.signal.aborted ? "cancelled" : "failed", detail: tab.status, tokens: tab.tokens });
-      } finally { tab.busy = false; tab.controller = undefined; tab.send.label = "Enviar"; tab.live=[]; this.showHistory(false, tab); this.desktop.invalidate(); }
+      } finally { tab.busy = false; tab.controller = undefined; tab.live=[]; this.showHistory(false, tab); this.desktop.invalidate(); }
     })();
     // Keep configuration/input responsive while the request runs.
     void tab.turn.catch(e => { tab.status = `No se pudo guardar el turno: ${(e as Error).message}`; this.desktop.invalidate(); });

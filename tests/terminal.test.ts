@@ -45,11 +45,11 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
       await until(() => run.output.includes("tercera"));
       expect(run.output).not.toContain("Respuesta de demostración");
       run.terminal.write("\x1b[97;5u\x7f"); // Ctrl+A extendido y borrado.
-      // Pegar no envía: el botón Enviar comparte la acción de Enter.
+      // Pegar no envía; Enter publica el prompt.
       run.terminal.write("\x1b[200~á文🙂\nSegunda línea\x1b[201~");
       await until(() => run.output.includes("Segunda línea"));
       expect(run.output).not.toContain("Respuesta de demostración");
-      run.terminal.write("\x1b[<0;66;18M\x1b[<0;66;18m");
+      run.terminal.write("\r");
       await until(() => run.output.includes("Respuesta de demostración · tmp"));
       expect(run.output).toContain("á文🙂");
       run.terminal.write("\x1b[200~borrador pendiente\x1b[201~");
@@ -113,8 +113,8 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
       expect(run.output).not.toContain("\x1b[?1006h");
       expect(run.output).not.toMatch(/\x1b\[(?:3\d|4\d|9\d|10\d)[;\dm]/);
       expect(run.output).toContain("\x1b[7m");
-      const beforeFocus = run.output.length; run.terminal.write("\t");
-      await until(() => run.output.slice(beforeFocus).includes("< Enviar >"));
+      const beforeFocus = run.output.length; run.terminal.write("foco");
+      await until(() => run.output.slice(beforeFocus).includes("foco"));
       expect(run.output.slice(beforeFocus)).toContain("\x1b[7m");
       run.terminal.write("\x03"); expect(await run.child.exited).toBe(0);
       await until(() => run.output.includes("AFTER:"));

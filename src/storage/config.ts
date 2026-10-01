@@ -12,12 +12,13 @@ export interface Provider { id: string; name: string; kind: "llama.cpp" | "opena
 export interface McpServer { id:string; name:string; enabled:boolean; transport:"stdio"|"http"; command?:string; args?:string[]; cwd?:string; envRefs?:Record<string,string>; url?:string; apiKeyEnv?:string }
 export interface Skill { id:string; name:string; path:string; enabled:boolean; projectId?:string; source?:string }
 export interface Prompting { id: string; name: string; text: string }
+export interface ResourceIndicators { cpu: boolean; ram: boolean; disk: boolean; gpu: boolean }
 export interface Config {
   version: 1; projects: Project[]; providers: Provider[];
   mcpServers: McpServer[]; skills: Skill[]; promptings: Prompting[];
   defaults: Selection & { projectId?: string }; lastProjectId?: string;
   workspace?: { openProjectIds: string[] };
-  ui: { vimMode: boolean; color: "auto" | "never"; palette: PaletteId; language: Language; showReasoning: boolean; bindings?: Bindings };
+  ui: { vimMode: boolean; color: "auto" | "never"; palette: PaletteId; language: Language; showReasoning: boolean; resources: ResourceIndicators; bindings?: Bindings };
   limits: { maxSteps: number; shellTimeoutMs: number; firstEventMs: number; idleMs: number };
 }
 
@@ -40,7 +41,7 @@ export function defaultProviders(): Provider[] {
 
 export function defaultConfig(): Config {
   return { version: 1, projects: [], mcpServers:[], skills:[], promptings: [], providers: defaultProviders(),
-    defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto", palette: "qbasic", language: "es", showReasoning: true },
+    defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto", palette: "qbasic", language: "es", showReasoning: true, resources: { cpu: true, ram: true, disk: true, gpu: true } },
     limits: { maxSteps: 30, shellTimeoutMs: 120000, firstEventMs: 120000, idleMs: 120000 } };
 }
 const text = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
@@ -55,6 +56,9 @@ export function validateConfig(value: unknown): Config {
   if (c.ui.language !== "es" && c.ui.language !== "en") throw new Error("Idioma inválido: usá es o en");
   if (c.ui.showReasoning === undefined) c.ui.showReasoning = true;
   if (typeof c.ui.showReasoning !== "boolean") throw new Error("Ver razonamiento debe ser true o false");
+  if (c.ui.resources === undefined) c.ui.resources = defaultConfig().ui.resources;
+  if (!c.ui.resources || typeof c.ui.resources !== "object" || Array.isArray(c.ui.resources)
+    || ["cpu", "ram", "disk", "gpu"].some(key => typeof c.ui.resources[key as keyof ResourceIndicators] !== "boolean")) throw new Error("Indicadores de recursos inválidos");
   const unique = (values: string[]) => new Set(values).size === values.length;
   for (const p of c.projects) if (!p || !text(p.id) || !text(p.name) || !text(p.path) || !isAbsolute(p.path)
     || (p.selection && (!text(p.selection.providerId) || (p.selection.modelId !== undefined && !text(p.selection.modelId))))) throw new Error("Proyecto inválido en config");

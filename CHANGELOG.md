@@ -5,6 +5,24 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Corregido — Indicadores siempre visibles en la TUI
+
+- Prompt sin botón Enviar/Cancelar, con borrador de ancho completo. Tokens de
+  entrada/salida y tok/s siempre arriba a la derecha en una fila propia; Enter,
+  Shift+Enter y Ctrl+C conservan envío, línea y cancelación.
+- CPU % y RAM/disco/VRAM usado/total en barra inferior persistente, con filas
+  adaptadas al ancho. Vista ofrece on/off por recurso guardado en ui.resources;
+  se eliminó el modal de datos y no existe toggle para ocultar tokens.
+- Tok/s calculado con salida reportada y tiempo real de requests, excluyendo
+  tools; incluye red/primer token. Uso/timing persisten por turno/pestaña;
+  config/sesiones anteriores compatibles, N/D si falta medición, parcial si
+  falta uso. Cantidades grandes abreviadas en UI, exactas en sesión.
+- ES/EN, typecheck y 127 tests / 25 archivos / 1980 assertions correctos.
+  Seis capturas tmux desde index.ts: 100×32, 80×24, 60×16, toggle CPU,
+  explorador y adjunto. GLM real: 151 entrada / 92 salida, 104,4 tok/s observados.
+  README/specs/AGENTS/fase12/QA actualizados. Sin builds ni push; pull fallido
+  por main sin upstream. Cambios ajenos conservados fuera del commit.
+
 ### Ajustado — Márgenes verticales del explorador
 
 - El explorador deja hasta dos filas libres arriba y abajo dentro del editor,

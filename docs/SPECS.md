@@ -63,7 +63,7 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R21 | Preparación open source | MIT, README reproducible, contribución, metadata y CI fuente; publicación como acción separada. |
 | R22 | Tools nativas definidas | read/write/edit/list/find/search/fetch/shell, archivo por tool y contratos documentados. |
 | R23 | Explorador grande y buscador en disco | Ventana adaptable, nombre/glob recursivo desde cualquier carpeta y cancelación, sin tapar el prompt. |
-| R24 | Recursos y tokens visibles | CPU/RAM/disco/VRAM usado/libre y entrada/salida por turno/pestaña, con N/D explícito cuando faltan datos. |
+| R24 | Recursos y tokens visibles | CPU %, RAM/disco/VRAM usado/total configurables desde Vista; E/S y tok/s fijos arriba a la derecha de Prompt, con N/D explícito cuando faltan datos. |
 | R25 | Idioma de la UI | Vista → Language: español/inglés en vivo y persistente, en todos los textos del harness y pestañas. |
 | R26 | Visibilidad del razonamiento | Vista → Ver razonamiento on/off: historial y streaming, conservando sesión, respuesta y tools. |
 | R27 | Identidad y skills internas | Prompt inicial breve; src/agent/skills con estructura de proyectos, debugging y PDF; internal_skill descubre/carga instrucciones bajo demanda. |
@@ -266,14 +266,16 @@ Una pantalla alternativa organizada como escritorio TUI:
 1. Menú superior: **Archivo**, **Projects**, **Models**, **Promptings**, **Tools**,
    **Vista** y **Ayuda**, con desplegables. Archivo agrupa explorador/adjuntos/salir;
    Projects, registro/sesiones/pestañas; Models, proveedores/modelos; Promptings,
-   biblioteca/nuevo/guardar borrador; Tools, MCP/Skills; Vista, paneles/paleta/idioma/razonamiento/Vim.
+   biblioteca/nuevo/guardar borrador; Tools, MCP/Skills; Vista, paneles/paleta/recursos/idioma/razonamiento/Vim.
    Ayuda muestra atajos y About. Sin acciones de prueba en el harness normal.
 2. Editor central con el **nombre del proyecto centrado en su marco superior**,
    como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
    allí en solo lectura, con selección y scroll; no abrir una ventana de chat independiente.
 3. Panel **Prompt** fijo debajo del editor, siempre visible. Ambos paneles no
    tienen cierre ni arrastre; auxiliares y modales quedan dentro del área del editor.
-   Enter/Enviar envía explícitamente; Shift+Enter inserta una línea y pegar no envía.
+   Sin botón Enviar: Enter envía explícitamente; Shift+Enter inserta una línea y
+   pegar no envía. Tokens E/S y tok/s fijos arriba a la derecha en una fila propia;
+   el borrador usa todo el ancho debajo, sin superposición con adjuntos/estado.
 4. Contexto visible: proyecto, proveedor/modelo y sesión en la ventana principal.
 5. Barra inferior: INSERT/NORMAL, foco, actividad, uso disponible y atajos.
 6. Fila de pestañas debajo del menú: nombre de cada proyecto, marca `~` de turno
@@ -336,14 +338,19 @@ En 60×16 la lista usa filas sin marco para conservar resultados clicables.
 
 ### Recursos y tokens
 
-Barra inferior QBasic: U/L (usado/libre) de CPU, RAM, disco y VRAM; E/S (entrada/
-salida) del último turno de la pestaña. Una fila en ≥120 columnas, dos en tamaños
-menores, sustituyendo la barra inferior de atajos. Vista → Recursos y tokens
-ofrece detalle/origen; los atajos siguen en Ayuda y los hints de controles.
+Barra inferior QBasic: CPU en porcentaje usado, RAM/disco/VRAM usado/total.
+Siempre visibles mientras cada indicador esté habilitado; no abrir un modal
+para consultarlos. Vista tiene CPU/RAM/Disco/VRAM: on/off; guardar booleanos en
+`ui.resources` (cpu/ram/disk/gpu), todos true en config anterior/nueva. Adaptar
+filas al ancho real; recalcular layout si cambia la cantidad de filas. Al ocultar
+todos, vuelve la barra de atajos. Tokens E/S y tok/s permanecen fijos arriba a
+la derecha de Prompt, sin toggle. Atajos siguen en Ayuda y hints de controles.
 
 CPU: delta de ticks idle/total de `node:os.cpus()`; RAM: `totalmem/freemem`.
-Disco: `node:fs/promises.statfs` del volumen del proyecto, libre = bavail; los
-bloques reservados no se anuncian como usados. APIs implementadas por Bun.
+Disco: `node:fs/promises.statfs` del volumen del proyecto, total = blocks y usado
+= blocks - bfree; bloques reservados no se anuncian como usados. Libre disponible
+continúa medido mediante bavail. APIs implementadas por Bun. Capacidades G/M
+representan GiB/MiB.
 Muestreo cada 2 s durante la TUI, sin consultas superpuestas; cierre detiene
 timer/proceso del contador. Solo cambian filas cuyo texto difiere. La demo no
 muestrea: la evidencia histórica de cero bytes idle corresponde a esa demo.
@@ -352,7 +359,7 @@ VRAM dedicada: archivos Linux DRM `mem_info_vram_total/used` cuando existen;
 si no, `nvidia-smi --query-gpu=memory.total,memory.used,memory.free` instalado,
 ejecutado con Bun.spawn sin shell y timeout 2 s. Suma contadores disponibles
 del origen elegido. No hay API Bun portable de VRAM utilizada ni instalación
-automática; driver/OS sin contador → N/D con motivo. Validado Linux x64; no
+automática; driver/OS sin contador → N/D en la barra. Validado Linux x64; no
 afirmar funcionamiento de hardware/otros SO por el parser de un fixture.
 
 Solicitar `stream_options.include_usage`; acumular `prompt_tokens` y
@@ -362,6 +369,18 @@ conservan lo reportado; parcial indica algún request con E/S faltantes. El
 evento turn admite `tokens` opcional sin invalidar sesiones v1 anteriores.
 Pestañas/nuevas sesiones tienen conteos separados; reabrir restaura el último
 turno persistido, sin inferencia adicional.
+
+Tok/s: promedio observado de tokens de salida reportados dividido por la suma
+de duraciones reales de sus requests completas, incluidas parciales/length con
+uso reportado. Medir con performance.now alrededor de complete: incluye conexión,
+red, primer token y streaming; excluye ejecución de tools/MCP y pausas entre
+requests. No presentarlo como velocidad pura de decodificación del servidor.
+Persistir timedOutput/generationMs opcionales sin invalidar sesiones anteriores;
+estas muestran N/D si no tienen tiempo. No dividir el conteo global por duración
+de solo parte de los requests: numerador y denominador deben corresponder.
+Actualizar al recibir uso, normalmente al fin de cada request. Cantidades
+grandes abreviadas en UI para caber en 60×16; valores exactos en sesión.
+[QA del ajuste](qa/persistent-indicators.md).
 
 ### Renderizado
 
@@ -680,8 +699,9 @@ manualmente. El default de proveedor es `llama.cpp` aun antes de elegir modelo.
 - Informar 401, 404, 429, 5xx, modelo ausente y contexto excedido de forma accionable.
 - Sin fallback cloud ni replay automático de herramientas al recuperar una
   respuesta truncada. Otras fallas no reintentan el turno.
-- Mostrar tokens/velocidad solo si el proveedor los reporta. Un dato ausente no
-  equivale a cero; cualquier estimación se identifica como aproximada.
+- Mostrar siempre indicadores de tokens/tok/s. Usar conteos del proveedor y
+  duración real de requests para velocidad observada; sin datos, mostrar N/D.
+  Un dato ausente no equivale a cero; no estimar tokens mediante texto/chunks.
 
 ## 8. `llama.cpp` como flujo predeterminado
 
