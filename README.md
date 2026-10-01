@@ -283,6 +283,10 @@ paleta conserva pestañas, borrador y sesión. Los IDs `grayscale` y `green` sig
 funcionando en configuraciones anteriores. Las tres nuevas paletas adaptan los
 colores originales al escritorio QBasic.
 
+El chat diferencia las etiquetas **Vos** y **Agente** con colores propios:
+amarillo y cian en QBasic, tonos adaptados en las otras paletas. El cuerpo conserva
+su color de lectura; sin color, las etiquetas quedan resaltadas en negrita.
+
 **Vista → Activar / desactivar Vim** configura el modo. Se respetan
 `NO_COLOR`, `--no-color` y `--no-mouse`; RGB con `COLORTERM=truecolor`, fallback
 ANSI16 para otros terminales. Renderer por filas modificadas; las métricas se

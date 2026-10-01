@@ -39,6 +39,9 @@ Las plantillas también están disponibles en configuraciones anteriores sin
 reemplazar endpoints registrados. Claves de sesión tienen prioridad y no se guardan.
 Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
 read/write/edit/list/find/search/fetch/shell, Vim acotado y adjuntos por rutas ya implementados.
+Etiquetas Vos/Agente con estilos semánticos distintos en historial/stream/estado:
+amarillo/cian QBasic y tonos adaptados por paleta; cuerpo neutral, selección
+prioritaria y etiquetas en negrita sin color. No insertar ANSI en mensajes/sesión.
 Mientras un turno LLM está activo, animar el título del proyecto y mostrar
 su estado (conectando/razonando/respondiendo/tools) dentro del chat, en una fila
 reservada bajo la conversación. Prompt no muestra estados de ese turno mientras

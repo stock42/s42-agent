@@ -271,6 +271,9 @@ Una pantalla alternativa organizada como escritorio TUI:
 2. Editor central con el **nombre del proyecto centrado en su marco superior**,
    como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
    allí en solo lectura, con selección y scroll; no abrir una ventana de chat independiente.
+   Diferenciar las etiquetas Vos/Agente por color (amarillo/cian en QBasic,
+   tonos propios por paleta), también durante streaming y en el estado del agente.
+   Mantener el cuerpo legible y sin cambios; etiquetas en negrita sin color.
 3. Panel **Prompt** fijo debajo del editor, siempre visible. Ambos paneles no
    tienen cierre ni arrastre; auxiliares y modales quedan dentro del área del editor.
    Sin botón Enviar: Enter envía explícitamente; Shift+Enter inserta una línea y

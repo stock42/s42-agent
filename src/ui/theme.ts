@@ -9,6 +9,8 @@ export const dosColors = [
 export const theme = {
   desktop: { fg: 7, bg: 4 },
   window: { fg: 7, bg: 4 },
+  chatUser: { fg: 11, bg: 4 },
+  chatAgent: { fg: 14, bg: 4 },
   frameActive: { fg: 15, bg: 4 },
   frameInactive: { fg: 7, bg: 4 },
   dialog: { fg: 0, bg: 7 },
@@ -40,6 +42,8 @@ interface Palette {
 const darkStyles: ReadonlyMap<Style, Style> = new Map([
   [theme.desktop, { fg: 7, bg: 0 }],
   [theme.window, { fg: 7, bg: 4 }],
+  [theme.chatUser, { fg: 11, bg: 4 }],
+  [theme.chatAgent, { fg: 14, bg: 4 }],
   [theme.frameActive, { fg: 6, bg: 4 }],
   [theme.frameInactive, { fg: 12, bg: 4 }],
   [theme.dialog, { fg: 7, bg: 8 }],
@@ -83,7 +87,7 @@ export const palettes = {
       "1c3428", "71a580", "8bbf97", "a7d4b0", "92b69e", "b8dec0", "d2ebd7", "e5f3e9",
     ),
     ansi: [0, 2, 2, 2, 0, 2, 10, 10, 0, 10, 10, 10, 2, 10, 10, 10],
-    styles: darkStyles,
+    styles: new Map([...darkStyles, [theme.chatUser, { fg: 12, bg: 4 }]]),
   },
   nord: {
     label: "Nord · Ártico",

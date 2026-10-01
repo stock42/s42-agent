@@ -1,9 +1,10 @@
 import type { Canvas } from "../canvas.ts";
-import { theme } from "../theme.ts";
+import { theme, type Style } from "../theme.ts";
 import { graphemes, type InputEvent, type Rect } from "../types.ts";
 import { Component } from "./component.ts";
 
 interface Row { start: number; end: number }
+export interface TextFragment { text: string; style?: Style }
 
 const normalize = (text: string) => text.replace(/\r\n?/g, "\n").replace(/\t/g, "    ").replace(/[\x00-\x08\x0b-\x1f\x7f]/g, " ");
 
@@ -20,6 +21,7 @@ export class TextArea extends Component {
   private rowWidth = 0;
   private viewHeight = 0;
   private undo: { value: string; cursor: number }[] = [];
+  private spans: { start: number; end: number; style: Style }[] = [];
   onSubmit?: () => void;
   readOnly = false;
   placeholder = "";
@@ -28,19 +30,29 @@ export class TextArea extends Component {
 
   get value(): string { return this.chars.join(""); }
 
-  append(text: string): void {
+  append(text: string, style?: Style): void {
+    const start = this.chars.length;
     this.chars.push(...graphemes(normalize(text))); this.rows = undefined;
+    if (style) this.spans.push({ start, end: this.chars.length, style });
     if (this.following) { this.cursor = this.chars.length; this.reveal = true; }
   }
-  update(value: string): void {
-    this.chars = graphemes(normalize(value)); this.rows = undefined;
+  private content(value: string | TextFragment[]): void {
+    this.chars = []; this.spans = []; this.rows = undefined;
+    for (const fragment of typeof value === "string" ? [{ text: value }] : value) {
+      const start = this.chars.length;
+      for (const char of graphemes(normalize(fragment.text))) this.chars.push(char);
+      if (fragment.style) this.spans.push({ start, end: this.chars.length, style: fragment.style });
+    }
+  }
+  update(value: string | TextFragment[]): void {
+    this.content(value);
     this.cursor = this.following ? this.chars.length : Math.min(this.cursor, this.chars.length);
     if (this.following) this.reveal = true;
   }
 
-  setValue(value: string, position: "start" | "end" = "end"): void {
+  setValue(value: string | TextFragment[], position: "start" | "end" = "end"): void {
     this.undo = [];
-    this.chars = graphemes(normalize(value)); this.cursor = position === "start" ? 0 : this.chars.length;
+    this.content(value); this.cursor = position === "start" ? 0 : this.chars.length;
     this.anchor = undefined; this.top = 0; this.rows = undefined; this.reveal = true; this.following = true; this.column = undefined;
   }
 
@@ -141,13 +153,17 @@ export class TextArea extends Component {
       this.placeholder.split("\n").slice(0, bounds.height).forEach((line, row) => canvas.text(bounds.x, bounds.y + row, line, theme.window, bounds.width));
     }
     const selection = focused ? this.selection : undefined;
+    let span = 0;
     for (let y = 0; y < bounds.height; y++) {
       const row = rows[this.top + y]; if (!row) break;
       let x = 0;
       for (let index = row.start; index < row.end; index++) {
         const char = this.chars[index]!; const width = Bun.stringWidth(char);
         if (x + width > bounds.width) break;
-        const style = selection && index >= selection[0] && index < selection[1] ? theme.selected : theme.window;
+        while (span < this.spans.length && this.spans[span]!.end <= index) span++;
+        const highlight = this.spans[span];
+        const style = selection && index >= selection[0] && index < selection[1] ? theme.selected
+          : highlight && index >= highlight.start ? highlight.style : theme.window;
         canvas.text(bounds.x + x, bounds.y + y, char, style, width); x += width;
       }
     }

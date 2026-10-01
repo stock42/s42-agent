@@ -22,6 +22,7 @@ import { SystemMonitor, metricLines, tokenLine } from "./system/metrics.ts";
 import { nativeTools } from "./agent/tools.ts";
 import { emptyUsage } from "./agent/usage.ts";
 import type { Language } from "./ui/i18n.ts";
+import type { TextFragment } from "./ui/components/text-area.ts";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
 export class App {
@@ -82,8 +83,11 @@ export class App {
       let context = this.desktop.t("No hay modelo configurado. Models → Proveedores");
       try { const { provider, model } = this.current(); context = `${provider.name} · ${model.id} · ${this.session?.state.id.slice(0, 8) ?? ""}`; } catch {}
       canvas.text(client.x + 1, client.y, context, theme.window, client.width - 2);
-      if (this.activeTab.agentState) canvas.text(client.x + 1, client.y + client.height - 1,
-        `${this.desktop.t("Agente")}: ${this.desktop.t(this.activeTab.agentState)}`, theme.window, client.width - 2);
+      if (this.activeTab.agentState) {
+        const label = `${this.desktop.t("Agente")}:`, y = client.y + client.height - 1;
+        canvas.text(client.x + 1, y, label, theme.chatAgent, client.width - 2);
+        canvas.text(client.x + 1 + Bun.stringWidth(label), y, ` ${this.desktop.t(this.activeTab.agentState)}`, theme.window, client.width - 2 - Bun.stringWidth(label));
+      }
     };
     promptWindow.onLayout = client => {
       const { prompt } = this.view;
@@ -438,7 +442,7 @@ export class App {
   showHistory(reset = true, tab = this.activeTab): void {
     const messages = tab.session?.state.messages ?? [];
     const names = new Map(messages.flatMap(m => m.tool_calls?.map(call => [call.id, call.function.name] as const) ?? []));
-    const text = messages.map(m => {
+    const rendered = messages.map(m => {
       let cached = tab.rendered.get(m); if (cached !== undefined) return cached;
       let content = typeof m.content === "string" ? m.content : m.content?.map(part => part.type === "text" ? part.text : this.desktop.t("[Imagen adjunta guardada en la sesión]")).join("\n");
       if(m.role==="tool" && typeof content==="string") try {
@@ -453,10 +457,21 @@ export class App {
         m.tool_calls?.map(c => `Tool call · ${c.function.name}\n${c.function.arguments}`).join("\n\n") ?? ""].filter(Boolean);
       cached = sections.length ? `${label}:\n${sections.join("\n\n")}` : "";
       tab.rendered.set(m, cached); return cached;
-    }).filter(Boolean).join("\n\n") + (tab.session?.state.notices.length ? "\n\n" + tab.session.state.notices.map(this.desktop.t).join("\n") : "");
-    const live = tab.live.filter(chunk => !chunk.reasoning || this.store.value.ui.showReasoning)
-      .map(chunk => `\n\n${this.desktop.t(chunk.label)}\n${chunk.text}`).join("");
-    if (reset) tab.response.setValue(text + live, "end"); else tab.response.update(text + live);
+    });
+    const fragments: TextFragment[] = [];
+    for (const [index, text] of rendered.entries()) {
+      if (!text) continue;
+      if (fragments.length) fragments.push({ text: "\n\n" });
+      const role = messages[index]!.role, end = text.indexOf("\n");
+      if (role === "user" || role === "assistant") {
+        fragments.push({ text: text.slice(0, end), style: role === "user" ? theme.chatUser : theme.chatAgent }, { text: text.slice(end) });
+      } else fragments.push({ text });
+    }
+    if (tab.session?.state.notices.length) fragments.push({ text: "\n\n" + tab.session.state.notices.map(this.desktop.t).join("\n") });
+    for (const chunk of tab.live.filter(chunk => !chunk.reasoning || this.store.value.ui.showReasoning)) {
+      fragments.push({ text: `\n\n${this.desktop.t(chunk.label)}\n`, style: chunk.id === "answer" || chunk.reasoning ? theme.chatAgent : undefined }, { text: chunk.text });
+    }
+    if (reset) tab.response.setValue(fragments, "end"); else tab.response.update(fragments);
   }
   async selectModel(selection: Selection): Promise<void> { this.requireIdle(); const old = this.selection; this.selection = selection;
     try { const {model} = this.current(); if (!model.capabilities.images && hasImages(this.session?.state.messages ?? [])) throw new Error("La sesión contiene imágenes: elegí un modelo con imágenes o creá /new"); await this.session?.append({ type: "selection", selection }); if (this.session) this.session.state.selection = selection; }
@@ -677,7 +692,7 @@ export class App {
           if (!chunk || chunk.id !== id) { chunk = { id, label, text: "", reasoning }; tab.live.push(chunk); }
           chunk.text += delta;
           if (!reasoning || this.store.value.ui.showReasoning) {
-            if(previousVisible!==chunk) tab.response.append(`\n\n${this.desktop.t(label)}\n`);
+            if(previousVisible!==chunk) tab.response.append(`\n\n${this.desktop.t(label)}\n`, id === "answer" || reasoning ? theme.chatAgent : undefined);
             tab.response.append(delta);
           }
           this.desktop.invalidate();

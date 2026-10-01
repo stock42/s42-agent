@@ -38,7 +38,7 @@ test("paletas oscuras cubren los controles con contraste y fallback ANSI16 legib
       // Includes inactive titles and disabled buttons, not just body text.
       expect(contrast(fg, bg)).toBeGreaterThanOrEqual(3);
     }
-    for (const style of [theme.window, theme.menu, theme.title, theme.menuHotkey, theme.selected, theme.focused, theme.button, theme.footer]) {
+    for (const style of [theme.window, theme.chatUser, theme.chatAgent, theme.menu, theme.title, theme.menuHotkey, theme.selected, theme.focused, theme.button, theme.footer]) {
       const sample = new Canvas(1, 1, palette); sample.text(0, 0, "X", style);
       const code = new Renderer().frame(sample, true, true).match(/\x1b\[38;2;(\d+);(\d+);(\d+);48;2;(\d+);(\d+);(\d+)m/)!;
       expect(contrast(code.slice(1, 4).map(Number), code.slice(4, 7).map(Number))).toBeGreaterThanOrEqual(4.5);
@@ -50,6 +50,24 @@ test("paletas oscuras cubren los controles con contraste y fallback ANSI16 legib
       expect(allowed).toContain(Number(code[1])); expect(allowed.map(value => value + 10)).toContain(Number(code[2]));
       expect(Number(code[1]) + 10).not.toBe(Number(code[2]));
     }
+  }
+});
+
+test("autores con colores distintos en seis paletas RGB/ANSI16 y énfasis sin color", () => {
+  for (const palette of Object.keys(palettes) as PaletteId[]) {
+    const canvas = new Canvas(20, 4, palette);
+    canvas.text(0, 0, "Vos:", theme.chatUser); canvas.text(0, 1, "Agente:", theme.chatAgent);
+    canvas.text(0, 2, "Texto", theme.window); canvas.text(0, 3, "Inactivo", theme.disabled);
+    for (const rgb of [true, false]) {
+      const renderer = new Renderer(), output = renderer.frame(canvas, true, rgb);
+      const codes = ["Vos:", "Agente:"].map(label => output.slice(0, output.indexOf(label)).match(/\x1b\[(?:38;2;[\d;]+|\d+;\d+)m/g)!.at(-1));
+      expect(codes[0]).not.toBe(codes[1]); expect(renderer.frame(canvas, true, rgb)).toBe("");
+      if (!rgb) expect(output).not.toContain("\x1b[1m"); // Bold can collapse normal/bright ANSI tones.
+    }
+    const mono = new Renderer().frame(canvas, false, true);
+    expect(mono).toContain("\x1b[1mVos:"); expect(mono).toContain("\x1b[1mAgente:");
+    expect(mono).toContain("\x1b[22mTexto"); expect(mono).toContain("\x1b[22m\x1b[2mInactivo");
+    expect(mono).not.toMatch(/\x1b\[(?:38|48|3\d|4\d|9\d|10\d)[;\dm]/);
   }
 });
 

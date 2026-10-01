@@ -5,6 +5,19 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Mejorado — Autores del chat con colores distintos
+
+- Vos en amarillo y Agente en cian en QBasic; tonos distintos en las otras cinco
+  paletas, incluido el fallback ANSI16. Historial, streaming y estado del agente
+  usan estilos propios; cuerpo neutral, selección conservada y negrita sin color.
+- Colores asignados según el rol del mensaje, sin confundir etiquetas citadas
+  dentro del texto ni guardar escapes ANSI en las sesiones. ES/EN y reapertura
+  mantienen la identificación de autores.
+- Typecheck y 131 tests / 27 archivos / 2260 assertions correctos; index.ts real
+  en PTY, seis paletas, selección, resize y ocultar/mostrar reasoning.
+  [QA](docs/qa/chat-colors.md). Sin builds ni push; pull falló por main sin upstream.
+
+
 ### Agregado — Actividad animada en el proyecto y estado en el chat
 
 - Título del proyecto con animación ASCII durante el turno, incluso antes del

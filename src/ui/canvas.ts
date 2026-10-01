@@ -92,7 +92,9 @@ export class Renderer {
         const inverted = cell.style === theme.focused || cell.style === theme.selected || cell.style === theme.selectedHotkey || cell.style === theme.menuSelection;
         const mnemonic = cell.style === theme.menuHotkey || cell.style === theme.selectedHotkey;
         const dim = cell.style === theme.disabled || cell.style === theme.inactiveTitle;
-        const code = color ? ansi(cell.style, trueColor, canvas.palette) : (inverted ? "\x1b[7m" : "\x1b[27m") + (mnemonic ? "\x1b[4m" : "\x1b[24m") + (dim ? "\x1b[2m" : "\x1b[22m");
+        const speaker = cell.style === theme.chatUser || cell.style === theme.chatAgent;
+        const code = color ? ansi(cell.style, trueColor, canvas.palette) + (speaker && trueColor ? "\x1b[1m" : "\x1b[22m")
+          : (inverted ? "\x1b[7m" : "\x1b[27m") + (mnemonic ? "\x1b[4m" : "\x1b[24m") + "\x1b[22m" + (speaker ? "\x1b[1m" : dim ? "\x1b[2m" : "");
         if (code !== current) { line += code; current = code; }
         line += cell.text;
       }
