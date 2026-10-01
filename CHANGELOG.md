@@ -5,6 +5,21 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Idioma y razonamiento en Vista
+
+- Vista → Language cambia español/inglés en vivo: menús, botones, formularios,
+  ayuda, avisos/estados, métricas y etiquetas del chat. Anchos/hit boxes de menú
+  siguen la traducción; nombres, archivos, prompts, modelo y resultados intactos.
+- Vista → Ver razonamiento: on/off oculta o muestra historial y deltas ya recibidos,
+  incluso durante un turno, en todas las pestañas. Reasoning persiste siempre;
+  respuesta, tool calls y resultados siguen disponibles. Sin encabezados duplicados
+  al reactivar en streaming. Preferencias ui.language/ui.showReasoning guardadas,
+  defaults/migración es/true; formularios aceptan sí/yes y proyecto/project.
+- Typecheck y 117 tests correctos (24 archivos). index.ts en tmux: elección con
+  teclado, resize 100×30/60×16 y reapertura sin color; pruebas de mouse inyectado,
+  SSE/cancelación/reanudación y fallo de guardado. Fase13/README/specs/AGENTS/QA
+  actualizados. Sin builds ni push; pull fallido por main sin upstream.
+
 ### Agregado — Tools nativas, explorador grande y recursos
 
 - src/agent/tools con un archivo/schema/handler por read/write/edit/list/find/

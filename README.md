@@ -20,8 +20,8 @@ bun install --frozen-lockfile
 bun run dev
 ```
 
-1. Registrá un proyecto en **Projects → Agregar proyecto**: solo **Name** y
-   **Folder**. **Explorar** permite elegir la carpeta con mouse o teclado.
+1. Registrá un proyecto en **Projects → Agregar proyecto**: solo **Nombre/Name** y
+   **Carpeta/Folder**. **Explorar** permite elegir la carpeta con mouse o teclado.
 2. Abrí **Models → Proveedores** y elegí **llama.cpp** o **DeepSeek**. Completá
    la configuración, consultá el catálogo y seleccioná el modelo.
 3. Escribí en **Prompt**. **Enter** envía; **Shift+Enter** agrega una línea.
@@ -44,7 +44,7 @@ bun run index.ts --help
 | Models | Proveedores, catálogo, selección/configuración de modelos y defaults. |
 | Promptings | Biblioteca, nueva plantilla y guardar el prompt actual. |
 | Tools | Catálogo nativo, CRUD/activación de MCP, Skills y buscador skills.sh. |
-| Vista | Respuestas/prompt, recursos y tokens, foco, auxiliares, paletas y modo Vim. |
+| Vista | Respuestas/prompt, recursos y tokens, foco, auxiliares, paletas, idioma, razonamiento y modo Vim. |
 | Ayuda | Atajos, mouse, comandos y About con autor, MIT y versión. |
 
 El agente abre directamente este espacio de trabajo. El laboratorio de componentes
@@ -181,8 +181,10 @@ contadores Linux DRM o, cuando está instalado, `nvidia-smi` vía Bun.spawn. Si
 el SO/driver no informa VRAM, muestra N/D y su motivo; no instala drivers ni
 programas. En GPU integrada puede no existir un contador de memoria dedicada.
 
-El chat muestra razonamiento solo cuando el proveedor envía `reasoning_content`
-o `reasoning`. Muestra argumentos parciales de tool calls, ejecución y resultados;
+El chat muestra razonamiento cuando el proveedor envía `reasoning_content`
+o `reasoning` y **Vista → Ver razonamiento** está en **on** (predeterminado).
+**off** lo oculta en el historial y durante el streaming; volver a **on** permite
+leer lo recibido. La sesión conserva ese contenido y las tools siguen visibles. Muestra argumentos parciales de tool calls, ejecución y resultados;
 solo ejecuta llamadas completas. Selección, scroll y lectura permanecen disponibles.
 
 Si el modelo alcanza el límite de salida, el agente conserva la respuesta parcial
@@ -246,6 +248,14 @@ ANSI16 para otros terminales. Renderer por filas modificadas; las métricas se
 muestrean cada 2 s y solo se emiten filas cuyo contenido cambió. La demo mantiene
 el render por demanda sin muestreo de recursos.
 
+**Vista → Language** permite elegir **Español** o **English** en vivo. Traduce
+menús, botones, formularios, ayuda, estados, indicadores y títulos del harness;
+los nombres del proyecto, archivos, prompts y respuestas conservan su contenido.
+El cambio se aplica a todas las pestañas, incluso durante un turno. Las preferencias
+`ui.language` (`es`/`en`) y `ui.showReasoning` se guardan en la configuración y se
+restauran al iniciar; las configuraciones anteriores usan español y razonamiento on.
+En inglés, el menú se llama **View** y la opción **Show reasoning: on/off**.
+
 **Ayuda → About** muestra `Powered by César Casas.`, `MIT.`, `S42 Agent.` y
 `Version: 0.1.0`. La versión se toma de package.json, como `--version`.
 
@@ -260,7 +270,7 @@ Linux respeta XDG: config en `~/.config/s42-agent/config.json` y sesiones en
 Windows, APPDATA/LOCALAPPDATA. Con `--config`, sesiones en `sessions/` junto al JSON.
 
 Configuración: proyectos/proveedores/modelos, MCP/Skills/Promptings, defaults,
-`workspace.openProjectIds`, `lastProjectId`, paleta y bindings. Las sesiones JSONL
+`workspace.openProjectIds`, `lastProjectId`, paleta, idioma, visibilidad del razonamiento y bindings. Las sesiones JSONL
 guardan mensajes, selección, borrador y eventos, con un lock por sesión.
 `--provider`, `--model` y `--session` permiten selecciones explícitas al iniciar.
 
@@ -271,6 +281,8 @@ Bindings opcionales por acción conocida, con colisiones rechazadas:
   "vimMode": true,
   "color": "auto",
   "palette": "qbasic",
+  "language": "es",
+  "showReasoning": true,
   "bindings": {
     "global": { "projects": "ctrl+g" },
     "normal": { "projects": "leader+g" }

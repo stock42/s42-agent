@@ -34,7 +34,7 @@ test('entrypoint real: Models primer uso, host/puerto/key, coding, cancelación 
   }catch(e){throw new Error((e as Error).message+' · salida reciente: '+text.slice(-3500).replace(/\x1b\[[0-?]*[ -/]*[@-~]/g,''));}finally{child.kill();terminal.close();server.stop(true);await rm(root,{recursive:true,force:true});}
 },15000);
 
-test('entrypoint: Projects Name/Folder, picker, explorador externo, reasoning y tool call visibles',async()=>{
+test('entrypoint: Projects Nombre/Carpeta, picker, explorador externo, reasoning y tool call visibles',async()=>{
   const root=await mkdtemp(join(tmpdir(),'s42-explorer-pty-')),project=join(root,'proyecto'),config=join(root,'config.json');
   const {mkdir}=await import('node:fs/promises');await mkdir(project);await Bun.write(join(root,'externo.ts'),'export const externo = 42;');
   let text='',requests=0;
@@ -53,7 +53,7 @@ test('entrypoint: Projects Name/Folder, picker, explorador externo, reasoning y 
   const child=Bun.spawn([process.execPath,index,'--config',config,'--no-color'],{cwd:project,env:{...process.env,TERM:'xterm-256color'},terminal});
   const write=(s:string)=>terminal.write(s),paste=(s:string)=>write(`\x01\x1b[200~${s}\x1b[201~`);
   try {
-    await until(()=>text.includes('Projects · nuevo'));expect(text).toContain('Name');expect(text).toContain('Folder');
+    await until(()=>text.includes('Projects · nuevo'));expect(text).toContain('Nombre');expect(text).toContain('Carpeta');
     paste('Proyecto PTY');write('\t');paste(root);write('\t\r');await until(()=>text.includes('Elegir folder'));await until(()=>text.includes('externo.ts'));
     text='';write('\t\t\t\t\r');await until(()=>text.includes('< Guardar >'));
     // The folder picker restores focus to Folder in the underlying form.

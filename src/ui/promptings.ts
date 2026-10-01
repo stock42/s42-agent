@@ -23,19 +23,19 @@ export class Promptings {
   library(selectedId?: string): void {
     const entries: { label: string; value: Prompting | undefined }[] = this.ctx.store.value.promptings.map(value => {
       const count = promptVariables(value.text).length;
-      return { label: `${value.name} · ${count} metavariable${count === 1 ? "" : "s"}`, value };
+      return { label: this.ctx.desktop.t(`${value.name} · ${count} metavariable${count === 1 ? "" : "s"}`), value };
     });
-    entries.push({ label: "+ Nuevo prompting", value: undefined });
+    entries.push({ label: this.ctx.desktop.t("+ Nuevo prompting"), value: undefined });
     choose(this.ctx.desktop, "Promptings", entries, prompting => prompting ? this.actions(prompting) : this.editor(),
       selectedId === undefined ? 0 : Math.max(0, entries.findIndex(entry => entry.value?.id === selectedId)));
   }
 
   private actions(prompting: Prompting): void {
     choose(this.ctx.desktop, prompting.name, [
-      { label: "Cargar en el editor", value: "load" },
-      { label: "Ejecutar con modelo actual", value: "execute" },
-      { label: "Ver / editar", value: "edit" },
-      { label: "Eliminar", value: "delete" },
+      { label: this.ctx.desktop.t("Cargar en el editor"), value: "load" },
+      { label: this.ctx.desktop.t("Ejecutar con modelo actual"), value: "execute" },
+      { label: this.ctx.desktop.t("Ver / editar"), value: "edit" },
+      { label: this.ctx.desktop.t("Eliminar"), value: "delete" },
     ], action => {
       if (action === "edit") this.editor(prompting);
       else if (action === "delete") this.ctx.run(async () => {
@@ -63,12 +63,12 @@ export class Promptings {
 
   editor(prompting?: Prompting, initialText = ""): void {
     const { desktop, store } = this.ctx;
-    const window = this.window(prompting ? "Editar prompting" : "Nuevo prompting");
+    const window = this.window(desktop.t(prompting ? "Editar prompting" : "Nuevo prompting"));
     if (!window) return;
     const name = new Input("name", { x: 10, y: 0, width: 44, height: 1 }, prompting?.name ?? "");
     const text = new TextArea("text", { x: 1, y: 2, width: 54, height: 7 });
     text.setValue(prompting?.text ?? initialText);
-    text.placeholder = "Escribí el prompting con {{metavariables}}";
+    text.placeholder = desktop.t("Escribí el prompting con {{metavariables}}");
     let error = "", saving = false;
     const save = new Button("save", { x: 1, y: 0, width: 16, height: 1 }, "Guardar", () => {
       if (saving) return;
@@ -105,9 +105,9 @@ export class Promptings {
       save.bounds.y = cancel.bounds.y = client.height - 1;
     };
     window.onDraw = (canvas, client) => {
-      canvas.text(client.x + 1, client.y, "Nombre", theme.dialog, 8);
-      canvas.text(client.x + 1, client.y + 1, "Texto · Shift+Enter línea · Enter guardar · Tab foco", theme.dialog, client.width - 2);
-      canvas.text(client.x + 1, client.y + client.height - 2, error, theme.dialog, client.width - 2);
+      canvas.text(client.x + 1, client.y, desktop.t("Nombre"), theme.dialog, 8);
+      canvas.text(client.x + 1, client.y + 1, desktop.t("Texto · Shift+Enter línea · Enter guardar · Tab foco"), theme.dialog, client.width - 2);
+      canvas.text(client.x + 1, client.y + client.height - 2, desktop.t(error), theme.dialog, client.width - 2);
     };
     desktop.add(window);
   }
@@ -115,7 +115,7 @@ export class Promptings {
   private use(prompting: Prompting, execute: boolean): void {
     const names = promptVariables(prompting.text), { desktop } = this.ctx;
     if (!names.length) { this.ctx.run(() => this.ctx.load(prompting.text, execute)); return; }
-    const window = this.window(`Metavariables · ${prompting.name}`);
+    const window = this.window(desktop.t(`Metavariables · ${prompting.name}`));
     if (!window) return;
     const values = new Map(names.map(name => [name, ""]));
     let page = 0, error = "", applying = false;
@@ -158,7 +158,7 @@ export class Promptings {
     };
     window.onDraw = (canvas, client) => {
       canvas.text(client.x + 1, client.y, `${page + 1}/${names.length} · {{${names[page]}}}`, theme.dialog, client.width - 2);
-      canvas.text(client.x + 1, client.y + client.height - 2, error || `Shift+Enter línea · Enter ${page === names.length - 1 ? (execute ? "ejecutar" : "cargar") : "siguiente"} · Esc cancelar`, theme.dialog, client.width - 2);
+      canvas.text(client.x + 1, client.y + client.height - 2, desktop.t(error || `Shift+Enter línea · Enter ${page === names.length - 1 ? (execute ? "ejecutar" : "cargar") : "siguiente"} · Esc cancelar`), theme.dialog, client.width - 2);
     };
     refresh(); desktop.add(window);
   }

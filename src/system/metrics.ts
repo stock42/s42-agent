@@ -80,18 +80,18 @@ export class SystemMonitor {
 }
 export function size(bytes: number): string { return bytes >= 1073741824 ? `${(bytes / 1073741824).toFixed(1)}G` : `${Math.round(bytes / 1048576)}M`; }
 const capacity = (value?: Capacity) => value ? `${size(value.used)}/${size(value.free)}` : "N/D";
-export function metricLines(metrics: SystemMetrics, tokens: TokenUsage | undefined, width: number): string[] {
-  const system = `U/L · CPU ${metrics.cpu ? `${Math.round(metrics.cpu.used)}%/${Math.round(metrics.cpu.free)}%` : "N/D"} · RAM ${capacity(metrics.ram)} · Disco ${capacity(metrics.disk)}`;
-  const usage = `VRAM ${capacity(metrics.gpu)} · Tokens E/S ${tokens?.input ?? "N/D"}/${tokens?.output ?? "N/D"}${tokens?.partial ? " (parcial)" : ""}`;
+export function metricLines(metrics: SystemMetrics, tokens: TokenUsage | undefined, width: number, t: (text: string) => string = text => text): string[] {
+  const system = `${t("U/L")} · CPU ${metrics.cpu ? `${Math.round(metrics.cpu.used)}%/${Math.round(metrics.cpu.free)}%` : t("N/D")} · RAM ${t(capacity(metrics.ram))} · ${t("Disco")} ${t(capacity(metrics.disk))}`;
+  const usage = `VRAM ${t(capacity(metrics.gpu))} · ${t("Tokens E/S")} ${tokens?.input ?? t("N/D")}/${tokens?.output ?? t("N/D")}${tokens?.partial ? t(" (parcial)") : ""}`;
   return width >= 120 ? [system + " · " + usage] : [system, usage];
 }
-export function metricDetails(metrics: SystemMetrics, tokens?: TokenUsage): string[] {
+export function metricDetails(metrics: SystemMetrics, tokens?: TokenUsage, t: (text: string) => string = text => text): string[] {
   return ["U/L = usado/libre · E/S = entrada/salida", "CPU: porcentaje del sistema entre muestras cada 2 s.",
     `RAM: ${capacity(metrics.ram)} · memoria física del sistema.`, `Disco: ${capacity(metrics.disk)} · volumen de ${metrics.diskPath}`,
     "Disco libre: disponible para este usuario; puede haber bloques reservados.",
-    `VRAM: ${capacity(metrics.gpu)} · ${metrics.gpuSource ?? metrics.gpuError ?? "pendiente"}`,
+    `VRAM: ${capacity(metrics.gpu)} · ${t(metrics.gpuSource ?? metrics.gpuError ?? "pendiente")}`,
     `Tokens: ${tokens?.input ?? "N/D"} entrada / ${tokens?.output ?? "N/D"} salida.`,
     `Último turno de esta pestaña: ${tokens?.reported ?? 0}/${tokens?.requests ?? 0} requests con uso reportado.`,
     "Se suman tools y continuaciones; no se estiman valores faltantes.", ...(tokens?.partial ? ["Conteo parcial: algún request no reportó entrada o salida."] : []),
-    "G/M son GiB/MiB · N/D = sin medición disponible.", `Última muestra: ${metrics.at ?? "pendiente"}`];
+    "G/M son GiB/MiB · N/D = sin medición disponible.", `Última muestra: ${metrics.at ?? t("pendiente")}`].map(line => t(line).replaceAll("N/D", t("N/D")));
 }

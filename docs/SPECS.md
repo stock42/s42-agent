@@ -64,6 +64,8 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R22 | Tools nativas definidas | read/write/edit/list/find/search/fetch/shell, archivo por tool y contratos documentados. |
 | R23 | Explorador grande y buscador en disco | Ventana adaptable, nombre/glob recursivo desde cualquier carpeta y cancelación, sin tapar el prompt. |
 | R24 | Recursos y tokens visibles | CPU/RAM/disco/VRAM usado/libre y entrada/salida por turno/pestaña, con N/D explícito cuando faltan datos. |
+| R25 | Idioma de la UI | Vista → Language: español/inglés en vivo y persistente, en todos los textos del harness y pestañas. |
+| R26 | Visibilidad del razonamiento | Vista → Ver razonamiento on/off: historial y streaming, conservando sesión, respuesta y tools. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
@@ -250,7 +252,7 @@ Una pantalla alternativa organizada como escritorio TUI:
 1. Menú superior: **Archivo**, **Projects**, **Models**, **Promptings**, **Tools**,
    **Vista** y **Ayuda**, con desplegables. Archivo agrupa explorador/adjuntos/salir;
    Projects, registro/sesiones/pestañas; Models, proveedores/modelos; Promptings,
-   biblioteca/nuevo/guardar borrador; Tools, MCP/Skills; Vista, paneles/paleta/Vim.
+   biblioteca/nuevo/guardar borrador; Tools, MCP/Skills; Vista, paneles/paleta/idioma/razonamiento/Vim.
    Ayuda muestra atajos y About. Sin acciones de prueba en el harness normal.
 2. Editor central con el **nombre del proyecto centrado en su marco superior**,
    como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
@@ -286,7 +288,7 @@ El estado de cada herramienta muestra su nombre, argumentos relevantes,
 resultado, código de salida y duración. No llamar «completada» a una herramienta
 fallida ni a un turno cancelado.
 
-El razonamiento enviado por el proveedor aparece progresivamente en el chat,
+Con Ver razonamiento en on, el razonamiento enviado por el proveedor aparece progresivamente en el chat,
 separado de la respuesta. Las tool calls muestran nombre y argumentos durante
 la recepción, ejecución y resultado. Los deltas se agregan sin volver a parsear
 el historial completo; al finalizar se conserva el mensaje canónico en la sesión.
@@ -623,7 +625,7 @@ Ejemplo ilustrativo: los paths y el modelo deben sustituirse por valores reales.
     "providerId": "llama.cpp",
     "modelId": "local-coder"
   },
-  "ui": { "vimMode": true, "color": "auto", "palette": "qbasic" }
+  "ui": { "vimMode": true, "color": "auto", "palette": "qbasic", "language": "es", "showReasoning": true }
 }
 ```
 
@@ -1189,3 +1191,33 @@ explícito existente. [CLI oficial](https://github.com/vercel-labs/skills/blob/m
 [Fase11](phases/11-staged-recovery-and-about.md), [QA](qa/staged-recovery.md):
 fixtures de longitud/cancelación, GLM real con primer corte provocado, About y
 búsqueda real de skills.sh; fuente Bun, sin builds nuevos.
+
+
+## 21. Idioma y visibilidad del razonamiento
+
+Vista → Language ofrece Español/English; elegir cambia en vivo todos los textos
+propios de la TUI: menús, botones, formularios, ayuda, avisos/estados y métricas.
+Nombre del proyecto, rutas, prompts, contenido del modelo y datos de herramientas
+son contenido original. Idioma de UI y lenguaje del pedido son independientes.
+Los anchos de menús y áreas clicables usan la traducción visible. La elección
+actual queda marcada y Escape conserva la preferencia anterior. Los formularios
+aceptan sí/yes para capacidades y proyecto/project para scope.
+
+Vista → Ver razonamiento: on/off afecta la visualización de `reasoning_content`
+y `reasoning` de todas las pestañas: historial guardado, deltas nuevos y parciales
+ya recibidos. El estado actual aparece en el menú (View → Show reasoning en inglés).
+Cambiar idioma o visibilidad durante un turno no cancela inferencia ni pierde el
+borrador, tool calls o resultados. Reasoning se conserva en mensajes/sesiones y
+contexto del modelo; al reactivar se muestra lo recibido. Los mensajes que solo
+contienen reasoning quedan ocultos con off. No se inventa razonamiento ausente.
+
+`ui.language` admite es/en y `ui.showReasoning` booleano, guardados en config v1.
+Defaults y migración de campos ausentes: es/true. Valores inválidos se rechazan
+sin sobrescribir el JSON. Aplicar la preferencia visual solo después de guardar;
+reabrir respeta ambos valores. Catálogo sin dependencias en src/ui/i18n.ts por
+escritorio; mensajes canónicos se conservan en la sesión y traducen al presentar.
+
+[Fase13](phases/13-language-and-reasoning.md), [QA](qa/language-and-reasoning.md):
+117 tests, typecheck, flujo real de index.ts en tmux, resize 100×30/60×16,
+reapertura sin color y SSE fixture con tool calling/cancelación. No hubo builds
+ni validación física de mouse/drop en esta tarea.

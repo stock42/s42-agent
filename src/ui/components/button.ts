@@ -4,6 +4,7 @@ import { contains, type InputEvent, type Rect } from "../types.ts";
 import { Component } from "./component.ts";
 
 export class Button extends Component {
+  translate: (text: string) => string = text => text;
   private pressed = false;
   private inside = false;
   constructor(id: string, bounds: Rect, public label: string, public onClick: () => void) { super(id, bounds); }
@@ -12,7 +13,7 @@ export class Button extends Component {
     const down = this.pressed && this.inside;
     const style = this.disabled ? theme.disabled : down ? theme.selected : focused ? theme.focused : theme.button;
     canvas.fill(bounds, style);
-    const text = `< ${this.label} >`;
+    const text = `< ${this.translate(this.label)} >`;
     const inset = Math.max(0, Math.floor((bounds.width - Bun.stringWidth(text)) / 2));
     canvas.text(bounds.x + inset, bounds.y, text, style, bounds.width - inset);
   }

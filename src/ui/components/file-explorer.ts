@@ -31,7 +31,7 @@ export class FileExplorer {
   constructor(private desktop: Desktop, start: string, private options: Options = {}) {
     this.folder = start;
     const area = desktop.floatingArea ?? { x: 0, y: 1, width: desktop.width, height: desktop.height - 2 }, height = area.height;
-    this.window = new Window(`explorer-${crypto.randomUUID()}`, options.pickFolder ? "Elegir folder" : "Explorador de archivos", {
+    this.window = new Window(`explorer-${crypto.randomUUID()}`, desktop.t(options.pickFolder ? "Elegir folder" : "Explorador de archivos"), {
       x: area.x + 1, y: area.y, width: Math.max(2, area.width - 2), height,
     });
     this.window.modal = true;
@@ -41,7 +41,7 @@ export class FileExplorer {
     const pathHandle = this.pathInput.handle.bind(this.pathInput);
     this.pathInput.handle = event => event.type === "key" && event.key === "enter" ? (this.run(() => this.navigate(this.pathInput.value)), true) : pathHandle(event);
     this.searchInput = new Input("query", { x: 0, y: 1, width: 50, height: 1 }, "");
-    this.searchInput.placeholder = "Nombre o glob (*.ts) · busca desde la ruta superior";
+    this.searchInput.placeholder = desktop.t("Nombre o glob (*.ts) · busca desde la ruta superior");
     const queryHandle = this.searchInput.handle.bind(this.searchInput);
     this.searchInput.handle = event => event.type === "key" && event.key === "enter" ? (this.run(() => this.search()), true) : queryHandle(event);
     this.list = new SelectList("files", { x: 0, y: 2, width: 70, height: 9 }, []);
@@ -88,7 +88,7 @@ export class FileExplorer {
       select.bounds.x = client.width - select.bounds.width;
     };
     this.window.onDraw = (canvas, client) => {
-      if (client.height >= 8) canvas.text(client.x + 1, client.y + client.height - 2, this.status, theme.dialog, client.width - 2);
+      if (client.height >= 8) canvas.text(client.x + 1, client.y + client.height - 2, desktop.t(this.status), theme.dialog, client.width - 2);
     };
   }
 
@@ -108,13 +108,13 @@ export class FileExplorer {
     try {
       const folder = await normalizeFolder(path, this.folder), children = await readdir(folder, { withFileTypes: true });
       const entries: Entry[] = children.map(entry => ({ path: join(folder, entry.name), name: entry.name, directory: entry.isDirectory(), link: entry.isSymbolicLink() }));
-      entries.sort((a, b) => Number(b.directory) - Number(a.directory) || a.name.localeCompare(b.name, "es", { numeric: true }));
+      entries.sort((a, b) => Number(b.directory) - Number(a.directory) || a.name.localeCompare(b.name, this.desktop.language, { numeric: true }));
       if (dirname(folder) !== folder) entries.unshift({ path: dirname(folder), name: "..", directory: true });
       if (request !== this.generation || !this.desktop.windows.includes(this.window)) return;
       this.folder = folder; this.pathInput.setValue(folder); this.entries = entries; this.click = undefined;
       this.list.setItems(entries.map(e => `${e.directory ? "[D]" : e.link ? "[L]" : "[F]"} ${e.name}${e.directory ? "/" : ""}`), entries.findIndex(e => e.path === previous));
       this.status = `${children.length} ${children.length===1 ? "entrada" : "entradas"} · Enter abrir · ← subir · doble clic`;
-      this.list.emptyText="Carpeta vacía";
+      this.list.emptyText=this.desktop.t("Carpeta vacía");
     } catch (error) { if (request === this.generation) this.status = (error as Error).message; }
     finally { if (request === this.generation) { this.loading=false;this.select.disabled=!this.options.pickFolder && !this.options.attach; this.desktop.invalidate(); } }
   }
@@ -130,16 +130,16 @@ export class FileExplorer {
       const selected=this.entries[this.list.selected]?.path;
       this.entries=matches.map(match=>({...match,directory:false}));
       this.list.setItems(matches.map(match=>`[F] ${match.name}`),Math.max(0,this.entries.findIndex(e=>e.path===selected)));
-      this.list.emptyText="Buscando…";this.status=`${matches.length} resultados · ${scanned} archivos revisados · buscando…`;this.desktop.invalidate();
+      this.list.emptyText=this.desktop.t("Buscando…");this.status=`${matches.length} resultados · ${scanned} archivos revisados · buscando…`;this.desktop.invalidate();
     };
     try {
       const folder=await normalizeFolder(this.pathInput.value,this.folder); controller.signal.throwIfAborted();
       this.folder=folder;this.pathInput.setValue(folder);update([],0);
       const result=await findFiles(folder,this.searchInput.value,controller.signal,{limit:1000,includeIgnored:true,onProgress:update});
-      update(result.matches.toSorted((a,b)=>a.name.localeCompare(b.name,"es",{numeric:true})),result.scanned);
-      this.list.emptyText="Sin resultados";
+      update(result.matches.toSorted((a,b)=>a.name.localeCompare(b.name,this.desktop.language,{numeric:true})),result.scanned);
+      this.list.emptyText=this.desktop.t("Sin resultados");
       if(active())this.status=`${result.matches.length} resultados${result.truncated?" · límite 1000":""} · ${result.skipped} carpetas inaccesibles · Enter preview`;
-    } catch(error) { if(active()){this.status=controller.signal.aborted?"Búsqueda cancelada · resultados parciales":(error as Error).message;this.list.emptyText=this.status;} }
+    } catch(error) { if(active()){this.status=controller.signal.aborted?"Búsqueda cancelada · resultados parciales":(error as Error).message;this.list.emptyText=this.desktop.t(this.status);} }
     finally { if(active()){this.searchController=undefined;this.searchButton.label="Buscar";this.loading=false;this.select.disabled=!this.options.pickFolder&&!this.options.attach;this.window.focusedId=this.list.id;this.desktop.invalidate();} }
   }
 
@@ -153,9 +153,9 @@ export class FileExplorer {
     const bytes = new Uint8Array(await Bun.file(entry.path).slice(0, 65536).arrayBuffer());
     let text: string;
     try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes, { stream: metadata.size > bytes.length }); if (text.includes("\0")) throw new Error(); }
-    catch { text = "Archivo binario; la vista previa admite texto UTF-8."; }
+    catch { text = this.desktop.t("Archivo binario; la vista previa admite texto UTF-8."); }
     if (!this.desktop.windows.includes(this.window) || revision!==this.generation) return;
     // info is a child modal: keep navigation state/focus underneath the preview.
-    info(this.desktop, basename(entry.path), [entry.path, `${metadata.size} bytes · solo lectura`, "", text, ...(metadata.size > bytes.length ? ["", "[Vista recortada a 64 KiB]"] : [])],this.window);
+    info(this.desktop, basename(entry.path), [entry.path, this.desktop.t(`${metadata.size} bytes · solo lectura`), "", text, ...(metadata.size > bytes.length ? ["", this.desktop.t("[Vista recortada a 64 KiB]")] : [])],this.window);
   }
 }

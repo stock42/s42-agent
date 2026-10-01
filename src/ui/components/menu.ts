@@ -6,6 +6,7 @@ export interface MenuItem { label: string; shortcut?: string; disabled?: boolean
 export interface Menu { label: string; hotkey?: string; align?: "right"; items: MenuItem[] }
 
 export class MenuBar {
+  translate: (text: string) => string = text => text;
   opened = -1;
   private selected = 0;
   private offset = 0;
@@ -19,18 +20,18 @@ export class MenuBar {
   resize(width: number, height: number): void { this.width = width; this.height = height; }
 
   private header(index: number): Rect {
-    const menu = this.menus[index]!; const width = Bun.stringWidth(menu.label) + 2;
-    const required=1+this.menus.reduce((sum,m)=>sum+Bun.stringWidth(m.label)+3,0);
-    const compact = 1 + this.menus.reduce((sum, m) => sum + Bun.stringWidth(m.label) + 2, 0);
+    const menu = this.menus[index]!; const width = Bun.stringWidth(this.translate(menu.label)) + 2;
+    const required=1+this.menus.reduce((sum,m)=>sum+Bun.stringWidth(this.translate(m.label))+3,0);
+    const compact = 1 + this.menus.reduce((sum, m) => sum + Bun.stringWidth(this.translate(m.label)) + 2, 0);
     const spacing = required > this.width ? (compact > this.width ? 1 : 2) : 3;
     return { x: menu.align === "right" ? this.width - width - 1
-      : 1 + this.menus.slice(0, index).filter(menu => menu.align !== "right").reduce((sum, menu) => sum + Bun.stringWidth(menu.label) + spacing, 0),
+      : 1 + this.menus.slice(0, index).filter(menu => menu.align !== "right").reduce((sum, menu) => sum + Bun.stringWidth(this.translate(menu.label)) + spacing, 0),
       y: 0, width, height: 1 };
   }
 
   private popup(): Rect {
     const menu = this.menus[this.opened]!;
-    const width = Math.min(this.width, Math.max(...menu.items.map((item) => Bun.stringWidth(item.label) + Bun.stringWidth(item.shortcut ?? "") + 6), 10));
+    const width = Math.min(this.width, Math.max(...menu.items.map((item) => Bun.stringWidth(this.translate(item.label)) + Bun.stringWidth(item.shortcut ?? "") + 6), 10));
     return { x: Math.max(0, Math.min(this.header(this.opened).x, this.width - width)), y: 1,
       width, height: Math.min(menu.items.length + 2, this.height - 2) };
   }
@@ -63,7 +64,7 @@ export class MenuBar {
     if (event.type === "key") {
       if (event.key === "escape") { this.opened < 0 ? this.open(0) : this.close(); return true; }
       const hotkey = event.key.startsWith("alt+") ? event.key.slice(4) : "";
-      const match = hotkey ? this.menus.findIndex((menu) => (menu.hotkey ?? menu.label[0])?.toLowerCase() === hotkey) : -1;
+      const match = hotkey ? this.menus.findIndex((menu) => (menu.hotkey ?? this.translate(menu.label)[0])?.toLowerCase() === hotkey) : -1;
       if (match >= 0) { this.open(match); return true; }
       if (this.opened < 0) return false;
       if (event.key === "left" || event.key === "right") this.open((this.opened + (event.key === "left" ? -1 : 1) + this.menus.length) % this.menus.length);
@@ -110,9 +111,10 @@ export class MenuBar {
     canvas.fill({ x: 0, y: 0, width: canvas.width, height: 1 }, theme.menu);
     this.menus.forEach((menu, index) => {
       const rect = this.header(index);
-      canvas.text(rect.x, 0, ` ${menu.label} `, index === this.opened ? theme.menuSelection : theme.menu);
-      const hotkey = menu.label.toLowerCase().indexOf((menu.hotkey ?? menu.label[0] ?? "").toLowerCase());
-      if (hotkey >= 0) canvas.text(rect.x + 1 + Bun.stringWidth(menu.label.slice(0, hotkey)), 0, menu.label[hotkey]!,
+      const label = this.translate(menu.label);
+      canvas.text(rect.x, 0, ` ${label} `, index === this.opened ? theme.menuSelection : theme.menu);
+      const hotkey = label.toLowerCase().indexOf((menu.hotkey ?? this.translate(menu.label)[0] ?? "").toLowerCase());
+      if (hotkey >= 0) canvas.text(rect.x + 1 + Bun.stringWidth(label.slice(0, hotkey)), 0, label[hotkey]!,
         index === this.opened ? theme.selectedHotkey : theme.menuHotkey);
     });
     if (this.opened < 0) return;
@@ -125,7 +127,7 @@ export class MenuBar {
       const style = item.disabled ? theme.disabled : index+this.offset === this.selected ? theme.menuSelection : theme.menu;
       canvas.fill({ x: popup.x + 1, y: popup.y + index + 1, width: popup.width - 2, height: 1 }, style);
       const shortcutWidth = Bun.stringWidth(item.shortcut ?? "");
-      canvas.text(popup.x + 2, popup.y + index + 1, item.label, style,
+      canvas.text(popup.x + 2, popup.y + index + 1, this.translate(item.label), style,
         popup.width - 4 - (shortcutWidth ? shortcutWidth + 1 : 0));
       if (item.shortcut) canvas.text(popup.x + popup.width - Bun.stringWidth(item.shortcut) - 2, popup.y + index + 1, item.shortcut, style);
     });

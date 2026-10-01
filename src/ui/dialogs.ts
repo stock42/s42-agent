@@ -14,7 +14,7 @@ export function info(desktop: Desktop, title: string, lines: string[], parent?: 
   const close=new Button("close",{x:1,y:0,width:15,height:1},"Aceptar",()=>desktop.close(window));
   const handle=text.handle.bind(text);text.handle=event=>event.type==="key" && event.key==="enter" ? (desktop.close(window),true):handle(event);
   window.controls.push(text,close);window.onLayout=client=>{text.bounds.width=client.width-2;text.bounds.height=Math.max(1,client.height-2);close.bounds.y=client.height-1;};
-  window.onDraw=(canvas,client)=>canvas.text(client.x+1,client.y+client.height-2,"↑/↓ PgUp/PgDn o rueda · Esc cerrar",theme.dialog,client.width-2);
+  window.onDraw=(canvas,client)=>canvas.text(client.x+1,client.y+client.height-2,desktop.t("↑/↓ PgUp/PgDn o rueda · Esc cerrar"),theme.dialog,client.width-2);
   desktop.add(window);
 }
 
@@ -47,10 +47,11 @@ export function form(desktop: Desktop, title: string, fields: Field[], save: (va
     previous.disabled = page === 0; next.disabled = page + 1 === pages;
   };
   window.onDraw = (canvas, client) => {
-    canvas.text(client.x + 1, client.y, `${page + 1}/${pages} · Tab: campo · Esc: cerrar`, theme.dialog, client.width - 2);
-    fields.slice(page * 3, page * 3 + 3).forEach((field, index) => canvas.text(client.x + 1, client.y + index + 1, field.label, theme.dialog, 18));
-    canvas.text(client.x + 1, client.y + client.height - 2, error, theme.dialog, client.width - 2);
+    canvas.text(client.x + 1, client.y, desktop.t(`${page + 1}/${pages} · Tab: campo · Esc: cerrar`), theme.dialog, client.width - 2);
+    fields.slice(page * 3, page * 3 + 3).forEach((field, index) => canvas.text(client.x + 1, client.y + index + 1, desktop.t(field.label), theme.dialog, 18));
+    canvas.text(client.x + 1, client.y + client.height - 2, desktop.t(error), theme.dialog, client.width - 2);
   };
+  for (const button of [previous, next, browse, accept]) button.translate = desktop.t;
   refresh(); desktop.add(window);
 }
 

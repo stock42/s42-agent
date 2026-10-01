@@ -83,6 +83,16 @@ Módulos: `src/app.ts`, `src/ui/`, `src/agent/`, `src/llm/` y `src/storage/`.
 **Vista → Paleta de colores** cambia toda la TUI en vivo y guarda `ui.palette`:
 `qbasic` (actual/default), `grayscale` (escala de grises) o `green` (gama de verdes).
 RGB y fallback ANSI16; `NO_COLOR`/`--no-color`/`ui.color: "never"` siguen vigentes.
+**Vista → Language** cambia la UI español/inglés en vivo; **Ver razonamiento:
+on/off** controla historial y streaming sin borrar reasoning ni ocultar tools.
+Persistencia global `ui.language: "es" | "en"` y `ui.showReasoning: boolean`;
+config anterior usa es/true. Catálogo propio en `src/ui/i18n.ts`, por escritorio,
+sin dependencias. Traducir solo texto de la UI del harness: conservar nombres,
+archivos, prompts, respuesta del modelo, argumentos y resultados de tools.
+Menús calculan ancho/hit boxes con el texto traducido; mantener IDs de acciones.
+Valores de formulario aceptan sí/yes y scope proyecto/project. Actualizar el
+catálogo al agregar mensajes UI. [Fase13](docs/phases/13-language-and-reasoning.md),
+[QA](docs/qa/language-and-reasoning.md): 117 tests fuente y terminal tmux.
 Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
 Menús de producto: Archivo, Projects, Models, Promptings, Tools, Vista y Ayuda.
@@ -104,7 +114,7 @@ CI fuente Linux con Bun 1.4.2. `package.json` conserva `private: true` porque no
 se publica un paquete npm. [Publicación](docs/PUBLISHING.md): no cambiar visibilidad,
 hacer push ni crear releases sin pedido explícito.
 
-Fases 02/03/07/08/09/10/11/12 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09/10/11/12/13 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.
@@ -151,7 +161,9 @@ artefactos ni hacer push sin pedido explícito.
   permite navegar fuera del proyecto; explorar/adjuntar no cambia el cwd de tools.
 - Mostrar en el chat el reasoning realmente recibido (`reasoning_content` o
   `reasoning`), las llamadas mientras llegan, su ejecución y resultados. No
-  inventar razonamiento para proveedores que no lo exponen.
+  inventar razonamiento para proveedores que no lo exponen. Respetar
+  `ui.showReasoning`: off oculta lo ya recibido y los deltas nuevos; on lo
+  recupera. Conservar siempre reasoning en la sesión y contexto del modelo.
 
 ## Regla Git obligatoria
 

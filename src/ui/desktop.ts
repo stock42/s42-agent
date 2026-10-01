@@ -6,6 +6,9 @@ import type { TabBar } from "./components/tab-bar.ts";
 import { theme, type PaletteId } from "./theme.ts";
 import { contains, type InputEvent, type Rect } from "./types.ts";
 
+import { translate, type Language } from "./i18n.ts";
+import { Button } from "./components/button.ts";
+
 type Capture = { window: Window; control: Component } | { window: Window; close: true }
   | { window: Window; offsetX: number; offsetY: number };
 
@@ -14,6 +17,8 @@ export class Desktop {
   active?: Window;
   status = "Demo de componentes · Bun";
   palette: PaletteId = "qbasic";
+  language: Language = "es";
+  readonly t = (text: string): string => translate(text, this.language);
   onExit: () => void = () => {};
   onHelp: () => void = () => {};
   invalidate: () => void = () => {};
@@ -28,11 +33,12 @@ export class Desktop {
   tabs?: TabBar;
   private capture?: Capture;
 
-  constructor(readonly menu: MenuBar, public width = 80, public height = 24) { menu.resize(width, height); }
+  constructor(readonly menu: MenuBar, public width = 80, public height = 24) { menu.translate = this.t; menu.resize(width, height); }
 
   get modal(): Window | undefined { return this.windows.findLast((window) => window.modal); }
 
   add(window: Window): void {
+    for (const control of window.controls) if (control instanceof Button) control.translate = this.t;
     this.cancelCapture();
     this.menu.close(); this.windows.push(window); this.active = window;
     this.fit(window); window.onLayout?.(window.client); this.ensureFocus(window);
@@ -182,12 +188,12 @@ export class Desktop {
   draw(): Canvas {
     const canvas = new Canvas(this.width, this.height, this.palette);
     if (this.width < 60 || this.height < 16) {
-      canvas.text(1, 1, "Terminal pequeño: mínimo 60 × 16", theme.window, this.width - 2);
-      canvas.text(1, 3, "Ctrl+Q para salir", theme.window, this.width - 2);
+      canvas.text(1, 1, this.t("Terminal pequeño: mínimo 60 × 16"), theme.window, this.width - 2);
+      canvas.text(1, 3, this.t("Ctrl+Q para salir"), theme.window, this.width - 2);
       return canvas;
     }
     canvas.clipped({ x: 0, y: 1, width: this.width, height: this.height - 2 }, () => {
-      if (!this.windows.length) canvas.text(2, 3, "Esc → Ventanas → Componentes para volver", theme.window, this.width - 4);
+      if (!this.windows.length) canvas.text(2, 3, this.t("Esc → Ventanas → Componentes para volver"), theme.window, this.width - 4);
       for (const window of this.windows) {
         window.onLayout?.(window.client); this.ensureFocus(window);
         if (!window.fixed && this.floatingArea) canvas.clipped(this.floatingArea, () => window.draw(canvas, window === this.active));
@@ -209,7 +215,7 @@ export class Desktop {
       : this.modal ? "Tab Foco  Enter Aceptar  Esc Cerrar  ^Q Salir"
       : this.active?.fixed ? this.footer?.() ?? "Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir"
       : "Esc Menú  Tab Foco  ^N Ventana  ^W Cerrar  ^Q Salir";
-    canvas.text(1, footer, hints, theme.footer, this.width - 2);
+    canvas.text(1, footer, this.t(hints), theme.footer, this.width - 2);
     return canvas;
   }
 }

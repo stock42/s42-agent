@@ -4,6 +4,7 @@ import { homedir } from "node:os";
 import type { Selection } from "../agent/messages.ts";
 import { bindings, type Bindings } from "../ui/bindings.ts";
 import { palettes, type PaletteId } from "../ui/theme.ts";
+import type { Language } from "../ui/i18n.ts";
 
 export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string }
 export interface Model { id: string; name: string; contextWindow: number; maxOutputTokens: number; capabilities: { tools: boolean; images: boolean } }
@@ -16,7 +17,7 @@ export interface Config {
   mcpServers: McpServer[]; skills: Skill[]; promptings: Prompting[];
   defaults: Selection & { projectId?: string }; lastProjectId?: string;
   workspace?: { openProjectIds: string[] };
-  ui: { vimMode: boolean; color: "auto" | "never"; palette: PaletteId; bindings?: Bindings };
+  ui: { vimMode: boolean; color: "auto" | "never"; palette: PaletteId; language: Language; showReasoning: boolean; bindings?: Bindings };
   limits: { maxSteps: number; shellTimeoutMs: number; firstEventMs: number; idleMs: number };
 }
 
@@ -39,7 +40,7 @@ export function defaultProviders(): Provider[] {
 
 export function defaultConfig(): Config {
   return { version: 1, projects: [], mcpServers:[], skills:[], promptings: [], providers: defaultProviders(),
-    defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto", palette: "qbasic" },
+    defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto", palette: "qbasic", language: "es", showReasoning: true },
     limits: { maxSteps: 30, shellTimeoutMs: 120000, firstEventMs: 120000, idleMs: 120000 } };
 }
 const text = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
@@ -50,6 +51,10 @@ export function validateConfig(value: unknown): Config {
     || !c.ui || typeof c.ui.vimMode !== "boolean" || !["auto", "never"].includes(c.ui.color)) throw new Error("Configuración v1 inválida");
   if (c.ui.palette === undefined) c.ui.palette = "qbasic";
   if (typeof c.ui.palette !== "string" || !Object.hasOwn(palettes, c.ui.palette)) throw new Error("Paleta inválida: usá qbasic, grayscale o green");
+  if (c.ui.language === undefined) c.ui.language = "es";
+  if (c.ui.language !== "es" && c.ui.language !== "en") throw new Error("Idioma inválido: usá es o en");
+  if (c.ui.showReasoning === undefined) c.ui.showReasoning = true;
+  if (typeof c.ui.showReasoning !== "boolean") throw new Error("Ver razonamiento debe ser true o false");
   const unique = (values: string[]) => new Set(values).size === values.length;
   for (const p of c.projects) if (!p || !text(p.id) || !text(p.name) || !text(p.path) || !isAbsolute(p.path)
     || (p.selection && (!text(p.selection.providerId) || (p.selection.modelId !== undefined && !text(p.selection.modelId))))) throw new Error("Proyecto inválido en config");
