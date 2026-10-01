@@ -1,4 +1,4 @@
-import { createDemo } from "./src/ui/demo.ts";
+import { createWorkspace } from "./src/ui/workspace.ts";
 import { runTerminal } from "./src/ui/terminal.ts";
 import { version } from "./package.json";
 
@@ -14,13 +14,14 @@ Uso: s42-agent [--no-color] [--no-mouse]
   --version    Mostrar versión
   --help       Mostrar ayuda
 
-Esc: menú · Tab: foco · Ctrl+N: ventana · Alt+Y: ayuda · Ctrl+Q: salir`);
+Enter: enviar demo · Ctrl+J: nueva línea · Esc: menú
+Tab: foco · Ctrl+N: panel · Alt+Y: ayuda · Ctrl+Q: salir`);
   } else if (args.includes("--version")) console.log(version);
   else {
     const unknown = args.find((arg) => arg !== "--no-color" && arg !== "--no-mouse");
     try {
       if (unknown) throw new Error(`Opción desconocida: ${unknown}`);
-      await runTerminal(createDemo(), { color: !args.includes("--no-color") && process.env.NO_COLOR === undefined, mouse: !args.includes("--no-mouse") });
+      await runTerminal(createWorkspace(), { color: !args.includes("--no-color") && process.env.NO_COLOR === undefined, mouse: !args.includes("--no-mouse") });
     } catch (error) {
       console.error(error instanceof Error ? error.message : String(error));
       process.exitCode = 1;

@@ -28,15 +28,21 @@ proveedores LLM y tools del agente; la configuración Bun y el binario mínimo
 se preparan dentro de ese hito. Después, reutilizar los componentes en el harness.
 
 Estado actual: demo QBasic implementada en el **`index.ts` raíz**, único punto
-de entrada del agente. La UI está en `src/ui/`, con controles reutilizables en
+de entrada del agente. Abre editor central con nombre de proyecto y prompt fijo;
+respuestas de demostración en el editor, sin proveedor conectado. El laboratorio
+de componentes sigue en Demo → Componentes. La UI está en `src/ui/`, con controles
+reutilizables en
 `src/ui/components/`. Bun y sus tipos: 1.4.2; TypeScript: 7.0.2. Existen scripts
 `dev`, `typecheck`, `test`, `build` y `bench:tui`; no hay dependencias de runtime.
-El agente, los proyectos, los proveedores y los adjuntos siguen pendientes.
+El agente, el registro persistente de proyectos, los proveedores y los adjuntos
+siguen pendientes; el contexto visual inicial usa nombre/path de la carpeta actual.
 
 La fase 00 está **En curso**: demo comprobada con PTY/tmux; falta validar mouse
 físico en un terminal gráfico. El primer binario Linux x64 corresponde al hito
 inicial; la comprobación de un host sin Bun/Node pertenece a distribución.
-Evidencia actual: [docs/qa/tui-ux.md](docs/qa/tui-ux.md); hito inicial:
+La fase 01 está **En curso** por pedido del usuario: layout y edición multilínea
+implementados; streaming y Markdown pendientes.
+Evidencia actual: [docs/qa/workspace.md](docs/qa/workspace.md); hito inicial:
 [docs/qa/tui-demo.md](docs/qa/tui-demo.md). Actualizar este estado al
 desarrollar; eventos inyectados no cierran la prueba manual.
 
@@ -57,6 +63,9 @@ desarrollar; eventos inyectados no cierran la prueba manual.
 - No asignar acciones a las teclas F1–F12: el usuario las descarta por colisiones
   con el sistema operativo/terminal. En la demo: Escape abre/cierra menús,
   Ctrl+N cambia de ventana y Alt+Y abre ayuda; mantener disponibles mouse y menú.
+- Editor central titulado con el nombre del proyecto, como el archivo en QBasic.
+  Prompt en un panel fijo siempre visible. No permitir cerrar/mover esos paneles
+  ni tapar el prompt con auxiliares; mostrar las respuestas dentro del editor.
 
 ## Regla Git obligatoria
 
@@ -88,8 +97,8 @@ esta política Git a los proyectos sobre los que trabaja.
 
 - TypeScript estricto y ESM; un paquete y un proceso iniciales.
 - Mantener `index.ts` raíz como entrypoint. Implementación en `src/`; componentes
-  visuales en `src/ui/components/`. La demo se compone en `src/ui/demo.ts` y el
-  futuro harness reutiliza esos controles.
+  visuales en `src/ui/components/`. El layout del agente se compone en
+  `src/ui/workspace.ts`; `src/ui/demo.ts` conserva el laboratorio reutilizable.
 - Usar `bun`, `bun run`, `bun install`, `bun test` y `bun build`. No depender de
   Node.js, npm, yarn o pnpm para desarrollar o ejecutar el harness.
 - Preferir APIs Bun: archivos, glob, spawn, texto, colores y Markdown. Usar APIs

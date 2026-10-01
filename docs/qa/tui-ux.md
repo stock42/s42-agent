@@ -1,6 +1,7 @@
 # Experiencia TUI — iteración de UX
 
 Fecha: 2026-10-01. Ejecución: `bun run dev` desde `index.ts`.
+Registro de la iteración `068291c`; el layout/editor/prompt actual está en [workspace.md](workspace.md).
 Esta iteración se concentra en interacción/render; binarios y benchmarks se
 reservan para distribución o un pedido explícito del usuario.
 

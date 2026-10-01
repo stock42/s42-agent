@@ -42,10 +42,10 @@ test("Ctrl+A y Shift+flechas permiten reemplazar selección sin romper Unicode",
 
 test("selección arrastrando el mouse reemplaza grafemas completos", () => {
   const input = new Input("edit", { x: 0, y: 0, width: 12, height: 1 }, "á文🙂z");
-  input.handle(mouse(1, 0)); input.handle(mouse(4, 0, "move"));
+  input.handle(mouse(0, 0)); input.handle(mouse(3, 0, "move"));
   const canvas = new Canvas(12, 1); input.draw(canvas, input.bounds, true);
   expect(canvas.cells[0]![1]!.style).toBe(theme.selected);
-  input.handle(mouse(4, 0, "release")); input.handle(key("X", "X")); expect(input.value).toBe("X🙂z");
+  input.handle(mouse(3, 0, "release")); input.handle(key("X", "X")); expect(input.value).toBe("X🙂z");
 });
 
 test("al ensanchar un input vuelve a mostrar el contexto que cabe", () => {
@@ -70,9 +70,9 @@ test("menú permite mantener, arrastrar y soltar; hover cambia la opción", () =
 test("botón y cierre muestran cancelación al arrastrar afuera", () => {
   const desktop = createDemo(); const window = desktop.active!;
   const button = window.controlRect(window.controls[2]!);
-  desktop.handle(mouse(button.x + 2, button.y)); expect(screen(desktop)).toContain("[+Aceptar+]");
-  desktop.handle(mouse(0, 22, "move")); expect(screen(desktop)).not.toContain("[+Aceptar+]");
-  desktop.handle(mouse(button.x + 2, button.y, "move")); expect(screen(desktop)).toContain("[+Aceptar+]");
+  desktop.handle(mouse(button.x + 2, button.y)); expect(desktop.draw().cells[button.y]![button.x]!.style).toBe(theme.selected);
+  desktop.handle(mouse(0, 22, "move")); expect(desktop.draw().cells[button.y]![button.x]!.style).toBe(theme.focused);
+  desktop.handle(mouse(button.x + 2, button.y, "move")); expect(desktop.draw().cells[button.y]![button.x]!.style).toBe(theme.selected);
   desktop.handle(mouse(button.x + 2, button.y, "release")); expect(desktop.status).toContain("Aceptar (1)");
   const close = window.closeRect;
   desktop.handle(mouse(close.x, close.y)); desktop.handle(mouse(0, 22, "move")); expect(window.closePressed).toBe(false);

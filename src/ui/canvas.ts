@@ -87,7 +87,8 @@ export class Renderer {
         if (cell.width === 0) continue;
         const inverted = cell.style === theme.focused || cell.style === theme.selected || cell.style === theme.selectedHotkey;
         const mnemonic = cell.style === theme.menuHotkey || cell.style === theme.selectedHotkey;
-        const code = color ? ansi(cell.style) : (inverted ? "\x1b[7m" : "\x1b[27m") + (mnemonic ? "\x1b[4m" : "\x1b[24m");
+        const dim = cell.style === theme.disabled || cell.style === theme.inactiveTitle;
+        const code = color ? ansi(cell.style) : (inverted ? "\x1b[7m" : "\x1b[27m") + (mnemonic ? "\x1b[4m" : "\x1b[24m") + (dim ? "\x1b[2m" : "\x1b[22m");
         if (code !== current) { line += code; current = code; }
         line += cell.text;
       }

@@ -17,7 +17,7 @@ export class Input extends Component {
     const chars = graphemes(this.value);
     this.cursor = Math.min(this.cursor, chars.length);
     this.start = Math.min(this.start, this.cursor);
-    const width = Math.max(1, this.bounds.width - 2);
+    const width = Math.max(1, this.bounds.width);
     const caretWidth = Math.min(width, Math.max(1, Bun.stringWidth(chars[this.cursor] ?? " ")));
     while (Bun.stringWidth(chars.slice(this.start, this.cursor).join("")) + caretWidth > width) this.start++;
     while (this.start > 0 && Bun.stringWidth(chars.slice(this.start - 1, this.cursor).join("")) + caretWidth <= width) this.start--;
@@ -31,10 +31,10 @@ export class Input extends Component {
   private positionAt(x: number, chars: string[]): number {
     let width = 0;
     let index = this.start;
-    const column = Math.max(0, Math.min(this.bounds.width - 2, x - 1));
+    const column = Math.max(0, Math.min(this.bounds.width, x));
     while (index < chars.length && width + Bun.stringWidth(chars[index]!) <= column) width += Bun.stringWidth(chars[index++]!);
-    if (this.dragging && x < 1) return Math.max(0, this.start - 1);
-    if (this.dragging && x >= this.bounds.width - 1) return Math.min(chars.length, index + 1);
+    if (this.dragging && x < 0) return Math.max(0, this.start - 1);
+    if (this.dragging && x >= this.bounds.width) return Math.min(chars.length, index + 1);
     return index;
   }
 
@@ -42,19 +42,17 @@ export class Input extends Component {
     const chars = this.visible();
     const style = this.disabled ? theme.disabled : theme.menu;
     canvas.fill(bounds, style);
-    canvas.text(bounds.x, bounds.y, "[", style);
-    canvas.text(bounds.x + bounds.width - 1, bounds.y, "]", style);
     const selection = this.selection;
     let used = 0;
     for (let index = this.start; index < chars.length; index++) {
       const glyph = chars[index]!; const width = Bun.stringWidth(glyph);
-      if (used + width > bounds.width - 2) break;
+      if (used + width > bounds.width) break;
       const selected = focused && selection && index >= selection[0] && index < selection[1];
-      canvas.text(bounds.x + 1 + used, bounds.y, glyph, selected ? theme.selected : style, width); used += width;
+      canvas.text(bounds.x + used, bounds.y, glyph, selected ? theme.selected : style, width); used += width;
     }
     if (focused && !this.disabled) {
       const offset = Bun.stringWidth(chars.slice(this.start, this.cursor).join(""));
-      canvas.text(bounds.x + 1 + offset, bounds.y, chars[this.cursor] ?? " ", theme.focused, bounds.width - 2 - offset);
+      canvas.text(bounds.x + offset, bounds.y, chars[this.cursor] ?? " ", theme.focused, bounds.width - offset);
     }
   }
 

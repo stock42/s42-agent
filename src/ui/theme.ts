@@ -6,7 +6,7 @@ export const theme = {
   window: { fg: 15, bg: 4 },
   dialog: { fg: 0, bg: 7 },
   title: { fg: 0, bg: 7 },
-  inactiveTitle: { fg: 7, bg: 4 },
+  inactiveTitle: { fg: 8, bg: 7 },
   menu: { fg: 0, bg: 7 },
   menuHotkey: { fg: 4, bg: 7 },
   selectedHotkey: { fg: 4, bg: 6 },

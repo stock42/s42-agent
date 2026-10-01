@@ -30,38 +30,31 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
     expect(error).toContain("terminal interactivo"); expect(error).not.toContain("\x1b"); expect(await noTTY.exited).toBe(1);
   });
 
-  test("clic, menús, drag, Unicode, modal y resize producen frames reales", async () => {
+  test("prompt, respuesta en editor, componentes, modal y resize producen frames reales", async () => {
     const run = session();
     try {
-      await until(() => run.output.includes("Laboratorio TUI"));
+      await until(() => run.output.includes("Demo sin LLM"));
       expect(run.output).toContain("\x1b[?1006h");
       expect(run.output).toContain("\x1b[?1003h");
-      // Aceptar: hit test según la composición 80×24.
-      run.terminal.write("\x1b[<0;59;11M\x1b[<0;59;11m");
+      // Pegar no envía: el botón Enviar comparte la acción de Enter.
+      run.terminal.write("\x1b[200~á文🙂\nSegunda línea\x1b[201~");
+      await until(() => run.output.includes("Segunda línea"));
+      expect(run.output).not.toContain("Respuesta de demostración");
+      run.terminal.write("\x1b[<0;66;18M\x1b[<0;66;18m");
+      await until(() => run.output.includes("Respuesta de demostración · tmp"));
+      expect(run.output).toContain("á文🙂");
+      run.terminal.write("\x1b[200~borrador pendiente\x1b[201~");
+      await until(() => run.output.includes("borrador pendiente"));
+      // El laboratorio sigue disponible dentro del área del editor.
+      run.terminal.write("\x1bd\r");
+      await until(() => run.output.includes("Laboratorio TUI"));
+      run.terminal.write("\x1b[<0;59;8M\x1b[<0;59;8m");
       await until(() => run.output.includes("Aceptar (1): s42-agent"));
-      // Escape aislado abre menú; las flechas se envían después de su frame.
-      const beforeMenu = run.output.length; run.terminal.write("\x1b");
-      await until(() => run.output.slice(beforeMenu).includes(">Salir"));
-      run.terminal.write("\x1b[C\x1b[B\r");
-      await until(() => run.output.includes("Ventana 1"));
-      run.terminal.write("\x1b[<0;31;7M\x1b[<32;41;9M\x1b[<0;41;9m");
-      await Bun.sleep(60);
-      // Cerrar ventana, abrir ayuda modal y salir con Escape.
-      run.terminal.write("\x17\x1by");
-      await until(() => run.output.includes("Mouse: clic"));
-      run.terminal.write("\x1b"); await Bun.sleep(80);
-      // Foco en input, pegado bracketed partido conserva texto literal.
-      run.terminal.write("\x1b[<0;11;8M\x1b[<0;11;8m\x1b[200~á文🙂");
-      run.terminal.write("\x1b[201~");
-      await until(() => run.output.includes("á文🙂"));
-      run.terminal.write("\x01\x1b[200~proyecto-local\x1b[201~");
+      run.terminal.write("\x1b[<0;11;6M\x1b[<0;11;6m\x01\x1b[200~proyecto-local\x1b[201~");
       await until(() => run.output.includes("Nombre: proyecto-local"));
-      const beforeComponents = run.output.length;
-      run.terminal.write("\x1b");
-      await until(() => run.output.slice(beforeComponents).includes(">Salir"));
-      run.terminal.write("\x1b[C");
-      await until(() => run.output.slice(beforeComponents).includes("Nueva ventana"));
-      const beforeReturn = run.output.length; run.terminal.write("\r");
+      const beforePanel = run.output.length; run.terminal.write("\x0e");
+      await until(() => run.output.slice(beforePanel).includes("^N Panel"));
+      const beforeReturn = run.output.length; run.terminal.write("\x1bd\r");
       await until(() => run.output.slice(beforeReturn).includes("proyecto-local"));
       // Abrir ayuda mientras el desplegable sigue abierto.
       const beforeHelp = run.output.length;
@@ -106,11 +99,13 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
     const wrapper = ["/usr/bin/bash", "-c", 'printf "BEFORE:%s\\n" "$(stty -g)"; "$@" --no-color --no-mouse; printf "AFTER:%s\\n" "$(stty -g)"', "pty-check", ...command];
     const run = session([], wrapper);
     try {
-      await until(() => run.output.includes("Laboratorio TUI"));
+      await until(() => run.output.includes("Demo sin LLM"));
       expect(run.output).not.toContain("\x1b[?1006h");
       expect(run.output).not.toMatch(/\x1b\[(?:3\d|4\d|9\d|10\d)[;\dm]/);
       expect(run.output).toContain("\x1b[7m");
-      run.terminal.write("\t\t"); await until(() => run.output.includes("[>Aceptar<]"));
+      const beforeFocus = run.output.length; run.terminal.write("\t");
+      await until(() => run.output.slice(beforeFocus).includes("< Enviar >"));
+      expect(run.output.slice(beforeFocus)).toContain("\x1b[7m");
       run.terminal.write("\x03"); expect(await run.child.exited).toBe(0);
       await until(() => run.output.includes("AFTER:"));
       expect(run.output.match(/BEFORE:([^\r\n]+)/)?.[1]).toBe(run.output.match(/AFTER:([^\r\n]+)/)?.[1]);

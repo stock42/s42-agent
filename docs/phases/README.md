@@ -4,13 +4,15 @@ Fuente de requisitos: [SPECS.md](../SPECS.md). Fecha: 2026-10-01.
 
 Estado actual: demo QBasic implementada desde `index.ts`, con componentes en
 `src/ui/components/`. La fase 00 está **En curso**, con experiencia de mouse,
-teclado y layout comprobada en PTY/tmux; falta mouse físico. Las fases 01–06
-siguen pendientes. [UX actual](../qa/tui-ux.md), [evidencia inicial](../qa/tui-demo.md).
+teclado y layout comprobada en PTY/tmux; falta mouse físico. La fase 01 está
+**En curso**: editor central con proyecto y prompt fijo, adelantados a solicitud
+del usuario; streaming/Markdown pendientes. Fases 02–06 pendientes.
+[UI actual](../qa/workspace.md), [evidencia inicial](../qa/tui-demo.md).
 
 | Fase | Archivo | Depende de | Resultado | Requisitos |
 | --- | --- | --- | --- | --- |
 | 00 | [Demo QBasic y componentes](00-tui-viability.md) | Specs | Ventanas, botones, menús y mouse probados en una demo Bun compilada. | R01–R05, R13–R17 |
-| 01 | [TUI del harness](01-terminal-ui.md) | 00 validada | Conversación/editor fixture sobre los componentes QBasic. | R03–R05, R15, R16 |
+| 01 | [TUI del harness](01-terminal-ui.md) | 00 validada | Editor del proyecto y prompt fijo sobre los componentes QBasic. | R03–R05, R15, R16 |
 | 02 | [Proyectos y sesiones](02-projects-and-sessions.md) | 00, 01 | Configuración durable y separación por proyecto. | R06, R12 |
 | 03 | [Proveedores y llama.cpp](03-providers-and-local-llm.md) | 01, 02 | Streaming local y selección de proveedor/modelo. | R09, R10 |
 | 04 | [Ciclo de coding](04-agent-loop-and-tools.md) | 02, 03 | Leer, editar y verificar un proyecto mediante tools. | R04, R11 |

@@ -1,0 +1,158 @@
+Capturas del entrypoint Bun en tmux, 2026-10-01. Input teclado/SGR inyectado.
+Sin builds ni benchmark de binarios; mouse físico pendiente.
+
+80×24 — proyecto en el marco central, prompt fijo y foco inicial
+  Archivo   Ventanas   Demo   Ayuda
+┌───────────────────────────────── s42-agent ──────────────────────────────────┐
+│ La respuesta aparecerá en este editor.                                       │
+│                                                                              │
+│ /home/lortmorris/repos/s42-agent                                             │
+│                                                                              │
+│ Escribí tu prompt en el panel inferior.                                      │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+╔═══════════════════════════════════ Prompt ═══════════════════════════════════╗
+║                                                                 < Enviar >   ║
+║                                                                              ║
+║                                                                              ║
+║                                                                              ║
+║ Demo sin LLM · Enter enviar · Ctrl+J nueva línea                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+ Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir
+
+80×24 — Enter coloca respuesta demo en el editor
+  Archivo   Ventanas   Demo   Ayuda
+┌───────────────────────────────── s42-agent ──────────────────────────────────┐
+│ Respuesta de demostración · s42-agent                                        │
+│                                                                              │
+│ Prompt recibido:                                                             │
+│ Implementá una función suma.                                                 │
+│ Con tipos de TypeScript.                                                     │
+│                                                                              │
+│ La respuesta del agente aparecerá en este editor.                            │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+╔═══════════════════════════════════ Prompt ═══════════════════════════════════╗
+║                                                                 < Enviar >   ║
+║                                                                              ║
+║                                                                              ║
+║                                                                              ║
+║ Respuesta demo · Enter enviar · Ctrl+J nueva línea                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+ Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir
+
+80×24 — input borrado sin corchetes, botones y marcos unidos; prompt visible
+  Archivo   Ventanas   Demo   Ayuda
+┌────╔                    s42-agent · Laboratorio TUI                 [X] ╗────┐
+│ Res║  Un escritorio clásico, hecho con celdas de terminal.              ║    │
+│    ║                                                                    ║    │
+│ Pro║  Nombre                                                            ║    │
+│ Imp║                                                                    ║    │
+│ Con║  Componentes · ↑/↓ o rueda                                         ║    │
+│    ║  ┌───────────────────────────────────────────┐     < Aceptar >     ║    │
+│ La ║  │Ventanas con título y cierre               │     < Ventana >     ║    │
+│    ║  │Botones y estados                          │     < Diálogo >     ║    │
+│    ║  │Inputs con Unicode: á 文 🙂                │     < Inactivo >    ║    │
+│    ║  │Listas y rueda de mouse                    │                     ║    │
+│    ║  └──────────────────────────────────────────↓┘                     ║    │
+│    ║  Nombre:                                                           ║    │
+│    ║                                                                    ║    │
+└────╚════════════════════════════════════════════════════════════════════╝ ───┘
+┌─────────────────────────────────── Prompt ───────────────────────────────────┐
+│ Borrador pendiente                                              < Enviar >   │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│ Respuesta demo · Enter enviar · Ctrl+J nueva línea                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+ Esc Menú  Tab Foco  ^N Ventana  ^W Cerrar  ^Q Salir
+
+60×16 — laboratorio y sus controles sin cubrir el prompt
+  Archivo   Ventanas   Demo   Ayuda
+┌─╔              s42-agent · Laboratorio TUI           [X] ╗
+│ ║  Nombre                                                ║
+│ ║                                                        ║
+│ ║  Componentes · ↑/↓ o rueda                             ║
+│ ║  ┌───────────────────────────────┐     < Aceptar >     ║
+│ ║  │Ventanas con título y cierre   │     < Ventana >     ║
+│ ║  │Botones y estados              │     < Diálogo >     ║
+│ ║  └──────────────────────────────↓┘     < Inactivo >    ║
+│ ║  Nombre:                                               ║
+└─╚════════════════════════════════════════════════════════╝
+┌───────────────────────── Prompt ─────────────────────────┐
+│ Borrador pendiente                          < Enviar >   │
+│ Respuesta demo · Enter enviar · Ctrl+J nueva línea       │
+└──────────────────────────────────────────────────────────┘
+ Esc Menú  Tab Foco  ^N Ventana  ^W Cerrar  ^Q Salir
+
+60×16 — cerrar el auxiliar conserva editor, proyecto y borrador
+  Archivo   Ventanas   Demo   Ayuda
+┌─────────────────────── s42-agent ────────────────────────┐
+│ Respuesta de demostración · s42-agent                    │
+│                                                          │
+│ Prompt recibido:                                         │
+│ Implementá una función suma.                             │
+│ Con tipos de TypeScript.                                 │
+│                                                          │
+│ La respuesta del agente aparecerá en este editor.        │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+╔═════════════════════════ Prompt ═════════════════════════╗
+║ Borrador pendiente                          < Enviar >   ║
+║ Respuesta demo · Enter enviar · Ctrl+J nueva línea       ║
+╚══════════════════════════════════════════════════════════╝
+ Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir
+
+120×40 — ayuda modal dentro del editor, prompt y borrador visibles
+  Archivo   Ventanas   Demo   Ayuda
+┌───────────────────────────────────────────────────── s42-agent ──────────────────────────────────────────────────────┐
+│ Respuesta de demostración · s42-agent                                                                                │
+│                                                                                                                      │
+│ Prompt recibido:                                                                                                     │
+│ Implementá una función suma.                                                                                         │
+│ Con tipos de TypeScript.                                                                                             │
+│                                                                                                                      │
+│ La respuesta del agente aparecerá en este editor.                                                                    │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                   ╔                    Ayuda                 [X] ╗                                   │
+│                                   ║                                              ║                                   │
+│                                   ║  Enter: enviar · Ctrl+J: nueva línea.        ║                                   │
+│                                   ║  Ctrl+N: cambiar entre paneles.              ║                                   │
+│                                   ║  Tab / Shift+Tab: foco · Esc: menú.          ║                                   │
+│                                   ║  Ctrl+A / Shift+flechas: seleccionar.        ║                                   │
+│                                   ║  Mouse: foco, scroll y selección.            ║                                   │
+│                                   ║                 < Aceptar >                  ║                                   │
+│                                   ║                                              ║                                   │
+│                                   ╚══════════════════════════════════════════════╝                                   │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────── Prompt ───────────────────────────────────────────────────────┐
+│ Borrador pendiente                                                                                      < Enviar >   │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│ Respuesta demo · Enter enviar · Ctrl+J nueva línea                                                                   │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Tab Foco  Enter Aceptar  Esc Cerrar  ^Q Salir

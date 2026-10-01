@@ -1,35 +1,40 @@
 # Fase 01 — TUI del harness sobre los componentes QBasic
 
-Estado: **Pendiente**. Dependencia: [demo de viabilidad 00](00-tui-viability.md).
+Estado: **En curso**. Dependencia: [demo de viabilidad 00](00-tui-viability.md).
+Layout adelantado a pedido del usuario, con mouse físico de fase 00 aún pendiente.
 Requisitos: R03, R04, R05, R15, R16. Contrato: SPECS §4, §5 y §12.
 
 ## Objetivo
 
-Construir la interfaz del harness sobre la biblioteca visual ya probada: ventana
-de conversación, editor y eventos fixture dentro del escritorio QBasic, sin
-necesitar un modelo ni reemplazar los componentes por otra TUI.
+Construir la interfaz del harness sobre la biblioteca visual ya probada: editor
+central con el nombre del proyecto, prompt fijo abajo y respuestas fixture dentro
+del escritorio QBasic, sin necesitar un modelo ni reemplazar los componentes por
+otra TUI.
 
 ## Tareas
 
-- [ ] F01-01. Crear el entrypoint del harness y reutilizar terminal, renderer,
+- [x] F01-01. Reutilizar `index.ts` como entrypoint del harness, terminal, renderer,
   input, foco y componentes de fase 00; conservar la demo como prueba de controles.
 - [ ] F01-02. Componer menús Archivo/Proyectos/Modelos/Ventanas/Ayuda y la ventana
   principal, con contexto del proyecto/modelo/sesión y barra inferior de atajos.
-- [ ] F01-03. Crear editor multilínea INSERT con cursor, borrado, Enter, Ctrl+J y pegado
+  Parcial: editor del proyecto y prompt fijo; modelo/sesión/selectores pendientes.
+- [x] F01-03. Crear editor multilínea INSERT con cursor, borrado, Enter, Ctrl+J y pegado
   multilínea; evitar envíos producidos por caracteres dentro de un paste.
 - [ ] F01-04. Integrar botones de enviar/cancelar, selectores y diálogos sobre los
   componentes existentes, con las mismas acciones por mouse y teclado.
+  Parcial: Enviar demo por botón/Enter; cancelación y selectores pendientes.
 - [ ] F01-05. Añadir coalescencia de streaming al renderer y layout de conversación;
   conservar clipping, filas modificadas y ausencia de frames idle de fase 00.
 - [ ] F01-06. Mostrar Markdown básico con callbacks de Bun, mensajes finalizados
   cacheados y eventos fixture; evitar reparsear todo el historial por delta.
 - [ ] F01-07. Implementar scroll de conversación con rueda/teclado, viewport
   independiente y seguimiento del streaming solo mientras esté al fondo.
-- [ ] F01-08. Manejar resize, terminal pequeño, ausencia de TTY, color automático
+  Parcial: viewport independiente con rueda/teclado; streaming pendiente.
+- [x] F01-08. Manejar resize, terminal pequeño, ausencia de TTY, color automático
   y `NO_COLOR`, con estados comprensibles por texto.
-- [ ] F01-09. Probar cierre normal, Ctrl+C como entrada raw, SIGTERM y error
+- [x] F01-09. Probar cierre normal, Ctrl+C como entrada raw, SIGTERM y error
   controlado; conservar el estado anterior del terminal.
-- [ ] F01-10. Repetir el flujo TUI desde Bun y revisar su experiencia. Registrar evidencia,
+- [x] F01-10. Repetir el flujo TUI desde Bun y revisar su experiencia. Registrar evidencia,
   actualizar CHANGELOG y hacer el commit de cada tarea completada.
 
 ## Escenarios de aceptación
@@ -58,7 +63,9 @@ real complementa los tests de secuencias ANSI.
 
 | Tarea/caso | Comando o captura | Resultado, terminal y versión |
 | --- | --- | --- |
-| — | — | Pendiente; no ejecutado. |
+| Layout/edición/resize | [QA actual](../qa/workspace.md), [capturas](../qa/workspace-captures.txt) | Editor con proyecto, prompt fijo, respuesta demo, componentes reutilizados y tamaños 80×24 / 60×16 / 120×40. |
+| Fuente Bun | `bun run typecheck`, tests de componentes y PTY | 36 casos: input limpio, edición, envío, foco, scroll, restricciones de paneles, monocromo y cleanup. Sin build de binarios. |
+| Pendiente | Streaming, Markdown, modelo/sesión, cancelación y selectores | No implementados; fixtures no demuestran operación de un proveedor. Mouse físico pendiente. |
 
 ## Cierre
 

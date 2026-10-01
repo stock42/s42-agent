@@ -3,7 +3,7 @@ import type { Component } from "./components/component.ts";
 import { MenuBar } from "./components/menu.ts";
 import { Window } from "./components/window.ts";
 import { theme } from "./theme.ts";
-import { contains, type InputEvent } from "./types.ts";
+import { contains, type InputEvent, type Rect } from "./types.ts";
 
 type Capture = { window: Window; control: Component } | { window: Window; close: true }
   | { window: Window; offsetX: number; offsetY: number };
@@ -14,6 +14,8 @@ export class Desktop {
   status = "Demo de componentes · Bun";
   onExit: () => void = () => {};
   onHelp: () => void = () => {};
+  onResize?: (width: number, height: number) => void;
+  floatingArea?: Rect;
   private capture?: Capture;
 
   constructor(readonly menu: MenuBar, public width = 80, public height = 24) { menu.resize(width, height); }
@@ -27,7 +29,7 @@ export class Desktop {
   }
 
   close(window = this.active): void {
-    if (!window || (this.modal && window !== this.modal)) return;
+    if (!window || window.fixed || (this.modal && window !== this.modal)) return;
     const index = this.windows.indexOf(window);
     if (index < 0) return;
     this.windows.splice(index, 1);
@@ -37,14 +39,17 @@ export class Desktop {
   }
 
   private fit(window: Window): void {
-    window.bounds.width = Math.min(window.preferred.width, Math.max(2, this.width - 2));
-    window.bounds.height = Math.min(window.preferred.height, Math.max(2, this.height - 2));
-    window.bounds.x = Math.max(0, Math.min(window.bounds.x, this.width - window.bounds.width));
-    window.bounds.y = Math.max(1, Math.min(window.bounds.y, this.height - 1 - window.bounds.height));
+    if (window.fixed) return;
+    const area = this.floatingArea ?? { x: 0, y: 1, width: this.width, height: this.height - 2 };
+    window.bounds.width = Math.min(window.preferred.width, Math.max(2, area.width - 2));
+    window.bounds.height = Math.min(window.preferred.height, Math.max(2, area.height));
+    window.bounds.x = Math.max(area.x, Math.min(window.bounds.x, area.x + area.width - window.bounds.width));
+    window.bounds.y = Math.max(area.y, Math.min(window.bounds.y, area.y + area.height - window.bounds.height));
   }
 
   resize(width: number, height: number): void {
     this.width = Math.max(1, width); this.height = Math.max(1, height); this.menu.resize(this.width, this.height);
+    this.onResize?.(this.width, this.height);
     for (const window of this.windows) { this.fit(window); window.onLayout?.(window.client); this.ensureFocus(window); }
   }
 
@@ -141,10 +146,10 @@ export class Desktop {
     }
     if (event.action !== "press" || event.button !== 0) return false;
     this.raise(window);
-    if (contains(window.closeRect, event.x, event.y)) {
+    if (!window.fixed && contains(window.closeRect, event.x, event.y)) {
       window.closePressed = true; this.capture = { window, close: true }; return true;
     }
-    if (event.y === window.bounds.y) {
+    if (!window.fixed && event.y === window.bounds.y) {
       this.capture = { window, offsetX: event.x - window.bounds.x, offsetY: event.y - window.bounds.y }; return true;
     }
     const control = window.controlAt(event.x, event.y);
@@ -164,13 +169,18 @@ export class Desktop {
     }
     canvas.clipped({ x: 0, y: 1, width: this.width, height: this.height - 2 }, () => {
       if (!this.windows.length) canvas.text(2, 3, "Esc → Ventanas → Componentes para volver", theme.window, this.width - 4);
-      for (const window of this.windows) { window.onLayout?.(window.client); this.ensureFocus(window); window.draw(canvas, window === this.active); }
+      for (const window of this.windows) {
+        window.onLayout?.(window.client); this.ensureFocus(window);
+        if (!window.fixed && this.floatingArea) canvas.clipped(this.floatingArea, () => window.draw(canvas, window === this.active));
+        else window.draw(canvas, window === this.active);
+      }
     });
     this.menu.draw(canvas);
     const footer = this.height - 1;
     canvas.fill({ x: 0, y: footer, width: this.width, height: 1 }, theme.menu);
     const hints = this.menu.opened >= 0 ? "←/→ Menú  ↑/↓ Opción  Enter Elegir  Esc Cerrar  ^Q Salir"
       : this.modal ? "Tab Foco  Enter Aceptar  Esc Cerrar  ^Q Salir"
+      : this.active?.fixed ? "Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir"
       : "Esc Menú  Tab Foco  ^N Ventana  ^W Cerrar  ^Q Salir";
     canvas.text(1, footer, hints, theme.menu, this.width - 2);
     return canvas;

@@ -12,8 +12,9 @@ export class Button extends Component {
     const down = this.pressed && this.inside;
     const style = this.disabled ? theme.disabled : down ? theme.selected : focused ? theme.focused : theme.button;
     canvas.fill(bounds, style);
-    const text = this.disabled ? `[-${this.label}-]` : down ? `[+${this.label}+]` : focused ? `[>${this.label}<]` : `[ ${this.label} ]`;
-    canvas.text(bounds.x, bounds.y, text, style, bounds.width);
+    const text = `< ${this.label} >`;
+    const inset = Math.max(0, Math.floor((bounds.width - Bun.stringWidth(text)) / 2));
+    canvas.text(bounds.x + inset, bounds.y, text, style, bounds.width - inset);
   }
 
   handle(event: InputEvent): boolean {

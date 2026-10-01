@@ -7,27 +7,36 @@ import { Desktop } from "./desktop.ts";
 import { theme } from "./theme.ts";
 
 export function createDemo(): Desktop {
-  let serial = 0;
-  let clicks = 0;
-  const desktop = new Desktop(new MenuBar([
+  const desktop = new Desktop(new MenuBar([]));
+  const panels = createDemoPanels(desktop);
+  desktop.menu.menus.push(
     { label: "Archivo", items: [{ label: "Salir", shortcut: "Ctrl+Q", run: () => desktop.onExit() }] },
     { label: "Ventanas", items: [
-      { label: "Componentes", run: () => components() },
-      { label: "Nueva ventana", run: () => secondary() },
+      { label: "Componentes", run: panels.components },
+      { label: "Nueva ventana", run: panels.secondary },
       { label: "Siguiente", shortcut: "Ctrl+N", run: () => desktop.cycle() },
       { label: "Cerrar", shortcut: "Ctrl+W", run: () => desktop.close() },
     ] },
     { label: "Demo", items: [
-      { label: "Diálogo modal", run: () => dialog() },
+      { label: "Diálogo modal", run: () => panels.dialog() },
       { label: "Agente LLM (próxima fase)", disabled: true, run: () => {} },
     ] },
-    { label: "Ayuda", hotkey: "y", items: [{ label: "Atajos y mouse", shortcut: "Alt+Y", run: () => help() }] },
-  ]));
+    { label: "Ayuda", hotkey: "y", items: [{ label: "Atajos y mouse", shortcut: "Alt+Y", run: panels.help }] },
+  );
+  desktop.onHelp = panels.help;
+  panels.components();
+  return desktop;
+}
+
+export function createDemoPanels(desktop: Desktop) {
+  let serial = 0;
+  let clicks = 0;
 
   function dialog(title = "Diálogo modal", lines = ["Este diálogo captura el foco.", "Puedes moverlo por su título.", "Enter, Escape o [X] para cerrar."]): void {
     if (desktop.modal) return;
+    const area = desktop.floatingArea;
     const window = new Window(`dialog-${++serial}`, title, {
-      x: Math.floor((desktop.width - 48) / 2), y: Math.floor((desktop.height - 10) / 2), width: 48, height: 10,
+      x: Math.floor((desktop.width - 48) / 2), y: area ? area.y + Math.floor((area.height - 10) / 2) : Math.floor((desktop.height - 10) / 2), width: 48, height: 10,
     });
     window.modal = true;
     const close = new Button("ok", { x: 0, y: 0, width: 14, height: 1 }, "Aceptar", () => desktop.close(window));
@@ -73,25 +82,24 @@ export function createDemo(): Desktop {
     window.controls.push(input, list, accept, open, modal, disabled);
     window.onLayout = (client) => {
       const compact = client.height < 14;
-      input.bounds.y = compact ? 3 : 4;
+      const short = client.height < 12;
+      input.bounds.y = short ? 1 : compact ? 3 : 4;
       input.bounds.width = Math.min(40, client.width - 4);
       list.bounds.width = Math.max(16, client.width - 23);
-      list.bounds.y = compact ? 5 : 7;
-      list.bounds.height = Math.max(3, Math.min(6, client.height - list.bounds.y - 2));
+      list.bounds.y = short ? 3 : compact ? 5 : 7;
+      list.bounds.height = Math.max(3, Math.min(6, client.height - list.bounds.y - (short ? 1 : 2)));
       const buttonX = Math.max(2, client.width - 17);
-      [accept, open, modal, disabled].forEach((button, index) => { button.bounds.x = buttonX; button.bounds.y = list.bounds.y + index; });
+      [accept, open, modal, disabled].forEach((button, index) => { button.bounds.x = buttonX; button.bounds.y = list.bounds.y + index * (compact ? 1 : 2); });
     };
     window.onDraw = (canvas, client) => {
       const label = (x: number, y: number, text: string) => canvas.text(client.x + x, client.y + y, text, theme.window, client.width - x - 1);
-      label(2, client.height < 14 ? 0 : 1, "Un escritorio clásico, hecho con celdas de terminal.");
+      if (client.height >= 12) label(2, client.height < 14 ? 0 : 1, "Un escritorio clásico, hecho con celdas de terminal.");
       label(2, input.bounds.y - 1, "Nombre");
       label(2, list.bounds.y - 1, "Componentes · ↑/↓ o rueda");
-      label(2, client.height - 2, desktop.status);
+      label(2, client.height - (client.height < 12 ? 1 : 2), desktop.status);
     };
     desktop.add(window);
   }
 
-  desktop.onHelp = help;
-  components();
-  return desktop;
+  return { components, secondary, dialog, help };
 }

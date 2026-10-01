@@ -85,3 +85,22 @@ cierre de cada tarea e incluirlo en su commit.
   typecheck y capturas tmux. Evidencia en `docs/qa/tui-ux.md`.
 - No se ejecutaron builds ni benchmarks de binarios. Mouse físico pendiente.
   `git pull` intentado: `main` sigue sin upstream; commit local.
+
+### Mejorado — Editor del proyecto y prompt fijo
+
+- Retirados los corchetes decorativos del Input: borrado completo y cursor sobre
+  el texto. Botones centrados sin marcadores de foco/presión combinados, estados
+  por color/video inverso/tenue, cabeceras conectadas al marco y sombras de una celda.
+- `index.ts` abre el editor central con el nombre de la carpeta/proyecto y un
+  panel Prompt fijo abajo. No se cierran/arrastran; auxiliares y modales quedan
+  dentro del editor y conservan visible el prompt.
+- Componente TextArea compartido: edición multilínea, Unicode, selección, wrap,
+  scroll y pegado sin envío. Enter/Enviar coloca una respuesta demo en el editor,
+  limpia el prompt y devuelve el foco; Ctrl+J inserta una línea.
+- Laboratorio conservado en Demo → Componentes. Contexto inicial desde cwd;
+  registro de proyectos, LLMs y streaming siguen pendientes.
+- Fase 01 En curso por pedido del usuario; specs, AGENTS y README actualizados.
+  Evidencia en `docs/qa/workspace.md`: 36 pruebas desde fuente, typecheck y seis
+  capturas tmux en 80×24 / 60×16 / 120×40. Mouse físico pendiente.
+- Sin builds ni benchmarks de binarios. `git pull` intentado: `main` sigue sin
+  upstream; trabajo y commit locales.

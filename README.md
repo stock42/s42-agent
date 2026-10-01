@@ -1,7 +1,7 @@
 # s42-agent
 
 Harness de coding en TypeScript/Bun con una TUI estilo QBasic. El primer
-entregable es una demo interactiva de componentes; el agente y los proveedores
+entregable es una demo del escritorio del agente; el agente y los proveedores
 LLM están planificados en [las specs](docs/SPECS.md).
 
 ## Ejecutar la demo
@@ -14,10 +14,15 @@ bun install --frozen-lockfile
 bun run dev
 ```
 
-`index.ts` es el punto de entrada del agente y hoy abre el laboratorio visual.
-La demo permite mover y superponer ventanas, cerrar con `[X]`, editar texto
-Unicode, pulsar botones, desplazar una lista y usar menús y diálogos modales.
-El botón Aceptar actualiza un contador; los datos de la lista son ejemplos.
+`index.ts` abre un editor central titulado con el nombre de la carpeta actual
+y un panel **Prompt** fijo abajo. Enter o Enviar coloca una respuesta de
+demostración en el editor; todavía no hay un LLM conectado. Podés editar esa
+respuesta, desplazarte por ella y escribir el siguiente prompt.
+
+El editor y el prompt no se cierran ni se arrastran. Las ventanas auxiliares
+quedan dentro del área del editor y conservan visible el prompt. **Demo →
+Componentes** abre el laboratorio de controles: ventanas, input, botones,
+lista y modales. Sus datos siguen siendo ejemplos.
 
 | Acción | Teclado / mouse |
 | --- | --- |
@@ -25,9 +30,12 @@ El botón Aceptar actualiza un contador; los datos de la lista son ejemplos.
 | Navegar menú | Flechas, Enter, hover o arrastrar y soltar; Escape / clic afuera cierra |
 | Cambiar foco | Tab / Shift+Tab, o clic en un control |
 | Activar botón | Enter / Espacio, o pulsar y soltar dentro |
-| Cambiar ventana | Ctrl+N o clic en la ventana visible |
+| Cambiar panel/ventana | Ctrl+N, menú Ventanas o clic en la ventana visible |
 | Mover ventana | Arrastrar su barra de título |
-| Cerrar ventana | Ctrl+W o `[X]` |
+| Cerrar auxiliar | Ctrl+W o `[X]`; editor y prompt son fijos |
+| Enviar prompt de demo | Enter o botón Enviar |
+| Nueva línea en el prompt | Ctrl+J; el pegado multilínea no envía |
+| Editor | Flechas / Home / End / Ctrl+Home / Ctrl+End / PageUp / PageDown, clic o rueda; Enter inserta una línea |
 | Lista | Flechas / Home / End / PageUp / PageDown, clic o rueda; ↑/↓ en el marco indican más filas |
 | Seleccionar texto | Ctrl+A, Shift+flechas / Home / End, o arrastre del mouse |
 | Reemplazar selección | Escribir, pegar, Backspace o Delete |
@@ -35,9 +43,9 @@ El botón Aceptar actualiza un contador; los datos de la lista son ejemplos.
 | Cerrar modal | Escape, su botón o `[X]` |
 | Salir | Ctrl+Q / Ctrl+C o Archivo → Salir |
 
-No se asignan acciones a F1–F12. Al cerrar todas las ventanas, Ventanas →
-Componentes vuelve a abrir el laboratorio; los desplegables cubren el mensaje
-del escritorio vacío.
+No se asignan acciones a F1–F12. Cerrar un auxiliar conserva el editor y el
+borrador del prompt. El contexto de proyecto usa la carpeta de ejecución;
+el registro persistente de múltiples proyectos corresponde a la fase 02.
 
 ```bash
 bun run index.ts --help
@@ -46,9 +54,9 @@ bun run index.ts --no-mouse
 ```
 
 También se respeta `NO_COLOR`. Sin color, cursor y selección usan video inverso,
-los menús subrayan sus letras de acceso y los botones indican sus estados por
-texto. Fuera de TTY o con `TERM=dumb`, se informa el requisito del terminal sin
-emitir escapes.
+los menús subrayan sus letras de acceso; botones deshabilitados y títulos
+inactivos usan texto tenue. Fuera de TTY o con `TERM=dumb`, se informa el
+requisito del terminal sin emitir escapes.
 
 ## Componentes y organización
 
@@ -61,11 +69,13 @@ src/ui/
   theme.ts                  paleta QBasic
   desktop.ts                foco, capas, captura de mouse y ventanas
   demo.ts                   composición del laboratorio
+  workspace.ts              editor del proyecto, prompt fijo y respuesta demo
   components/
     component.ts            contrato pequeño de controles
     window.ts               ventana; también usada para modales
     button.ts
     input.ts
+    text-area.ts            edición multilínea, selección, wrap y scroll
     select-list.ts
     menu.ts                 cabecera y desplegable integrado
 tests/                      comportamiento y terminal PTY
@@ -84,7 +94,7 @@ bun test
 ```
 
 La prioridad actual es iterar sobre `bun run dev`, mouse, teclado, foco y layout.
-[Correcciones y comprobaciones de UX](docs/qa/tui-ux.md).
+[Layout y comprobaciones actuales](docs/qa/workspace.md).
 
 ## Distribución, cuando corresponda
 

@@ -8,6 +8,7 @@ export class Window {
   focusedId?: string;
   closePressed = false;
   modal = false;
+  fixed = false;
   onLayout?: (client: Rect) => void;
   onDraw?: (canvas: Canvas, client: Rect) => void;
   readonly preferred: { width: number; height: number };
@@ -39,13 +40,14 @@ export class Window {
 
   draw(canvas: Canvas, active: boolean): void {
     const style = this.modal ? theme.dialog : theme.window;
-    canvas.fill({ ...this.bounds, x: this.bounds.x + 2, y: this.bounds.y + 1 }, theme.shadow);
+    if (!this.fixed) canvas.fill({ ...this.bounds, x: this.bounds.x + 1, y: this.bounds.y + 1 }, theme.shadow);
     canvas.fill(this.bounds, style);
     canvas.box(this.bounds, style, active);
-    const titleStyle = active ? theme.title : theme.inactiveTitle;
-    canvas.fill({ ...this.bounds, height: 1 }, titleStyle);
-    canvas.text(this.bounds.x + 1, this.bounds.y, ` ${this.title} `, titleStyle, this.bounds.width - 7);
-    canvas.text(this.closeRect.x, this.closeRect.y, "[X]", this.closePressed ? theme.selected : titleStyle);
+    const titleStyle = this.fixed ? style : active ? theme.title : theme.inactiveTitle;
+    if (!this.fixed) canvas.fill({ x: this.bounds.x + 1, y: this.bounds.y, width: this.bounds.width - 2, height: 1 }, titleStyle);
+    const titleWidth = Math.max(0, Math.min(Bun.stringWidth(this.title) + 2, this.bounds.width - (this.fixed ? 4 : 10)));
+    canvas.text(this.bounds.x + Math.floor((this.bounds.width - titleWidth) / 2), this.bounds.y, ` ${this.title} `, titleStyle, titleWidth);
+    if (!this.fixed) canvas.text(this.closeRect.x, this.closeRect.y, "[X]", this.closePressed ? theme.selected : titleStyle);
     canvas.clipped(this.client, () => {
       this.onDraw?.(canvas, this.client);
       for (const control of this.controls) {

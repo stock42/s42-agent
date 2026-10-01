@@ -1,11 +1,12 @@
 # s42-agent — Especificaciones
 
-Fecha: 2026-10-01. Estado: demo QBasic implementada desde `index.ts`; el harness
-de coding sigue pendiente. [Evidencia de la demo](qa/tui-demo.md).
+Fecha: 2026-10-01. Estado: layout QBasic del agente desde `index.ts`, con editor
+central y prompt fijo; el harness de coding/LLMs sigue pendiente.
+[Evidencia actual](qa/workspace.md), [demo inicial](qa/tui-demo.md).
 
 Prioridad confirmada: perfeccionar la experiencia dentro de la TUI mediante
 `bun run dev`. Builds, smoke y benchmarks de binarios se realizan al preparar
-distribución o a pedido explícito. [Iteración UX](qa/tui-ux.md).
+distribución o a pedido explícito. [UI actual](qa/workspace.md).
 
 ## 1. Objetivo
 
@@ -187,12 +188,13 @@ funciones del IDE QBasic ni incorporar un segundo tema tipo Pi.
 | `MenuBar` | Menús de cabecera y desplegable integrado, selección y cierre. |
 | `Dialog` | Ventana modal que restringe input al diálogo y restaura el foco al cerrar. |
 | `Input` | Campo editable con cursor, foco, teclado y paste. |
+| `TextArea` | Edición multilínea, selección por grafemas, wrap, scroll y envío explícito del prompt. |
 | `SelectList` | Lista con selección por clic/flechas y scroll con rueda/teclado. |
 
 Un componente conserva estado mínimo y expone un contrato tipado para dibujar,
 recibir eventos y manejar su foco. `Dialog` puede reutilizar `Window`; no crear
 una jerarquía compleja de clases ni duplicar la detección de input en cada control.
-El editor multilínea y la conversación se agregan después utilizando esa base.
+El editor y el prompt multilínea reutilizan esa base; la respuesta aparece en el editor.
 
 La demo conserva texto, selección y foco al volver a una ventana existente.
 Los menús admiten hover y arrastrar/soltar, con accesos Alt únicos; el input
@@ -218,14 +220,25 @@ Con esa evidencia se determina la viabilidad antes de integrar el agente.
 Una pantalla alternativa organizada como escritorio TUI:
 
 1. Menú superior: Archivo, Proyectos, Modelos, Ventanas y Ayuda, con desplegables.
-2. Área de ventanas. La ventana principal del agente contiene conversación,
-   editor multilínea y adjuntos; los selectores se abren en ventanas/diálogos.
-3. Contexto visible: proyecto, proveedor/modelo y sesión en la ventana principal.
-4. Barra inferior: INSERT/NORMAL, foco, actividad, uso disponible y atajos.
+2. Editor central con el **nombre del proyecto centrado en su marco superior**,
+   como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
+   allí y pueden editarse; no abrir una ventana de chat independiente.
+3. Panel **Prompt** fijo debajo del editor, siempre visible. Ambos paneles no
+   tienen cierre ni arrastre; auxiliares y modales quedan dentro del área del editor.
+   Enter/Enviar envía explícitamente; Ctrl+J inserta una línea y pegar no envía.
+4. Contexto visible: proyecto, proveedor/modelo y sesión en la ventana principal.
+5. Barra inferior: INSERT/NORMAL, foco, actividad, uso disponible y atajos.
+
+La demo actual toma nombre/path de la carpeta de ejecución y usa una respuesta
+identificada como demostración, sin LLM. Registrar/configurar varios proyectos
+y conectar proveedores sigue en fases 02/03. Demo → Componentes conserva el
+laboratorio. Los inputs no agregan corchetes; botones con etiqueta centrada y
+estado por color/video inverso/tenue, sin combinar marcadores de foco/presión.
+Los marcos conservan esquinas unidas a la cabecera y sombras de una celda solo
+en ventanas flotantes.
 
 Ventanas y menús usan un orden de superposición común. Cerrar una ventana auxiliar
-no elimina una sesión ni borra datos; cerrar la conversación no cancela un turno
-implícitamente. Las acciones de cancelar o salir deben ser explícitas.
+no elimina una sesión ni borra datos. Las acciones de cancelar o salir deben ser explícitas.
 
 El estado de cada herramienta muestra su nombre, argumentos relevantes,
 resultado, código de salida y duración. No llamar «completada» a una herramienta
@@ -258,8 +271,8 @@ una caída del sistema no permiten garantizar restauración.
 
 ### Mouse y ventanas
 
-El protocolo inicial es mouse SGR por celdas (`1006`) con tracking de botones y
-movimiento durante arrastre (`1002`). El terminal entrega secuencias por stdin;
+El protocolo actual es mouse SGR por celdas (`1006`) con tracking de movimiento
+por celda (`1003`) para hover y arrastre. El terminal entrega secuencias por stdin;
 Bun las decodifica junto con el teclado. Las coordenadas del protocolo parten
 de 1 y se normalizan a la grilla interna. No usar coordenadas en píxeles ni un
 puente de UI nativa. [Protocolo de xterm](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Mouse-Tracking).

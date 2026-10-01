@@ -31,8 +31,9 @@ describe("interacciones de escritorio", () => {
   test("botón activa una vez al soltar dentro, cancela fuera y omite deshabilitados", () => {
     const { desktop, window, calls } = fixture();
     mouse(desktop, 6, 5); expect(calls).toEqual([]);
-    expect(desktop.draw().lines().join("\n")).toContain("[+Click+]");
-    expect(desktop.draw().lines().join("\n")).toContain("[-No-]");
+    expect(desktop.draw().cells[5]![6]!.style).toBe(theme.selected);
+    expect(desktop.draw().cells[9]![6]!.style).toBe(theme.disabled);
+    expect(desktop.draw().lines().join("\n")).toContain("< Click >");
     mouse(desktop, 6, 5, "release"); mouse(desktop, 6, 5, "release"); expect(calls).toEqual(["click"]);
     mouse(desktop, 6, 5); mouse(desktop, 70, 20, "release"); expect(calls).toEqual(["click"]);
     click(desktop, 6, 9); expect(calls).toEqual(["click"]);
@@ -142,7 +143,9 @@ describe("render y composición", () => {
       expect(window.closeRect.x + 3).toBeLessThanOrEqual(width);
       expect(window.bounds.y + window.bounds.height).toBeLessThan(height);
       key(desktop, "tab"); key(desktop, "tab");
-      expect(desktop.draw().lines().join("\n")).toContain("[>Aceptar<]");
+      const button = window.controlRect(window.controls[2]!);
+      expect(window.focusedId).toBe("accept");
+      expect(desktop.draw().cells[button.y]![button.x]!.style).toBe(theme.focused);
       window.focusedId = "name";
     }
     desktop.resize(20, 6); expect(desktop.draw().lines().join("\n")).toContain("Ctrl+Q");
