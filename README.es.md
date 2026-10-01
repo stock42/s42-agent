@@ -22,6 +22,7 @@ trabaja. Cada proyecto conserva su conversación, archivos, modelo y herramienta
 - **TUI estilo QBasic:** mouse, ventanas auxiliares movibles y atajos inspirados en Vim.
 - **Varios proyectos a la vez:** sesiones y borradores independientes, actividad visible en cada pestaña.
 - **Explorador de archivos:** cualquier carpeta, búsqueda por nombre/glob, adjuntos y colores para HTML/CSS/JS/TS con números de línea. El chat también tiene un margen numerado.
+- **Preview web:** Tools → WebServer sirve el proyecto con Bun, puerto configurable y apertura del navegador.
 - **Modelos locales y remotos:** llama.cpp por defecto, DeepSeek precargado y endpoints compatibles.
 - **12 herramientas nativas:** leer, escribir, editar, buscar, HTTP, comandos, Markdown, WebSocket y scraping.
 - **MCP y skills:** servidores stdio/HTTP, enabled/disabled, guías internas, skills externas y búsqueda en skills.sh.
@@ -82,6 +83,20 @@ También acepta `--model`, `--llm_apikey` y `--session`. La respuesta llega por
 stdout; tools, errores, ID de sesión y uso por stderr. `--reasoning` controla
 la visibilidad del razonamiento emitido por el proveedor. Todos los argumentos:
 `bun run index.ts --help`.
+
+### Probar un proyecto web
+
+En **Tools → WebServer**, elegí el puerto (inicial `3000`) y **Iniciar**, o
+presioná Enter en el campo. Sirve la carpeta del proyecto activo en
+`http://127.0.0.1:PUERTO/` y abre el navegador predeterminado. Si estás viendo un
+archivo dentro del proyecto, lo abre directamente; si no, abre `index.html` o
+un listado de archivos. HTML, CSS, JavaScript, imágenes y otros archivos
+estáticos conservan su tipo MIME. Refrescá el navegador para ver cambios.
+
+El mismo menú permite **Detener** y **Abrir navegador**. Podés tener un servidor
+por proyecto en distintos puertos. Cerrar el diálogo lo deja funcionando; cerrar
+la pestaña del proyecto o salir del agente lo detiene. Es una preview estática,
+sin bundler ni backend de aplicación.
 
 ## Herramientas
 

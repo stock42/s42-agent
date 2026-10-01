@@ -166,14 +166,14 @@ test("App integra skills internas, Markdown y WebSocket en chat persistente; cat
       expect(reopened.view.response.value).toContain("WS_VERIFIED"); expect(requests).toBe(4);
       reopened.desktop.resize(60, 16); reopened.view.prompt.setValue("BORRADOR");
       const toolsMenu = reopened.desktop.menu.menus.find(menu => menu.label === "Tools")!;
-      toolsMenu.items[0]!.run();
+      toolsMenu.items.find(item => item.label === "Nativas · catálogo")!.run();
       for (let i = 0; i < 10; i++) reopened.desktop.handle({ type: "key", key: "down" });
       expect(reopened.desktop.draw().lines().join("\n")).toContain("websocket");
       reopened.desktop.handle({ type: "key", key: "enter" });
       expect(reopened.desktop.draw().lines().join("\n")).toContain("Probar cualquier servidor");
       reopened.desktop.handle({ type: "key", key: "escape" });
       reopened.desktop.language = "en";
-      toolsMenu.items[0]!.run();
+      toolsMenu.items.find(item => item.label === "Nativas · catálogo")!.run();
       for (let i = 0; i < 10; i++) reopened.desktop.handle({ type: "key", key: "down" });
       reopened.desktop.handle({ type: "key", key: "enter" });
       expect(reopened.desktop.draw().lines().join("\n")).toContain("Test any ws/wss server");

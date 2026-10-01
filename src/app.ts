@@ -26,6 +26,8 @@ import type { Language } from "./ui/i18n.ts";
 import type { TextFragment } from "./ui/components/text-area.ts";
 import { openFileTab, type FileTab } from "./file-tab.ts";
 import type { TabItem } from "./ui/components/tab-bar.ts";
+import { ProjectWebServers } from "./system/webserver.ts";
+import { showWebServer } from "./ui/webserver.ts";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
 export class App {
@@ -49,6 +51,7 @@ export class App {
   readonly extensions:Extensions;
   readonly promptings: Promptings;
   readonly metrics: SystemMonitor;
+  readonly webservers = new ProjectWebServers();
   get mode() { return this.activeTab.mode; }
   set mode(value: "INSERT" | "NORMAL") { this.activeTab.mode = value; }
   private get pending() { return this.activeTab.pending; }
@@ -153,6 +156,7 @@ export class App {
         { label: "Guardar prompt actual", run: () => this.promptings.editor(undefined, this.view.prompt.value) },
       ] },
       { label: "Tools", hotkey: "o", items: [
+        { label: "WebServer", run: () => this.webServer() },
         { label: "Nativas · catálogo", run: () => choose(this.desktop, this.desktop.t("Tools nativas"), nativeTools.map(tool => ({ label: tool.definition.function.name, value: tool })), tool => info(this.desktop, this.desktop.t(`Tool · ${tool.definition.function.name}`), [this.desktop.t(tool.definition.function.description), "", JSON.stringify(tool.definition.function.parameters, null, 2)])) },
         { label: "MCP · servidores", run: () => this.extensions.servers() },
         { label: "MCP · agregar stdio", run: () => this.extensions.serverForm("stdio") },
@@ -235,6 +239,7 @@ export class App {
       for (const tab of this.tabs) tab.controller?.abort(new Error("Turno cancelado; cerrando s42-agent"));
       await Promise.all(this.tabs.map(tab => tab.turn));
       clearInterval(this.activityTimer); this.activityTimer = undefined;
+      await this.webservers.close();
       for (const tab of this.tabs) { await this.saveDraft(tab); await tab.session?.close(); }
     };
     this.desktop.resize(this.desktop.width, this.desktop.height);
@@ -330,7 +335,9 @@ export class App {
     if (execute) await this.submit(true);
   }
   async switchProject(project: Project, id?: string): Promise<void> {
-    await normalizeFolder(project.path, this.cwd);
+    const folder = await normalizeFolder(project.path, this.cwd);
+    const server = this.webservers.get(project.id);
+    if (server && server.root !== folder) await this.webservers.stop(project.id);
     const existing = this.tabs.find(tab => tab.project?.id === project.id);
     if (existing && (id === undefined || existing.session?.state.id === id)) {
       existing.project = project; await this.activateTab(existing.id); return;
@@ -437,12 +444,17 @@ export class App {
     const index = this.tabs.findIndex(tab => tab.id === id), tab = this.tabs[index]; if (!tab) return;
     if (tab.busy) throw new Error(`${tab.project?.name ?? "Proyecto"}: cancelá el turno antes de cerrar la pestaña`);
     await this.saveDraft(tab); await tab.session?.close(); this.tabs.splice(index, 1);
+    if (tab.project) await this.webservers.stop(tab.project.id);
     for (let i = this.fileTabs.length - 1; i >= 0; i--) if (this.fileTabs[i]!.ownerId === tab.id) this.fileTabs.splice(i, 1);
     if (!this.tabs.length) { const empty = createProjectTab(); this.bindTab(empty); this.tabs.push(empty); }
     if (this.activeTab === tab) this.displayTab(this.tabs[Math.min(index, this.tabs.length - 1)]!);
     await this.saveWorkspace(); this.desktop.invalidate();
   }
   async newSession(): Promise<void> { this.requireIdle(); if (!this.project) { this.projectForm(); return; } await this.switchProject(this.project, crypto.randomUUID()); }
+  webServer(): void {
+    if (!this.project) { this.projectForm(); return; }
+    showWebServer(this.desktop, this.project, this.webservers, work => this.change(work), this.activeFile?.path);
+  }
   projects(): void {
     if (!this.store.value.projects.length) { this.projectForm(); return; }
     choose(this.desktop, this.desktop.t("Projects · abrir"), this.store.value.projects.map(value => ({ label: `${this.tabs.some(t => t.project?.id === value.id) ? this.desktop.t("[abierto] ") : ""}${value.name} · ${value.path}`, value })), p => this.run(() => this.switchProject(p)));

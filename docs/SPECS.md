@@ -73,6 +73,7 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R31 | CLI sin TUI | Ejecutar pedidos con --prompting, endpoint/puerto/API key y reasoning on/off; mismo agente/tools, stdout/stderr, sesiones y cancelación. |
 | R32 | Config global y APIs Bun | Modelo recordado, claves en llavero, comandos Bun Shell y scraping con Bun.WebView. |
 | R33 | Coding fiable y SQLite | Detectar tools/contexto de llama.cpp, tabs P:/F: con actividad simultánea, tok/s en streaming, migración/config/historial SQLite nativos. |
+| R34 | WebServer del proyecto | Tools → WebServer, puerto configurable, document root del proyecto activo y navegador para HTML/CSS/JS/archivos estáticos. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
@@ -272,7 +273,7 @@ Una pantalla alternativa organizada como escritorio TUI:
 1. Menú superior: **Archivo**, **Projects**, **Models**, **Promptings**, **Tools**,
    **Vista** y **Ayuda**, con desplegables. Archivo agrupa explorador/adjuntos/salir;
    Projects, registro/sesiones/pestañas; Models, proveedores/modelos; Promptings,
-   biblioteca/nuevo/guardar borrador; Tools, MCP/Skills; Vista, paneles/paleta/recursos/idioma/razonamiento/Vim.
+   biblioteca/nuevo/guardar borrador; Tools, WebServer/catálogo/MCP/Skills; Vista, paneles/paleta/recursos/idioma/razonamiento/Vim.
    Ayuda muestra atajos y About. Sin acciones de prueba en el harness normal.
 2. Editor central con el **nombre del proyecto centrado en su marco superior**,
    como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
@@ -1138,7 +1139,7 @@ comprueban disponibilidad, no una TUI implementada ni soporte multiplataforma.
 | SQL remoto, Redis y S3 | Sin uso: el agente usa almacenamiento local. |
 | FFI, C compiler y Node-API | Sin uso inicial: evitar código nativo y toolchains extra. |
 | Secrets | Propuesta pendiente; la API está marcada experimental. |
-| HTTP server | Fixtures de pruebas; sin backend obligatorio del producto. |
+| HTTP server | Preview estática del proyecto con Bun.serve y fixtures de pruebas. |
 | WebSockets, TCP, UDP, DNS y cookies | Sin necesidad adicional al cliente HTTP inicial. |
 | Cron, WebView, CSRF y HTMLRewriter | Fuera del alcance del harness solicitado. |
 | Image y Archive | No requeridos para adjuntar bytes; no agregar transformación/extracción. |
@@ -1455,3 +1456,36 @@ al terminar. QA aislada: no migrar config personal para probar.
 [QA](qa/reliable-coding-and-sqlite.md). Fuentes:
 [Bun SQLite](https://bun.com/docs/runtime/sqlite),
 [llama.cpp server](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md).
+
+
+## 25. WebServer del proyecto
+
+R34. **Tools → WebServer** abre una ventana QBasic con nombre/carpeta del proyecto,
+puerto editable (inicial 3000), estado/URL y acciones Iniciar/Aplicar, Detener,
+Abrir navegador y Cerrar. Enter en el puerto inicia/aplica. ES/EN, mouse/teclado y
+layout desde 60×16 conservan visible el prompt y su borrador. Sin proyecto activo
+abre el formulario Name/Folder. No depende de configurar un modelo.
+
+`src/system/webserver.ts` usa **Bun.serve** en `127.0.0.1`, puerto entero
+1–65535 y document root real de la carpeta del proyecto capturado al abrir el
+diálogo. GET/HEAD sirven **Bun.file** sin convertir archivos binarios: MIME nativo,
+rangos HTTP y sin caché para refrescar cambios. Directorios redirigen a barra
+final, sirven index.html o un listado de enlaces codificados/escapados. Las rutas
+y enlaces simbólicos no permiten servir fuera del document root.
+
+El navegador predeterminado se abre con **Bun Shell**: xdg-open en Linux, open
+en macOS y cmd.exe start en Windows. Archivo activo dentro del proyecto abre su
+URL; archivo externo o chat abre la raíz. Un puerto ocupado informa error y
+conserva el servidor anterior al cambiar puerto. Error de apertura del navegador
+conserva servidor/URL para volver a intentar.
+
+Un servidor por proyecto, puertos independientes. Cerrar el diálogo o cambiar de
+pestaña lo conserva; cerrar el proyecto/cambiar su carpeta/salir detiene y libera
+recursos. Cerrar una vista de archivo no lo detiene. Puertos/servidores son estado
+de ejecución: no guardar ni iniciar automáticamente. Es una utilidad de menú,
+sin añadir tool LLM, bundler, hot reload ni backend de aplicación.
+
+[Fase19](phases/19-project-webserver.md), [QA](qa/webserver.md). Fuentes:
+[Bun.serve](https://bun.com/docs/runtime/http/server),
+[Bun.file y rutas](https://bun.com/docs/runtime/http/routing),
+[Bun Shell](https://bun.com/docs/runtime/shell).

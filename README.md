@@ -22,6 +22,7 @@ together.
 
 - **QBasic-style TUI:** mouse, draggable auxiliary windows, menus and Vim-inspired shortcuts.
 - **Multiple projects:** independent sessions, drafts and models; background activity in each tab.
+- **Web preview:** Tools → WebServer serves the current project with Bun on a chosen port and opens your browser.
 - **Files at hand:** browse any folder, search filenames/globs, attach files and read HTML/CSS/JS/TS with syntax colors and line numbers. Chats also have a numbered margin.
 - **Local first:** llama.cpp is the default; DeepSeek and other Chat Completions-compatible providers are configurable.
 - **12 native tools:** files, content search, HTTP, commands, Markdown, WebSocket and rendered-page scraping.
@@ -85,6 +86,20 @@ Use `--model id` to select a specific model and `--llm_apikey` for a per-run
 credential override. Answers stream to stdout; tools, errors, session ID and
 usage go to stderr. `--reasoning` controls visibility of provider-emitted
 reasoning, not how the model reasons. Run `bun run index.ts --help` for flags.
+
+### Preview a web project
+
+Open **Tools → WebServer**, choose a port (default `3000`) and select **Start**
+or press Enter in the port field. It serves the active project folder at
+`http://127.0.0.1:PORT/` and opens your default browser. An open file inside the
+project is previewed directly; otherwise it opens `index.html` or a directory
+listing. HTML, CSS, JavaScript, images and other static assets retain their MIME
+types. Refresh the browser to see changes.
+
+Use **Stop** or **Open browser** in the same menu. Each project can run a server
+on a different port. Closing the dialog leaves it running; closing the project
+tab or exiting the agent stops it. This is a static preview, without a bundler
+or application backend.
 
 ## Tools and extensions
 

@@ -445,7 +445,20 @@ const english: Readonly<Record<string, string>> = {
   "Agregar stdio": "Add stdio",
   "Agregar HTTP": "Add HTTP",
   "Skills registradas": "Registered skills",
-  "Registrar SKILL.md": "Register SKILL.md"
+  "Registrar SKILL.md": "Register SKILL.md",
+  "Iniciar": "Start",
+  "Aplicar": "Apply",
+  "Abriendo…": "Opening…",
+  "Detener": "Stop",
+  "Abrir navegador": "Open browser",
+  "WebServer iniciado": "WebServer running",
+  "WebServer detenido": "WebServer stopped",
+  "WebServer no está iniciado": "WebServer is not running",
+  "Puerto inválido: usá un entero entre 1 y 65535": "Invalid port: use an integer between 1 and 65535",
+  "El document root debe ser una carpeta": "The document root must be a directory",
+  "Detené el servidor antes de cambiar su document root": "Stop the server before changing its document root",
+  "No se pudo iniciar WebServer en el puerto {0}: {1}": "Could not start WebServer on port {0}: {1}",
+  "No se pudo abrir el navegador ({0}). {1}": "Could not open the browser ({0}). {1}"
 };
 
 // Native tool descriptions are authored in English for the model; localize only the catalog view.

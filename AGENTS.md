@@ -196,6 +196,16 @@ catálogo al agregar mensajes UI. [Fase13](docs/phases/13-language-and-reasoning
 Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
 Menús de producto: Archivo, Projects, Models, Promptings, Tools, Vista y Ayuda.
+**Tools → WebServer** configura puerto (inicial 3000) y sirve la carpeta del
+proyecto activo con Bun.serve en 127.0.0.1. Bun.file preserva MIME/binarios/rangos;
+index.html o listado de directorios. Abre el navegador mediante Bun Shell;
+archivo activo dentro de raíz abre directo, externo/chat abre raíz. Un servidor
+por proyecto; cambiar de tab/cerrar modal lo conserva, cerrar proyecto/cambiar
+carpeta/salir lo detiene. Puerto ocupado conserva el anterior; error al abrir
+browser conserva URL/servidor. ES/EN y 60×16 sin tapar prompt. Estado transitorio,
+sin inicio automático ni tool LLM nueva; catálogo sigue con 12. Módulos
+src/system/webserver.ts y src/ui/webserver.ts. [Fase19](docs/phases/19-project-webserver.md),
+[QA](docs/qa/webserver.md).
 **Ayuda → About** presenta capacidades, estilo QBasic, modelos locales/remotos,
 MCP/skills, proyectos/promptings y binarios Bun para Windows/Linux/macOS.
 Conserva Powered by César Casas., MIT., S42 Agent. y Version de package.json;
@@ -230,7 +240,9 @@ de la QA actual. CI Linux necesita Secret Service para el test PTY de API key:
 instala dbus/gnome-keyring/libsecret y usa D-Bus/llavero temporal aislado; no
 omitir ese test ni usar secretos personales. [QA de publicación](docs/qa/publication-readiness.md).
 
-Fases 02/03/07/08/09/10/11/12/13/14/15/16/17/18 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09/10/11/12/13/14/15/16/17/18 completadas. Fase 19 implementada
+y validada desde fuente en Linux; apertura Windows/macOS pendiente.
+00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.

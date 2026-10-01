@@ -5,6 +5,23 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — WebServer del proyecto
+
+- Tools → WebServer: puerto configurable (inicial 3000), iniciar/aplicar,
+  detener, URL/estado y apertura del navegador predeterminado mediante Bun Shell.
+- Bun.serve/Bun.file sirven la carpeta del proyecto en 127.0.0.1: HTML/CSS/JS,
+  imágenes/binarios, MIME, HEAD/rangos, index.html o listado navegable. Archivo
+  activo dentro del proyecto abre directamente; refresh ve cambios en disco.
+- Un servidor por proyecto, puertos independientes; cerrar modal/cambiar de tab
+  lo conserva, cerrar proyecto/cambiar carpeta/salir lo detiene. Puerto ocupado
+  conserva el anterior; fallo al abrir navegador mantiene URL/servidor.
+- ES/EN y 60×16 con prompt visible, botones separados y foco conservado tras error.
+  README, manual, SPECS, AGENTS, fase 19 y QA/capturas reales actualizados.
+- Typecheck correcto; suite completa 172 pass/0 fail. HTTP real, entrypoint PTY
+  y Chrome Linux comprobados con HTML/CSS/JS/SVG y clic funcional. Apertura en
+  Windows/macOS pendiente. Sin builds, dependencias nuevas ni publicación.
+  Pull correcto; edición ajena de final-validation.md preservada.
+
 ### Agregado — Números de línea y capturas de la TUI real
 
 - Margen de números de línea lógica en chats y archivos: wrap sin repetir,

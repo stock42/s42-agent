@@ -91,7 +91,7 @@ realizados. Sin `--prompting` se mantiene el arranque habitual de la TUI.
 | Projects | Abrir/agregar/editar/quitar proyectos, sesiones y pestañas. |
 | Models | Proveedores, catálogo, selección/configuración de modelos y defaults. |
 | Promptings | Biblioteca, nueva plantilla y guardar el prompt actual. |
-| Tools | Catálogo nativo, CRUD/activación de MCP, Skills y buscador skills.sh. |
+| Tools | WebServer del proyecto, catálogo nativo, CRUD/activación de MCP, Skills y buscador skills.sh. |
 | Vista | Respuestas/prompt, indicadores CPU/RAM/disco/VRAM, foco, auxiliares, paletas, idioma, razonamiento y modo Vim. |
 | Ayuda | Atajos, mouse, comandos y About con autor, MIT y versión. |
 
@@ -479,3 +479,31 @@ mouse/drop físicos y runtime macOS/Windows/arm64 siguen pendientes.
 
 Para contribuir: [CONTRIBUTING.es.md](../CONTRIBUTING.es.md). Preparación de publicación:
 [PUBLISHING.md](PUBLISHING.md). Licencia: [MIT](../LICENSE).
+
+
+## WebServer para previews del proyecto
+
+1. Activá la pestaña del proyecto, o un archivo suyo que quieras previsualizar.
+2. Abrí **Tools → WebServer** (`Alt+O` abre Tools).
+3. Indicá un puerto entre 1 y 65535 (inicial: 3000) y pulsá Enter o **Iniciar**.
+4. El navegador predeterminado abre `http://127.0.0.1:PUERTO/` o la URL del archivo
+   activo dentro del proyecto. El document root siempre es la carpeta registrada
+   del proyecto.
+
+Bun sirve los archivos HTML/CSS/JS e imágenes directamente con su tipo MIME.
+Una carpeta usa `index.html` cuando existe; de lo contrario muestra un listado
+con enlaces. Se puede navegar a otros archivos dentro de esa raíz. Refrescá para
+ver cambios guardados: las respuestas no se cachean. No transpila ni ejecuta
+backends, ni sustituye el dev server de un framework.
+
+**Aplicar** cambia el puerto y vuelve a abrir la preview. Si el puerto está
+ocupado, muestra el error y mantiene el servidor anterior. **Detener** libera
+el puerto; **Abrir navegador** vuelve a mostrar la preview sin reiniciar. Si
+falla la apertura del navegador, el servidor sigue disponible y la URL queda
+en el diálogo. El puerto se conserva mientras el servidor está activo; no hay
+inicio automático al reabrir el agente.
+
+Cada proyecto puede tener un servidor en un puerto distinto. Cambiar de pestaña
+o cerrar el diálogo no lo detiene; cerrar la pestaña del proyecto, cambiar su
+carpeta o salir del agente sí. Cerrar solamente una pestaña de archivo conserva
+el servidor del proyecto. Sin proyecto activo se abre el formulario Name/Folder.
