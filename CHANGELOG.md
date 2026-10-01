@@ -5,6 +5,12 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Eliminado — CLAUDE.md
+
+- Eliminado CLAUDE.md del checkout por pedido del usuario. Era un archivo sin
+  versionar; se registra aquí su eliminación. Verificada su ausencia.
+- Pull falló por main sin upstream; cambios ajenos preservados.
+
 ### Agregado — Crédito de desarrollo en About
 
 - Ayuda → About muestra `Building with Codex & GPT-6.1 Sol` debajo del autor,
