@@ -223,7 +223,7 @@ Una pantalla alternativa organizada como escritorio TUI:
 1. Menú superior: Archivo, Proyectos, Modelos, Ventanas y Ayuda, con desplegables.
 2. Editor central con el **nombre del proyecto centrado en su marco superior**,
    como QBasic mostraba el nombre del archivo. Las respuestas del agente aparecen
-   allí y pueden editarse; no abrir una ventana de chat independiente.
+   allí en solo lectura, con selección y scroll; no abrir una ventana de chat independiente.
 3. Panel **Prompt** fijo debajo del editor, siempre visible. Ambos paneles no
    tienen cierre ni arrastre; auxiliares y modales quedan dentro del área del editor.
    Enter/Enviar envía explícitamente; Shift+Enter inserta una línea y pegar no envía.

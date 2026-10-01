@@ -67,6 +67,7 @@ desarrollar; eventos inyectados no cierran la prueba manual.
 - Editor central titulado con el nombre del proyecto, como el archivo en QBasic.
   Prompt en un panel fijo siempre visible. No permitir cerrar/mover esos paneles
   ni tapar el prompt con auxiliares; mostrar las respuestas dentro del editor.
+  El panel de respuestas es de solo lectura; permitir selección y scroll.
 - Usar las capturas de QBasic suministradas como guía: azul DOS, marcos finos,
   títulos centrados en pestañas grises, Ayuda a la derecha, menús con selección
   negra y barra inferior turquesa. Conservar atajos sin teclas F.

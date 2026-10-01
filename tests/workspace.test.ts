@@ -74,13 +74,20 @@ test("auxiliares y modales quedan arriba del prompt incluso después de resize",
   expect(draft.value).toBe("Borrador sin enviar");
 });
 
-test("editor conserva edición y borrador tras resize y cambio de foco", () => {
+test("respuesta de solo lectura conserva selección, scroll y borrador tras resize", () => {
   const { desktop, editor, prompt, draft, response } = panels();
   desktop.handle({ type: "paste", text: "pedido" }); desktop.handle(key("enter"));
   desktop.handle({ type: "paste", text: "siguiente pedido" });
   desktop.focus(editor); desktop.handle(key("ctrl+a")); desktop.handle({ type: "paste", text: "const suma = (a: number, b: number) => a + b;" });
   desktop.resize(60, 16); desktop.draw(); desktop.resize(120, 40); desktop.draw(); desktop.focus(prompt);
-  expect(draft.value).toBe("siguiente pedido"); expect(response.value).toContain("const suma =");
+  expect(draft.value).toBe("siguiente pedido"); expect(response.value).toContain("Respuesta de demostración");
+  const original = response.value;
+  desktop.focus(editor);
+  for (const action of ["backspace", "delete", "enter", "shift+enter", "ctrl+j"]) desktop.handle(key(action));
+  expect(response.value).toBe(original);
+  desktop.handle(key("ctrl+home")); desktop.handle(key("shift+right"));
+  expect(desktop.draw().cells.flat().some(cell => cell.style === theme.selected)).toBe(true);
+  desktop.focus(prompt);
   draft.setValue("á文🙂".repeat(30)); desktop.draw(); desktop.resize(60, 16);
   const compact = desktop.draw(); const bounds = prompt.controlRect(draft);
   expect(compact.cells.slice(bounds.y, bounds.y + bounds.height).some(row => row.slice(bounds.x, bounds.x + bounds.width).some(cell => cell.style === theme.focused))).toBe(true);

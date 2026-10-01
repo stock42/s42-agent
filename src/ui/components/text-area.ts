@@ -20,6 +20,7 @@ export class TextArea extends Component {
   private rowWidth = 0;
   private viewHeight = 0;
   onSubmit?: () => void;
+  readOnly = false;
   placeholder = "";
 
   constructor(id: string, bounds: Rect, value = "") { super(id, bounds); this.setValue(value); }
@@ -100,7 +101,7 @@ export class TextArea extends Component {
         canvas.text(bounds.x + x, bounds.y + y, char, style, width); x += width;
       }
     }
-    if (focused && !this.disabled) {
+    if (focused && !this.disabled && !this.readOnly) {
       const rowIndex = this.rowAt(this.cursor, rows); const row = rows[rowIndex]!;
       const x = Bun.stringWidth(this.chars.slice(row.start, this.cursor).join("")); const y = rowIndex - this.top;
       const caret = this.chars[this.cursor] ?? (!this.chars.length ? graphemes(this.placeholder)[0] : undefined) ?? " ";
@@ -127,6 +128,7 @@ export class TextArea extends Component {
       this.reveal = true; this.following = true; this.column = undefined;
       return event.action === "press" || before !== this.cursor;
     }
+    if (this.readOnly && (event.type === "paste" || event.text || ["enter", "shift+enter", "ctrl+j", "backspace", "delete"].includes(event.key))) return false;
     if (event.type === "paste") { this.replace(event.text); return true; }
     if (event.text) { this.replace(event.text); return true; }
     if (event.key === "enter" && this.onSubmit) { this.onSubmit(); return true; }

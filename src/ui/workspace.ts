@@ -15,6 +15,7 @@ export function createWorkspace(project: ProjectContext = { name: basename(proce
   const promptWindow = new Window("prompt", "Prompt", { x: 0, y: 16, width: 80, height: 7 });
   editorWindow.fixed = promptWindow.fixed = true;
   const editor = new TextArea("response", { x: 1, y: 0, width: 76, height: 13 });
+  editor.readOnly = true;
   editor.placeholder = `La respuesta aparecerá en este editor.\n\n${project.path}\n\nEscribí tu prompt en el panel inferior.`;
   const prompt = new TextArea("draft", { x: 1, y: 0, width: 60, height: 4 });
   let submitted = false;

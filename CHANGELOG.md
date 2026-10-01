@@ -128,3 +128,10 @@ cierre de cada tarea e incluirlo en su commit.
 - Typecheck y 40 pruebas correctas; Shift+Enter/Enter comprobados desde fuente
   en tmux 3.4. Evidencia y capturas en `docs/qa/shift-enter.md`.
 - Sin builds de binarios. `git pull` intentado: `main` sin upstream; commit local.
+
+### Corregido — Respuestas de solo lectura
+
+- El panel central bloquea escritura, pegado, saltos y borrado; conserva foco,
+  navegación, selección y scroll. El Prompt sigue siendo editable.
+- Typecheck y pruebas de workspace/componentes; actualizado el contrato visual.
+- `git pull` intentado: `main` sin upstream. Commit local, sin build de binarios.

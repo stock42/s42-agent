@@ -16,8 +16,8 @@ bun run dev
 
 `index.ts` abre un editor central titulado con el nombre de la carpeta actual
 y un panel **Prompt** fijo abajo. Enter o Enviar coloca una respuesta de
-demostración en el editor; todavía no hay un LLM conectado. Podés editar esa
-respuesta, desplazarte por ella y escribir el siguiente prompt.
+demostración en el editor; todavía no hay un LLM conectado. La respuesta es de
+solo lectura; podés seleccionarla, desplazarte por ella y escribir el siguiente prompt.
 
 El editor y el prompt no se cierran ni se arrastran. Las ventanas auxiliares
 quedan dentro del área del editor y conservan visible el prompt. **Demo →
@@ -35,7 +35,7 @@ lista y modales. Sus datos siguen siendo ejemplos.
 | Cerrar auxiliar | Ctrl+W o `[X]`; editor y prompt son fijos |
 | Enviar prompt de demo | Enter o botón Enviar |
 | Nueva línea en el prompt | Shift+Enter; el pegado multilínea no envía |
-| Editor | Flechas / Home / End / Ctrl+Home / Ctrl+End / PageUp / PageDown, clic o rueda; Enter inserta una línea |
+| Respuestas (solo lectura) | Flechas / Home / End / Ctrl+Home / Ctrl+End / PageUp / PageDown, clic o rueda |
 | Lista | Flechas / Home / End / PageUp / PageDown, clic o rueda; ↑/↓ en el marco indican más filas |
 | Seleccionar texto | Ctrl+A, Shift+flechas / Home / End, o arrastre del mouse |
 | Reemplazar selección | Escribir, pegar, Backspace o Delete |
