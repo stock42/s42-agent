@@ -23,12 +23,16 @@ import { nativeTools } from "./agent/tools.ts";
 import { emptyUsage } from "./agent/usage.ts";
 import type { Language } from "./ui/i18n.ts";
 import type { TextFragment } from "./ui/components/text-area.ts";
+import { openFileTab, type FileTab } from "./file-tab.ts";
+import type { TabItem } from "./ui/components/tab-bar.ts";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
 export class App {
   readonly view = createWorkspaceView({ name: "s42-agent", path: "" }, false);
   readonly desktop = this.view.desktop;
   readonly tabs: ProjectTab[] = [createProjectTab(this.view)];
+  readonly fileTabs: FileTab[] = [];
+  private activeFile?: FileTab;
   private activeTab = this.tabs[0]!;
   get project() { return this.activeTab.project; }
   get session() { return this.activeTab.session; }
@@ -68,18 +72,23 @@ export class App {
     });
     const { promptWindow } = this.view;
     this.bindTab(this.activeTab);
-    this.desktop.tabs = new TabBar(() => this.tabs.filter(t => t.project).map(t => ({ id: t.id, label: t.project!.name, busy: t.busy })),
-      () => this.activeTab.id, id => this.run(() => this.activateTab(id)), id => this.run(() => this.closeTab(id)), () => this.projects());
+    this.desktop.tabs = new TabBar(() => this.tabItems(),
+      () => this.activeFile?.id ?? this.activeTab.id, id => this.run(() => this.activateTab(id)), id => this.run(() => this.closeTab(id)), () => this.projects());
     const resize=this.desktop.onResize!;
     this.desktop.onResize=(width,height)=>{resize(width,height);if(this.attachments.length && promptWindow.client.height<4){
       promptWindow.bounds.height++;promptWindow.bounds.y--;this.view.editorWindow.bounds.height--;this.desktop.floatingArea={...this.view.editorWindow.bounds};
     }};
     this.view.editorWindow.onLayout = client => {
-      this.view.editorWindow.titleSuffix = this.activeTab.agentState ? ` · ${["|", "/", "-", "\\"][this.activityFrame]}` : "";
-      this.view.response.bounds.y = 1; this.view.response.bounds.height = Math.max(1, client.height - 1 - Number(Boolean(this.activeTab.agentState)));
+      this.view.editorWindow.titleSuffix = !this.activeFile && this.activeTab.agentState ? ` · ${["|", "/", "-", "\\"][this.activityFrame]}` : "";
+      this.view.response.bounds.y = 1; this.view.response.bounds.height = Math.max(1, client.height - 1 - Number(!this.activeFile && Boolean(this.activeTab.agentState)));
       this.view.response.bounds.width = Math.max(1, client.width - 2);
     };
     this.view.editorWindow.onDraw = (canvas, client) => {
+      if (this.activeFile) {
+        const file = this.activeFile;
+        canvas.text(client.x + 1, client.y, [this.project?.name, file.language?.toUpperCase() ?? "TXT", this.desktop.t(`${file.size} bytes · solo lectura`), file.path].filter(Boolean).join(" · "), theme.window, client.width - 2);
+        return;
+      }
       let context = this.desktop.t("No hay modelo configurado. Models → Proveedores");
       try { const { provider, model } = this.current(); context = `${provider.name} · ${model.id} · ${this.session?.state.id.slice(0, 8) ?? ""}`; } catch {}
       canvas.text(client.x + 1, client.y, context, theme.window, client.width - 2);
@@ -151,7 +160,7 @@ export class App {
         { label: "Skills · buscar en skills.sh", run: () => this.extensions.search() },
       ] },
       { label: "Vista", items: [
-        { label: "Respuestas", run: () => this.desktop.focus(this.view.editorWindow) },
+        { label: "Respuestas", run: () => { this.displayTab(this.activeTab); this.desktop.focus(this.view.editorWindow); } },
         { label: "Prompt", run: () => this.desktop.focus(promptWindow) },
         { label: "Paleta de colores", run: () => this.colorPalette() },
         ...(["cpu", "ram", "disk", "gpu"] as const).map(key => ({
@@ -183,7 +192,7 @@ export class App {
       ...Object.entries(bindings(this.store.value.ui.bindings).normal).map(([action,key])=>`${key}: ${this.desktop.t(actionLabels[action as Action])}`), "Ctrl+N: cambiar panel",
       "Comandos: /help /projects /models /providers", "/sessions /files /new /attach ruta /detach /quit", "/mcp /skills /skill nombre prompt · Alt+C MCP · Alt+S Skills",
       "/promptings: biblioteca · menú Promptings: guardar borrador",
-      "Alt+←/→: pestaña · Alt+1…9: proyecto · Ctrl+W: cerrar",
+      "Alt+←/→: pestaña · Alt+1…9: pestaña · Ctrl+W: cerrar",
       "~ en pestaña: turno activo · Ctrl+C cancela la actual",
     ].map(this.desktop.t));
     this.desktop.onShortcut = event => {
@@ -195,9 +204,9 @@ export class App {
       if (this.desktop.modal || this.desktop.menu.opened >= 0) return false;
       if (event.key === "alt+left" || event.key === "alt+right") { this.cycleTab(event.key === "alt+right" ? 1 : -1); return true; }
       if (/^alt\+[1-9]$/.test(event.key)) {
-        const tab = this.tabs.filter(t => t.project)[Number(event.key.slice(4)) - 1]; if (tab) this.run(() => this.activateTab(tab.id)); return true;
+        const tab = this.tabItems()[Number(event.key.slice(4)) - 1]; if (tab) this.run(() => this.activateTab(tab.id)); return true;
       }
-      if (event.key === "ctrl+w" && this.desktop.active?.fixed) { this.run(() => this.closeTab(this.activeTab.id)); return true; }
+      if (event.key === "ctrl+w" && this.desktop.active?.fixed) { this.run(() => this.closeTab(this.activeFile?.id ?? this.activeTab.id)); return true; }
       if (event.key === "escape" && this.store.value.ui.vimMode && this.mode === "INSERT" && this.desktop.active === promptWindow && promptWindow.focusedId === prompt.id) { this.mode = "NORMAL"; this.pending = ""; return true; }
       if (event.key === "tab" && this.mode === "NORMAL" && this.desktop.active?.fixed) {
         this.desktop.focus(this.desktop.active === promptWindow ? this.view.editorWindow : promptWindow); promptWindow.focusedId = prompt.id; this.pending = ""; return true;
@@ -303,6 +312,7 @@ export class App {
     for (const tab of this.tabs) {
       tab.rendered = new WeakMap(); this.showHistory(false, tab); this.showContext(tab);
     }
+    for (const file of this.fileTabs) if (file.binary) file.content.placeholder = this.desktop.t("Archivo binario; la vista de archivos admite texto UTF-8.");
     this.desktop.resize(this.desktop.width, this.desktop.height); this.desktop.invalidate();
   }
   private requireIdle(tab = this.activeTab): void { if (tab.busy) throw new Error("Hay un turno activo: cancelalo antes de cambiar de contexto"); }
@@ -343,7 +353,32 @@ export class App {
   private bindTab(tab: ProjectTab): void {
     tab.prompt.onSubmit = () => this.run(() => this.submit());
   }
+  private tabItems(): TabItem[] {
+    return this.tabs.flatMap(tab => [
+      ...(tab.project ? [{ id: tab.id, label: tab.project.name, busy: tab.busy }] : []),
+      ...this.fileTabs.filter(file => file.ownerId === tab.id).map(file => ({ id: file.id, label: file.name, busy: false })),
+    ]);
+  }
+  async openFile(path: string, ownerId = this.activeTab.id): Promise<void> {
+    const owner = this.tabs.find(tab => tab.id === ownerId); if (!owner) return;
+    const absolute = resolve(owner.project?.path ?? this.cwd, path);
+    let file = this.fileTabs.find(file => file.ownerId === ownerId && file.path === absolute);
+    if (!file) {
+      try { file = await openFileTab(absolute, ownerId); }
+      catch (error) { owner.status = (error as Error).message; this.desktop.invalidate(); throw error; }
+      if (!this.tabs.includes(owner)) return;
+      if (file.binary) file.content.placeholder = this.desktop.t("Archivo binario; la vista de archivos admite texto UTF-8.");
+      this.fileTabs.push(file);
+    }
+    await this.activateTab(file.id);
+  }
+  private rememberPanel(tab: ProjectTab): void {
+    if (this.activeFile) return;
+    tab.panel = this.desktop.active === this.view.editorWindow ? "editor" : "prompt";
+    tab.focusedId = tab.panel === "editor" ? this.view.editorWindow.focusedId : this.view.promptWindow.focusedId;
+  }
   private displayTab(tab: ProjectTab): void {
+    this.activeFile = undefined;
     this.activeTab = tab;
     this.view.response = tab.response; this.view.prompt = tab.prompt;
     this.view.editorWindow.controls.splice(0, this.view.editorWindow.controls.length, tab.response);
@@ -367,23 +402,40 @@ export class App {
     await this.store.save(next);
   }
   async activateTab(id: string): Promise<void> {
+    const file = this.fileTabs.find(file => file.id === id);
+    if (file) {
+      const owner = this.tabs.find(tab => tab.id === file.ownerId); if (!owner) return;
+      if (owner !== this.activeTab) await this.activateTab(owner.id);
+      this.rememberPanel(owner);
+      this.activeFile = file; this.view.response = file.content;
+      this.view.editorWindow.controls.splice(0, this.view.editorWindow.controls.length, file.content);
+      this.view.editorWindow.title = file.name; this.view.editorWindow.focusedId = file.content.id;
+      this.desktop.resize(this.desktop.width, this.desktop.height); this.desktop.focus(this.view.editorWindow); this.desktop.invalidate();
+      return;
+    }
     const tab = this.tabs.find(tab => tab.id === id); if (!tab) return;
     const previous = this.activeTab;
     if (tab !== previous) {
-      previous.panel = this.desktop.active === this.view.editorWindow ? "editor" : "prompt";
-      previous.focusedId = previous.panel === "editor" ? this.view.editorWindow.focusedId : this.view.promptWindow.focusedId;
+      this.rememberPanel(previous);
       await this.saveDraft(previous);
     }
     this.displayTab(tab); await this.saveWorkspace();
   }
   cycleTab(direction: number): void {
-    const tabs = this.tabs.filter(tab => tab.project), index = tabs.indexOf(this.activeTab);
+    const tabs = this.tabItems(), index = tabs.findIndex(tab => tab.id === (this.activeFile?.id ?? this.activeTab.id));
     if (tabs.length) { const tab = tabs[(index + direction + tabs.length) % tabs.length]!; this.run(() => this.activateTab(tab.id)); }
   }
-  async closeTab(id = this.activeTab.id): Promise<void> {
+  async closeTab(id = this.activeFile?.id ?? this.activeTab.id): Promise<void> {
+    const fileIndex = this.fileTabs.findIndex(file => file.id === id);
+    if (fileIndex >= 0) {
+      const [file] = this.fileTabs.splice(fileIndex, 1);
+      if (this.activeFile === file) this.displayTab(this.activeTab);
+      this.desktop.invalidate(); return;
+    }
     const index = this.tabs.findIndex(tab => tab.id === id), tab = this.tabs[index]; if (!tab) return;
     if (tab.busy) throw new Error(`${tab.project?.name ?? "Proyecto"}: cancelá el turno antes de cerrar la pestaña`);
     await this.saveDraft(tab); await tab.session?.close(); this.tabs.splice(index, 1);
+    for (let i = this.fileTabs.length - 1; i >= 0; i--) if (this.fileTabs[i]!.ownerId === tab.id) this.fileTabs.splice(i, 1);
     if (!this.tabs.length) { const empty = createProjectTab(); this.bindTab(empty); this.tabs.push(empty); }
     if (this.activeTab === tab) this.displayTab(this.tabs[Math.min(index, this.tabs.length - 1)]!);
     await this.saveWorkspace(); this.desktop.invalidate();
@@ -575,7 +627,10 @@ export class App {
   }
   explore(): void {
     if(this.desktop.modal)return;
-    const explorer=new FileExplorer(this.desktop,this.project?.path ?? this.cwd,{attach:path=>this.change(()=>this.attach([path]))});this.run(()=>explorer.show());
+    const owner = this.activeTab;
+    const explorer=new FileExplorer(this.desktop,this.activeFile ? dirname(this.activeFile.path) : this.project?.path ?? this.cwd,{
+      attach:path=>this.change(()=>this.attach([path])), openFile:path=>this.change(()=>this.openFile(path, owner.id)),
+    });this.run(()=>explorer.show());
   }
   private bindingLabel(action:Action):string{return bindings(this.store.value.ui.bindings).global[action]!.replace(/^(ctrl|alt)\+([a-z])$/,(_match,mod,key)=>(mod==="ctrl"?"Ctrl":"Alt")+"+"+key.toUpperCase());}
   private input(event: InputEvent): boolean {
@@ -640,7 +695,7 @@ export class App {
     this.activityFrame = 0;
     this.activityTimer = setInterval(() => {
       this.activityFrame = (this.activityFrame + 1) % 4;
-      if (this.activeTab.agentState) this.desktop.invalidate();
+      if (!this.activeFile && this.activeTab.agentState) this.desktop.invalidate();
     }, 200);
     this.activityTimer.unref();
   }
@@ -674,6 +729,7 @@ export class App {
     validateAttachments(tab.attachments,model.capabilities.images);
     if(changed) {this.desktop.invalidate();throw new Error("Un adjunto cambió: vista actualizada. Revisá Ctrl+F y pulsá Enter de nuevo.");}
     const content=contentWithAttachments(text,tab.attachments);
+    if (this.activeFile) { this.displayTab(tab); this.desktop.focus(this.view.promptWindow); }
     const key = credential(provider, this.keys.get(provider.id));
     const controller = new AbortController(), context = structuredClone({ limits: this.store.value.limits, mcpServers: this.store.value.mcpServers, skills: this.store.value.skills });
     tab.busy = true; tab.controller = controller; tab.tokens = emptyUsage();

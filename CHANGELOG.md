@@ -5,6 +5,24 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Archivos en pestañas y resaltado de sintaxis
+
+- Abrir desde el explorador usa una pestaña junto al proyecto, con nombre del
+  archivo como título, ruta/lenguaje/tamaño y todo el panel central. Texto UTF-8
+  completo de solo lectura; Prompt, chat, cwd/modelo y adjuntos conservados.
+- HTML/CSS/JavaScript/TypeScript con colores por token, incluyendo style/script
+  en HTML. Resaltado léxico propio sin dependencias, ejecución ni cambios en disco;
+  paletas/selección/monocromo respetados. Otros textos y binarios tienen fallback.
+- Reabrir conserva la vista/scroll; teclado/mouse recorren proyectos y archivos.
+  Ctrl+W/× cierra archivos sin cerrar el proyecto; enviar vuelve al chat, streams
+  en background no reemplazan el archivo. Vistas de archivo transitorias.
+- Typecheck y suite completa 136 tests / 29 archivos correctos; pruebas finales
+  de archivos/sintaxis también correctas. index.ts real en PTY, archivo >64 KiB,
+  Unicode, ES/EN, selección, resize, cierre, errores y contexto LLM aislado.
+  [QA y capturas](docs/qa/file-tabs.md), README/specs/AGENTS/fase15 actualizados.
+  Sin builds ni push; pull falló por main sin upstream. Cambios ajenos preservados.
+
+
 ### Mejorado — Autores del chat con colores distintos
 
 - Vos en amarillo y Agente en cian en QBasic; tonos distintos en las otras cinco

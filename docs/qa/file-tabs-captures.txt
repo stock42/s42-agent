@@ -1,0 +1,106 @@
+100x32 - QBasic HTML con CSS/JS
+  Archivo   Projects   Models   Promptings   Tools   Vista                                   Ayuda
+ <  1:Mi proyecto    ×   2:index.html    ×                                                    >  +
+┌─────────────────────────────────────────── index.html ───────────────────────────────────────────┐
+│ Mi proyecto · HTML · 525 bytes · solo lectura · /tmp/s42-file-view-qa-zI9w0M/project/index.html  │
+│ <!DOCTYPE html>                                                                                  │
+│ <html lang="es">                                                                                 │
+│ <head>                                                                                           │
+│   <meta charset="UTF-8">                                                                         │
+│   <title>Un archivo en S42 Agent</title>                                                         │
+│   <style>                                                                                        │
+│     /* Un estilo sencillo */                                                                     │
+│     body { color: #ffcc55; background: #1b1b1b; }                                                │
+│     .card { margin: 24px; padding: 12px; }                                                       │
+│   </style>                                                                                       │
+│ </head>                                                                                          │
+│ <body>                                                                                           │
+│   <h1>Hola, mundo!</h1>                                                                          │
+│   <script>                                                                                       │
+│     // El codigo se muestra, no se ejecuta                                                       │
+│     const mensaje = "Hola desde JavaScript";                                                     │
+│     function saludar(nombre) {                                                                   │
+│       return mensaje + ", " + nombre;                                                            │
+│     }                                                                                            │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────── Prompt ─────────────────────────────────────────────┐
+│                                                                   Tokens E/S N/D/N/D · N/D tok/s │
+│ BORRADOR conservado                                                                              │
+│                                                                                                  │
+│                                                                                                  │
+│ INSERT · No hay modelo configurado. Abrí Models → Proveedores.              · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+ CPU: 12% · RAM: 32.1G/62.3G · Disco: 747.5G/953.9G · VRAM: N/D
+
+
+100x32 - Nord archivo completo
+  Archivo   Projects   Models   Promptings   Tools   Vista                                   Ayuda
+ <  1:Mi proyecto    ×   2:index.html    ×                                                    >  +
+┌─────────────────────────────────────────── index.html ───────────────────────────────────────────┐
+│ Mi proyecto · HTML · 525 bytes · solo lectura · /tmp/s42-file-view-qa-zI9w0M/project/index.html  │
+│ <!DOCTYPE html>                                                                                  │
+│ <html lang="es">                                                                                 │
+│ <head>                                                                                           │
+│   <meta charset="UTF-8">                                                                         │
+│   <title>Un archivo en S42 Agent</title>                                                         │
+│   <style>                                                                                        │
+│     /* Un estilo sencillo */                                                                     │
+│     body { color: #ffcc55; background: #1b1b1b; }                                                │
+│     .card { margin: 24px; padding: 12px; }                                                       │
+│   </style>                                                                                       │
+│ </head>                                                                                          │
+│ <body>                                                                                           │
+│   <h1>Hola, mundo!</h1>                                                                          │
+│   <script>                                                                                       │
+│     // El codigo se muestra, no se ejecuta                                                       │
+│     const mensaje = "Hola desde JavaScript";                                                     │
+│     function saludar(nombre) {                                                                   │
+│       return mensaje + ", " + nombre;                                                            │
+│     }                                                                                            │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────── Prompt ─────────────────────────────────────────────┐
+│                                                                   Tokens E/S N/D/N/D · N/D tok/s │
+│ BORRADOR conservado                                                                              │
+│                                                                                                  │
+│                                                                                                  │
+│ INSERT · Paleta: Nord · Ártico                                              · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+ CPU: 12% · RAM: 32.1G/62.3G · Disco: 747.5G/953.9G · VRAM: N/D
+
+
+60x16 - Archivo y Prompt visibles
+  Archivo Projects Models Promptings Tools Vista     Ayuda
+ <  1:Mi proyecto    ×   2:index.html    ×            >  +
+┌─────────────────────── index.html ───────────────────────┐
+│ Mi proyecto · HTML · 525 bytes · solo lectura · /tmp/s42 │
+│ <!DOCTYPE html>                                          │
+│ <html lang="es">                                         │
+│ <head>                                                   │
+│   <meta charset="UTF-8">                                 │
+└──────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│                           Tokens E/S N/D/N/D · N/D tok/s │
+│ BORRADOR conservado                                      │
+│ INSERT · Paleta: Nord · Ártico      · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ CPU: 12% · RAM: 32.1G/62.3G · Disco: 747.5G/953.9G
+ VRAM: N/D
+
+
+60x16 - Volver al proyecto conserva el borrador
+  Archivo Projects Models Promptings Tools Vista     Ayuda
+ <  1:Mi proyecto    ×                                >  +
+┌────────────────────── Mi proyecto ───────────────────────┐
+│ No hay modelo configurado. Models → Proveedores          │
+│ /tmp/s42-file-view-qa-zI9w0M/project                     │
+│                                                          │
+│ No hay modelo configurado. Abrí Models → Proveedores.    │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│                           Tokens E/S N/D/N/D · N/D tok/s │
+│ BORRADOR conservado                                      │
+│ INSERT · Paleta: Nord · Ártico      · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ CPU: 12% · RAM: 32.1G/62.3G · Disco: 747.5G/953.9G
+ VRAM: N/D

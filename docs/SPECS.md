@@ -69,6 +69,7 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R27 | Identidad y skills internas | Prompt inicial breve; src/agent/skills con estructura de proyectos, debugging y PDF; internal_skill descubre/carga instrucciones bajo demanda. |
 | R28 | Markdown HTML nativo | Bun.markdown.html desde texto/archivo, fragmento/documento y salida HTML opcional; no requiere una dependencia Markdown. |
 | R29 | WebSocket nativo | Cliente ws/wss para pruebas, headers/subprotocolos, mensajes, timeout/cancelación y cierre por call, visible en chat. |
+| R30 | Archivos en pestañas | Abrir archivos como pestañas junto al proyecto, título con el nombre, panel central completo y sintaxis HTML/CSS/JavaScript/TypeScript. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
@@ -233,7 +234,7 @@ funciones del IDE QBasic ni incorporar un segundo tema tipo Pi.
 | `Input` | Campo editable con cursor, foco, teclado y paste. |
 | `TextArea` | Edición multilínea, selección por grafemas, wrap, scroll y envío explícito del prompt. |
 | `SelectList` | Lista con selección por clic/flechas y scroll con rueda/teclado. |
-| `FileExplorer` | Navegación libre de carpetas, ruta editable, preview read-only y selección de archivo/folder. |
+| `FileExplorer` | Navegación libre de carpetas, ruta editable, apertura en pestañas read-only y selección de archivo/folder. |
 
 Un componente conserva estado mínimo y expone un contrato tipado para dibujar,
 recibir eventos y manejar su foco. `Dialog` puede reutilizar `Window`; no crear
@@ -334,12 +335,33 @@ Si el proveedor no expone razonamiento, no inventarlo.
 Archivo → Explorador de archivos, Ctrl+E o `/files`. Parte de la carpeta del
 proyecto, pero permite navegar fuera de ella con padre, raíz o ruta escrita.
 Lista un nivel por vez, incluyendo archivos ocultos y enlaces; Enter/doble clic
-abre carpetas o una vista previa de archivo. Preview UTF-8 en solo lectura hasta
-64 KiB con recorte explícito, o aviso de binario; Escape vuelve al listado.
+abre carpetas o archivos en pestañas junto al proyecto. Cerrar el explorador al
+abrir un archivo; mostrar el texto UTF-8 completo en el panel central de solo
+lectura, desde la primera línea. Título = nombre del archivo; cabecera = proyecto,
+lenguaje, bytes y ruta. Conservar prompt, adjuntos, chat, modelo y cwd del proyecto.
+Aviso para binarios/UTF-8 inválido; no interpretar el HTML ni ejecutar código.
+En picker/demo sin integración de pestañas, conservar la preview auxiliar acotada.
 Flechas/j/k seleccionan, derecha/l/Enter abre, izquierda/h/Backspace sube y la
 rueda desplaza. Adjuntar prepara el archivo elegido sin inferencia ni cambio de
-proyecto. Rutas inválidas/ilegibles se muestran en el explorador y permiten volver
-a navegar. El prompt sigue visible, también en 60×16.
+proyecto. Rutas inválidas/ilegibles aparecen en el explorador o el estado del
+proyecto al abrir. El prompt sigue visible, también en 60×16.
+
+Una pestaña por ruta absoluta y proyecto de origen; reabrir la misma activa su
+vista y mantiene scroll/selección. Clic, Alt+←/→ y Alt+1…9 recorren las pestañas
+visibles de proyectos/archivos; Ctrl+W o × sobre un archivo vuelve al chat, incluso
+si su proyecto está trabajando. Cerrar el proyecto cierra sus vistas de archivo.
+Vista → Respuestas regresa al chat. Enviar un prompt vuelve al chat del proyecto;
+streams en segundo plano no reemplazan una vista de archivo activa. Los archivos
+no crean proyectos/sesiones ni se adjuntan automáticamente; sus vistas duran la
+ejecución actual, sin agregar persistencia a config.workspace.
+
+Resaltado léxico propio, sin dependencias ni parseo/ejecución: keywords, strings,
+números, comentarios, tags/atributos HTML y propiedades CSS. Detectar extensión
+HTML/HTM, CSS, JS/MJS/CJS/JSX y TS/MTS/CTS/TSX; HTML incluye CSS en style y JS en
+script. No es un parser completo: templates se colorean como strings, regex/JSX
+no tienen una gramática propia. Conservar todo el texto, incluido código incompleto.
+Calcular fragmentos una vez al abrir; paleta/selección/monocromo se resuelven en
+los componentes existentes. Sin resaltado especial para otras extensiones.
 
 Projects reutiliza el explorador como picker: Elegir folder devuelve la carpeta
 visitada al formulario sin perder Name ni el borrador de la conversación.
@@ -350,7 +372,7 @@ mantiene el prompt visible. Ruta superior = carpeta base de búsqueda; puede ser
 la raíz del disco. Campo nombre/glob + Buscar/Enter busca recursivamente archivos
 con `Bun.Glob.match`/recorrido incremental, sin proceso find/rg externo ni índice.
 Incluye ocultos/dependencias; no sigue enlaces, omite subcarpetas inaccesibles y
-reporta el conteo. Máximo 1.000 resultados con ubicación, preview y adjuntos.
+reporta el conteo. Máximo 1.000 resultados con ubicación, apertura y adjuntos.
 Resultados finales ordenados por ruta/nombre. Cancelar/navegar/cerrar/salir
 interrumpen el recorrido; respuestas obsoletas no reabren ventanas.
 En 60×16 la lista usa filas sin marco para conservar resultados clicables.

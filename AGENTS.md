@@ -74,8 +74,17 @@ prompt/skills orientativas de memoria episódica, autoaprendizaje o evals A/B.
 El explorador aprovecha el ancho del editor y deja hasta dos filas de margen
 arriba/abajo cuando hay espacio; en terminales pequeñas prioriza los controles.
 Incluye Buscar por nombre/glob desde
-la ruta superior, resultados con ubicación, Cancelar, preview y adjuntos;
+la ruta superior, resultados con ubicación, Cancelar, apertura y adjuntos;
 no sigue enlaces en búsquedas, cuenta carpetas inaccesibles y limita a 1000.
+En el harness, Enter/doble clic abre archivos completos en pestañas junto al
+proyecto, con título del archivo y panel central de solo lectura. Prompt/chat/
+modelo/cwd/adjuntos del proyecto quedan intactos. Ctrl+W/× cierra la vista;
+Vista → Respuestas o enviar vuelve al chat. Streams no reemplazan el archivo.
+Vistas por ruta/proyecto, con scroll/selección propios, transitorias; cerrar el
+proyecto quita sus vistas. `src/file-tab.ts` usa Bun.file; `src/ui/syntax.ts`
+resalta HTML/CSS/JS/TS y CSS/JS embebidos, sin dependencias ni ejecución. Tokens
+semánticos adaptan todas las paletas y preservan selección/monocromo.
+[Fase 15](docs/phases/15-file-tabs-and-syntax.md), [QA](docs/qa/file-tabs.md).
 CPU % y RAM/disco/VRAM usado/total aparecen en la barra inferior, sin modal.
 **Vista → CPU/RAM/Disco/VRAM: on/off** persiste cada indicador en `ui.resources`;
 config anterior muestra todos. Tokens E/S y tok/s siempre visibles arriba a la
@@ -96,7 +105,7 @@ Las continuaciones conservan proyecto, presupuesto, historial y efectos realizad
 descartan calls truncadas, respetan maxSteps y Ctrl+C. No tratar HTTP/timeout/
 cancelación como límite de salida. [QA](docs/qa/staged-recovery.md).
 **Projects** pide solo **Name/Folder**, con selector de carpeta. **Ctrl+E** abre el
-explorador: padre, raíz o ruta libre, preview de solo lectura y adjuntos fuera del
+explorador: padre, raíz o ruta libre, archivos en pestañas de solo lectura y adjuntos fuera del
 proyecto. El chat muestra reasoning emitido por el proveedor, argumentos de tool
 calls en recepción, inicio y resultados; conserva reasoning al cancelar/reabrir.
 **Tools → MCP** (Alt+C, /mcp) administra servidores stdio/HTTP con CRUD, enabled/disabled,
@@ -157,7 +166,7 @@ CI fuente Linux con Bun 1.4.2. `package.json` conserva `private: true` porque no
 se publica un paquete npm. [Publicación](docs/PUBLISHING.md): no cambiar visibilidad,
 hacer push ni crear releases sin pedido explícito.
 
-Fases 02/03/07/08/09/10/11/12/13/14 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09/10/11/12/13/14/15 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.

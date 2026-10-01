@@ -11,7 +11,7 @@ import { Window } from "./window.ts";
 import { findFiles, type FileMatch } from "../../agent/tools/find.ts";
 
 interface Entry { path: string; name: string; directory: boolean; link?: boolean }
-interface Options { parent?: Window; initialPath?: string; pickFolder?: (path: string) => void; attach?: (path: string) => Promise<void> }
+interface Options { parent?: Window; initialPath?: string; pickFolder?: (path: string) => void; attach?: (path: string) => Promise<void>; openFile?: (path: string) => Promise<void> }
 
 export class FileExplorer {
   readonly window: Window;
@@ -143,7 +143,7 @@ export class FileExplorer {
       const result=await findFiles(folder,this.searchInput.value,controller.signal,{limit:1000,includeIgnored:true,onProgress:update});
       update(result.matches.toSorted((a,b)=>a.name.localeCompare(b.name,this.desktop.language,{numeric:true})),result.scanned);
       this.list.emptyText=this.desktop.t("Sin resultados");
-      if(active())this.status=`${result.matches.length} resultados${result.truncated?" · límite 1000":""} · ${result.skipped} carpetas inaccesibles · Enter preview`;
+      if(active())this.status=`${result.matches.length} resultados${result.truncated?" · límite 1000":""} · ${result.skipped} carpetas inaccesibles · Enter ${this.options.openFile ? "abrir" : "preview"}`;
     } catch(error) { if(active()){this.status=controller.signal.aborted?"Búsqueda cancelada · resultados parciales":(error as Error).message;this.list.emptyText=this.desktop.t(this.status);} }
     finally { if(active()){this.searchController=undefined;this.searchButton.label="Buscar";this.loading=false;this.select.disabled=!this.options.pickFolder&&!this.options.attach;this.window.focusedId=this.list.id;this.desktop.invalidate();} }
   }
@@ -155,6 +155,7 @@ export class FileExplorer {
     if (!this.desktop.windows.includes(this.window) || revision!==this.generation) return;
     if (metadata.isDirectory()) { await this.navigate(entry.path); return; }
     if (!metadata.isFile()) throw new Error("Esta entrada no es un archivo regular");
+    if (this.options.openFile) { this.desktop.close(this.window); await this.options.openFile(entry.path); return; }
     const bytes = new Uint8Array(await Bun.file(entry.path).slice(0, 65536).arrayBuffer());
     let text: string;
     try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes, { stream: metadata.size > bytes.length }); if (text.includes("\0")) throw new Error(); }

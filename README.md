@@ -73,7 +73,7 @@ propios. El editor central muestra el nombre del proyecto.
   un diálogo/auxiliar cierra esa ventana.
 - **Nueva sesión** y **Sesiones** cambian el historial de la pestaña actual.
   Requieren que ese proyecto esté inactivo; otros proyectos pueden seguir respondiendo.
-- Las pestañas abiertas y el proyecto activo se restauran al iniciar. Cerrar todas
+- Las pestañas de proyectos y el proyecto activo se restauran al iniciar. Cerrar todas
   deja el espacio vacío; el registro de proyectos, carpetas e historiales se conserva.
 - **Ctrl+Q** cancela los turnos de todos los proyectos, guarda borradores y sale.
 
@@ -144,15 +144,27 @@ Enter en Texto guarda.
 ## Archivos, chat y herramientas
 
 **Archivo → Explorador** o **Ctrl+E** permite navegar por padre, raíz y rutas
-escritas, incluyendo fuera del proyecto. Enter/doble clic abre carpetas o previews
-de texto en solo lectura; rueda, flechas y `h/j/k/l` navegan. Preview hasta 64 KiB;
-los binarios muestran su tipo. Adjuntar no cambia el cwd de las herramientas.
+escritas, incluyendo fuera del proyecto. Enter/doble clic abre carpetas o archivos
+en una **pestaña junto al proyecto**, usando todo el panel central. El título es
+el nombre del archivo; la cabecera muestra lenguaje, tamaño y ruta. El Prompt
+del proyecto sigue visible. HTML, CSS, JavaScript y TypeScript tienen resaltado
+de sintaxis, incluido CSS/JS dentro de HTML. Otros textos se muestran sin colores
+de sintaxis y los binarios muestran un aviso.
+
+La vista carga el texto UTF-8 completo, en solo lectura, con selección, scroll,
+flechas, rueda y navegación Vim. Abrir el mismo archivo vuelve a su pestaña y
+conserva el scroll. Clic, **Alt+←/→** y **Alt+1…9** recorren proyectos y archivos;
+**Ctrl+W** o **×** cierra el archivo y vuelve al chat sin cerrar el proyecto.
+**Vista → Respuestas** también vuelve al chat. Enviar un prompt devuelve el panel
+al chat; una respuesta en segundo plano no reemplaza el archivo que estás leyendo.
+Abrir/adjuntar archivos externos no cambia el cwd de las herramientas. Las pestañas
+de archivos duran esta ejecución; las de proyectos se restauran al reiniciar.
 
 El explorador ocupa el área disponible del chat, se adapta al resize y conserva
 el prompt visible. Escribí la ruta donde buscar arriba (podés usar la raíz del
 disco), un nombre o glob como `*.ts` debajo y pulsá **Buscar** o Enter en ese
 campo. Recorre subcarpetas, incluidos ocultos y carpetas de dependencias; devuelve
-hasta 1.000 archivos con su ubicación. **Cancelar** detiene la búsqueda. Preview
+hasta 1.000 archivos con su ubicación. **Cancelar** detiene la búsqueda. Abrir
 y Adjuntar funcionan sobre los resultados; **Ir** vuelve a navegar la ruta.
 No sigue enlaces al buscar y muestra cuántas carpetas fueron inaccesibles.
 
