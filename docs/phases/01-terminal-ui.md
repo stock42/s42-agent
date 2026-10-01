@@ -29,7 +29,7 @@ necesitar un modelo ni reemplazar los componentes por otra TUI.
   y `NO_COLOR`, con estados comprensibles por texto.
 - [ ] F01-09. Probar cierre normal, Ctrl+C como entrada raw, SIGTERM y error
   controlado; conservar el estado anterior del terminal.
-- [ ] F01-10. Compilar y repetir el smoke TUI del binario. Registrar evidencia,
+- [ ] F01-10. Repetir el flujo TUI desde Bun y revisar su experiencia. Registrar evidencia,
   actualizar CHANGELOG y hacer el commit de cada tarea completada.
 
 ## Escenarios de aceptación
@@ -63,5 +63,6 @@ real complementa los tests de secuencias ANSI.
 ## Cierre
 
 TUI del harness estilo QBasic usable con fixtures, mouse y teclado, limpieza del
-terminal verificada y mismo comportamiento desde fuentes y binario. El subconjunto
+terminal verificada desde la fuente. La equivalencia del binario se verifica en
+distribución. El subconjunto
 Vim acordado se incorpora en fase 05 sin interceptar input de menús/modales.

@@ -6,7 +6,6 @@ const simpleKeys: Record<string, string> = {
 const csiKeys: Record<string, string> = {
   A: "up", B: "down", C: "right", D: "left", H: "home", F: "end", Z: "shift+tab",
   "1~": "home", "2~": "insert", "3~": "delete", "4~": "end", "5~": "pageup", "6~": "pagedown",
-  "11~": "f1", "17~": "f6", "21~": "f10",
 };
 
 export class InputParser {
@@ -65,7 +64,7 @@ export class InputParser {
         }
         if (this.buffer[1] === "O") {
           if (this.buffer.length < 3) return;
-          const key = ({ P: "f1", Q: "f2", R: "f3", S: "f4", A: "up", B: "down", C: "right", D: "left" } as Record<string, string>)[this.buffer[2]!];
+          const key = ({ A: "up", B: "down", C: "right", D: "left", H: "home", F: "end" } as Record<string, string>)[this.buffer[2]!];
           this.buffer = this.buffer.slice(3);
           if (key) this.emit({ type: "key", key });
           continue;

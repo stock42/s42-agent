@@ -31,7 +31,7 @@ mediante archivos locales legibles y recuperables.
   Prohibir cambio de proyecto en turno activo, conservando el borrador actual.
 - [ ] F02-10. Cargar instrucciones AGENTS aplicables sin mezclar proyectos y sin
   inventar políticas Git para las carpetas registradas.
-- [ ] F02-11. Validar config, sesiones y proyectos desde el binario. Registrar
+- [ ] F02-11. Validar config, sesiones y proyectos desde el entrypoint Bun. Registrar
   evidencia, actualizar CHANGELOG y hacer el commit de cada tarea completada.
 
 ## Escenarios de aceptación

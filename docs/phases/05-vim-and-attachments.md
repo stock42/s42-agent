@@ -31,7 +31,7 @@ al terminal en adjuntos verificables, con alternativas de teclado.
   con la sesión; reabrir sin sustituirlo por una nueva versión del archivo original.
 - [ ] F05-09. Probar automáticamente secuencias de paste y manualmente drag &
   drop desde el SO. Registrar formatos observados por terminal y plataforma.
-- [ ] F05-10. Repetir atajos y adjuntos desde el binario; registrar evidencia,
+- [ ] F05-10. Repetir atajos y adjuntos desde el entrypoint Bun; registrar evidencia,
   actualizar CHANGELOG y hacer el commit de cada tarea completada.
 
 ## Escenarios de aceptación

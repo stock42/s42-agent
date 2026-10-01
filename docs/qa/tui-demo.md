@@ -2,6 +2,8 @@
 
 Fecha: 2026-10-01. Entrega: 0.1.0. Entrypoint: `index.ts` raíz.
 Estado: demo implementada, binario Linux x64 comprobado; fase 00 **En curso**.
+Este registro documenta el hito inicial `c098d88`. La experiencia actual y la
+prioridad de validar desde la fuente están en [tui-ux.md](tui-ux.md).
 
 ## Implementación
 

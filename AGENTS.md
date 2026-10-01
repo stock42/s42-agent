@@ -33,9 +33,11 @@ de entrada del agente. La UI está en `src/ui/`, con controles reutilizables en
 `dev`, `typecheck`, `test`, `build` y `bench:tui`; no hay dependencias de runtime.
 El agente, los proyectos, los proveedores y los adjuntos siguen pendientes.
 
-La fase 00 está **En curso**: tests y binario Linux x64 comprobados con PTY/tmux;
-falta validar mouse físico en un terminal gráfico y un host sin Bun/Node.
-Evidencia: [docs/qa/tui-demo.md](docs/qa/tui-demo.md). Actualizar este estado al
+La fase 00 está **En curso**: demo comprobada con PTY/tmux; falta validar mouse
+físico en un terminal gráfico. El primer binario Linux x64 corresponde al hito
+inicial; la comprobación de un host sin Bun/Node pertenece a distribución.
+Evidencia actual: [docs/qa/tui-ux.md](docs/qa/tui-ux.md); hito inicial:
+[docs/qa/tui-demo.md](docs/qa/tui-demo.md). Actualizar este estado al
 desarrollar; eventos inyectados no cierran la prueba manual.
 
 ## Preferencias globales del usuario
@@ -48,6 +50,13 @@ desarrollar; eventos inyectados no cierran la prueba manual.
 - Hacer sugerencias cuando se detecten mejoras, riesgos u oportunidades,
   priorizando especialmente las relacionadas con seguridad. Presentarlas al
   usuario y esperar su aprobación explícita antes de implementarlas.
+- Prioridad actual confirmada por el usuario: perfeccionar la experiencia dentro
+  de la TUI. Iterar con `bun run dev`; realizar builds, smoke de binarios y
+  benchmarks de distribución cuando el usuario los pida o se prepare una entrega
+  de binarios.
+- No asignar acciones a las teclas F1–F12: el usuario las descarta por colisiones
+  con el sistema operativo/terminal. En la demo: Escape abre/cierra menús,
+  Ctrl+N cambia de ventana y Alt+Y abre ayuda; mantener disponibles mouse y menú.
 
 ## Regla Git obligatoria
 
@@ -88,7 +97,8 @@ esta política Git a los proyectos sobre los que trabaja.
 - `process` y módulos `node:*` implementados por Bun son válidos cuando cubren
   raw mode, paths, directorios, append o rename. No requieren Node externo.
 - No agregar dotenv ni crear un nuevo mecanismo de entorno por conveniencia.
-- Compilar un binario desde la fase 00 y repetir el smoke en las fases siguientes.
+- El build del primer hito ya existe. Las iteraciones de UX se validan desde el
+  entrypoint Bun; no repetir compilaciones ni pruebas de binarios por rutina.
 - Construir una biblioteca interna pequeña de componentes TUI con render por
   celdas, clipping, foco y eventos compartidos. Está solicitada por el usuario;
   no convertirla en un framework, motor CSS o paquete publicable por inferencia.
@@ -108,9 +118,9 @@ esta política Git a los proyectos sobre los que trabaja.
 - No crear tests que solo repitan la implementación ni ampliar suites sin motivo.
 - Usar `bun:test`. No interpretar «no tests found», skips o fixtures como pruebas
   del modelo real o del terminal del usuario.
-- Después de configurar los scripts en fase 00, ejecutar los checks adecuados
-  mediante `bun run typecheck`, `bun test` y `bun run build`; antes de que existan,
-  no afirmar que se ejecutaron.
+- Para iteraciones de UX ejecutar typecheck y pruebas relevantes de la TUI desde
+  la fuente; revisar la interacción/render en terminal. Build/smoke/benchmark
+  quedan para tareas explícitas de binarios o entrega. Registrar solo lo ejecutado.
 - Verificar la TUI en terminal real/PTY, con Unicode, resize, color desactivado,
   pegado y cierre que restaure cursor, raw mode y mouse.
 - Probar clic, release, rueda, arrastre de título, foco, ventanas superpuestas,

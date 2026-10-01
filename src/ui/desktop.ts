@@ -38,7 +38,7 @@ export class Desktop {
 
   private fit(window: Window): void {
     window.bounds.width = Math.min(window.preferred.width, Math.max(2, this.width - 2));
-    window.bounds.height = Math.min(window.preferred.height, Math.max(2, this.height - 3));
+    window.bounds.height = Math.min(window.preferred.height, Math.max(2, this.height - 2));
     window.bounds.x = Math.max(0, Math.min(window.bounds.x, this.width - window.bounds.width));
     window.bounds.y = Math.max(1, Math.min(window.bounds.y, this.height - 1 - window.bounds.height));
   }
@@ -57,6 +57,11 @@ export class Desktop {
     const index = this.windows.indexOf(window);
     this.windows.splice(index, 1); this.windows.push(window); this.active = window;
     this.ensureFocus(window);
+  }
+
+  focus(window: Window): void {
+    if (!this.windows.includes(window) || (this.modal && this.modal !== window)) return;
+    this.cancelCapture(); this.menu.close(); this.raise(window);
   }
 
   cycle(): void {
@@ -85,24 +90,38 @@ export class Desktop {
       const capture = this.capture;
       if (event.action === "release" && event.button === 0) {
         this.capture = undefined;
-        if ("control" in capture) capture.control.handle(this.local(event, capture.window, capture.control));
+        if ("control" in capture) {
+          const local = this.local(event, capture.window, capture.control);
+          capture.control.handle(contains(capture.window.client, event.x, event.y) ? local : { ...event, x: -1, y: -1 });
+        }
         else if ("close" in capture) {
           capture.window.closePressed = false;
           if (contains(capture.window.closeRect, event.x, event.y)) this.close(capture.window);
         }
         return true;
       }
-      if (event.action === "move" && "offsetX" in capture) {
+      if (event.action === "move") {
+        if ("control" in capture) return capture.control.handle(this.local(event, capture.window, capture.control));
+        if ("close" in capture) {
+          const inside = contains(capture.window.closeRect, event.x, event.y);
+          const changed = inside !== capture.window.closePressed; capture.window.closePressed = inside; return changed;
+        }
+        const before = `${capture.window.bounds.x}:${capture.window.bounds.y}`;
         capture.window.bounds.x = event.x - capture.offsetX; capture.window.bounds.y = event.y - capture.offsetY;
-        this.fit(capture.window); return true;
+        this.fit(capture.window); return before !== `${capture.window.bounds.x}:${capture.window.bounds.y}`;
       }
       return false;
     }
-    if (!this.modal && this.menu.handle(event)) { this.cancelCapture(); return true; }
     if (event.type === "key") {
-      if (event.key === "f1") { this.onHelp(); return true; }
-      if (event.key === "f6") { this.cycle(); return true; }
-      if (event.key === "ctrl+w" || (event.key === "escape" && this.modal)) { this.close(); return true; }
+      if (event.key === "alt+y" && !this.modal) { this.cancelCapture(); this.menu.close(); this.onHelp(); return true; }
+      if (event.key === "ctrl+n" && !this.modal) { this.menu.close(); this.cycle(); return true; }
+      if (event.key === "ctrl+w" || (event.key === "escape" && this.modal)) { this.menu.close(); this.close(); return true; }
+    }
+    // An open menu owns input even when moving over the same option changes no pixels.
+    const menuWasOpen = this.menu.opened >= 0;
+    if (!this.modal && this.menu.handle(event)) { this.cancelCapture(); return true; }
+    if (!this.modal && menuWasOpen) return false;
+    if (event.type === "key") {
       const window = this.active;
       if (!window) return false;
       if (event.key === "tab" || event.key === "shift+tab") {
@@ -144,13 +163,16 @@ export class Desktop {
       return canvas;
     }
     canvas.clipped({ x: 0, y: 1, width: this.width, height: this.height - 2 }, () => {
+      if (!this.windows.length) canvas.text(2, 3, "Esc → Ventanas → Componentes para volver", theme.window, this.width - 4);
       for (const window of this.windows) { window.onLayout?.(window.client); this.ensureFocus(window); window.draw(canvas, window === this.active); }
     });
     this.menu.draw(canvas);
     const footer = this.height - 1;
     canvas.fill({ x: 0, y: footer, width: this.width, height: 1 }, theme.menu);
-    canvas.text(1, footer, "F1 Ayuda  F10 Menú  Tab Foco  F6 Ventana  ^Q Salir", theme.menu, this.width - 2);
-    if (!this.windows.length) canvas.text(2, 3, "F10 → Ventanas → Componentes para volver", theme.window, this.width - 4);
+    const hints = this.menu.opened >= 0 ? "←/→ Menú  ↑/↓ Opción  Enter Elegir  Esc Cerrar  ^Q Salir"
+      : this.modal ? "Tab Foco  Enter Aceptar  Esc Cerrar  ^Q Salir"
+      : "Esc Menú  Tab Foco  ^N Ventana  ^W Cerrar  ^Q Salir";
+    canvas.text(1, footer, hints, theme.menu, this.width - 2);
     return canvas;
   }
 }

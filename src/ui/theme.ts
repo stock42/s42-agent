@@ -8,6 +8,8 @@ export const theme = {
   title: { fg: 0, bg: 7 },
   inactiveTitle: { fg: 7, bg: 4 },
   menu: { fg: 0, bg: 7 },
+  menuHotkey: { fg: 4, bg: 7 },
+  selectedHotkey: { fg: 4, bg: 6 },
   selected: { fg: 0, bg: 6 },
   button: { fg: 0, bg: 7 },
   focused: { fg: 15, bg: 0 },

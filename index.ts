@@ -14,7 +14,7 @@ Uso: s42-agent [--no-color] [--no-mouse]
   --version    Mostrar versión
   --help       Mostrar ayuda
 
-F1: ayuda · F10: menú · Tab: foco · F6: ventana · Ctrl+Q: salir`);
+Esc: menú · Tab: foco · Ctrl+N: ventana · Alt+Y: ayuda · Ctrl+Q: salir`);
   } else if (args.includes("--version")) console.log(version);
   else {
     const unknown = args.find((arg) => arg !== "--no-color" && arg !== "--no-mouse");

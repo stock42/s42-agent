@@ -2,10 +2,10 @@
 
 Fuente de requisitos: [SPECS.md](../SPECS.md). Fecha: 2026-10-01.
 
-Estado actual: demo QBasic implementada y compilada desde `index.ts`, con
-componentes en `src/ui/components/`. La fase 00 está **En curso**, con tests,
-PTY y capturas tmux; falta mouse físico y un host sin Bun/Node. Las fases 01–06
-siguen pendientes. [Evidencia](../qa/tui-demo.md).
+Estado actual: demo QBasic implementada desde `index.ts`, con componentes en
+`src/ui/components/`. La fase 00 está **En curso**, con experiencia de mouse,
+teclado y layout comprobada en PTY/tmux; falta mouse físico. Las fases 01–06
+siguen pendientes. [UX actual](../qa/tui-ux.md), [evidencia inicial](../qa/tui-demo.md).
 
 | Fase | Archivo | Depende de | Resultado | Requisitos |
 | --- | --- | --- | --- | --- |
@@ -35,8 +35,10 @@ esos componentes. Pi continúa como referencia del agente, no como estilo visual
 5. Hacer el commit de los archivos de esa tarea después de validar el diff.
 
 Las fases describen responsabilidades, no siete cambios gigantes. Dividirlas en
-tareas pequeñas que dejen una versión ejecutable. Cada fase vuelve a compilar el
-binario: la distribución no se descubre al final.
+tareas pequeñas que dejen una versión ejecutable mediante Bun. Por prioridad
+del usuario, las iteraciones actuales se concentran en UX desde la fuente.
+Builds y pruebas de binarios se concentran en fase 06 o en una entrega de distribución;
+el primer build de fase 00 ya se comprobó.
 
 No incorporar propuestas pendientes de SPECS §15 a estas tareas sin aprobación
 explícita. No agregar proveedores nativos, sandbox, plugins o un backend como

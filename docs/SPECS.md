@@ -3,6 +3,10 @@
 Fecha: 2026-10-01. Estado: demo QBasic implementada desde `index.ts`; el harness
 de coding sigue pendiente. [Evidencia de la demo](qa/tui-demo.md).
 
+Prioridad confirmada: perfeccionar la experiencia dentro de la TUI mediante
+`bun run dev`. Builds, smoke y benchmarks de binarios se realizan al preparar
+distribución o a pedido explícito. [Iteración UX](qa/tui-ux.md).
+
 ## 1. Objetivo
 
 Crear un harness de coding con una TUI en color, simple, rápido y estable,
@@ -190,6 +194,13 @@ recibir eventos y manejar su foco. `Dialog` puede reutilizar `Window`; no crear
 una jerarquía compleja de clases ni duplicar la detección de input en cada control.
 El editor multilínea y la conversación se agregan después utilizando esa base.
 
+La demo conserva texto, selección y foco al volver a una ventana existente.
+Los menús admiten hover y arrastrar/soltar, con accesos Alt únicos; el input
+selecciona por Ctrl+A, Shift+flechas/Home/End o arrastre del mouse. La lista
+admite PageUp/Down y muestra si hay filas fuera del viewport. Los atajos de la
+barra inferior reflejan el contexto de menú o modal. A 60×16, el estado ocupa
+una fila separada de los controles.
+
 ### Primer entregable: demo de viabilidad
 
 Antes del harness, construir una demo Bun que permita abrir una ventana de
@@ -199,7 +210,7 @@ operable con mouse y teclado. Sus datos son fixtures identificados como demo;
 no llama LLMs, ejecuta herramientas de coding ni modifica proyectos.
 
 Verificar layout a 80×24 y 120×40, coordenadas de clic, orden de ventanas,
-restauración del terminal, repintado sin flicker y funcionamiento desde el binario.
+restauración del terminal y repintado sin flicker desde el entrypoint Bun.
 Con esa evidencia se determina la viabilidad antes de integrar el agente.
 
 ### Distribución
@@ -273,11 +284,13 @@ eventos de mouse no entrega por sí mismo archivos del sistema operativo.
 
 ### Foco y teclado de controles
 
-Tab/Shift+Tab recorren controles en una ventana/diálogo. F10 activa la barra de
-menús; flechas recorren menú y opciones; Enter selecciona y Escape cierra el nivel
-actual. F1 abre ayuda. Mouse y teclado invocan la misma acción de cada control.
-Si un terminal no distingue Shift+Tab o una tecla de función, la ayuda indica
-su alternativa disponible; no depender exclusivamente de Alt ni de Kitty.
+Tab/Shift+Tab recorren controles en una ventana/diálogo. Escape activa la barra de
+menús desde el escritorio; flechas recorren menú y opciones; Enter selecciona y
+Escape cierra el nivel actual. Alt+Y abre ayuda; Ctrl+N cambia de ventana y Ctrl+W
+la cierra. Mouse y teclado invocan la misma acción de cada control.
+No asignar acciones a F1–F12 por decisión del usuario: colisionan con el sistema
+operativo/terminal. Si Alt o Shift+Tab no están disponibles, conservar operación
+con Escape, flechas y mouse; no depender exclusivamente de Alt ni de Kitty.
 
 El foco vuelve al control previo después de cerrar un diálogo. Mientras haya un
 menú/modal, sus acciones tienen prioridad; los atajos Vim operan sobre el editor
@@ -295,7 +308,9 @@ Ctrl+J será la forma portable de insertar una nueva línea.
 
 | Contexto | Tecla | Acción |
 | --- | --- | --- |
-| Escritorio | F10 / F1 | Abrir barra de menús / ayuda. |
+| Escritorio | Escape | Abrir barra de menús cuando no lo consume un editor Vim. |
+| Escritorio | Alt+Y | Abrir ayuda; también disponible desde el menú Ayuda. |
+| Escritorio | Ctrl+N / Ctrl+W | Cambiar / cerrar ventana. |
 | Ventana/diálogo | Tab / Shift+Tab | Recorrer controles enfocados. |
 | Menú/diálogo | Escape | Cerrar menú o diálogo antes de cambiar modo Vim. |
 | Global | Ctrl+C | Cancelar el turno activo; si está inactivo, cerrar guardando el borrador. |
@@ -673,6 +688,8 @@ Comando implementado en `bun run build` para la demo de fase 00. `index.ts`
 es también el punto de entrada del futuro agente, por decisión del usuario.
 El artefacto Linux x64 y sus mediciones están registrados en
 [qa/tui-benchmark.json](qa/tui-benchmark.json).
+Ese registro corresponde al hito inicial `c098d88`; las iteraciones posteriores
+de UX se comprueban desde la fuente. No recompilar por rutina durante esta etapa.
 
 En desarrollo, empezar por Linux x64, que es el entorno de este checkout. La
 distribución objetivo incluye Linux x64/arm64, macOS x64/arm64 y Windows x64.
@@ -716,7 +733,7 @@ validar el estado de pantalla, sin añadirlo al runtime.
 
 Orden y tareas en [phases/README.md](phases/README.md):
 
-1. Componentes visuales QBasic, mouse y demo de viabilidad compilada con Bun.
+1. Componentes visuales QBasic, mouse y demo de viabilidad desde Bun.
 2. TUI del harness sobre esos componentes: conversación, editor y eventos fixture.
 3. Configuración, proyectos y sesiones.
 4. Proveedores y streaming local.

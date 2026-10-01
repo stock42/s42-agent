@@ -61,7 +61,7 @@ describe("interacciones de escritorio", () => {
     modal.controls.push(new Button("ok", { x: 1, y: 1, width: 10, height: 1 }, "OK", () => desktop.close(modal)));
     desktop.add(modal);
     mouse(desktop, 6, 5, "release");
-    click(desktop, 6, 5); key(desktop, "f10"); expect(calls).toEqual([]); expect(desktop.active).toBe(modal);
+    click(desktop, 6, 5); key(desktop, "alt+a"); expect(calls).toEqual([]); expect(desktop.active).toBe(modal);
     expect(desktop.menu.opened).toBe(-1);
     key(desktop, "enter"); expect(desktop.active).toBe(window); expect(window.focusedId).toBe("input");
   });
@@ -75,8 +75,8 @@ describe("interacciones de escritorio", () => {
     const desktop = new Desktop(menu);
     click(desktop, 3, 0); click(desktop, 4, 3); expect(calls).toEqual([]);
     click(desktop, 4, 2); expect(calls).toEqual(["open"]); expect(menu.opened).toBe(-1);
-    key(desktop, "f10"); key(desktop, "down"); key(desktop, "enter"); expect(calls).toEqual(["open", "close"]);
-    key(desktop, "f10"); key(desktop, "escape"); expect(menu.opened).toBe(-1);
+    key(desktop, "escape"); key(desktop, "down"); key(desktop, "enter"); expect(calls).toEqual(["open", "close"]);
+    key(desktop, "escape"); key(desktop, "escape"); expect(menu.opened).toBe(-1);
     key(desktop, "alt+a"); click(desktop, 60, 10); expect(menu.opened).toBe(-1);
   });
 

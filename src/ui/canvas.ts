@@ -85,7 +85,9 @@ export class Renderer {
       let current = "";
       for (const cell of canvas.cells[y]!) {
         if (cell.width === 0) continue;
-        const code = color ? ansi(cell.style) : cell.style === theme.focused ? "\x1b[7m" : "\x1b[27m";
+        const inverted = cell.style === theme.focused || cell.style === theme.selected || cell.style === theme.selectedHotkey;
+        const mnemonic = cell.style === theme.menuHotkey || cell.style === theme.selectedHotkey;
+        const code = color ? ansi(cell.style) : (inverted ? "\x1b[7m" : "\x1b[27m") + (mnemonic ? "\x1b[4m" : "\x1b[24m");
         if (code !== current) { line += code; current = code; }
         line += cell.text;
       }

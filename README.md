@@ -21,17 +21,23 @@ El botón Aceptar actualiza un contador; los datos de la lista son ejemplos.
 
 | Acción | Teclado / mouse |
 | --- | --- |
-| Abrir menú | F10, Alt+A / V / D, o clic en su cabecera |
-| Navegar menú | Flechas, Enter; Escape o clic afuera para cerrar |
+| Abrir menú | Escape, Alt+A / V / D, o clic en su cabecera |
+| Navegar menú | Flechas, Enter, hover o arrastrar y soltar; Escape / clic afuera cierra |
 | Cambiar foco | Tab / Shift+Tab, o clic en un control |
 | Activar botón | Enter / Espacio, o pulsar y soltar dentro |
-| Cambiar ventana | F6 o clic en la ventana visible |
+| Cambiar ventana | Ctrl+N o clic en la ventana visible |
 | Mover ventana | Arrastrar su barra de título |
 | Cerrar ventana | Ctrl+W o `[X]` |
-| Lista | Flechas / Home / End, clic o rueda |
-| Ayuda | F1 |
+| Lista | Flechas / Home / End / PageUp / PageDown, clic o rueda; ↑/↓ en el marco indican más filas |
+| Seleccionar texto | Ctrl+A, Shift+flechas / Home / End, o arrastre del mouse |
+| Reemplazar selección | Escribir, pegar, Backspace o Delete |
+| Ayuda | Alt+Y o Ayuda → Atajos y mouse |
 | Cerrar modal | Escape, su botón o `[X]` |
 | Salir | Ctrl+Q / Ctrl+C o Archivo → Salir |
+
+No se asignan acciones a F1–F12. Al cerrar todas las ventanas, Ventanas →
+Componentes vuelve a abrir el laboratorio; los desplegables cubren el mensaje
+del escritorio vacío.
 
 ```bash
 bun run index.ts --help
@@ -39,9 +45,10 @@ bun run index.ts --no-color
 bun run index.ts --no-mouse
 ```
 
-También se respeta `NO_COLOR`. Sin color, el cursor usa video inverso y los
-botones indican foco, presión y deshabilitado por texto. Fuera de TTY o con
-`TERM=dumb`, se informa el requisito del terminal sin emitir escapes.
+También se respeta `NO_COLOR`. Sin color, cursor y selección usan video inverso,
+los menús subrayan sus letras de acceso y los botones indican sus estados por
+texto. Fuera de TTY o con `TERM=dumb`, se informa el requisito del terminal sin
+emitir escapes.
 
 ## Componentes y organización
 
@@ -69,21 +76,27 @@ No hay dependencias de runtime. Los controles reciben eventos locales; el
 escritorio decide foco, captura y clipping. El renderer emite únicamente filas
 que cambiaron y no tiene un intervalo activo en reposo.
 
-## Validar y compilar
+## Validar la experiencia TUI
 
 ```bash
 bun run typecheck
 bun test
-bun run build
-./dist/s42-agent
 ```
 
-El build incorpora Bun en el ejecutable. La validación actual corresponde a
-Linux x64; otros sistemas requieren sus propias pruebas.
+La prioridad actual es iterar sobre `bun run dev`, mouse, teclado, foco y layout.
+[Correcciones y comprobaciones de UX](docs/qa/tui-ux.md).
 
-Para repetir los escenarios PTY sobre el binario y medir rendimiento:
+## Distribución, cuando corresponda
+
+El build incorpora Bun en el ejecutable. Build, smoke y benchmark se realizan
+para una entrega o cuando se soliciten; no forman parte de cada iteración de UX.
+La validación inicial del binario corresponde a Linux x64.
+
+Comandos disponibles para esa tarea:
 
 ```bash
+bun run build
+./dist/s42-agent
 S42_TEST_BINARY="$PWD/dist/s42-agent" bun test
 bun run bench:tui
 ```
@@ -93,6 +106,7 @@ sin Bun/Node y guarda sus resultados en `docs/qa/tui-benchmark.json`.
 Eso verifica operación fuera del checkout; no equivale a desinstalar los runtimes
 del equipo. Las pruebas PTY requieren Linux/macOS; esta entrega se probó en Linux.
 
-[Evidencia y límites](docs/qa/tui-demo.md): quedan pendientes el mouse físico en
-un terminal gráfico y un host sin Bun/Node instalados. El drag & drop de archivos
+[Evidencia inicial del binario](docs/qa/tui-demo.md). La UX actual se comprobó
+desde la fuente; sigue pendiente el mouse físico en un terminal gráfico.
+El host sin Bun/Node se verifica en distribución. El drag & drop de archivos
 del SO, Vim, proyectos y LLMs pertenecen a las siguientes fases.

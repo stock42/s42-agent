@@ -1,7 +1,8 @@
 # Fase 00 — Componentes QBasic y demo de viabilidad TUI
 
-Estado: **En curso**. Demo y binario Linux x64 implementados y probados en PTY;
-pendientes mouse físico en terminal gráfico y host sin Bun/Node instalados.
+Estado: **En curso**. Demo comprobada desde la fuente en PTY/tmux;
+pendiente mouse físico en terminal gráfico. Prioridad actual: experiencia TUI.
+El host sin Bun/Node se verifica en distribución, sin bloquear las iteraciones UX.
 Dependencia: [SPECS.md](../SPECS.md).
 Requisitos: R01, R02, R03, R04, R05, R13, R14, R15, R16, R17.
 
@@ -50,7 +51,7 @@ anteponer una fase separada de backend o una CLI sin componentes.
 ## Escenarios de aceptación
 
 1. En un terminal real 80×24, abrir un menú superior con clic y elegir una opción
-   de su desplegable. Repetir con F10/flechas/Enter y cerrar con Escape/clic afuera.
+   de su desplegable. Repetir con Escape/flechas/Enter y cerrar con Escape/clic afuera.
 2. Pulsar un botón: feedback de presionado y una sola acción al release dentro.
    Soltar afuera y pulsar un botón deshabilitado no activan acciones.
 3. Abrir dos ventanas superpuestas; clic enfoca/eleva la visible, mover por el
@@ -75,15 +76,17 @@ anteponer una fase separada de backend o una CLI sin componentes.
 | Tarea/caso | Comando, captura o artefacto | Resultado, entorno y tipo de prueba |
 | --- | --- | --- |
 | F00-01–10 | `index.ts`, `src/ui/`, `src/ui/components/`, README | Demo funcional sin LLMs ni dependencias de runtime. |
-| Tipos y comportamiento | `bun run typecheck`, `bun test` | Tipos correctos; 17 tests; eventos, capas, modal, Unicode y PTY. |
+| Tipos y comportamiento iniciales | `bun run typecheck`, `bun test` | 17 tests en el hito inicial; eventos, capas, modal, Unicode y PTY. |
+| Iteración UX | [QA actual](../qa/tui-ux.md), [capturas](../qa/tui-ux-captures.txt) | 28 casos desde la fuente, selección, capas de menús, atajos sin F, conservación de edición y layout compacto. |
 | Terminal emulado | [Capturas tmux](../qa/tui-captures.txt) | Componentes, ventanas, modal, menú y tamaños 80×24 / 60×16 / 120×40. |
 | Binario | `bun run build`; `S42_TEST_BINARY="$PWD/dist/s42-agent" bun test` | Linux x64 probado desde `/tmp`; mismo flujo PTY. |
 | F00-12 | `bun run bench:tui`; [mediciones](../qa/tui-benchmark.json) | 30 arranques, 100 entradas, RSS y 50 ciclos modales; copia externa con PATH sin Bun/Node. |
-| F00-11 pendiente | [QA y límites](../qa/tui-demo.md) | Mouse físico y host sin runtimes no comprobados. La fase permanece abierta. |
+| F00-11 pendiente | [QA actual](../qa/tui-ux.md) | Mouse físico pendiente. Host sin runtimes corresponde a fase 06. |
 
 ## Cierre
 
-Completar cuando la demo QBasic y su binario funcionan, los componentes pueden
-reutilizarse, los escenarios de mouse/teclado están comprobados y se registró la
-viabilidad con limitaciones reales. No avanzar a proveedores/tools antes de
+Completar cuando la demo QBasic funciona desde Bun, sus componentes pueden
+reutilizarse y los escenarios de mouse/teclado están comprobados. El build inicial
+ya está registrado; nuevas comprobaciones de binarios corresponden a distribución.
+Registrar viabilidad y límites reales. No avanzar a proveedores/tools antes de
 comprobar este hito. Una captura estática o un parser aislado no cierran la fase.

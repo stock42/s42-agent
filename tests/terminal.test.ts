@@ -35,22 +35,41 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
     try {
       await until(() => run.output.includes("Laboratorio TUI"));
       expect(run.output).toContain("\x1b[?1006h");
+      expect(run.output).toContain("\x1b[?1003h");
       // Aceptar: hit test según la composición 80×24.
       run.terminal.write("\x1b[<0;59;11M\x1b[<0;59;11m");
       await until(() => run.output.includes("Aceptar (1): s42-agent"));
-      // Abrir ventana vía F10 → derecha → abajo → Enter.
-      run.terminal.write("\x1b[21~\x1b[C\x1b[B\r");
+      // Escape aislado abre menú; las flechas se envían después de su frame.
+      const beforeMenu = run.output.length; run.terminal.write("\x1b");
+      await until(() => run.output.slice(beforeMenu).includes(">Salir"));
+      run.terminal.write("\x1b[C\x1b[B\r");
       await until(() => run.output.includes("Ventana 1"));
       run.terminal.write("\x1b[<0;31;7M\x1b[<32;41;9M\x1b[<0;41;9m");
       await Bun.sleep(60);
       // Cerrar ventana, abrir ayuda modal y salir con Escape.
-      run.terminal.write("\x17\x1bOP");
+      run.terminal.write("\x17\x1by");
       await until(() => run.output.includes("Mouse: clic"));
       run.terminal.write("\x1b"); await Bun.sleep(80);
       // Foco en input, pegado bracketed partido conserva texto literal.
       run.terminal.write("\x1b[<0;11;8M\x1b[<0;11;8m\x1b[200~á文🙂");
       run.terminal.write("\x1b[201~");
       await until(() => run.output.includes("á文🙂"));
+      run.terminal.write("\x01\x1b[200~proyecto-local\x1b[201~");
+      await until(() => run.output.includes("Nombre: proyecto-local"));
+      const beforeComponents = run.output.length;
+      run.terminal.write("\x1b");
+      await until(() => run.output.slice(beforeComponents).includes(">Salir"));
+      run.terminal.write("\x1b[C");
+      await until(() => run.output.slice(beforeComponents).includes("Nueva ventana"));
+      const beforeReturn = run.output.length; run.terminal.write("\r");
+      await until(() => run.output.slice(beforeReturn).includes("proyecto-local"));
+      // Abrir ayuda mientras el desplegable sigue abierto.
+      const beforeHelp = run.output.length;
+      run.terminal.write("\x1b");
+      await until(() => run.output.slice(beforeHelp).includes(">Salir"));
+      run.terminal.write("\x1by");
+      await until(() => run.output.slice(beforeHelp).includes("Ctrl+A / Shift+flechas"));
+      run.terminal.write("\x1b"); await Bun.sleep(80);
       for (const [cols, rows] of [[120, 40], [60, 16], [80, 24]] as const) {
         const beforeResize = run.output.length;
         run.terminal.resize(cols, rows);
@@ -66,6 +85,7 @@ describe(process.env.S42_TEST_BINARY ? "binario en PTY fuera del checkout" : "en
       expect(await run.child.exited).toBe(0);
       await until(() => run.output.includes("\x1b[?1049l"));
       expect(run.output).toContain("\x1b[?1006l"); expect(run.output).toContain("\x1b[?25h");
+      expect(run.output).toContain("\x1b[?1003l");
     } finally { run.dispose(); }
   });
 

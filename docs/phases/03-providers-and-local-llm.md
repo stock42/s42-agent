@@ -29,7 +29,7 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
   defaults distintos, errores HTTP y streams truncados.
 - [ ] F03-09. Validar streaming/cancelación con `llama-server` y un GGUF real. Anotar
   versiones, modelo, template y contexto; documentar cómo iniciar el servidor.
-- [ ] F03-10. Repetir el flujo desde el binario. Registrar evidencia, actualizar
+- [ ] F03-10. Repetir el flujo desde el entrypoint Bun. Registrar evidencia, actualizar
   CHANGELOG y hacer el commit de cada tarea completada.
 
 ## Escenarios de aceptación

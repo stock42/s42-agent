@@ -63,3 +63,25 @@ cierre de cada tarea e incluirlo en su commit.
   agente de coding y drag & drop del SO siguen pendientes.
 - Tras configurar el remoto, se volvió a intentar `git pull`: el remoto aún no
   tiene ramas y `main` no tiene upstream. Trabajo y commit locales; sin push.
+
+### Mejorado — Experiencia TUI como prioridad
+
+- Registrada la prioridad del usuario: iterar sobre la TUI desde Bun; reservar
+  builds, smoke y benchmarks de binarios para distribución o pedido explícito.
+  Actualizados AGENTS, specs, README y fases para evitar compilación por rutina.
+- Componentes conserva edición, selección y foco al volver; layout 60×16 con
+  tres filas de lista y estado separado de los botones.
+- Selección/reemplazo de texto mediante Ctrl+A, Shift+flechas/Home/End y arrastre,
+  con grafemas Unicode y recuperación de contexto al ensanchar el input.
+- Menús por hover o pulsar/arrastrar/soltar; accesos Alt únicos, ayuda Alt+Y desde un
+  menú abierto, modales centrados y atajos contextuales en la barra inferior.
+- Feedback correcto al arrastrar afuera de botones/cierre; release fuera del
+  área visible cancela. Lista con PageUp/Down, indicadores de scroll y marco inerte.
+- Corregido el orden de capas del escritorio vacío: su mensaje ya no tapa las
+  opciones del menú Demo. Ventanas → Componentes permite recuperar el laboratorio.
+- Retirados los atajos F1–F12 por colisiones con el SO; Escape abre/cierra menús,
+  Ctrl+N cambia de ventana y Alt+Y abre ayuda. Actualizados CLI, ayuda y documentación.
+- Once escenarios UX nuevos; 28 casos de fuente/componentes/PTY comprobados,
+  typecheck y capturas tmux. Evidencia en `docs/qa/tui-ux.md`.
+- No se ejecutaron builds ni benchmarks de binarios. Mouse físico pendiente.
+  `git pull` intentado: `main` sigue sin upstream; commit local.
