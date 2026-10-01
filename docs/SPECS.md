@@ -323,7 +323,8 @@ a navegar. El prompt sigue visible, también en 60×16.
 Projects reutiliza el explorador como picker: Elegir folder devuelve la carpeta
 visitada al formulario sin perder Name ni el borrador de la conversación.
 
-La ventana aprovecha casi todo el editor, crece/encoge al cambiar el terminal y
+La ventana aprovecha el ancho del editor y deja hasta dos filas de margen arriba
+y abajo cuando hay espacio; en tamaños compactos prioriza los controles. Crece/encoge al cambiar el terminal y
 mantiene el prompt visible. Ruta superior = carpeta base de búsqueda; puede ser
 la raíz del disco. Campo nombre/glob + Buscar/Enter busca recursivamente archivos
 con `Bun.Glob.match`/recorrido incremental, sin proceso find/rg externo ni índice.

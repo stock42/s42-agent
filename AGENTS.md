@@ -58,7 +58,9 @@ Las tres aparecen en Tools → Nativas con descripciones ES/EN y en el chat.
 [Papers y decisiones](docs/AGENT-INTELLIGENCE.md), [fase 14](docs/phases/14-internal-skills-and-tools.md).
 No afirmar mejoras porcentuales del modelo por pruebas funcionales; distinguir
 prompt/skills orientativas de memoria episódica, autoaprendizaje o evals A/B.
-El explorador aprovecha todo el editor, incluye Buscar por nombre/glob desde
+El explorador aprovecha el ancho del editor y deja hasta dos filas de margen
+arriba/abajo cuando hay espacio; en terminales pequeñas prioriza los controles.
+Incluye Buscar por nombre/glob desde
 la ruta superior, resultados con ubicación, Cancelar, preview y adjuntos;
 no sigue enlaces en búsquedas, cuenta carpetas inaccesibles y limita a 1000.
 CPU/RAM/disco/VRAM U/L y tokens E/S aparecen en la barra inferior; detalle en

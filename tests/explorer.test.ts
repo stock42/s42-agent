@@ -84,8 +84,9 @@ test("Ctrl+E abre explorador, adjunta archivo externo y conserva proyecto y prom
   const app=await App.open({config:join(root,"config.json"),cwd:project});
   try {
     app.view.prompt.setValue("pedido conservado");app.desktop.handle({type:"key",key:"ctrl+e"});await until(()=>app.desktop.modal?.title==="Explorador de archivos");const window=app.desktop.modal!;
-    const path=window.controls[0] as Input;path.setValue(root);window.focusedId="path";app.desktop.handle({type:"key",key:"enter"});await until(()=>screen(app.desktop).includes("externo.ts"));
-    const list=window.controls.find(c=>c instanceof SelectList) as SelectList;list.selected=list.items.findIndex(item=>item.includes("externo.ts"));button(app.desktop,window,"select");await until(()=>app.attachments.length===1);
+    const list=window.controls.find(c=>c instanceof SelectList) as SelectList;
+    const path=window.controls[0] as Input;path.setValue(root);window.focusedId="path";app.desktop.handle({type:"key",key:"enter"});await until(()=>list.items.some(item=>item.includes("externo.ts")));
+    list.selected=list.items.findIndex(item=>item.includes("externo.ts"));button(app.desktop,window,"select");await until(()=>app.attachments.length===1);
     expect(app.attachments[0]!.path).toBe(file);expect(app.project!.path).toBe(project);expect(app.view.prompt.value).toBe("pedido conservado");expect(app.busy).toBe(false);
     app.desktop.handle({type:"key",key:"escape"});app.desktop.handle({type:"key",key:"alt+p"});expect(app.desktop.menu.opened).toBe(1);expect(app.desktop.menu.menus[1]!.label).toBe("Projects");
   } finally {await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}

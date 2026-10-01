@@ -54,7 +54,7 @@ test('entrypoint: Projects Nombre/Carpeta, picker, explorador externo, reasoning
   const write=(s:string)=>terminal.write(s),paste=(s:string)=>write(`\x01\x1b[200~${s}\x1b[201~`);
   try {
     await until(()=>text.includes('Projects · nuevo'));expect(text).toContain('Nombre');expect(text).toContain('Carpeta');
-    paste('Proyecto PTY');write('\t');paste(root);write('\t\r');await until(()=>text.includes('Elegir folder'));await until(()=>text.includes('externo.ts'));
+    paste('Proyecto PTY');write('\t');paste(root);write('\t\r');await until(()=>text.includes('Elegir folder'));await until(()=>text.includes('doble clic'));
     text='';write('\t\t\t\t\r');await until(()=>text.includes('< Guardar >'));
     // The folder picker restores focus to Folder in the underlying form.
     write('\t\t\r');await until(()=>text.includes('Fixture · fixture'));

@@ -5,6 +5,16 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Ajustado — Márgenes verticales del explorador
+
+- El explorador deja hasta dos filas libres arriba y abajo dentro del editor,
+  con altura reducida y posición recalculada al abrir/redimensionar. En tamaños
+  compactos reduce los márgenes para conservar lista, búsqueda y acciones.
+- Mantiene el ancho y el prompt fijo visible. Typecheck y 16 tests relevantes
+  correctos; terminal tmux desde index.ts revisado a 100×32, 80×24 y 60×16.
+  Pruebas existentes de carga adaptadas a archivos que requieren scroll.
+  Sin builds ni push; git pull falló por main sin upstream.
+
 ### Agregado — Identidad, skills internas y tools Markdown/WebSocket
 
 - Investigación de ocho papers primarios sobre agentes, interfaz de tools,

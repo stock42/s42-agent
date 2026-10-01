@@ -35,7 +35,12 @@ export class FileExplorer {
       x: area.x + 1, y: area.y, width: Math.max(2, area.width - 2), height,
     });
     this.window.modal = true;
-    this.window.onFit = available => { this.window.preferred.width = Math.max(2, available.width - 2); this.window.preferred.height = available.height; };
+    this.window.onFit = available => {
+      const margin = Math.min(2, Math.max(0, Math.floor((available.height - 10) / 2)));
+      this.window.preferred.width = Math.max(2, available.width - 2);
+      this.window.preferred.height = Math.max(2, available.height - margin * 2);
+      this.window.bounds.y = available.y + margin;
+    };
     this.window.onClose = () => { this.generation++; this.searchController?.abort(); };
     this.pathInput = new Input("path", { x: 0, y: 0, width: 60, height: 1 }, start);
     const pathHandle = this.pathInput.handle.bind(this.pathInput);
