@@ -452,6 +452,7 @@ proyectos ni inventar reglas Git para el repositorio del usuario.
 - Nunca crear `.env.local`. Los secretos se obtienen de variables de entorno ya
   configuradas; la configuración solo guarda el nombre de la variable.
 - La API key ingresada en Models vive solo en memoria durante esa ejecución.
+  Si se proporciona, tiene prioridad sobre la variable configurada del proveedor.
 - Las sesiones no guardan cabeceras HTTP ni valores de credenciales.
 
 No habrá configuración ejecutable, evaluación de JavaScript ni comandos para
@@ -469,6 +470,33 @@ en el módulo LLM.
 Un modelo contiene `id` real del servidor, nombre visible, `contextWindow`,
 `maxOutputTokens` y capacidades explícitas: `tools` y `images`. Contexto y
 capacidades son datos configurados, no garantías inferidas del nombre.
+
+### Proveedores precargados y configuración guiada
+
+- Configuración nueva: llama.cpp en `http://127.0.0.1:8080/v1`, sin clave ni
+  modelos inventados, y DeepSeek en `https://api.deepseek.com`, con
+  `DEEPSEEK_API_KEY` como variable sugerida. El default sigue siendo llama.cpp.
+- **Models → Proveedores / Nuevo proveedor** muestra primero esas dos opciones,
+  con los valores personalizados existentes si ya están registradas. Las plantillas
+  faltantes se pueden registrar al guardar; no se reinsertan en disco al leer JSON.
+  Nuevo proveedor ofrece además una configuración manual para otro endpoint.
+- Elegir abre un formulario con clave de sesión/variable, host, puerto y nombre.
+  Guardar llama.cpp/DeepSeek consulta `/models` y abre un selector del catálogo
+  obtenido para ese proveedor. La selección previa se mantiene hasta elegir modelo.
+  Un HTTP401/error/lista vacía conserva el formulario y evita guardar la operación.
+- Mostrar los nombres reales y tomar `context_window`/`input_modalities` cuando
+  el catálogo los publica. Salida inicial: mínimo entre 2048, máximo reportado y
+  contexto menos uno. Si solo hay IDs, usar contexto8192/salida2048 ajustables.
+  Conservar las capacidades y límites de modelos ya configurados por el usuario.
+- Tools de DeepSeek se habilitan según su contrato Chat Completions; imágenes
+  según la metadata. Otros proveedores conservan tools desactivadas inicialmente.
+  No inferir capacidades de nombres ni hardcodear una lista de modelos disponibles.
+- Consulta cancelable con Ctrl+C, timeout y estado visible; sin requests de catálogo
+  al iniciar. JSON/sesiones no contienen claves. [QA](qa/provider-presets.md).
+
+Fuentes oficiales revisadas: [endpoint y autenticación](https://api-docs.deepseek.com/),
+[catálogo y metadata](https://api-docs.deepseek.com/api/list-models/),
+[Chat Completions/tools](https://api-docs.deepseek.com/api/create-chat-completion/).
 
 Se pueden agregar, editar y quitar proveedores/modelos, seleccionar uno para la
 sesión y guardar defaults. El selector muestra proveedor e ID del modelo para
@@ -502,6 +530,14 @@ Ejemplo ilustrativo: los paths y el modelo deben sustituirse por valores reales.
           "capabilities": { "tools": true, "images": false }
         }
       ]
+    },
+    {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "kind": "openai-compatible",
+      "baseUrl": "https://api.deepseek.com",
+      "apiKeyEnv": "DEEPSEEK_API_KEY",
+      "models": []
     }
   ],
   "defaults": {
@@ -513,7 +549,7 @@ Ejemplo ilustrativo: los paths y el modelo deben sustituirse por valores reales.
 }
 ```
 
-La primera configuración crea el proveedor local, pero no inventa un modelo.
+La primera configuración crea los proveedores local y DeepSeek, sin inventar modelos.
 Si `/models` devuelve uno, se puede ofrecer seleccionarlo; si devuelve varios,
 el usuario elige. Si el endpoint no soporta descubrimiento, se registra el ID
 manualmente. El default de proveedor es `llama.cpp` aun antes de elegir modelo.

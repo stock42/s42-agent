@@ -15,19 +15,41 @@ bun run dev
 
 En el primer inicio, **Projects** pide solamente **Name** y **Folder**. El botón
 **Explorar** permite elegir la carpeta navegando el filesystem. Abrir
-**Models → Configurar modelo**: sin un modelo seleccionado, la ventana de chat
-muestra **No hay modelo configurado** y no envía requests.
+**Models → Proveedores** (Ctrl+B) ofrece dos proveedores precargados:
 
-El formulario tiene tres páginas, recorridas con Tab y Siguiente:
+| Proveedor | Endpoint inicial | Credencial |
+| --- | --- | --- |
+| llama.cpp | `http://127.0.0.1:8080/v1` | Sin clave por defecto. |
+| DeepSeek | `https://api.deepseek.com` | API key de sesión o `DEEPSEEK_API_KEY`. |
 
-1. ID real del modelo, nombre y host/URL base, incluyendo `/v1`.
+Elegir el proveedor abre su configuración con host/puerto ya cargados. En
+DeepSeek, ingresar la clave y **Guardar** consulta el catálogo `/models` y abre
+la lista para elegir un modelo con teclado o mouse. No hace falta escribir el ID.
+llama.cpp también consulta su servidor al guardar. El descubrimiento se inicia
+por esa acción, no al arrancar la TUI; la selección anterior se conserva hasta
+elegir un modelo. Un error de conexión/clave queda en el formulario para corregirlo.
+
+**Models → Nuevo proveedor** ofrece esas mismas plantillas y **Otro proveedor**
+para configuración manual. Los registros previos conservan sus endpoints/modelos;
+si falta una plantilla, aparece disponible para registrarla explícitamente.
+Sin un modelo seleccionado, el chat muestra **No hay modelo configurado**.
+
+**Models → Configurar modelo** conserva el formulario manual de tres páginas,
+recorridas con Tab y Siguiente:
+
+1. ID real del modelo, nombre y host/URL base (incluyendo `/v1` si el servidor lo exige).
 2. Puerto, API key para esta ejecución o nombre de su variable de entorno.
 3. Contexto, máximo de salida y `Tools / imágenes`: `sí/no`, `no/no` o `sí/sí`.
 
-El proveedor inicial es `llama.cpp` en `http://127.0.0.1:8080/v1`, sin ID de modelo
-inventado. **Models → Descubrir /models** obtiene IDs, pero las capacidades y el
-contexto se configuran manualmente. Habilitar tools únicamente para un modelo y
-template que las soporten. La API key escrita en el formulario vive en memoria;
+llama.cpp sigue siendo el default. **Models → Descubrir /models** actualiza la
+lista del proveedor activo. El catálogo aporta nombres, contexto y modalidades
+cuando están disponibles; la salida inicial se limita a 2048 tokens o al límite
+menor reportado. DeepSeek admite tools según su API oficial; para llama.cpp y
+otros endpoints, habilitarlas manualmente solo si el modelo/template las soporta.
+Los valores configurados de modelos existentes se conservan al consultar de nuevo.
+[Contrato de descubrimiento DeepSeek](https://api-docs.deepseek.com/api/list-models/).
+La API key escrita en el formulario vive en memoria y tiene prioridad durante
+esa ejecución sobre la variable configurada;
 para reusar credenciales se guarda solo el nombre de una variable de entorno.
 No se crean archivos `.env.local` ni se guardan claves/cabeceras en las sesiones.
 

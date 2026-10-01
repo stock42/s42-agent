@@ -5,6 +5,21 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — DeepSeek y llama.cpp precargados
+
+- Models → Proveedores / Nuevo proveedor ofrece dos presets con host/puerto y
+  credencial sugerida; llama.cpp sigue como default. Configuraciones anteriores
+  conservan sus registros y pueden incorporar las plantillas explícitamente.
+- Configurar DeepSeek/llama.cpp consulta el catálogo y abre la selección del
+  proveedor, sin elegir automáticamente el primer modelo. Nombres/contexto/
+  modalidades de la API, salida inicial acotada y capacidades previas conservadas.
+- Errores HTTP401/conexión dejan el formulario abierto; consulta cancelable y sin
+  requests al iniciar. API key de sesión tiene prioridad y no se guarda en disco.
+- Typecheck y 91 tests fuente correctos; PTY/tmux 80×24 / 60×16, fixtures de
+  catálogo, corrección de clave, cancelación y reapertura. API oficial revisada;
+  DeepSeek real no probado sin credencial. Docs/QA/fase03 actualizadas. Sin builds.
+  Pull fallido por main sin upstream; commit local, sin push.
+
 ### Agregado — Tres paletas configurables
 
 - Ventanas → Paleta de colores: Clásica · QBasic (actual/default), Blanco y negro

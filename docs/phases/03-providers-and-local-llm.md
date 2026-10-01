@@ -33,6 +33,9 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
   CHANGELOG y hacer el commit de cada tarea completada.
 - [x] F03-11. Recibir reasoning_content/reasoning progresivo, exponer snapshots
   de tool calls parciales y conservar razonamiento en desconexión/cancelación.
+- [x] F03-12. Precargar llama.cpp/DeepSeek, ofrecer sus plantillas en configuraciones
+  previas y consultar el catálogo al configurar; selección explícita, metadata,
+  corrección de errores en el formulario y credenciales de sesión sin persistencia.
 
 ## Escenarios de aceptación
 
@@ -60,6 +63,7 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
 | TUI fuente | `bun test tests/app-terminal.test.ts` | Host/puerto/key configurados desde Models; clave en memoria y fuera de config/sesión. |
 | Servidor real | [GLM local](../qa/local-llm.md) | Endpoint del usuario; skill/MCP/read/edit/shell, bun test exit0, reasoning, cancelación y reapertura. |
 | Reasoning / calls progresivas | `bun test tests/reasoning.test.ts` | Ambos campos con UTF-8 fragmentado, snapshots independientes, cancelación/reapertura y reasoning conservado en el request siguiente. [QA](../qa/explorer-and-reasoning.md). |
+| Presets / catálogo guiado | [QA](../qa/provider-presets.md), [capturas](../qa/provider-presets-captures.txt) | Dos proveedores precargados; lista HTTP fixture, Bearer, metadata, HTTP401/reintento, cancelación, prompt en 60×16 y selección persistente. DeepSeek real no probado sin una clave configurada. |
 
 ## Cierre
 

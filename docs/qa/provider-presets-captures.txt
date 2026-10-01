@@ -1,0 +1,113 @@
+=== Proveedores precargados · 80×24 ===
+  Archivo   Projects   Models   MCP   Skills   Ventanas                  Ayuda
+┌───────────────────────────────── s42-agent ──────────────────────────────────┐
+│ No hay modelo configurado. Models → Proveedores                              │
+│ /tmp/s42-provider-preview-dcKQN4                                             │
+│                                                                              │
+│ No hay modelo configurado. Abrí Models → Proveedores.                        │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────── Prompt ───────────────────────────────────┐
+│                                                                 < Enviar >   │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│ INSERT · No hay modelo configurado. Abrí Models → Prove · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────┘
+ Enter Enviar  Esc NORMAL  ^N Panel  ^F Adjuntos  ^Q Salir
+
+=== DeepSeek preconfigurado · 80×24 ===
+  Archivo   Projects   Models   MCP   Skills   Ventanas                  Ayuda
+┌───────────────────────────────── s42-agent ──────────────────────────────────┐
+│ No hay modelo configurado. Models → Proveedores                              │
+│ /tmp/s42-┌──────────────── DeepSeek · configurar ─────────────[X]─┐          │
+│          │ 1/2 · Tab: campo · Esc: cerrar                         │          │
+│ No hay mo│ API key (sesión)                                       │          │
+│          │ Variable API key   DEEPSEEK_API_KEY                    │          │
+│          │ Host / URL base    https://api.deepseek.com            │          │
+│          │                                                        │          │
+│          │                                                        │          │
+│          │                                                        │          │
+│          │ < Anterior > < Siguiente >              < Guardar >    │          │
+│          └────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────── Prompt ───────────────────────────────────┐
+│ Borrador conservado                                             < Enviar >   │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│ INSERT · No hay modelo configurado. Abrí Models → Prove · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────┘
+ Tab Foco  Enter Aceptar  Esc Cerrar  ^Q Salir
+
+=== Modelos retornados por fixture HTTP · 80×24 ===
+  Archivo   Projects   Models   MCP   Skills   Ventanas                  Ayuda
+┌───────────────────────────────── s42-agent ──────────────────────────────────┐
+│ No hay mo┌────────────────── Models · DeepSeek ───────────────[X]─┐          │
+│ /tmp/s42-│┌──────────────────────────────────────────────────────┐│          │
+│          ││DeepSeek · Alpha del catálogo · fixture-alpha         ││          │
+│ No hay mo││DeepSeek · Beta del catálogo · fixture-beta           ││          │
+│          ││                                                      ││          │
+│          ││                                                      ││          │
+│          ││                                                      ││          │
+│          ││                                                      ││          │
+│          ││                                                      ││          │
+│          ││                                                      ││          │
+│          │└──────────────────────────────────────────────────────┘│          │
+│          │   < Elegir >                                           │          │
+│          └────────────────────────────────────────────────────────┘          │
+└───────────                                                          ─────────┘
+┌─────────────────────────────────── Prompt ───────────────────────────────────┐
+│ Borrador conservado                                             < Enviar >   │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│ INSERT · 2 modelos disponibles · elegí uno              · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────┘
+ Tab Foco  Enter Aceptar  Esc Cerrar  ^Q Salir
+
+=== Catálogo fixture y prompt visible · 60×16 ===
+  Archivo  Projects  Models  MCP  Skills  Ventanas   Ayuda
+┌─┌────────────────── Models · DeepSeek ───────────────[X]─┐
+│ │┌──────────────────────────────────────────────────────┐│
+│ ││DeepSeek · Alpha del catálogo · fixture-alpha         ││
+│ ││DeepSeek · Beta del catálogo · fixture-beta           ││
+│ ││                                                      ││
+│ ││                                                      ││
+│ ││                                                      ││
+│ │└──────────────────────────────────────────────────────┘│
+│ │   < Elegir >                                           │
+└─└────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│ Borrador conservado                         < Enviar >   │
+│ INSERT · 2 modelos disponibles · el · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ Tab Foco  Enter Aceptar  Esc Cerrar  ^Q Salir
+
+=== Modelo elegido y borrador conservado · 60×16 ===
+  Archivo  Projects  Models  MCP  Skills  Ventanas   Ayuda
+┌─────────────────────── s42-agent ────────────────────────┐
+│ DeepSeek · fixture-beta · 5c912482                       │
+│ /tmp/s42-provider-preview-dcKQN4                         │
+│                                                          │
+│ DeepSeek · fixture-beta                                  │
+│                                                          │
+│                                                          │
+│                                                          │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│ Borrador conservado                         < Enviar >   │
+│ INSERT · Modelo elegido             · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ Enter Enviar  Esc NORMAL  ^N Panel  ^F Adjuntos  ^Q Salir

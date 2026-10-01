@@ -28,8 +28,15 @@ export function storagePaths(configPath?: string, env = process.env, platform = 
       : platform === "win32" ? join(env.LOCALAPPDATA ?? home, "s42-agent/sessions") : join(base, "sessions") };
 }
 
+export function defaultProviders(): Provider[] {
+  return [
+    { id: "llama.cpp", name: "Local · llama.cpp", kind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", models: [] },
+    { id: "deepseek", name: "DeepSeek", kind: "openai-compatible", baseUrl: "https://api.deepseek.com", apiKeyEnv: "DEEPSEEK_API_KEY", models: [] },
+  ];
+}
+
 export function defaultConfig(): Config {
-  return { version: 1, projects: [], mcpServers:[], skills:[], providers: [{ id: "llama.cpp", name: "Local · llama.cpp", kind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", models: [] }],
+  return { version: 1, projects: [], mcpServers:[], skills:[], providers: defaultProviders(),
     defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto", palette: "qbasic" },
     limits: { maxSteps: 30, shellTimeoutMs: 120000, firstEventMs: 120000, idleMs: 120000 } };
 }

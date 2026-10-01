@@ -21,15 +21,25 @@ export class SSEParser {
 }
 
 export function credential(provider: Provider, sessionKey?: string): string | undefined {
+  if (sessionKey) return sessionKey;
   if (provider.apiKeyEnv) { const key = process.env[provider.apiKeyEnv]; if (!key) throw new Error(`Falta la variable ${provider.apiKeyEnv} para ${provider.name}`); return key; }
-  return sessionKey || undefined;
+  return undefined;
 }
-export async function discoverModels(provider: Provider, key?: string, signal?: AbortSignal): Promise<string[]> {
+export async function discoverModels(provider: Provider, key?: string, signal?: AbortSignal): Promise<Model[]> {
   const response = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/models`, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal: signal ?? AbortSignal.timeout(120000) });
-  if (!response.ok) throw new Error(`Models: HTTP ${response.status}`);
-  const body = await response.json() as { data?: { id?: string }[] };
-  if (!Array.isArray(body.data)) throw new Error("/models no devolvió una lista válida");
-  return body.data.map(m => m.id).filter((id): id is string => typeof id === "string" && id.length > 0);
+  if (!response.ok) throw new Error(`Models: HTTP ${response.status}${response.status === 401 ? " · revisar API key" : ""}`);
+  const body = await response.json() as { data?: { id?: string; name?: string; context_window?: number; max_output_tokens?: number; input_modalities?: string[] }[] };
+  if (!Array.isArray(body?.data)) throw new Error("/models no devolvió una lista válida");
+  const models = new Map<string, Model>();
+  for (const m of body.data) {
+    if (!m || typeof m.id !== "string" || !m.id.trim() || models.has(m.id)) continue;
+    const contextWindow = Number.isSafeInteger(m.context_window) && m.context_window! > 1 ? m.context_window! : 8192;
+    const outputLimit = Number.isSafeInteger(m.max_output_tokens) && m.max_output_tokens! > 0 ? m.max_output_tokens! : 2048;
+    models.set(m.id, { id: m.id, name: typeof m.name === "string" && m.name.trim() ? m.name : m.id,
+      contextWindow, maxOutputTokens: Math.min(2048, outputLimit, contextWindow - 1),
+      capabilities: { tools: provider.id === "deepseek", images: Array.isArray(m.input_modalities) && m.input_modalities.includes("image") } });
+  }
+  return [...models.values()];
 }
 
 export async function complete(options: { provider: Provider; model: Model; messages: Message[]; tools?: ToolDefinition[]; key?: string; signal: AbortSignal;

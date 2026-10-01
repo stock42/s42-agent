@@ -31,6 +31,12 @@ Estado actual: harness desde **`index.ts` raíz**, único entrypoint. `bun run d
 abre proyectos/sesiones persistentes; **Models** configura host, puerto, ID del
 modelo y API key (en memoria o nombre de variable). Sin modelo elegido, el chat
 lo indica y no envía requests. `--demo` conserva el laboratorio sin persistencia.
+**Proveedores / Nuevo proveedor** ofrece llama.cpp y DeepSeek preconfigurados;
+llama.cpp sigue como default. DeepSeek usa `https://api.deepseek.com` y la clave
+de sesión o `DEEPSEEK_API_KEY`. Guardar consulta `/models` y abre el selector;
+los errores quedan en el formulario. No fijar IDs de modelos ni consultar al iniciar.
+Las plantillas también están disponibles en configuraciones anteriores sin
+reemplazar endpoints registrados. Claves de sesión tienen prioridad y no se guardan.
 Respuesta en solo lectura, prompt fijo, streaming/Markdown, cancelación, loop
 read/list/search/write/edit/shell, Vim acotado y adjuntos por rutas ya implementados.
 **Projects** pide solo **Name/Folder**, con selector de carpeta. **Ctrl+E** abre el

@@ -1,6 +1,6 @@
 import { Extensions } from "./ui/extensions.ts";
 import { basename, dirname, resolve, sep } from "node:path";
-import { ConfigStore, normalizeFolder, storagePaths, type Project, type Provider, type Model } from "./storage/config.ts";
+import { ConfigStore, defaultProviders, normalizeFolder, storagePaths, validateConfig, type Project, type Provider, type Model } from "./storage/config.ts";
 import { Session, listSessions } from "./storage/sessions.ts";
 import type { Message, Selection, ToolCall } from "./agent/messages.ts";
 import { createWorkspaceView } from "./ui/workspace.ts";
@@ -44,7 +44,7 @@ export class App {
     }};
     this.view.editorWindow.onLayout = client => { this.view.response.bounds.y = 1; this.view.response.bounds.height = Math.max(1, client.height - 1); this.view.response.bounds.width = Math.max(1, client.width - 2); };
     this.view.editorWindow.onDraw = (canvas, client) => {
-      let context = "No hay modelo configurado. Models → Configurar modelo";
+      let context = "No hay modelo configurado. Models → Proveedores";
       try { const { provider, model } = this.current(); context = `${provider.name} · ${model.id} · ${this.session?.state.id.slice(0, 8) ?? ""}`; } catch {}
       canvas.text(client.x + 1, client.y, context, theme.window, client.width - 2);
     };
@@ -79,7 +79,7 @@ export class App {
         { label: "Agregar modelo", run: () => this.modelForm(true) },
         { label: "Quitar modelo", run: () => this.removeModel() },
         { label: "Proveedores", shortcut: "Ctrl+B", run: () => this.providers() },
-        { label: "Nuevo proveedor", run: () => this.modelForm(true, true) },
+        { label: "Nuevo proveedor", run: () => this.providers(true) },
         { label: "Descubrir /models", run: () => this.run(() => this.discover()) },
         { label: "Guardar default", run: () => this.run(() => this.saveDefault()) },
         { label: "Default del proyecto", run: () => this.run(() => this.saveProjectDefault()) },
@@ -207,10 +207,10 @@ export class App {
     choose(this.desktop, "Sesiones", (await listSessions(this.sessionsPath, project.id)).map(value => ({ label: `${value.title} · ${value.id.slice(0, 8)}`, value })), s => this.run(() => this.switchProject(project, s.id))); }); }
   current(): { provider: Provider; model: Model } {
     const provider = this.store.value.providers.find(p => p.id === this.selection.providerId), model = provider?.models.find(m => m.id === this.selection.modelId);
-    if (!provider || !model) throw new Error("No hay modelo configurado. Abrí Models → Configurar modelo."); return { provider, model };
+    if (!provider || !model) throw new Error("No hay modelo configurado. Abrí Models → Proveedores."); return { provider, model };
   }
   showContext(): void {
-    let selected = "No hay modelo configurado. Abrí Models → Configurar modelo.";
+    let selected = "No hay modelo configurado. Abrí Models → Proveedores.";
     try { const { provider, model } = this.current(); selected = `${provider.name} · ${model.id}${model.capabilities.tools ? "" : " · sin tools"}`; } catch {}
     this.view.response.placeholder = `${this.project?.path ?? "Registrá un proyecto en Projects → Agregar proyecto."}\n\n${selected}`;
     if (!this.session?.state.messages.length && this.status === "Listo") this.status = selected;
@@ -240,19 +240,45 @@ export class App {
   async selectModel(selection: Selection): Promise<void> { this.requireIdle(); const old = this.selection; this.selection = selection;
     try { const {model} = this.current(); if (!model.capabilities.images && hasImages(this.session?.state.messages ?? [])) throw new Error("La sesión contiene imágenes: elegí un modelo con imágenes o creá /new"); await this.session?.append({ type: "selection", selection }); if (this.session) this.session.state.selection = selection; }
     catch (e) { this.selection = old; throw e; } this.status = "Modelo elegido"; this.showContext(); }
-  models(): void { choose(this.desktop, "Models · elegir", this.store.value.providers.flatMap(p => p.models.map(m => ({ label: `${p.name} · ${m.id}`, value: { providerId: p.id, modelId: m.id } }))), s => this.run(() => this.selectModel(s))); }
-  providers(): void { choose(this.desktop, "Proveedores", this.store.value.providers.map(value => ({ label: `${value.name} · ${value.baseUrl}`, value })), p => this.run(async () => {
-    this.requireIdle();
-    if(p.models.length) await this.selectModel({providerId:p.id,modelId:p.models[0]!.id});
-    else {this.selection={providerId:p.id};await this.session?.append({type:"selection",selection:this.selection});if(this.session)this.session.state.selection=this.selection;this.showContext();}
-    this.providerForm(p);
-  })); }
+  models(providerId?: string, ids?: string[]): void {
+    const providers = this.store.value.providers.filter(p => !providerId || p.id === providerId);
+    choose(this.desktop, providerId ? `Models · ${providers[0]?.name}` : "Models · elegir", providers.flatMap(p => p.models.filter(m => !ids || ids.includes(m.id)).map(m => ({
+      label: `${p.name} · ${m.name}${m.name === m.id ? "" : " · " + m.id}`, value: { providerId: p.id, modelId: m.id },
+    }))), s => this.run(() => this.selectModel(s)));
+  }
+  providers(add = false): void {
+    const presets = defaultProviders();
+    const providers = [...presets.map(p => this.store.value.providers.find(saved => saved.id === p.id) ?? p), ...this.store.value.providers.filter(p => !presets.some(preset => preset.id === p.id))];
+    const entries: { label: string; value: Provider | undefined }[] = providers.map(value => ({ label: `${value.name} · ${value.baseUrl}`, value }));
+    if (add) entries.push({ label: "Otro proveedor · configuración manual", value: undefined });
+    choose(this.desktop, add ? "Nuevo proveedor" : "Proveedores", entries, p => this.run(async () => {
+      this.requireIdle(); p ? this.providerForm(p) : this.modelForm(true, true);
+    }));
+  }
   providerForm(provider: Provider): void {
     const url=new URL(provider.baseUrl),port=url.port;url.port="";
-    form(this.desktop,"Proveedor · configurar",[{label:"Nombre",value:provider.name},{label:"Host / URL base",value:url.href.replace(/\/$/,"")},{label:"Puerto",value:port},{label:"Variable API key",value:provider.apiKeyEnv??""}],([name,host,port,env])=>this.change(async()=>{
-      this.requireIdle();const endpoint=new URL(host!);if(port && (!/^\d+$/.test(port)||Number(port)<1||Number(port)>65535))throw new Error("Puerto inválido");endpoint.port=port??"";
-      const next=structuredClone(this.store.value),p=next.providers.find(p=>p.id===provider.id)!;p.name=name!;p.baseUrl=endpoint.href.replace(/\/$/,"");p.apiKeyEnv=env?.trim()||undefined;await this.store.save(next);this.showContext();
-    }));
+    const preset = provider.id === "deepseek" || provider.kind === "llama.cpp";
+    form(this.desktop,`${provider.name} · configurar`,[
+      {label:"API key (sesión)",value:""}, {label:"Variable API key",value:provider.apiKeyEnv??""}, {label:"Host / URL base",value:url.href.replace(/\/$/,"")},
+      {label:"Puerto",value:port}, {label:"Nombre",value:provider.name},
+    ], async ([apiKey,env,host,port,name]) => {
+      let ids: string[] | undefined;
+      await this.change(async()=>{
+        this.requireIdle();const endpoint=new URL(host!);if(port && (!/^\d+$/.test(port)||Number(port)<1||Number(port)>65535))throw new Error("Puerto inválido");endpoint.port=port??"";
+        const next=structuredClone(this.store.value),p=next.providers.find(p=>p.id===provider.id)??structuredClone(provider);
+        p.name=name!;p.baseUrl=endpoint.href.replace(/\/$/,"");p.apiKeyEnv=env?.trim()||undefined;
+        if (!next.providers.some(saved => saved.id === p.id)) next.providers.push(p);
+        // Validate locally before contacting the configured endpoint.
+        validateConfig(next);
+        const sessionKey = apiKey?.trim() || this.keys.get(p.id);
+        if (preset) {
+          const models = await this.providerModels(p, sessionKey); ids = models.map(m => m.id);
+          for (const model of models) if (!p.models.some(saved => saved.id === model.id)) p.models.push(model);
+        }
+        await this.store.save(next); if (apiKey?.trim()) this.keys.set(p.id, apiKey.trim()); this.showContext();
+      });
+      return ids ? () => this.models(provider.id, ids) : undefined;
+    });
   }
   modelForm(add = false, newProvider = false): void {
     if (this.busy) { this.status = "Cancelá el turno antes de configurar modelos"; return; }
@@ -261,7 +287,7 @@ export class App {
     const url = new URL(newProvider ? "http://127.0.0.1:8080/v1" : provider?.baseUrl ?? "http://127.0.0.1:8080/v1"), port = url.port; url.port = "";
     form(this.desktop, "Models · host, puerto y modelo", [
       { label: "ID del modelo", value: model?.id ?? "" }, { label: "Nombre", value: model?.name ?? "" }, { label: "Host / URL base", value: url.href.replace(/\/$/, "") },
-      { label: "Puerto", value: port }, { label: "API key (sesión)", value: "" }, { label: "Variable API key", value: provider?.apiKeyEnv ?? "" },
+      { label: "Puerto", value: port }, { label: "API key (sesión)", value: "" }, { label: "Variable API key", value: newProvider ? "" : provider?.apiKeyEnv ?? "" },
       { label: "Contexto", value: String(model?.contextWindow ?? 8192) }, { label: "Máximo salida", value: String(model?.maxOutputTokens ?? 2048) },
       { label: "Tools / imágenes", value: `${model?.capabilities.tools ? "sí" : "no"}/${model?.capabilities.images ? "sí" : "no"}` },
     ], ([id, name, host, port, apiKey, apiKeyEnv, context, max, caps]) => this.change(async () => {
@@ -287,16 +313,25 @@ export class App {
   removeProvider(): void { choose(this.desktop,"Quitar proveedor",this.store.value.providers.map(value=>({label:value.name,value})),p=>this.run(async()=>{
     this.requireIdle(); const next=structuredClone(this.store.value); next.providers=next.providers.filter(provider=>provider.id!==p.id); await this.store.save(next); this.keys.delete(p.id); this.showContext();
   })); }
+  private async providerModels(provider: Provider, sessionKey?: string): Promise<Model[]> {
+    this.requireIdle();
+    const key=credential(provider,sessionKey ?? this.keys.get(provider.id));
+    if (provider.id === "deepseek" && !key) throw new Error("Ingresá una API key de DeepSeek o su variable de entorno");
+    this.controller=new AbortController();this.busy=true;this.view.send.label="Cancelar";
+    this.status = `Consultando modelos de ${provider.name}…`; this.desktop.invalidate();
+    try {
+      const models = await discoverModels(provider, key, AbortSignal.any([this.controller.signal,AbortSignal.timeout(this.store.value.limits.firstEventMs)]));
+      if (!models.length) throw new Error(`${provider.name}: no hay modelos disponibles`);
+      this.status = `${models.length} modelos disponibles · elegí uno`; return models;
+    } catch (error) { this.status = (error as Error).message; throw error; }
+    finally {this.busy=false;this.controller=undefined;this.view.send.label="Enviar";this.desktop.invalidate();}
+  }
   async discover(): Promise<void> {
     this.requireIdle(); const provider = this.store.value.providers.find(p => p.id === this.selection.providerId); if (!provider) throw new Error("Elegí un proveedor");
-    const key=credential(provider,this.keys.get(provider.id));this.controller=new AbortController();this.busy=true;this.view.send.label="Cancelar";
-    this.status = "Consultando /models…"; this.desktop.invalidate();
-    try {
-    const ids = await discoverModels(provider, key, AbortSignal.any([this.controller.signal,AbortSignal.timeout(this.store.value.limits.firstEventMs)]));
+    const models = await this.providerModels(provider);
     const next = structuredClone(this.store.value), configured = next.providers.find(p => p.id === provider.id)!;
-    for (const id of ids) if (!configured.models.some(m => m.id === id)) configured.models.push({ id, name: id, contextWindow: 8192, maxOutputTokens: 2048, capabilities: { tools: false, images: false } });
-    await this.store.save(next); this.status = "IDs descubiertos; configurá contexto y capacidades en Models"; this.models(); this.desktop.invalidate();
-    } finally {this.busy=false;this.controller=undefined;this.view.send.label="Enviar";this.desktop.invalidate();}
+    for (const model of models) if (!configured.models.some(m => m.id === model.id)) configured.models.push(model);
+    await this.store.save(next); this.models(provider.id, models.map(m => m.id)); this.desktop.invalidate();
   }
   private action(action: Action): void {
     ({projects:()=>this.projects(),models:()=>this.models(),providers:()=>this.providers(),sessions:()=>this.sessions(),attachments:()=>this.attachmentMenu(),explorer:()=>this.explore(),mcp:()=>this.extensions.servers(),skills:()=>this.extensions.skills(),help:()=>this.desktop.onHelp()})[action]();
