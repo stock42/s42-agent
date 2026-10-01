@@ -3,8 +3,8 @@
 Fuente de requisitos: [SPECS.md](../SPECS.md). Fecha: 2026-10-01.
 
 Estado actual: harness Bun/QBasic persistente desde index.ts, respuestas read-only,
-prompt fijo, explorer fuera del proyecto, Models/Projects, MCP y Skills.
-Fases 02/03/07/08 completadas; implementación de 00/01/04/05 disponible con
+prompt fijo, explorer fuera del proyecto, Models/Projects, MCP, Skills y Promptings.
+Fases 02/03/07/08/09 completadas; implementación de 00/01/04/05 disponible con
 validaciones físicas o por SO pendientes. Fase 06 incorpora QA real, rendimiento,
 prueba prolongada y distribución local. [QA integral](../qa/final-validation.md).
 
@@ -21,6 +21,7 @@ de implementación no sustituyen esos criterios de cierre. No hay release public
 | 05 | [Vim y adjuntos](05-vim-and-attachments.md) | 01, 02, 03, 04 | Operación con teclado y archivos arrastrados. | R07, R08 |
 | 07 | [MCP](07-mcp.md) | 02–04 | CRUD, enabled/disabled, tools stdio/HTTP en el loop. | R18 |
 | 08 | [Skills](08-skills.md) | 02, 04 | SKILL.md, carga progresiva y buscador skills.sh. | R19 |
+| 09 | [Promptings](09-promptings.md) | 01–04 | CRUD de plantillas y valores de metavariables al cargar/ejecutar. | R20 |
 | 06 | [Validación y distribución](06-quality-and-binaries.md) | 00–05 | Evidencia integral, mediciones y binarios comprobados. | R01–R17 |
 
 La UI QBasic, el uso de mouse y los componentes visuales están confirmados. El

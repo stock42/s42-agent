@@ -85,6 +85,7 @@ mantiene el laboratorio QBasic. `--demo` abre la demo sin persistencia ni provee
 | Elegir proyecto / modelo / proveedor / sesión | Ctrl+P / Ctrl+O / Ctrl+B / Ctrl+R |
 | Adjuntos | Ctrl+F o Ventanas → Adjuntos |
 | Explorador de archivos | Ctrl+E o Archivo → Explorador de archivos |
+| Biblioteca de promptings | Alt+T o Archivo → Promptings |
 | Cambiar panel | Ctrl+N o clic; Tab en NORMAL cambia prompt/conversación |
 | Foco de controles | Tab / Shift+Tab o clic |
 | Menú | Escape desde NORMAL; desde INSERT pasa primero a NORMAL; Alt+A/P/M/C/S/V/Y o clic |
@@ -96,11 +97,11 @@ mantiene el laboratorio QBasic. `--demo` abre la demo sin persistencia ni provee
 
 Vim arranca en **INSERT**. En NORMAL, el prompt admite `h/j/k/l`, `w/b`, `0/$`,
 `i/a/I/A`, `x`, `dd` y `u`. En la conversación: `j/k`, Ctrl+D/U, `gg/G`.
-Espacio seguido de `p/m/s/e/f/c/k/?` abre proyectos/modelos/sesiones/explorador/adjuntos/MCP/skills/ayuda.
+Espacio seguido de `p/m/s/e/f/c/k/t/?` abre proyectos/modelos/sesiones/explorador/adjuntos/MCP/skills/promptings/ayuda.
 Ayuda permite activar/desactivar Vim; `ui.vimMode` también puede configurarse en JSON.
 
 Comandos: `/help`, `/projects`, `/providers`, `/models`, `/sessions`, `/files`, `/new`,
-`/mcp`, `/skills`, `/skill nombre prompt`, `/attach ruta`, `/detach`, `/quit`. Tab completa comandos y una ruta de `/attach`
+`/mcp`, `/skills`, `/skill nombre prompt`, `/promptings`, `/attach ruta`, `/detach`, `/quit`. Tab completa comandos y una ruta de `/attach`
 con candidato único. /skill se envía como invocación; los demás comandos de la aplicación no se envían al modelo.
 No se asignan acciones a F1–F12.
 
@@ -119,7 +120,37 @@ Bindings opcionales, asociados a acciones conocidas, con colisiones rechazadas:
 ```
 
 Las acciones configurables son `projects`, `models`, `providers`, `sessions`,
-`attachments`, `explorer`, `mcp`, `skills` y `help`. Los atajos de lifecycle/foco/edición permanecen reservados.
+`attachments`, `explorer`, `mcp`, `skills`, `promptings` y `help`. Los atajos de lifecycle/foco/edición permanecen reservados.
+
+## Promptings reutilizables
+
+**Archivo → Promptings**, **Alt+T** o `/promptings` abre la biblioteca. Permite
+crear, ver/editar y eliminar plantillas con nombre y texto multilínea. **Archivo →
+Guardar prompt actual** toma el borrador como texto inicial. Se guardan en
+`promptings` dentro del JSON de configuración y están disponibles en todos los
+proyectos.
+
+```text
+Revisá {{archivo}} en {{lenguaje}}.
+Usá este contexto:
+{{contexto}}
+Incluí {{archivo}} en el resumen.
+```
+
+Elegí **Cargar en el editor** para revisar el resultado o **Ejecutar con modelo
+actual** para enviarlo. La TUI pregunta por cada metavariable distinta, en orden
+de aparición; **Anterior/Siguiente** conservan los valores. `archivo` se pregunta
+una sola vez en el ejemplo. Valores vacíos y multilínea están permitidos:
+**Shift+Enter** agrega una línea, **Enter** avanza o aplica y **Esc** cancela sin
+cambiar el borrador. En el editor de plantillas, Enter en Nombre pasa al texto;
+Enter en Texto guarda. Tab y mouse recorren los controles.
+
+Los nombres de metavariables usan letras ASCII, números y `_`, comenzando con
+letra o `_`; también se acepta `{{ archivo }}`. La sustitución es literal y de una
+sola pasada: pegar `$&` o `{{otra}}` como valor los conserva. La plantilla mantiene
+sus metavariables; los valores quedan en el borrador/historial habitual de la
+sesión. Si falta un modelo al ejecutar, el texto completo permanece en el prompt.
+[Validación y capturas de terminal](docs/qa/promptings.md).
 
 ## Explorador y chat
 

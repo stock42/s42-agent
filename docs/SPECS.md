@@ -58,6 +58,7 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R17 | Viabilidad de la TUI primero | Demo de componentes ejecutable y validada antes de integrar proveedores o tools del agente. |
 | R18 | MCP configurable | CRUD de servidores stdio/HTTP, enabled/disabled, tools visibles y cancelables en el loop. |
 | R19 | Skills | Registro global/proyecto de SKILL.md, activación, carga progresiva, búsqueda e instalación desde skills.sh. |
+| R20 | Promptings reutilizables | CRUD con nombre/texto multilínea y preguntas por cada `{{metavar_name}}` al cargar o ejecutar con el modelo actual. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
@@ -136,6 +137,7 @@ de `src/ui/components/`. TUI, agente, LLM y persistencia están implementados.
 index.ts                   argumentos y arranque de demo/harness
 src/
   app.ts                   composición del harness y configuración TUI
+  prompts.ts               extracción y sustitución literal de metavariables
   ui/
     terminal.ts            lifecycle y frames por demanda
     input-parser.ts        teclado, paste y mouse
@@ -143,6 +145,7 @@ src/
     theme.ts               estilos QBasic y paletas clásica/grises/verdes
     desktop.ts             foco, capas y captura
     demo.ts                composición de la demo inicial
+    promptings.ts           CRUD y preguntas de metavariables
     components/            window, button, input, text-area, select-list, menu, file-explorer
   agent/                   loop, mensajes, tools y adjuntos
   llm/                     Chat Completions y SSE
@@ -383,6 +386,7 @@ Al salir, restaurar la pila Kitty y el valor inicial de modifyOtherKeys.
 | Global | Ctrl+R | Seleccionar una sesión del proyecto activo. |
 | Global | Ctrl+F | Agregar o quitar adjuntos por ruta. |
 | Global | Ctrl+E | Abrir explorador de archivos y carpetas, incluyendo fuera del proyecto. |
+| Global | Alt+T | Abrir biblioteca de promptings; también Archivo → Promptings. |
 | INSERT | Escape | Entrar a NORMAL cuando Vim está habilitado. |
 | INSERT | Enter | Enviar el borrador; si acaba de reconocer rutas sin marcadores, primero adjuntarlas. |
 | INSERT | Shift+Enter | Insertar salto de línea; Ctrl+J como alternativa de compatibilidad. |
@@ -394,7 +398,7 @@ Al salir, restaurar la pila Kitty y el valor inicial de modifyOtherKeys.
 | NORMAL | Tab | Cambiar foco entre editor y conversación. |
 | NORMAL, conversación | j / k / Ctrl+D / Ctrl+U | Desplazar una línea o media pantalla. |
 | NORMAL, conversación | gg / G | Ir al inicio/final. |
-| NORMAL | Espacio, p / m / s / e / f / ? | Proyectos / modelos / sesiones / explorador / adjuntos / ayuda. |
+| NORMAL | Espacio, p / m / s / e / f / c / k / t / ? | Proyectos / modelos / sesiones / explorador / adjuntos / MCP / skills / promptings / ayuda. |
 | Selector | j / k o flechas, Enter, Escape | Navegar, elegir, cerrar. |
 | Conversación | PageUp / PageDown | Desplazar sin modificar el borrador. |
 
@@ -407,7 +411,7 @@ se asocian a acciones conocidas y se valida que no colisionen en el mismo modo.
 No depender de Ctrl+M, que muchos terminales transmiten igual que Enter.
 
 Comandos de la aplicación: `/help`, `/projects`, `/providers`, `/models`,
-`/sessions`, `/files`, `/new`, `/attach`, `/detach`, `/quit`. Sus nombres no se envían al
+`/sessions`, `/files`, `/new`, `/mcp`, `/skills`, `/promptings`, `/attach`, `/detach`, `/quit`. Sus nombres no se envían al
 modelo cuando se usan como comandos de la TUI.
 
 ## 6. Proyectos
@@ -540,6 +544,7 @@ Ejemplo ilustrativo: los paths y el modelo deben sustituirse por valores reales.
       "models": []
     }
   ],
+  "promptings": [],
   "defaults": {
     "projectId": "s42-agent",
     "providerId": "llama.cpp",
@@ -1010,3 +1015,34 @@ se consultan por enlace y registro local. [Agent Skills](https://agentskills.io/
 Distribución local de esta entrega: [manifest](qa/build-targets.json), Linux x64
 [smoke](qa/binary-smoke.json) y comparación de flags en QA integral. Sin release
 remota; cross-compilación no declara compatibilidad runtime.
+
+## 18. Promptings reutilizables (alcance agregado por el usuario)
+
+Biblioteca global en el JSON de configuración: `promptings: Prompting[]`, con
+`Prompting = { id: string; name: string; text: string }`. Nombre y cuerpo no
+vacíos, ID estable y único; configuraciones anteriores sin el campo usan `[]`.
+El registro se guarda por el mecanismo atómico existente, sin archivos nuevos
+de configuración ni separación artificial por proveedor/proyecto.
+
+- **Archivo → Promptings**, Alt+T, /promptings y NORMAL Espacio+t abren el CRUD.
+  **Guardar prompt actual** crea una plantilla desde el borrador. Formulario
+  con nombre y editor multilínea; lectura/edición y eliminación desde el listado.
+- Texto con `{{metavar_name}}`: letras ASCII, números y `_`, inicial letra o `_`;
+  espacios dentro de las llaves permitidos. Otras expresiones con llaves se
+  conservan como texto literal. Preguntar nombres únicos en orden de aparición.
+- Cada valor tiene editor multilínea y permite vacío; Anterior/Siguiente conserva
+  respuestas. Enter avanza/aplica, Shift+Enter inserta línea; Esc cancela sin
+  modificar el borrador. El prompt fijo permanece visible durante los modales.
+- Sustituir una sola vez y literalmente, sin evaluar código ni expandir los
+  placeholders que vengan dentro de un valor. Repeticiones comparten respuesta.
+  Guardar siempre la plantilla original; los valores resueltos pasan al draft y
+  al historial existente de la sesión cuando se usan.
+- **Cargar en el editor** deja revisar el texto resuelto, en INSERT y con foco
+  en el prompt. **Ejecutar con modelo actual** usa la misma sesión/proyecto y
+  pipeline de streaming/tools; envía el contenido como texto, incluidos prefijos
+  de comando o ruta. Falta de modelo deja el texto completo para corregir la
+  configuración. Turno activo bloquea reemplazo del borrador.
+
+Implementación: `src/prompts.ts`, `src/ui/promptings.ts`, configuración y App.
+[Fase09](phases/09-promptings.md), [QA](qa/promptings.md): tests fuente, payload
+SSE de fixture y capturas tmux; sin pruebas adicionales de binarios o mouse físico.

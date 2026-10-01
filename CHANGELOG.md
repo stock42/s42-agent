@@ -5,6 +5,22 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — CRUD de promptings con metavariables
+
+- Archivo → Promptings, Alt+T, /promptings y NORMAL Espacio+t: biblioteca global
+  persistente con nombre/texto multilínea, alta, lectura/edición y eliminación.
+  Guardar prompt actual reutiliza el borrador como plantilla.
+- Cargar o ejecutar pregunta cada `{{metavar_name}}` única en orden, admite
+  valores vacíos/multilínea, anterior/siguiente, Enter para avanzar/aplicar y
+  Shift+Enter para línea. Cancelar conserva el draft; la plantilla no cambia.
+- Sustitución literal de una pasada; ejecución con proyecto/modelo actuales,
+  reasoning/respuestas en chat y texto completo conservado si falta modelo.
+  Turnos activos no permiten reemplazar el borrador. Config anterior compatible.
+- Typecheck y 96 tests fuente correctos (19 archivos, 1085 assertions), PTY con
+  payload/SSE fixture, CRUD/reapertura y capturas tmux 80×24/60×16 inspeccionadas.
+  Corregida selección inicial de la biblioteca. Fase09, SPECS, README, AGENTS y
+  QA actualizados. Sin builds. Pull fallido por main sin upstream; commit local.
+
 ### Agregado — DeepSeek y llama.cpp precargados
 
 - Models → Proveedores / Nuevo proveedor ofrece dos presets con host/puerto y

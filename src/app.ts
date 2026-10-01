@@ -1,4 +1,5 @@
 import { Extensions } from "./ui/extensions.ts";
+import { Promptings } from "./ui/promptings.ts";
 import { basename, dirname, resolve, sep } from "node:path";
 import { ConfigStore, defaultProviders, normalizeFolder, storagePaths, validateConfig, type Project, type Provider, type Model } from "./storage/config.ts";
 import { Session, listSessions } from "./storage/sessions.ts";
@@ -28,6 +29,7 @@ export class App {
   readonly keys = new Map<string, string>();
   attachments: Attachment[] = [];
   readonly extensions:Extensions;
+  readonly promptings: Promptings;
   mode: "INSERT" | "NORMAL" = "INSERT";
   private pending = "";
   private pasting = false;
@@ -60,11 +62,16 @@ export class App {
     };
     const demo = createDemoPanels(this.desktop);
     this.extensions=new Extensions({desktop:this.desktop,store:this.store,cwd:this.cwd,project:()=>this.project,idle:()=>this.requireIdle(),change:task=>this.change(async()=>{this.requireIdle();await task();}),run:task=>this.run(task),task:(label,operation)=>this.task(label,operation),status:text=>{if(text.startsWith("/skill ")){this.view.prompt.setValue(text+" ");this.desktop.focus(this.view.promptWindow);}else this.status=text;this.desktop.invalidate();}});
+    this.promptings = new Promptings({ desktop: this.desktop, store: this.store, idle: () => this.requireIdle(),
+      change: work => this.change(work), run: work => this.run(work), load: (text, execute) => this.loadPrompting(text, execute),
+      status: text => { this.status = text; this.desktop.invalidate(); } });
     this.desktop.menu.menus.splice(0, this.desktop.menu.menus.length,
       { label: "Archivo", items: [
         { label: "Explorador de archivos", run: () => this.explore() },
         { label: "Nueva sesión", run: () => this.run(() => this.newSession()) },
         { label: "Sesiones", shortcut: "Ctrl+R", run: () => this.sessions() },
+        { label: "Promptings", run: () => this.promptings.library() },
+        { label: "Guardar prompt actual", run: () => this.promptings.editor(undefined, prompt.value) },
         { label: "Salir", shortcut: "Ctrl+Q", run: () => this.desktop.onExit() },
       ] },
       { label: "Projects", hotkey: "p", items: [
@@ -97,7 +104,7 @@ export class App {
       ] },
       { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", run: () => this.desktop.onHelp() }, {label:"Activar / desactivar Vim",run:()=>this.run(async()=>{ const next=structuredClone(this.store.value); next.ui.vimMode=!next.ui.vimMode; await this.store.save(next); this.mode="INSERT"; this.pending="";this.status=`Vim ${next.ui.vimMode ? "activado" : "desactivado"}`; })}] },
     );
-    const actionLabels:Record<Action,string>={projects:"Elegir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",explorer:"Explorador de archivos",mcp:"Servidores / CRUD",skills:"Skills registradas",help:"Atajos y mouse"};
+    const actionLabels:Record<Action,string>={projects:"Elegir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",explorer:"Explorador de archivos",mcp:"Servidores / CRUD",skills:"Skills registradas",promptings:"Promptings",help:"Atajos y mouse"};
     for(const menu of this.desktop.menu.menus) for(const item of menu.items) {
       const action=(Object.keys(actionLabels) as Action[]).find(action=>actionLabels[action]===item.label);if(action)item.shortcut=this.bindingLabel(action);
     }
@@ -106,6 +113,7 @@ export class App {
       "Esc: INSERT → NORMAL → menú; modal: cerrar", "NORMAL: h/j/k/l w/b 0/$ · i/a/I/A · x dd u", "Conversación: j/k Ctrl+D/U gg/G; solo lectura",
       ...Object.entries(bindings(this.store.value.ui.bindings).normal).map(([action,key])=>`${key}: ${action}`), "Ctrl+N: cambiar panel",
       "Comandos: /help /projects /models /providers", "/sessions /files /new /attach ruta /detach /quit", "/mcp /skills /skill nombre prompt · Alt+C MCP · Alt+S Skills",
+      "/promptings: biblioteca · Archivo: guardar prompt actual",
     ]);
     this.desktop.onShortcut = event => {
       if (event.type !== "key") return false;
@@ -117,7 +125,7 @@ export class App {
         this.desktop.focus(this.desktop.active === promptWindow ? this.view.editorWindow : promptWindow); promptWindow.focusedId = prompt.id; this.pending = ""; return true;
       }
       if(event.key==="tab" && this.desktop.active===promptWindow && promptWindow.focusedId===prompt.id && this.mode==="INSERT") {
-        const text=prompt.value, commands=["/help","/projects","/providers","/models","/sessions","/files","/mcp","/skills","/skill","/new","/attach","/detach","/quit"];
+        const text=prompt.value, commands=["/help","/projects","/providers","/models","/sessions","/files","/mcp","/skills","/skill","/promptings","/new","/attach","/detach","/quit"];
         if(/^\/[a-z]*$/.test(text)) {const matches=commands.filter(c=>c.startsWith(text));if(matches.length){prompt.setValue(matches[0]!);return true;}}
         if(text.startsWith("/attach ")) {this.run(async()=>{const raw=text.slice(8),path=resolve(this.project?.path??this.cwd,raw);const entries=await readdir(dirname(path),{withFileTypes:true});const prefix=basename(path);const candidates=entries.filter(e=>e.name.startsWith(prefix));
           if(candidates.length===1) prompt.setValue(`/attach ${JSON.stringify((raw.slice(0,raw.length-prefix.length)+candidates[0]!.name)+(candidates[0]!.isDirectory()?sep:""))}`);
@@ -163,6 +171,14 @@ export class App {
   private requireIdle(): void { if (this.busy) throw new Error("Hay un turno activo: cancelalo antes de cambiar de contexto"); }
   private async saveDraft(): Promise<void> {
     if (this.session) await this.session.append({ type: "draft", text: this.view.prompt.value, attachments: this.attachments.map(a => a.path) });
+  }
+  private async loadPrompting(text: string, execute: boolean): Promise<void> {
+    this.requireIdle();
+    this.view.prompt.setValue(text); this.mode = "INSERT"; this.pending = "";
+    this.desktop.focus(this.view.promptWindow); this.view.promptWindow.focusedId = this.view.prompt.id;
+    this.status = "Prompting cargado · Enter enviar"; this.desktop.invalidate();
+    await this.saveDraft();
+    if (execute) await this.submit(true);
   }
   async switchProject(project: Project, id?: string): Promise<void> {
     this.requireIdle(); await normalizeFolder(project.path, this.cwd);
@@ -334,7 +350,7 @@ export class App {
     await this.store.save(next); this.models(provider.id, models.map(m => m.id)); this.desktop.invalidate();
   }
   private action(action: Action): void {
-    ({projects:()=>this.projects(),models:()=>this.models(),providers:()=>this.providers(),sessions:()=>this.sessions(),attachments:()=>this.attachmentMenu(),explorer:()=>this.explore(),mcp:()=>this.extensions.servers(),skills:()=>this.extensions.skills(),help:()=>this.desktop.onHelp()})[action]();
+    ({projects:()=>this.projects(),models:()=>this.models(),providers:()=>this.providers(),sessions:()=>this.sessions(),attachments:()=>this.attachmentMenu(),explorer:()=>this.explore(),mcp:()=>this.extensions.servers(),skills:()=>this.extensions.skills(),promptings:()=>this.promptings.library(),help:()=>this.desktop.onHelp()})[action]();
   }
   explore(): void {
     if(this.desktop.modal)return;
@@ -398,20 +414,20 @@ export class App {
   }
   cancel(): void { this.controller?.abort(new Error("Turno cancelado; los efectos ya realizados se conservan")); }
   private async message(message: Message): Promise<void> { await this.session!.append({ type: "message", message }); this.session!.state.messages.push(message); }
-  async submit(): Promise<void> {
+  async submit(literal = false): Promise<void> {
     const text = this.view.prompt.value;
-    if (text.startsWith("/attach ")) {
+    if (!literal && text.startsWith("/attach ")) {
       const raw=text.slice(8), paths=await pastedPaths(raw,this.project?.path ?? this.cwd) ?? parsePaths(raw); if(!paths) throw new Error("Ruta inválida"); await this.attach(paths); this.view.prompt.setValue(""); return;
     }
-    const dropped=this.project && await pastedPaths(text,this.project.path);
+    const dropped=!literal && this.project && await pastedPaths(text,this.project.path);
     if(dropped) {this.requireIdle();await this.attach(dropped);this.view.prompt.setValue("");await this.saveDraft();return;}
-    if(text.startsWith("/skill ")){
+    if(!literal && text.startsWith("/skill ")){
       const name=text.trim().split(/\s+/)[1];const skill=this.store.value.skills.find(s=>s.name===name && s.enabled && (!s.projectId||s.projectId===this.project?.id));
       if(!skill)throw new Error("Skill no habilitada para este proyecto. Abrí Skills.");
       if(text.trim()===`/skill ${name}`){this.view.prompt.setValue(`/skill ${name} `);this.status="Agregá el pedido y pulsá Enter";return;}
     }
-    if (text.startsWith("/") && !text.startsWith("/skill ")) {
-      const commands: Record<string, () => void> = { "/mcp":()=>this.extensions.servers(),"/skills":()=>this.extensions.skills(),"/projects": () => this.projects(), "/models": () => this.models(), "/providers": () => this.providers(), "/sessions": () => this.sessions(), "/files":()=>this.explore(), "/new": () => this.run(() => this.newSession()), "/help": () => this.desktop.onHelp(), "/attach":()=>this.attachmentMenu(), "/detach":()=>this.detach(), "/quit": () => this.desktop.onExit() };
+    if (!literal && text.startsWith("/") && !text.startsWith("/skill ")) {
+      const commands: Record<string, () => void> = { "/promptings":()=>this.promptings.library(), "/mcp":()=>this.extensions.servers(),"/skills":()=>this.extensions.skills(),"/projects": () => this.projects(), "/models": () => this.models(), "/providers": () => this.providers(), "/sessions": () => this.sessions(), "/files":()=>this.explore(), "/new": () => this.run(() => this.newSession()), "/help": () => this.desktop.onHelp(), "/attach":()=>this.attachmentMenu(), "/detach":()=>this.detach(), "/quit": () => this.desktop.onExit() };
       const action = commands[text.trim()]; if (!action) throw new Error("Comando desconocido. /help"); this.view.prompt.setValue(""); action(); return;
     }
     this.requireIdle(); if (!text.trim() && !this.attachments.length) return;

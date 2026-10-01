@@ -48,13 +48,22 @@ prueba de conexión y tools en el loop. **Skills** (Alt+S, /skills) registra SKI
 scopes global/proyecto, activación, búsqueda skills.sh e instalación desde GitHub
 (Git externo). /skill nombre prompt invoca instrucciones; cargar no ejecuta scripts.
 Módulos nuevos: `src/mcp/`, `src/skills/`, `src/ui/extensions.ts`.
+**Archivo → Promptings** (Alt+T, /promptings, NORMAL Espacio+t) administra
+plantillas globales con nombre/texto multilínea en `config.promptings`.
+Guardar prompt actual toma el borrador. Cargar/ejecutar pregunta una vez por
+cada `{{metavar_name}}`, con valores multilínea, anterior/siguiente y cancelación
+sin modificar el draft. Sustitución literal de una pasada; la plantilla conserva
+sus variables. Enter avanza/aplica; Shift+Enter agrega línea. Cargar permite
+revisar; ejecutar usa proyecto/modelo/sesión actuales y muestra su respuesta en
+el chat. Sin modelo, conserva el prompt resuelto. `src/prompts.ts` y
+`src/ui/promptings.ts`; [QA](docs/qa/promptings.md).
 Módulos: `src/app.ts`, `src/ui/`, `src/agent/`, `src/llm/` y `src/storage/`.
 **Ventanas → Paleta de colores** cambia toda la TUI en vivo y guarda `ui.palette`:
 `qbasic` (actual/default), `grayscale` (escala de grises) o `green` (gama de verdes).
 RGB y fallback ANSI16; `NO_COLOR`/`--no-color`/`ui.color: "never"` siguen vigentes.
 Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
-Fases 02/03/07/08 completadas. 00/01/04/05 tienen implementación y QA fuente,
+Fases 02/03/07/08/09 completadas. 00/01/04/05 tienen implementación y QA fuente,
 con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
 estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
 PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.

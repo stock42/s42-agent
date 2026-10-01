@@ -10,9 +10,10 @@ export interface Model { id: string; name: string; contextWindow: number; maxOut
 export interface Provider { id: string; name: string; kind: "llama.cpp" | "openai-compatible"; baseUrl: string; apiKeyEnv?: string; models: Model[] }
 export interface McpServer { id:string; name:string; enabled:boolean; transport:"stdio"|"http"; command?:string; args?:string[]; cwd?:string; envRefs?:Record<string,string>; url?:string; apiKeyEnv?:string }
 export interface Skill { id:string; name:string; path:string; enabled:boolean; projectId?:string; source?:string }
+export interface Prompting { id: string; name: string; text: string }
 export interface Config {
   version: 1; projects: Project[]; providers: Provider[];
-  mcpServers: McpServer[]; skills: Skill[];
+  mcpServers: McpServer[]; skills: Skill[]; promptings: Prompting[];
   defaults: Selection & { projectId?: string }; lastProjectId?: string;
   ui: { vimMode: boolean; color: "auto" | "never"; palette: PaletteId; bindings?: Bindings };
   limits: { maxSteps: number; shellTimeoutMs: number; firstEventMs: number; idleMs: number };
@@ -36,7 +37,7 @@ export function defaultProviders(): Provider[] {
 }
 
 export function defaultConfig(): Config {
-  return { version: 1, projects: [], mcpServers:[], skills:[], providers: defaultProviders(),
+  return { version: 1, projects: [], mcpServers:[], skills:[], promptings: [], providers: defaultProviders(),
     defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto", palette: "qbasic" },
     limits: { maxSteps: 30, shellTimeoutMs: 120000, firstEventMs: 120000, idleMs: 120000 } };
 }
@@ -74,6 +75,9 @@ export function validateConfig(value: unknown): Config {
   }
   for(const skill of c.skills)if(!skill || !text(skill.id)||!text(skill.name)||!text(skill.path)||!isAbsolute(skill.path)||typeof skill.enabled!=="boolean"||(skill.projectId!==undefined&&!c.projects.some(p=>p.id===skill.projectId)))throw new Error("Skill inválida");
   if(!unique(c.mcpServers.map(s=>s.id))||!unique(c.skills.map(s=>s.id))||!unique(c.skills.map(s=>s.path)))throw new Error("MCP/skills duplicados");
+  if (c.promptings === undefined) c.promptings = [];
+  if (!Array.isArray(c.promptings) || c.promptings.some(p => !p || !text(p.id) || !text(p.name) || !text(p.text))) throw new Error("Prompting inválido: requiere id, name y text");
+  if (!unique(c.promptings.map(p => p.id))) throw new Error("IDs de promptings duplicados");
   c.limits ??= defaultConfig().limits;
   if (![c.limits.maxSteps, c.limits.shellTimeoutMs, c.limits.firstEventMs, c.limits.idleMs].every(positive)) throw new Error("Límites inválidos en config");
   bindings(c.ui.bindings);
