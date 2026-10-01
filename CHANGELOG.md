@@ -5,6 +5,17 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Completado — Ensayo prolongado de estabilidad
+
+- Soak real de 30 minutos: 1800.009 s, 60 ciclos (20 completos, 20 cancelados
+  parcialmente y 20 HTTP503), resize/explorador/nueva sesión y exit0. RSS inicial
+  58.08 MiB, final 61.44 MiB, máximo 63.61 MiB; sin GC forzado.
+- Se cierra F06-03 con evidencia; se identifica que el proceso core arrancó antes
+  de integrar MCP/skills, validadas por separado. Contador etiquetado como chunks
+  PTY para no confundirlo con FPS. No se extrapola a mouse/drop ni otros SO.
+- Typecheck y documentos conciliados. Commit local tras pull fallido por main
+  sin upstream. QA externa pendiente solo en los casos expresamente indicados.
+
 ### Completado — QA local, rendimiento y targets
 
 - Suite final fuente: 81 tests, 741 assertions, 16 archivos, cero fallas;

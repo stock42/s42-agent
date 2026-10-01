@@ -28,7 +28,10 @@ cancelación, resize a 60×16 y cierre. Restauración de cursor/mouse/paste en 5
 sin error. Directorio protegido produjo EACCES. Descendientes shell/stdio Linux
 comprobados por bun:test; fallas HTTP, stream truncado y recuperación cubiertos.
 
-La [prueba prolongada](tui-soak.json) se completa solo después de 30 min reales.
+La [prueba prolongada](tui-soak.json) completó **1800.009 s, 60 ciclos y exit0**:
+20 respuestas completas, 20 cancelaciones parciales, 20 errores HTTP503. RSS
+58.08 → 61.44 MiB; máximo 63.61 MiB, dentro del objetivo de 100 MiB. Se registra
+la variación observada sin afirmar ausencia de fugas para duraciones mayores.
 Su proceso fuente se inició antes de incorporar menús/loop MCP y skills: cubre el
 núcleo TUI/sesión/stream/cancelación/resize. Las extensiones se validaron luego con
 fixtures, GLM y smoke del binario. No extender el resultado del soak a capacidades

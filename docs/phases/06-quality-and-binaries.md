@@ -18,7 +18,7 @@ ejecutados en las plataformas que se declaren soportadas.
   `bun:test`; distinguir casos reales, fixtures, skips y fallas.
 - [x] F06-02. Completar el recorrido fixture de dos proyectos: seleccionar modelo, adjuntar,
   solicitar una edición, verificarla, cancelar otro turno, cerrar y reanudar.
-- [ ] F06-03. Ejecutar 50 ciclos de apertura/cancelación/cierre, una sesión fixture
+- [x] F06-03. Ejecutar 50 ciclos de apertura/cancelación/cierre, una sesión fixture
   de 30 min y fallas de red, disco, resize y comandos con descendientes.
 - [x] F06-04. Crear mediciones Bun para inicio, latencia de input/frames, memoria
   idle y reanudación; usar los fixtures y objetivos de SPECS §12.
@@ -85,4 +85,6 @@ hay equipos disponibles, dejar esa tarea pendiente y declarar el soporte parcial
 Fuente final: suite completa y typecheck; [QA integral](../qa/final-validation.md).
 F06-07/08 conservan pendiente la ejecución en otros SO/arquitecturas y el mouse/
 drop desde el SO. No hay superficies nativas de computador habilitadas para ese
-caso en esta sesión. F06-03 se cierra solo al terminar los 30 min reales.
+caso en esta sesión. F06-03 completada: 1800.009 s, 60 ciclos y exit0; RSS máximo 63.61 MiB.
+Ver [soak](../qa/tui-soak.json) y [stress](../qa/tui-stress.json). Núcleo TUI
+iniciado antes de las extensiones; MCP/skills tienen QA independiente.

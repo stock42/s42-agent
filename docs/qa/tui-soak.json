@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-10-01T16:23:52.169Z",
+  "endedAt": "2026-10-01T16:53:52.178Z",
+  "durationSeconds": 1800.009,
+  "cycles": 60,
+  "requests": 60,
+  "exitCode": 0,
+  "rssMiB": {
+    "first": 58.078125,
+    "last": 61.44140625,
+    "max": 63.60546875
+  },
+  "mode": "Bun source in PTY; 80x24/60x16; complete/partial-cancel/HTTP503; explorer modal; new sessions",
+  "physicalMouse": false,
+  "ptyChunks": 322,
+  "scopeNote": "Core TUI/session/stream/cancel/resize source process started before MCP/Skills integration. Extensions validated separately with fixtures, real GLM and native binary smoke.",
+  "fixtureCases": {
+    "completed": 20,
+    "partialCancelled": 20,
+    "http503": 20
+  }
+}
