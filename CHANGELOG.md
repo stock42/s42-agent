@@ -5,6 +5,25 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Instaladores y compilados para Windows, Linux y macOS
+
+- README inglés/español con selector de idioma, imágenes nuevas de campaña,
+  un comando por SO, instalación de Bun 1.4.2, clonación y ejecución/build.
+  Distinguen Bun requerido para fuente de runtime incluido en el binario.
+- install.sh/install.ps1 detectan x64/ARM64, comprueban SHA-256/versión e
+  instalan sin admin con PATH; instalación desde dist y opción de no modificar
+  perfiles para QA. URLs remotas identificadas como pendientes de publicación.
+- build:release genera seis binarios, incluido Windows ARM64, checksums,
+  manifiestos/instaladores y paquete gzip nativo con doce archivos en dist/.
+  Bun Shell para builds y Bun.Archive con bytes explícitos; paquete inspeccionado
+  con sus seis tamaños/hashes y metadata. Guía/metadata de publicación actualizadas.
+- Typecheck y frozen install correctos; suite aislada 177 pass/0 fail. Cinco
+  tests nuevos de instalador, bootstrap HTTP con binario real y CLI local probados.
+  Smoke Linux x64 fuera del checkout y sin Bun/Node en PATH correcto; fixture
+  HTTP actualizado para GET de metadata. PowerShell parseado en Linux.
+- Runtime Windows/macOS/ARM64 pendiente. Sin benchmark nuevo, push o release;
+  pull correcto y edición ajena de final-validation.md conservada fuera del commit.
+
 ### Agregado — Campaña comercial con referencias de la TUI real
 
 - Diez nuevas piezas image_gen, cinco en español y cinco en inglés, PNG RGB

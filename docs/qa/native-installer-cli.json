@@ -1,0 +1,13 @@
+{
+  "platform": "linux",
+  "arch": "x64",
+  "version": "0.1.0",
+  "localInstaller": true,
+  "installedBinary": "/tmp/s42-native-install-UIJNNE/bin/s42-agent",
+  "headlessCLI": true,
+  "requests": 2,
+  "writtenFile": true,
+  "PATH": "/nonexistent",
+  "fixture": true,
+  "personalConfigChanged": false
+}

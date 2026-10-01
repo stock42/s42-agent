@@ -5,7 +5,9 @@
 Desarrollado con TypeScript y Bun. Una terminal con ventanas, mouse, proyectos
 en pestañas y soporte para modelos locales. Open source bajo [licencia MIT](LICENSE).
 
-[English](README.md) · [Manual de uso](docs/USAGE.es.md) ·
+**[English](README.md)** · **Español**
+
+[Instalación](#instalación) · [Imágenes comerciales](#imágenes-promocionales) · [Manual de uso](docs/USAGE.es.md) ·
 [Tools](docs/TOOLS.md) · [Contribuir](CONTRIBUTING.es.md)
 
 <img src="screenshots/32-spanish-gruvbox.jpg" alt="S42 Agent ejecutándose: pestañas de proyecto y archivo, TypeScript con números de línea, sintaxis coloreada y prompt fijo" width="960">
@@ -76,10 +78,115 @@ Las plantillas y Web Playground son ejemplos para las capturas. El chat usa un m
 
 </details>
 
-## Empezar
+## Instalación
 
-Necesitás **Bun 1.4.2** y un terminal ANSI de al menos **60×16** celdas;
-se recomienda 80×24 o más.
+Usá un terminal ANSI de al menos **60×16** celdas; se recomienda 80×24 o más.
+El agente compilado incluye el runtime de Bun: podés instalarlo y ejecutarlo
+sin instalar Bun por separado. El servidor/modelo LLM y los programas externos
+usados por shell/MCP se configuran aparte.
+[Ejecutables independientes de Bun](https://bun.com/docs/bundler/executables).
+
+**Estado de publicación:** los instaladores y seis binarios están preparados
+localmente. Los comandos con URLs públicas funcionarán cuando se publique este
+commit y los assets de la release **v0.1.0** en GitHub. Ya podés instalar los
+compilados locales con los comandos que aparecen debajo de la tabla.
+
+### Linux · un comando
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/stock42/s42-agent/main/install.sh | bash
+```
+
+### macOS · un comando
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/stock42/s42-agent/main/install.sh | bash
+```
+
+### Windows · un comando en PowerShell
+
+```powershell
+irm https://raw.githubusercontent.com/stock42/s42-agent/main/install.ps1 | iex
+```
+
+El instalador detecta x64/ARM64, comprueba SHA-256 e instala para tu usuario,
+sin permisos de administrador. Linux/macOS usan `~/.local/bin`; Windows usa
+`%LOCALAPPDATA%\S42Agent\bin`. Agrega la carpeta al perfil de tu shell o al
+PATH del usuario en Windows. Abrí otro terminal y ejecutá:
+
+```text
+s42-agent
+```
+
+Archivos preparados para la release. Linux x64 tiene validación de ejecución
+local; los otros cinco destinos cuentan con cross-builds:
+
+| Plataforma | Arquitectura | Binario |
+| --- | --- | --- |
+| Linux (glibc) | x64 | `s42-agent-0.1.0-linux-x64` |
+| Linux (glibc) | ARM64 | `s42-agent-0.1.0-linux-arm64` |
+| macOS | Intel x64 | `s42-agent-0.1.0-darwin-x64` |
+| macOS | Apple Silicon ARM64 | `s42-agent-0.1.0-darwin-arm64` |
+| Windows | x64 | `s42-agent-0.1.0-windows-x64.exe` |
+| Windows | ARM64 | `s42-agent-0.1.0-windows-arm64.exe` |
+
+Disponibles en [GitHub Releases](https://github.com/stock42/s42-agent/releases)
+una vez publicados. Los ejecutables se acompañan de `SHASUMS256.txt`.
+Windows requiere Windows 10 1809 o posterior; macOS requiere 13 o posterior.
+Los binarios Linux usan glibc; Alpine/musl requiere otro target.
+[Requisitos de Bun por plataforma](https://bun.com/docs/installation).
+
+Desde un clon que tenga los archivos generados en `dist/`, la instalación local
+también es un comando:
+
+```bash
+# Linux o macOS
+bash install.sh --from-dir ./dist
+```
+
+```powershell
+# Windows PowerShell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -FromDirectory .\dist
+```
+
+Opciones: `--version`, `--install-dir`, `--no-modify-path` en Linux/macOS;
+`-Version`, `-InstallDir`, `-NoModifyPath` en Windows. Para actualizar, usá el
+mismo instalador. Borrar el ejecutable no elimina la configuración ni el historial.
+
+## Ejecutar desde código fuente
+
+**Necesitás Git y Bun 1.4.2 para clonar, ejecutar la fuente o generar binarios.**
+No hace falta Node.js ni npm. Instalá la versión de Bun usada por el proyecto:
+
+### Instalar Bun en Linux
+
+Requiere `curl` y `unzip` (Debian/Ubuntu: `sudo apt install curl unzip`).
+
+```bash
+curl -fsSL https://bun.com/install | bash -s -- bun-v1.4.2
+```
+
+### Instalar Bun en macOS
+
+```bash
+curl -fsSL https://bun.com/install | bash -s -- bun-v1.4.2
+```
+
+### Instalar Bun en Windows
+
+En PowerShell:
+
+```powershell
+iex "& {$(irm https://bun.com/install.ps1)} -Version 1.4.2"
+```
+
+Abrí otro terminal y comprobá `bun --version`. Si no encuentra el comando,
+agregá `~/.bun/bin` (Linux/macOS) o `%USERPROFILE%\.bun\bin` (Windows) al PATH.
+[Guía oficial de instalación](https://bun.com/docs/installation).
+
+### Clonar e iniciar
+
+Los mismos comandos sirven en Linux/macOS y en PowerShell de Windows:
 
 ```bash
 git clone https://github.com/stock42/s42-agent.git
@@ -87,6 +194,23 @@ cd s42-agent
 bun install --frozen-lockfile
 bun run dev
 ```
+
+### Compilar todas las plataformas
+
+```bash
+bun run build:release
+```
+
+Bun genera los seis ejecutables en `dist/`, checksums `SHASUMS256.txt`,
+metadatos, instaladores y el paquete conjunto
+`s42-agent-0.1.0-all-platforms.tar.gz`. Cross-compilar no prueba la ejecución
+en el SO de destino. Los archivos generados quedan fuera de Git y se suben
+a una release por separado. [Preparación de la release](docs/PUBLISHING.md).
+
+`bun run build` compila solo para el host; `bun run build:targets` genera los
+seis ejecutables y el manifiesto sin el paquete de entrega.
+
+## Primer inicio
 
 1. **Projects → Agregar proyecto:** Nombre/Name y Carpeta/Folder.
 2. **Models → Proveedores:** configurá llama.cpp, DeepSeek u otro endpoint;
@@ -110,6 +234,8 @@ Elegí `local-coder` en Models. Para usar herramientas, el modelo y su template
 deben soportar tool calling. El agente descubre capacidades mediante `/props`.
 
 ### Sin interfaz
+
+Con el binario instalado, reemplazá `bun run index.ts` por `s42-agent`.
 
 ```bash
 bun run index.ts \
@@ -172,10 +298,11 @@ e inferencia LLM. No es un benchmark nuevo de la fuente actual.
 
 ## Estado y desarrollo
 
-**v0.1.0 es una preview desde código fuente.** Linux x64 cuenta con validación
-local, PTY y modelo real. Hay cross-builds de Windows/macOS/Linux arm64; faltan
-pruebas de runtime en esos destinos y cobertura física de mouse/drop en
-terminales. Este lanzamiento no incluye nuevos binarios descargables.
+**v0.1.0 es una preview.** Linux x64 cuenta con validación local, PTY y modelo
+real; el compilado actual también pasa el smoke fuera del checkout.
+Los seis binarios actuales están preparados para la release. Faltan pruebas
+de ejecución en Windows/macOS/ARM64 y cobertura física de mouse/drop.
+[Validación de compilados e instaladores](docs/qa/distribution.md).
 
 ```bash
 bun run typecheck

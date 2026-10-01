@@ -1,7 +1,7 @@
 # Publicar S42 Agent en GitHub y anunciarlo
 
 Repositorio: https://github.com/stock42/s42-agent · Licencia MIT.
-Primera entrega propuesta: **v0.1.0, prerelease desde código fuente**.
+Primera entrega propuesta: **v0.1.0, preview con fuente y seis compilados**.
 
 Esta preparación no hace push, no cambia visibilidad, no crea una release
 y no envía anuncios. `package.json` mantiene `private: true`: evita publicación
@@ -18,7 +18,10 @@ npm y no determina la visibilidad del repositorio.
 | Descripción, homepage, topics y datos de la release | [github-metadata.json](launch/github-metadata.json) |
 | Notas para la prerelease | [v0.1.0.md](releases/v0.1.0.md) |
 | Anuncios ES/EN, versión corta, benchmark y carrusel | [ANNOUNCEMENTS.md](launch/ANNOUNCEMENTS.md) |
-| Cinco imágenes comerciales | [Campaña](../assets/banners/s42-agent-launch-2026-10-01/README.md) |
+| Diez imágenes comerciales con referencias reales, ES/EN | [Campaña](../assets/banners/s42-agent-real-tui-2026-10-01/README.md) |
+| Instaladores de un comando | [Linux/macOS](../install.sh) / [Windows](../install.ps1) |
+| Lista de assets para la release | [release-files.json](qa/release-files.json) |
+| Compilados e instalación | [distribution.md](qa/distribution.md) |
 | Vista previa social para GitHub | [social-preview.jpg](../assets/github/social-preview.jpg) |
 | Validación de esta preparación | [publication-readiness.md](qa/publication-readiness.md) |
 
@@ -38,7 +41,11 @@ La imagen es una ilustración comercial de la TUI, no una captura de inferencia.
   El runner no tenía Secret Service; el workflow ahora instala las dependencias
   Linux y ejecuta la suite con D-Bus y un llavero temporal aislado.
   La corrección se comprueba localmente; una nueva CI remota requiere el push.
-- No hay nuevas builds, mediciones de rendimiento ni validación de otros SO.
+- Preparación posterior: seis binarios actuales generados en dist/, instalación
+  Linux x64 y smoke TUI/CLI comprobados. [Registro](qa/distribution.md).
+  No hay benchmark nuevo ni ejecución de Windows/macOS/ARM64.
+- Las URLs públicas del repo/release/instalador respondieron 404 en esta tarea.
+  Generar los archivos localmente no activa las descargas del README.
 
 ## Publicación del código y prerelease
 
@@ -55,10 +62,15 @@ Al ejecutar la publicación aprobada:
 4. En **Settings → Social preview**, subir `assets/github/social-preview.jpg`.
 5. Crear la prerelease **v0.1.0**, target **main**, con el título del JSON y las
    notas de `releases/v0.1.0.md`. Marcarla como **pre-release**.
-   Esta entrega es de código fuente; no adjuntar binarios antiguos como si
-   correspondieran al commit actual.
-6. Verificar el repositorio y las notas sin autenticación. Clonar la versión
-   publicada y repetir el inicio rápido antes de enviar el anuncio.
+   Adjuntar los archivos enumerados en `dist/release-files.json`: seis binarios
+   actuales, SHASUMS256.txt, build-targets.json, install.sh, install.ps1 y LICENSE.
+   El tag exacto v0.1.0 y los nombres son parte del contrato de los instaladores;
+   no dependen de la ruta /latest, que excluye prereleases.
+   Opcionalmente adjuntar `dist/s42-agent-0.1.0-all-platforms.tar.gz` como
+   paquete conjunto. No subir binarios antiguos de benchmark/compare.
+6. Verificar repo, raw main/install.sh, raw main/install.ps1 y assets de v0.1.0
+   sin autenticación. Clonar y repetir el inicio rápido; comprobar la descarga
+   de un comando del README antes de enviar el anuncio.
 
 La autenticación de origin está en .git/config y se conserva como pidió el usuario.
 No forma parte del código, assets ni archivos de publicación. La revisión de
@@ -75,13 +87,24 @@ Las publicaciones se envían solo cuando el enlace sea público y haya una
 instrucción explícita de publicarlas en el canal correspondiente.
 
 Conservar en los anuncios estos datos:
-- Preview desde fuente, MIT y Bun.
+- Preview con fuente/binarios, MIT y Bun; descarga solo cuando esté publicada.
 - Linux probado; runtime Windows/macOS/arm64 pendiente.
 - Benchmark histórico identificado, sin inferencia LLM ni pintura gráfica.
 - Modelos/servidores externos y tool calling dependiente del modelo/template.
 
-## Binarios posteriores
+## Generar o actualizar los archivos de release
 
-Cuando se solicite una entrega de binarios, usar build/build:targets, registrar
-checksums y ejecutar cada destino antes de declarar soporte.
-La preview fuente no depende de esas pruebas ni las da por realizadas.
+```bash
+bun install --frozen-lockfile
+bun run typecheck
+bun run build:release
+bun run smoke:binary dist/s42-agent-0.1.0-linux-x64
+bun run scripts/build-release.ts --package-only
+```
+
+El último comando incorpora el manifiesto validado al paquete sin recompilar.
+El smoke indicado se ejecuta en Linux x64. Los otros destinos requieren ejecución
+en su SO/arquitectura antes de declarar soporte validado.
+
+Los archivos de dist/ no se guardan en Git; se distribuyen como assets de release.
+build:release no hace push ni sube archivos a GitHub.

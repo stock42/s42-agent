@@ -1,0 +1,63 @@
+{
+  "at": "2026-10-01T23:24:33.976Z",
+  "version": "0.1.0",
+  "bun": "1.4.2",
+  "embedded": "ESM imports, package version, UI; no GGUF/credentials/config/session",
+  "entries": [
+    {
+      "target": "bun-linux-x64",
+      "file": "s42-agent-0.1.0-linux-x64",
+      "flags": [],
+      "bytes": 81688032,
+      "sha256": "461331a850fb7deedce6e2e1861124e1f0e53f2eeb3e6fe71cb1af2aeedfda48",
+      "buildMs": 159,
+      "runtimeValidated": true,
+      "runtimeEvidence": "docs/qa/distribution-binary-smoke.json"
+    },
+    {
+      "target": "bun-linux-arm64",
+      "file": "s42-agent-0.1.0-linux-arm64",
+      "flags": [],
+      "bytes": 81643816,
+      "sha256": "ff7be1754695f4949052f241b8dd62c3a92d899d1ddc9687bda0296d3101cf6a",
+      "buildMs": 159,
+      "runtimeValidated": false
+    },
+    {
+      "target": "bun-darwin-x64",
+      "file": "s42-agent-0.1.0-darwin-x64",
+      "flags": [],
+      "bytes": 69693712,
+      "sha256": "6d7d75f88c0aca661ce5ed44adceeb934f65d56a1f52bac78b5c88e0c1d14076",
+      "buildMs": 136,
+      "runtimeValidated": false
+    },
+    {
+      "target": "bun-darwin-arm64",
+      "file": "s42-agent-0.1.0-darwin-arm64",
+      "flags": [],
+      "bytes": 62590194,
+      "sha256": "7b43a567b056c5c049c591105363d747d7cb33e80e602812f1dcec2b6fb350e0",
+      "buildMs": 223,
+      "runtimeValidated": false
+    },
+    {
+      "target": "bun-windows-x64",
+      "file": "s42-agent-0.1.0-windows-x64.exe",
+      "flags": [],
+      "bytes": 86458880,
+      "sha256": "dd851ced9627d0346001761747747ba51d0d43f124a462c3bbc78145859856cc",
+      "buildMs": 240,
+      "runtimeValidated": false
+    },
+    {
+      "target": "bun-windows-arm64",
+      "file": "s42-agent-0.1.0-windows-arm64.exe",
+      "flags": [],
+      "bytes": 77950976,
+      "sha256": "db01cd8cddd8a50d8d1d3fbbbcbc12548f33c898d737573f943b5d759dffbfcd",
+      "buildMs": 229,
+      "runtimeValidated": false
+    }
+  ]
+}

@@ -263,6 +263,22 @@ smoke:binary, qa:stress, qa:soak, qa:llm y qa:skills. QA siempre usa config/carp
 temporal; no reemplazar la config personal para hacer pruebas. No publicar
 artefactos ni hacer push sin pedido explícito.
 
+Distribución: **bun run build:release** genera seis ejecutables (Linux glibc,
+macOS y Windows, cada uno x64/ARM64), checksums SHASUMS256.txt, instaladores,
+manifiestos y paquete all-platforms.tar.gz en dist/, fuera de Git.
+scripts/build-targets.ts usa Bun Shell; scripts/build-release.ts usa Bun.Archive
+con bytes materializados y serialización .bytes() para conservar gzip en Bun 1.4.2.
+install.sh (Bash) e install.ps1 (PowerShell) son bootstraps del binario: detectan
+arquitectura, verifican SHA-256/versión e instalan sin admin en ~/.local/bin o
+LocalAppData/S42Agent/bin, con PATH. --from-dir/-FromDirectory consume dist local;
+--no-modify-path/-NoModifyPath evita perfiles/PATH en QA. Bun instalado se necesita
+para fuente/build; los compilados contienen su runtime. URLs remotas requieren
+publicar código y assets v0.1.0; no declarar disponibles por generación local.
+README EN/ES documentan un comando por SO, instalación de Bun, clonación y builds.
+[QA](docs/qa/distribution.md): Linux x64 instalado/TUI/CLI fuera del checkout,
+fixtures HTTP, sin Bun/Node en PATH; otros cinco destinos solo compilados.
+PowerShell parseado en Linux; runtime Windows/macOS/ARM64 aún pendiente.
+
 ## Preferencias globales del usuario
 
 - Nunca crear archivos `.env.local`. Respetar el mecanismo de configuración

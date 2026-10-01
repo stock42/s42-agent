@@ -20,6 +20,7 @@
     "build": "bun build ./index.ts --compile --outfile ./dist/s42-agent",
     "bench:tui": "bun run scripts/bench-tui.ts",
     "build:targets": "bun run scripts/build-targets.ts",
+    "build:release": "bun run scripts/build-release.ts",
     "build:compare": "bun run scripts/build-targets.ts --compare",
     "qa:stress": "bun run scripts/stress-tui.ts",
     "qa:soak": "bun run scripts/soak-tui.ts 30",

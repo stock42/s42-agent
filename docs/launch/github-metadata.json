@@ -20,6 +20,8 @@
     "title": "S42 Agent v0.1.0 — QBasic meets local AI",
     "prerelease": true,
     "notes": "docs/releases/v0.1.0.md",
-    "distribution": "source-only"
+    "distribution": "source-and-six-binaries-prepared",
+    "assetsManifest": "docs/qa/release-files.json",
+    "published": false
   }
 }
