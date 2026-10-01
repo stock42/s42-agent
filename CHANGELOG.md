@@ -5,6 +5,18 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Campaña comercial en inglés
+
+- Cinco nuevas versiones PNG 1254×1254 en assets/banners/s42-agent-launch-2026-10-01-en/:
+  TUI QBasic, proyectos/archivos, idiomas/temas, modelos/tools y benchmark.
+- Headlines, menús, chat, ejemplos, temas y captions en inglés; originales
+  españoles conservados. Prompts de generación y corrección numérica registrados.
+- Benchmark histórico conserva sus cinco cifras y condiciones; puntos decimales,
+  unidad MiB y exclusión de inferencia LLM explícita. Revisión visual y de PNG,
+  dimensiones, JSON y enlaces; ZIP de entrega local en out/marketing/.
+- Pull correcto; cambios previos de final-validation.md preservados. Sin cambios
+  de runtime, nuevos benchmarks, builds ni publicación externa.
+
 ### Preparado — Publicación GitHub y anuncio de la preview v0.1.0
 
 - README EN/ES con portada horizontal, quickstart, capacidades y estado real;
