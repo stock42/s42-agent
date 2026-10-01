@@ -193,19 +193,22 @@ pero el servidor LLM y los comandos externos siguen siendo independientes.
 
 ## Imágenes promocionales
 
-Las cinco ilustraciones del lanzamiento, separadas de las capturas reales de la
-interfaz. La imagen del benchmark muestra resultados históricos de v0.1.0 Linux
-x64; excluye inferencia LLM y pintura del emulador. [Campaña, textos y fuentes](assets/banners/s42-agent-launch-2026-10-01/README.md).
+Cinco nuevas composiciones comerciales generadas a partir de las capturas finales,
+con versiones en español e inglés. Los originales siguen en la galería de capturas
+anterior. El benchmark muestra resultados históricos de v0.1.0 Linux x64;
+excluye inferencia LLM y pintura del emulador.
+[Campaña en español y captions](assets/banners/s42-agent-real-tui-2026-10-01/es/README.md) ·
+[Ambos idiomas y fuentes](assets/banners/s42-agent-real-tui-2026-10-01/README.md).
 
 <table>
   <tr>
-    <td><a href="assets/banners/s42-agent-launch-2026-10-01/01-superagente-qbasic.png"><img src="assets/banners/s42-agent-launch-2026-10-01/01-superagente-qbasic.png" alt="Alma de QBasic" width="260"></a><br><strong>Alma de QBasic</strong></td>
-    <td><a href="assets/banners/s42-agent-launch-2026-10-01/02-proyectos-y-archivos.png"><img src="assets/banners/s42-agent-launch-2026-10-01/02-proyectos-y-archivos.png" alt="Proyectos y archivos" width="260"></a><br><strong>Proyectos y archivos</strong></td>
-    <td><a href="assets/banners/s42-agent-launch-2026-10-01/03-idiomas-y-temas.png"><img src="assets/banners/s42-agent-launch-2026-10-01/03-idiomas-y-temas.png" alt="Idiomas y temas" width="260"></a><br><strong>Idiomas y temas</strong></td>
+    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png" alt="Alma de QBasic" width="260"></a><br><strong>Alma de QBasic</strong></td>
+    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/02-proyectos-y-web.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/02-proyectos-y-web.png" alt="Proyectos y preview web" width="260"></a><br><strong>Proyectos y preview web</strong></td>
+    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/03-idiomas-y-temas.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/03-idiomas-y-temas.png" alt="Idiomas y temas" width="260"></a><br><strong>Idiomas y temas</strong></td>
   </tr>
   <tr>
-    <td><a href="assets/banners/s42-agent-launch-2026-10-01/04-modelos-y-herramientas.png"><img src="assets/banners/s42-agent-launch-2026-10-01/04-modelos-y-herramientas.png" alt="Modelos y herramientas" width="260"></a><br><strong>Modelos y herramientas</strong></td>
-    <td><a href="assets/banners/s42-agent-launch-2026-10-01/05-benchmark.png"><img src="assets/banners/s42-agent-launch-2026-10-01/05-benchmark.png" alt="Benchmark histórico v0.1.0" width="260"></a><br><strong>Benchmark histórico v0.1.0</strong></td>
+    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/04-modelos-y-herramientas.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/04-modelos-y-herramientas.png" alt="Modelos y herramientas" width="260"></a><br><strong>Modelos y herramientas</strong></td>
+    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/05-benchmark.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/05-benchmark.png" alt="Benchmark histórico v0.1.0" width="260"></a><br><strong>Benchmark histórico v0.1.0</strong></td>
   </tr>
 </table>
 

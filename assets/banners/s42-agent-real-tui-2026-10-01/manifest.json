@@ -1,0 +1,320 @@
+{
+  "date": "2026-10-01",
+  "generator": "image_gen",
+  "format": "Five square carousel pieces per language",
+  "totalImages": 10,
+  "languages": [
+    "es",
+    "en"
+  ],
+  "sourceCommitBeforeCampaign": "bf666ca2fa8cc3a49effc484cc78c6b5f58f5e57",
+  "originalCaptureManifest": "screenshots/manifest.json",
+  "imageClassification": "AI-generated commercial compositions based on real screenshot references",
+  "originalScreenshotPixelsPreserved": true,
+  "posterInsertsAreUnmodifiedScreenshotPixels": false,
+  "runtimeValidation": false,
+  "newBenchmark": false,
+  "englishEdition": "Localized advertising copy; captured code, output and UI retain their source language",
+  "themes": "Four real reference images: QBasic, Forest, Nord, Dracula; all six available themes named outside the inserts",
+  "benchmark": {
+    "source": "docs/qa/benchmark-s42-agent-0.1.0-linux-x64.json",
+    "methodology": "docs/qa/final-validation.md",
+    "version": "0.1.0",
+    "platform": "linux",
+    "arch": "x64",
+    "measurements": [
+      {
+        "id": "startupP95",
+        "value": 24.43,
+        "unit": "ms",
+        "samples": 30
+      },
+      {
+        "id": "inputP95",
+        "value": 35.95,
+        "unit": "ms",
+        "samples": 100
+      },
+      {
+        "id": "sseToFrameP95",
+        "value": 4.07,
+        "unit": "ms",
+        "samples": 20
+      },
+      {
+        "id": "idleRSS",
+        "value": 46.64,
+        "unit": "MiB"
+      },
+      {
+        "id": "resume1000Messages",
+        "value": 42.07,
+        "unit": "ms",
+        "messages": 1000
+      }
+    ],
+    "cpu": "Intel(R) Core(TM) Ultra 9 275HX",
+    "os": "Ubuntu 24.04.5 LTS",
+    "bun": "1.4.2",
+    "conditions": "Historical binary; hot OS cache, received PTY bytes; excludes LLM inference and graphical emulator painting"
+  },
+  "sourceCaptures": [
+    {
+      "file": "screenshots/16-qbasic-typescript.jpg",
+      "title": "QBasic · TypeScript, line numbers and P:/F: tabs",
+      "batch": "expanded-gallery",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 841,
+      "bytes": 149877,
+      "sha256": "df8312bd592199020f328461cda9f1940c104a4dedd4917d1b49a31a792f7c5f",
+      "language": "en",
+      "palette": "qbasic"
+    },
+    {
+      "file": "screenshots/14-project-explorer.jpg",
+      "title": "Browse the current repository",
+      "batch": "expanded-gallery",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 841,
+      "bytes": 114676,
+      "sha256": "d0c551f2691c0c055d2e58323156fe46329e935878a56aca98da6e6559287ef5",
+      "language": "en",
+      "palette": "qbasic"
+    },
+    {
+      "file": "screenshots/06-webserver.jpg",
+      "title": "WebServer running for a project",
+      "batch": "webserver-qa",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 841,
+      "bytes": 84222,
+      "sha256": "0d97e5fcc19f04ed99466119f7d45f6f5c5abd1adc2676d8ed985f36b7160114",
+      "copiedFrom": "docs/qa/assets/webserver/tui.jpg"
+    },
+    {
+      "file": "screenshots/07-browser-preview.jpg",
+      "title": "HTML, CSS, JavaScript and SVG in the browser",
+      "batch": "webserver-qa",
+      "mimeType": "image/jpeg",
+      "width": 1920,
+      "height": 903,
+      "bytes": 37105,
+      "sha256": "b90d01a28575d30536669ab4d5dd97d9017d7d22d51a1ffd6269a11ea632717e",
+      "copiedFrom": "docs/qa/assets/webserver/browser.jpg"
+    },
+    {
+      "file": "screenshots/18-forest-typescript.jpg",
+      "title": "Forest · TypeScript",
+      "batch": "expanded-gallery",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 841,
+      "bytes": 138861,
+      "sha256": "53d7684b5a8f7d2bb100021c1703fd3deb4b1efcd38d5ac53668889fa114b78d",
+      "language": "en",
+      "palette": "green"
+    },
+    {
+      "file": "screenshots/19-nord-typescript.jpg",
+      "title": "Nord · TypeScript",
+      "batch": "expanded-gallery",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 841,
+      "bytes": 126703,
+      "sha256": "3c953a68ebbcfa88b6b96717b40a7f303bdf5cf1d69b1a90f05b59e1b308a648",
+      "language": "en",
+      "palette": "nord"
+    },
+    {
+      "file": "screenshots/20-dracula-typescript.jpg",
+      "title": "Dracula · TypeScript",
+      "batch": "expanded-gallery",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 841,
+      "bytes": 139967,
+      "sha256": "54211e41b3d841c7fdc9862c62785bdbb7b20a1dcf1118d44141951d8eece187",
+      "language": "en",
+      "palette": "dracula"
+    },
+    {
+      "file": "screenshots/10-live-tool-chat.jpg",
+      "title": "Real read tool call, response and token metrics",
+      "batch": "expanded-gallery",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 841,
+      "bytes": 142909,
+      "sha256": "7386ad80381a2976fbad37cf3b0d948ca94849773a9eb9ab33a93381201e5fb6",
+      "language": "en",
+      "palette": "qbasic"
+    },
+    {
+      "file": "screenshots/22-tools-menu.jpg",
+      "title": "Tools menu · WebServer, native tools, MCP and skills",
+      "batch": "expanded-gallery",
+      "mimeType": "image/jpeg",
+      "width": 1680,
+      "height": 841,
+      "bytes": 137593,
+      "sha256": "6f6cac0195459a47bc452d491b4bd22fd252ea04ae4435ef74a9d515bc9ebe52",
+      "language": "en",
+      "palette": "gruvbox"
+    }
+  ],
+  "assets": [
+    {
+      "id": "en01",
+      "language": "en",
+      "file": "en/01-qbasic-soul.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1450439,
+      "sha256": "30e69c98f355f2fad945b81f16839d932b3feba1ca45d5750ff07030c40b6e0f",
+      "references": [
+        "assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png"
+      ],
+      "edits": 0
+    },
+    {
+      "id": "en02",
+      "language": "en",
+      "file": "en/02-projects-and-web.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1414655,
+      "sha256": "7dc485644cc39d140c97c396e9c9a1a6f2c677d9d39e415e11867cffe38f90c9",
+      "references": [
+        "assets/banners/s42-agent-real-tui-2026-10-01/es/02-proyectos-y-web.png"
+      ],
+      "edits": 0
+    },
+    {
+      "id": "en03",
+      "language": "en",
+      "file": "en/03-languages-and-themes.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1714864,
+      "sha256": "e6b5f62df9404090da6d02a895b2411ea6af69d33105b1a2a6d0d7b6b6fc8635",
+      "references": [
+        "assets/banners/s42-agent-real-tui-2026-10-01/es/03-idiomas-y-temas.png"
+      ],
+      "edits": 0
+    },
+    {
+      "id": "en04",
+      "language": "en",
+      "file": "en/04-models-and-tools.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1593958,
+      "sha256": "3df9ab753e35ed0d32dda10a730a8c2d159bb4ebfc224278adf9704c63634875",
+      "references": [
+        "assets/banners/s42-agent-real-tui-2026-10-01/es/04-modelos-y-herramientas.png"
+      ],
+      "edits": 0
+    },
+    {
+      "id": "en05",
+      "language": "en",
+      "file": "en/05-benchmark.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1323755,
+      "sha256": "1b49053afdf9fe996a2f49558e6a101d82e25eb6fab641a75e1d2090a38664d2",
+      "references": [
+        "assets/banners/s42-agent-real-tui-2026-10-01/es/05-benchmark.png"
+      ],
+      "edits": 1
+    },
+    {
+      "id": "es01",
+      "language": "es",
+      "file": "es/01-alma-qbasic.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1449814,
+      "sha256": "3864714e6628cdc145bedc8fe851ddbd645c9d2e6d66994e05941cdef901db43",
+      "references": [
+        "screenshots/16-qbasic-typescript.jpg"
+      ],
+      "edits": 0
+    },
+    {
+      "id": "es02",
+      "language": "es",
+      "file": "es/02-proyectos-y-web.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1411793,
+      "sha256": "3d3083570134ff7c5def76925330e4fb663bf6754ab12538909c28350476c6df",
+      "references": [
+        "assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png",
+        "screenshots/14-project-explorer.jpg",
+        "screenshots/06-webserver.jpg",
+        "screenshots/07-browser-preview.jpg"
+      ],
+      "edits": 0
+    },
+    {
+      "id": "es03",
+      "language": "es",
+      "file": "es/03-idiomas-y-temas.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1676760,
+      "sha256": "0382c31e08817b03610c36266f7cb8ac6dcb3337fb515eb2044aaef34115ab3d",
+      "references": [
+        "assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png",
+        "screenshots/16-qbasic-typescript.jpg",
+        "screenshots/18-forest-typescript.jpg",
+        "screenshots/19-nord-typescript.jpg",
+        "screenshots/20-dracula-typescript.jpg"
+      ],
+      "edits": 0
+    },
+    {
+      "id": "es04",
+      "language": "es",
+      "file": "es/04-modelos-y-herramientas.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1586960,
+      "sha256": "edcca5c2acb706ea03da45ee40961fb3f4f3ba9d17462c2d088d0f03cb4655eb",
+      "references": [
+        "assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png",
+        "screenshots/10-live-tool-chat.jpg",
+        "screenshots/22-tools-menu.jpg"
+      ],
+      "edits": 0
+    },
+    {
+      "id": "es05",
+      "language": "es",
+      "file": "es/05-benchmark.png",
+      "mimeType": "image/png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1263407,
+      "sha256": "3baf73c6c891f2ae0b72cb1cbdded31a548b1816ea0da357d0bae1ad6b6763b2",
+      "references": [
+        "assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png"
+      ],
+      "edits": 0
+    }
+  ]
+}

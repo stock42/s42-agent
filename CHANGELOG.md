@@ -5,6 +5,21 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Campaña comercial con referencias de la TUI real
+
+- Diez nuevas piezas image_gen, cinco en español y cinco en inglés, PNG RGB
+  1254×1254: QBasic, proyectos/WebServer, idiomas/seis temas, modelos/tools y
+  benchmark. Estética común azul/cian, titulares grandes y referencias reales.
+- Galerías y captions bilingües, prompts, manifiesto con hashes/procedencia y
+  README EN/ES actualizados. Campañas anteriores y 35 screenshots conservados;
+  composiciones generadas identificadas aparte de los JPEG originales.
+- Cinco métricas históricas cotejadas con su JSON y revisadas en ambas piezas;
+  decimales ingleses corregidos con image_gen, unidad MiB y condiciones explícitas.
+- Diez imágenes inspeccionadas y decodificadas; dimensiones, JSON, referencias,
+  enlaces y hashes de originales comprobados. ZIP local en out/marketing/.
+  Pull correcto; edición ajena de final-validation.md fuera del commit.
+  Sin cambios de runtime, builds, benchmarks nuevos ni publicación externa.
+
 ### Agregado — Galería de screenshots y presentación del repositorio
 
 - Directorio raíz screenshots/ con 35 JPEG reales: 28 capturas nuevas de

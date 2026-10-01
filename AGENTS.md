@@ -232,8 +232,12 @@ hacer push ni crear releases sin pedido explícito.
 Presentación open source en README.md (inglés) y README.es.md; manual detallado
 conservado en docs/USAGE.es.md. CONTRIBUTING tiene variantes EN/ES. Notas de
 preview fuente v0.1.0 en docs/releases/, metadata y anuncios en docs/launch/;
-portada social JPEG/PNG en assets/github/. Las imágenes de campaña son ilustraciones;
-README EN/ES muestra capturas reales y una sección separada de ilustraciones.
+portada social JPEG/PNG en assets/github/. Campaña actual en
+assets/banners/s42-agent-real-tui-2026-10-01/: cinco piezas ES y cinco EN,
+composiciones comerciales image_gen con capturas finales como referencias.
+Prompts, captions y manifest conservan procedencia; no son JPEG originales ni
+evidencia nueva de runtime. README EN/ES muestra capturas reales y una sección
+separada de campaña. Las ilustraciones anteriores se conservan como archivo.
 Galería principal en screenshots/README.md: 35 JPEG originales, seis paletas,
 es/en y funciones; manifest.json registra hashes, dimensiones y procedencia.
 Capturada de index.ts en PTY con xterm.js en Chrome, sin recrear la interfaz.
