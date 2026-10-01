@@ -233,8 +233,12 @@ Presentación open source en README.md (inglés) y README.es.md; manual detallad
 conservado en docs/USAGE.es.md. CONTRIBUTING tiene variantes EN/ES. Notas de
 preview fuente v0.1.0 en docs/releases/, metadata y anuncios en docs/launch/;
 portada social JPEG/PNG en assets/github/. Las imágenes de campaña son ilustraciones;
-README EN/ES muestra ahora una captura real. Galería en assets/screenshots/2026-10-01/,
-capturada de index.ts en PTY con xterm.js en Chrome, sin recrear la interfaz.
+README EN/ES muestra capturas reales y una sección separada de ilustraciones.
+Galería principal en screenshots/README.md: 35 JPEG originales, seis paletas,
+es/en y funciones; manifest.json registra hashes, dimensiones y procedencia.
+Capturada de index.ts en PTY con xterm.js en Chrome, sin recrear la interfaz.
+Conservar assets/screenshots/2026-10-01/ y docs/qa/assets/webserver/ como evidencia
+histórica; las copias 01–07 son idénticas. [QA](docs/qa/screenshot-gallery.md).
 Mantener el benchmark histórico separado
 de la QA actual. CI Linux necesita Secret Service para el test PTY de API key:
 instala dbus/gnome-keyring/libsecret y usa D-Bus/llavero temporal aislado; no

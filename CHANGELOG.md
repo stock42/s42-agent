@@ -5,6 +5,22 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Galería de screenshots y presentación del repositorio
+
+- Directorio raíz screenshots/ con 35 JPEG reales: 28 capturas nuevas de
+  index.ts en Bun PTY/xterm.js/Chrome y 7 copias de QA anterior, sin alterar píxeles.
+  Galería por funciones y manifiesto con procedencia, dimensiones y SHA-256.
+- Chat local GLM-4.7-Flash con read real, actividad, tokens/tok/s; archivos y
+  búsqueda, P:/F:, seis paletas, español/inglés, proveedores, proyectos,
+  promptings/metavariables, MCP, catálogo nativo, skills.sh y About.
+- README EN/ES con portadas reales, miniaturas enlazadas, temas desplegables y
+  las cinco piezas promocionales existentes por idioma en sección de ilustraciones.
+  Originales históricos y alcance del benchmark conservados; AGENTS y QA actualizados.
+- Typecheck correcto, imágenes/hashes/enlaces comprobados y presentación local
+  revisada en Chrome. Config SQLite temporal, sin credenciales personales.
+  Pull correcto; cambio ajeno de final-validation.md preservado fuera del commit.
+  Sin cambios de runtime, builds, benchmarks nuevos ni publicación externa.
+
 ### Agregado — WebServer del proyecto
 
 - Tools → WebServer: puerto configurable (inicial 3000), iniciar/aplicar,

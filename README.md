@@ -8,10 +8,10 @@ project tabs and local LLMs — under the [MIT license](LICENSE).
 [Español](README.es.md) · [User guide](docs/USAGE.es.md) ·
 [Tools](docs/TOOLS.md) · [Contributing](CONTRIBUTING.md)
 
-<img src="assets/screenshots/2026-10-01/03-typescript-file.jpg" alt="S42 Agent running: project and file tabs, numbered TypeScript source, syntax colors and a permanent prompt" width="960">
+<img src="screenshots/16-qbasic-typescript.jpg" alt="S42 Agent running: project and file tabs, numbered TypeScript source, syntax colors and a permanent prompt" width="960">
 
 *Real `index.ts` execution in a Bun PTY, displayed by xterm.js in Chrome.
-[Screenshot gallery and capture details](assets/screenshots/2026-10-01/README.md).*
+[Screenshot gallery and capture details](screenshots/README.md).*
 
 ## Why S42 Agent?
 
@@ -34,6 +34,47 @@ together.
 
 The harness has **no external runtime package dependencies**. Your LLM server,
 models and programs invoked by shell/MCP are separate.
+
+## Screenshots
+
+A tour of the running agent. Click any image to open the original; see all **35 screenshots** in the [full gallery](screenshots/README.md).
+
+<table>
+  <tr>
+    <td><a href="screenshots/10-live-tool-chat.jpg"><img src="screenshots/10-live-tool-chat.jpg" alt="Live model, tool calls and token metrics" width="440"></a><br><strong>Live model, tool calls and token metrics</strong></td>
+    <td><a href="screenshots/14-project-explorer.jpg"><img src="screenshots/14-project-explorer.jpg" alt="Browse and search project files" width="440"></a><br><strong>Browse and search project files</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/12-prompting-variables.jpg"><img src="screenshots/12-prompting-variables.jpg" alt="Reusable prompts with {{variables}}" width="440"></a><br><strong>Reusable prompts with {{variables}}</strong></td>
+    <td><a href="screenshots/09-provider-presets.jpg"><img src="screenshots/09-provider-presets.jpg" alt="llama.cpp and DeepSeek presets" width="440"></a><br><strong>llama.cpp and DeepSeek presets</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/06-webserver.jpg"><img src="screenshots/06-webserver.jpg" alt="Start a project WebServer" width="440"></a><br><strong>Start a project WebServer</strong></td>
+    <td><a href="screenshots/27-skills-search-results.jpg"><img src="screenshots/27-skills-search-results.jpg" alt="Search the live skills.sh catalog" width="440"></a><br><strong>Search the live skills.sh catalog</strong></td>
+  </tr>
+</table>
+
+The prompt templates and Web Playground are tour examples. The chat uses a real local model; the WebServer images come from its recorded browser QA.
+
+<details>
+<summary>See all six themes</summary>
+
+<table>
+  <tr>
+    <td><a href="screenshots/16-qbasic-typescript.jpg"><img src="screenshots/16-qbasic-typescript.jpg" alt="QBasic" width="440"></a><br><strong>QBasic</strong></td>
+    <td><a href="screenshots/17-graphite-typescript.jpg"><img src="screenshots/17-graphite-typescript.jpg" alt="Graphite" width="440"></a><br><strong>Graphite</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/18-forest-typescript.jpg"><img src="screenshots/18-forest-typescript.jpg" alt="Forest" width="440"></a><br><strong>Forest</strong></td>
+    <td><a href="screenshots/19-nord-typescript.jpg"><img src="screenshots/19-nord-typescript.jpg" alt="Nord" width="440"></a><br><strong>Nord</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/20-dracula-typescript.jpg"><img src="screenshots/20-dracula-typescript.jpg" alt="Dracula" width="440"></a><br><strong>Dracula</strong></td>
+    <td><a href="screenshots/21-gruvbox-typescript.jpg"><img src="screenshots/21-gruvbox-typescript.jpg" alt="Gruvbox" width="440"></a><br><strong>Gruvbox</strong></td>
+  </tr>
+</table>
+
+</details>
 
 ## Start from source
 
@@ -181,6 +222,24 @@ Bun; the LLM and external commands remain separate.
 - [Publication validation](docs/qa/publication-readiness.md)
 - [Development phases](docs/phases/README.md) and [changelog](CHANGELOG.md)
 - [Release notes](docs/releases/v0.1.0.md) and [launch materials](docs/launch/ANNOUNCEMENTS.md)
+
+## Launch artwork
+
+Five launch illustrations, separate from the real interface screenshots above.
+The benchmark image uses the historical v0.1.0 Linux x64 results; it excludes LLM
+inference and emulator painting. [Campaign, captions and sources](assets/banners/s42-agent-launch-2026-10-01-en/README.md).
+
+<table>
+  <tr>
+    <td><a href="assets/banners/s42-agent-launch-2026-10-01-en/01-superagent-qbasic.png"><img src="assets/banners/s42-agent-launch-2026-10-01-en/01-superagent-qbasic.png" alt="QBasic soul" width="260"></a><br><strong>QBasic soul</strong></td>
+    <td><a href="assets/banners/s42-agent-launch-2026-10-01-en/02-projects-and-files.png"><img src="assets/banners/s42-agent-launch-2026-10-01-en/02-projects-and-files.png" alt="Projects and files" width="260"></a><br><strong>Projects and files</strong></td>
+    <td><a href="assets/banners/s42-agent-launch-2026-10-01-en/03-languages-and-themes.png"><img src="assets/banners/s42-agent-launch-2026-10-01-en/03-languages-and-themes.png" alt="Languages and themes" width="260"></a><br><strong>Languages and themes</strong></td>
+  </tr>
+  <tr>
+    <td><a href="assets/banners/s42-agent-launch-2026-10-01-en/04-models-and-tools.png"><img src="assets/banners/s42-agent-launch-2026-10-01-en/04-models-and-tools.png" alt="Models and tools" width="260"></a><br><strong>Models and tools</strong></td>
+    <td><a href="assets/banners/s42-agent-launch-2026-10-01-en/05-benchmark.png"><img src="assets/banners/s42-agent-launch-2026-10-01-en/05-benchmark.png" alt="Recorded v0.1.0 benchmark" width="260"></a><br><strong>Recorded v0.1.0 benchmark</strong></td>
+  </tr>
+</table>
 
 ## Credits
 
