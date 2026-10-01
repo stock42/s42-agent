@@ -2,14 +2,14 @@
 
 Fuente de requisitos: [SPECS.md](../SPECS.md). Fecha: 2026-10-01.
 
-Estado actual: harness persistente desde `index.ts`, con TUI QBasic, respuesta
-read-only y prompt fijo. Fase 02 completada; 01/03/04/05 implementadas con fixtures
-pero conservan validaciones externas pendientes. Fase 06 tiene QA fuente/documentación
-avanzadas; binarios y benchmarks diferidos por prioridad del usuario.
-[QA actual del agente](../qa/agent-mvp.md), [apariencia](../qa/qbasic-style.md).
+Estado actual: harness Bun/QBasic persistente desde index.ts, respuestas read-only,
+prompt fijo, explorer fuera del proyecto, Models/Projects, MCP y Skills.
+Fases 02/03/07/08 completadas; implementación de 00/01/04/05 disponible con
+validaciones físicas o por SO pendientes. Fase 06 incorpora QA real, rendimiento,
+prueba prolongada y distribución local. [QA integral](../qa/final-validation.md).
 
-Pendientes concretos: modelo real con tools, mouse/drop físicos y matriz de SO.
-Los checks de implementación no sustituyen esos criterios de cierre.
+Pendientes externos: mouse/drop físicos, Windows/macOS/arm64 en destino. Los checks
+de implementación no sustituyen esos criterios de cierre. No hay release publicada.
 
 | Fase | Archivo | Depende de | Resultado | Requisitos |
 | --- | --- | --- | --- | --- |

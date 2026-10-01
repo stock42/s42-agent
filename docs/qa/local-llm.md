@@ -17,7 +17,8 @@ temporal con config aislada, dos archivos y AGENTS.md propio:
 
 El modelo invocó read, la herramienta MCP QA/project_hint, edit y shell. La skill
 qa-guide se cargó por /skill antes de inferir. Se conservaron 5 pares start/result;
-la llamada MCP tuvo un efecto comprobado. Shell ejecutó `bun test`: 1 test pasó;
+la llamada MCP tuvo un efecto comprobado. El servidor MCP QA es un fixture Bun
+de protocolo; la inferencia y las herramientas de coding sí son reales. Shell ejecutó `bun test`: 1 test pasó;
 una ejecución independiente también devolvió exit0, manteniendo el test original.
 El registro distingue reasoning, contenido final y tools reales.
 

@@ -9,9 +9,18 @@
     "typecheck": "bun ./node_modules/typescript/bin/tsc --noEmit",
     "test": "bun test",
     "build": "bun build ./index.ts --compile --outfile ./dist/s42-agent",
-    "bench:tui": "bun run scripts/bench-tui.ts"
+    "bench:tui": "bun run scripts/bench-tui.ts",
+    "build:targets": "bun run scripts/build-targets.ts",
+    "build:compare": "bun run scripts/build-targets.ts --compare",
+    "qa:stress": "bun run scripts/stress-tui.ts",
+    "qa:soak": "bun run scripts/soak-tui.ts 30",
+    "qa:llm": "bun run scripts/validate-local-llm.ts",
+    "qa:skills": "bun run scripts/validate-skills.ts",
+    "smoke:binary": "bun run scripts/smoke-binary.ts"
   },
-  "engines": { "bun": "1.4.2" },
+  "engines": {
+    "bun": "1.4.2"
+  },
   "devDependencies": {
     "@types/bun": "1.4.2",
     "typescript": "7.0.2"

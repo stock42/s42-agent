@@ -1,0 +1,42 @@
+{
+  "at": "2026-10-01T16:33:20.077Z",
+  "version": "0.1.0",
+  "bun": "1.4.2",
+  "embedded": "ESM imports, package version, UI; no GGUF/credentials/config/session",
+  "entries": [
+    {
+      "target": "bun-linux-x64",
+      "file": "s42-agent-0.1.0-normal",
+      "flags": [],
+      "bytes": 81503712,
+      "sha256": "153ca86af827fb08c75a5a003dd14273d3074171c196f8f4754e23a5e297d324",
+      "buildMs": 159,
+      "runtimeValidated": false
+    },
+    {
+      "target": "bun-linux-x64",
+      "file": "s42-agent-0.1.0-minify-map",
+      "flags": [
+        "--minify",
+        "--sourcemap"
+      ],
+      "bytes": 81573344,
+      "sha256": "debfa5a232170fa1c8b8ef7073fd2cb69d9d13230ca6e876000b66101d1a7be0",
+      "buildMs": 159,
+      "runtimeValidated": false
+    },
+    {
+      "target": "bun-linux-x64",
+      "file": "s42-agent-0.1.0-bytecode",
+      "flags": [
+        "--minify",
+        "--sourcemap",
+        "--bytecode"
+      ],
+      "bytes": 83551712,
+      "sha256": "36ae99f8172dc6e07a6f4ecc6cf552b6bc5c45415c75c6aef6cc947a5623caee",
+      "buildMs": 210,
+      "runtimeValidated": false
+    }
+  ]
+}

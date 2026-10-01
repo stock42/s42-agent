@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-01T16:49:02.000Z",
+  "bun": "1.4.2",
+  "platform": "linux",
+  "arch": "x64",
+  "cpu": "Intel(R) Core(TM) Ultra 9 275HX",
+  "ramKiB": 65274432,
+  "os": "Ubuntu 24.04.5 LTS",
+  "terminal": "Bun.Terminal 80x24",
+  "binary": "s42-agent-0.1.0-linux-x64",
+  "binaryBytes": 81507808,
+  "sha256": "bca157ed0e5e504b4b96065fd63c517e73b9a6ede2c773423beae6e18e3cd776",
+  "startup": {
+    "samples": 30,
+    "minMs": 22.020632999999975,
+    "p50Ms": 22.548867,
+    "p95Ms": 24.429071999999906,
+    "maxMs": 28.892779
+  },
+  "input": {
+    "samples": 100,
+    "minMs": 33.25101200000017,
+    "p50Ms": 34.854433999999856,
+    "p95Ms": 35.94764200000009,
+    "maxMs": 37.61700699999983
+  },
+  "deltaEmitToFrame": {
+    "samples": 20,
+    "minMs": 2.251741000000038,
+    "p50Ms": 3.546280000000479,
+    "p95Ms": 4.067064999999275,
+    "maxMs": 4.231732999999622
+  },
+  "idleRSSMiB": 46.640625,
+  "idle10sBytes": 0,
+  "modalOpenCloseCycles": 50,
+  "resume": {
+    "messages": 1000,
+    "bytes": 379463,
+    "firstFrameMs": 42.0692229999986
+  },
+  "limits": "Hot OS cache; received PTY bytes, not graphical painting; SSE measured from fixture emit (includes local HTTP). Copied outside checkout with PATH without Bun/Node; host runtimes not uninstalled."
+}

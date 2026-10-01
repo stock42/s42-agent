@@ -55,9 +55,9 @@ La primera versión será una implementación propia pequeña; no un fork comple
 | R14 | Documentación de trabajo | Specs, fases, AGENTS y CHANGELOG coherentes con el estado real. |
 | R15 | Mouse como interacción principal disponible | Clic en controles, foco, rueda y arrastre de ventanas comprobados en terminal real. |
 | R16 | Componentes visuales TUI reutilizables | Botones, ventanas con título/cierre, menús con desplegables y controles comparten render e input. |
+| R17 | Viabilidad de la TUI primero | Demo de componentes ejecutable y validada antes de integrar proveedores o tools del agente. |
 | R18 | MCP configurable | CRUD de servidores stdio/HTTP, enabled/disabled, tools visibles y cancelables en el loop. |
 | R19 | Skills | Registro global/proyecto de SKILL.md, activación, carga progresiva, búsqueda e instalación desde skills.sh. |
-| R17 | Viabilidad de la TUI primero | Demo de componentes ejecutable y validada antes de integrar proveedores o tools del agente. |
 
 ### Decisiones iniciales para mantenerlo pequeño
 
@@ -715,8 +715,9 @@ flush se verifica en las pruebas de interrupción.
 
 ## 12. Rapidez y estabilidad
 
-Objetivos del producto. La demo ya tiene mediciones PTY en
-[qa/tui-demo.md](qa/tui-demo.md); SSE, sesiones e inferencia siguen sin medir.
+Objetivos del producto. La demo tiene mediciones históricas en
+[qa/tui-demo.md](qa/tui-demo.md). El harness final mide SSE, sesiones y arranque
+en [QA integral](qa/final-validation.md); inferencia real se verifica aparte.
 
 | Métrica | Objetivo | Medición |
 | --- | --- | --- |
@@ -748,16 +749,18 @@ El primer build será mínimo y verificable:
 bun build ./index.ts --compile --outfile ./dist/s42-agent
 ```
 
-Comando implementado en `bun run build` para la demo de fase 00. `index.ts`
-es también el punto de entrada del futuro agente, por decisión del usuario.
-El artefacto Linux x64 y sus mediciones están registrados en
+Comando implementado en `bun run build`. `index.ts` es el único entrypoint del
+harness persistente y la demo se conserva con --demo.
+El artefacto histórico Linux x64 y sus mediciones están registrados en
 [qa/tui-benchmark.json](qa/tui-benchmark.json).
 Ese registro corresponde al hito inicial `c098d88`; las iteraciones posteriores
 de UX se comprueban desde la fuente. No recompilar por rutina durante esta etapa.
 
 En desarrollo, empezar por Linux x64, que es el entorno de este checkout. La
 distribución objetivo incluye Linux x64/arm64, macOS x64/arm64 y Windows x64.
-Los targets x64 baseline se evalúan para CPUs sin AVX2. No prometer soporte de una
+Bun 1.4.2 documenta un binario x64 con selección de instrucciones por runtime;
+los sufijos baseline/modern se conservan como alias y no se necesitan para
+elegir CPU. No prometer soporte de una
 plataforma solo porque Bun puede cross-compilarla.
 
 Cada target declarado soportado debe ejecutarse en ese SO/arquitectura, fuera del
@@ -959,3 +962,7 @@ scripts, conservar licencias y registrar origen. Orígenes sin repo identificabl
 se consultan por enlace y registro local. [Agent Skills](https://agentskills.io/specification),
 [CLI oficial](https://github.com/vercel-labs/skills/blob/main/src/find.ts),
 [YAML Bun](https://bun.sh/docs/runtime/yaml).
+
+Distribución local de esta entrega: [manifest](qa/build-targets.json), Linux x64
+[smoke](qa/binary-smoke.json) y comparación de flags en QA integral. Sin release
+remota; cross-compilación no declara compatibilidad runtime.

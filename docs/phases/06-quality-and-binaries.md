@@ -4,8 +4,8 @@ Estado: **En curso**. Dependencias: fases [00](00-tui-viability.md) a
 [05](05-vim-and-attachments.md). Requisitos: R01–R17.
 Contratos: SPECS §12, §13 y §14.
 
-Prioridad del usuario: QA y documentación desde Bun. Builds, benchmarks de
-distribución y targets quedan diferidos; no cerrar esta fase por fixtures.
+El usuario pidió ejecutar todas las fases. Se completan QA, mediciones y targets
+locales; no cerrar los casos que requieren un SO/terminal externo por fixtures.
 
 ## Objetivo
 
@@ -20,20 +20,20 @@ ejecutados en las plataformas que se declaren soportadas.
   solicitar una edición, verificarla, cancelar otro turno, cerrar y reanudar.
 - [ ] F06-03. Ejecutar 50 ciclos de apertura/cancelación/cierre, una sesión fixture
   de 30 min y fallas de red, disco, resize y comandos con descendientes.
-- [ ] F06-04. Crear mediciones Bun para inicio, latencia de input/frames, memoria
+- [x] F06-04. Crear mediciones Bun para inicio, latencia de input/frames, memoria
   idle y reanudación; usar los fixtures y objetivos de SPECS §12.
-- [ ] F06-05. Comparar build normal y flags minify/sourcemap/bytecode. Evaluar smol
+- [x] F06-05. Comparar build normal y flags minify/sourcemap/bytecode. Evaluar smol
   solo ante necesidad medida; documentar flags, tamaño y resultados.
-- [ ] F06-06. Generar los targets de SPECS §13 desde scripts TypeScript/Bun, con
+- [x] F06-06. Generar los targets de SPECS §13 desde scripts TypeScript/Bun, con
   versión, checksum y assets embebidos. Mantener datos/config fuera del binario.
 - [ ] F06-07. Ejecutar smoke de cada target en su SO/arquitectura, fuera del checkout
   y sin Bun/Node. Separar los targets compilados que aún no tienen validación runtime.
 - [ ] F06-08. Comprobar TUI QBasic, mouse, ventanas/menús, tool shell, restauración
   y drop en la matriz de terminales;
   publicar solo la compatibilidad comprobada. Registrar lo pendiente sin ocultarlo.
-- [ ] F06-09. Completar README con instalación del binario, proyectos, configuración,
+- [x] F06-09. Completar README con instalación del binario, proyectos, configuración,
   servidor local externo, modelos, atajos, adjuntos y solución de errores reales.
-  README fuente completo; instalación/uso del binario actualizado pendiente.
+  Instalación de artefactos locales documentada, sin inventar una release.
 - [x] F06-10. Conciliar SPECS, fases, AGENTS y CHANGELOG con la implementación final,
   sus limitaciones y los comandos que existen; hacer el commit de cada tarea.
 
@@ -66,18 +66,23 @@ a partir de un build o commit.
 | Fuente / integración | `bun run typecheck`; `bun test` | Ver [QA actual](../qa/agent-mvp.md): TUI/stream/tools/adjuntos y persistencia fixture. |
 | Dos proyectos | `bun test tests/projects-integration.test.ts` | A/B con endpoints y adjuntos distintos, edit/shell, cancelación, borradores y reanudación; no se mezclan carpetas/modelos/historial. |
 | Pantallas | [Capturas tmux](../qa/agent-mvp-captures.txt) | Sin modelo, Models compacto, Markdown fixture y adjuntos a 60×16. Sin mouse/drop físicos. |
-| Distribución | Diferida por pedido del usuario | Binario histórico corresponde a la demo; no se compiló de nuevo el harness. |
+| Distribución | `bun run build:targets`, `bun run smoke:binary` | Cinco targets compilados; Linux x64 con coding/MCP/skill fixture y PATH sin Bun/Node. Ver manifest y QA final. |
 
 | Target | Compilado | Ejecutado sin Bun/Node | Terminal/drop | Estado |
 | --- | --- | --- | --- | --- |
-| Linux x64 | Pendiente | Pendiente | Pendiente | Pendiente |
-| Linux arm64 | Pendiente | Pendiente | Pendiente | Pendiente |
-| macOS x64 | Pendiente | Pendiente | Pendiente | Pendiente |
-| macOS arm64 | Pendiente | Pendiente | Pendiente | Pendiente |
-| Windows x64 | Pendiente | Pendiente | Pendiente | Pendiente |
+| Linux x64 | Sí | Sí, PATH sin Bun/Node, host driver Bun | PTY, físico pendiente | Runtime local comprobado |
+| Linux arm64 | Sí | No, destino no disponible | Pendiente | Solo compilado |
+| macOS x64 | Sí | No, destino no disponible | Pendiente | Solo compilado |
+| macOS arm64 | Sí | No, destino no disponible | Pendiente | Solo compilado |
+| Windows x64 | Sí | No, destino no disponible | Pendiente | Solo compilado |
 
 ## Cierre
 
 MVP comprobado en el alcance declarado, resultados de rendimiento registrados y
 artefactos reproducibles. No cerrar con plataformas requeridas sin validar: si no
 hay equipos disponibles, dejar esa tarea pendiente y declarar el soporte parcial.
+
+Fuente final: suite completa y typecheck; [QA integral](../qa/final-validation.md).
+F06-07/08 conservan pendiente la ejecución en otros SO/arquitecturas y el mouse/
+drop desde el SO. No hay superficies nativas de computador habilitadas para ese
+caso en esta sesión. F06-03 se cierra solo al terminar los 30 min reales.

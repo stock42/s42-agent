@@ -1,0 +1,119 @@
+bun test v1.4.2 (744846f84)
+
+tests/workspace.test.ts:
+(pass) input sin adornos permite borrar todo e ingresar corchetes como texto [0.86ms]
+(pass) paneles fijos conservan proyecto y prompt visibles al cerrar o arrastrar [3.19ms]
+(pass) Enter y clic en Enviar publican la respuesta demo en el editor y devuelven el foco [0.46ms]
+(pass) auxiliares y modales quedan arriba del prompt incluso después de resize [2.82ms]
+(pass) respuesta de solo lectura conserva selección, scroll y borrador tras resize [2.95ms]
+(pass) textarea conserva Unicode y saltos pegados sin enviar; Shift+Enter inserta línea [0.11ms]
+(pass) scroll del editor no salta al cursor y wrap mantiene ancho con grafemas [0.22ms]
+(pass) botones centrados, marco unido y estados legibles en monocromo [1.84ms]
+(pass) pestañas QBasic, barra turquesa y Ayuda a la derecha conservan hit testing [1.66ms]
+
+tests/attachments-vim.test.ts:
+(pass) rutas POSIX, quotes, Windows/UNC, file URL y bloques no convertidos [1.78ms]
+(pass) Vim edita por grafema/línea, undo; conversación no modifica texto [0.48ms]
+(pass) paste NORMAL no ejecuta Vim ni envía; modales tienen prioridad [16.23ms]
+(pass) snapshot, cambio antes de enviar y payload enviado conservado tras borrar original [20.89ms]
+(pass) rutas absolutas sin paste adjuntan al primer Enter, prompt compacto visible [7.41ms]
+(pass) ayuda completa navegable y cambios de modelo durante turno rechazados [7.82ms]
+
+tests/skills.test.ts:
+(pass) native YAML frontmatter, progressive loading, disabled/project isolation and exact base directory [1.43ms]
+(pass) skills.sh search contract, URL encoded queries, error/cancel, unsupported install origin [1.97ms]
+
+tests/extensions.test.ts:
+(pass) MCP CRUD y skill registro/toggle/removal, compact menu mouse and modal save focus [42.38ms]
+(pass) app loop loads invoked skill, executes MCP tool, persists named results and resumes without effects [23.85ms]
+(pass) long Models menu scrolls with keys and wheel without covering the fixed prompt at 60x16 [5.23ms]
+(pass) completed background tasks restore status and a closed search form does not reopen results [9.62ms]
+
+tests/app-terminal.test.ts:
+(pass) entrypoint real: Models primer uso, host/puerto/key, coding, cancelación y borrador reabierto [386.21ms]
+(pass) entrypoint: Projects Name/Folder, picker, explorador externo, reasoning y tool call visibles [485.40ms]
+
+tests/input-parser.test.ts:
+(pass) input del terminal > Shift+Enter CSI-u y modifyOtherKeys fragmentados se distinguen de Enter [0.67ms]
+(pass) input del terminal > teclado extendido conserva atajos, texto, Tab, Escape y navegación [0.06ms]
+(pass) input del terminal > SGR, paste y UTF-8 partidos en cada byte conservan los eventos [0.20ms]
+(pass) input del terminal > Escape aislado se resuelve; secuencias CSI desconocidas no bloquean el texto [0.11ms]
+
+tests/storage.test.ts:
+(pass) config local por defecto, proyectos normalizados y JSON inválido conservado [1.14ms]
+(pass) sesión append serializado, borrador, selección y lock de único escritor [4.51ms]
+(pass) última línea incompleta recuperada; corrupción completa explícita; tool no reejecutada [2.86ms]
+(pass) proyectos y sesiones mantienen borradores; Models y aviso sin modelo visibles [12.63ms]
+(pass) reinicio repara pares call/result y recupera un lock de proceso muerto [14.61ms]
+
+tests/ux.test.ts:
+(pass) volver a Componentes conserva texto, selección y foco [0.31ms]
+(pass) layout 60×16 muestra tres filas de lista y estado separado de botones [0.72ms]
+(pass) Ctrl+A y Shift+flechas permiten reemplazar selección sin romper Unicode [0.10ms]
+(pass) selección arrastrando el mouse reemplaza grafemas completos [0.14ms]
+(pass) al ensanchar un input vuelve a mostrar el contexto que cabe [0.06ms]
+(pass) menú permite mantener, arrastrar y soltar; hover cambia la opción [0.14ms]
+(pass) botón y cierre muestran cancelación al arrastrar afuera [0.93ms]
+(pass) diálogo abre centrado y la ayuda funciona con un menú abierto [0.52ms]
+(pass) PageUp/Down recorren la lista sin seleccionar su marco [0.08ms]
+(pass) escritorio vacío queda detrás del desplegable y permite recuperar Componentes [0.51ms]
+(pass) Escape, Ctrl+N y Alt+Y funcionan sin asignar acciones a teclas F [0.18ms]
+
+tests/explorer.test.ts:
+(pass) explorador sale del proyecto: padre, carpeta hermana, enlaces, raíz y ruta escrita [32.51ms]
+(pass) doble clic solo abre filas válidas; preview UTF-8/binario es de solo lectura y vuelve al listado [19.98ms]
+(pass) Projects pide solo Name/Folder; picker conserva formulario, guarda y reabre proyecto [42.92ms]
+(pass) Ctrl+E abre explorador, adjunta archivo externo y conserva proyecto y prompt [23.23ms]
+
+tests/llm.test.ts:
+(pass) SSE fragmentado UTF-8/CRLF, datos multilínea y múltiples eventos [0.17ms]
+(pass) Chat Completions conserva deltas/tool calls intercaladas y credencial del proveedor [1.51ms]
+(pass) stream truncado preserva parcial y errores HTTP no inventan respuesta [0.65ms]
+(pass) dos endpoints con mismo modelo conservan keys; errores HTTP e idle/cancel parcial [18.27ms]
+
+tests/terminal.test.ts:
+(pass) entrypoint Bun en PTY > no TTY y ayuda devuelven mensajes limpios [32.75ms]
+(pass) entrypoint Bun en PTY > prompt, respuesta en editor, componentes, modal y resize producen frames reales [571.81ms]
+(pass) entrypoint Bun en PTY > idle 10 s emite cero bytes y SIGTERM restaura modos [10091.72ms]
+(pass) entrypoint Bun en PTY > Ctrl+C restaura raw mode y --no-color/--no-mouse siguen usables [66.56ms]
+(pass) un fallo de render restaura terminal y propaga el error [58.14ms]
+
+tests/projects-integration.test.ts:
+(pass) dos proyectos: endpoint/modelo, adjuntos, edit/shell, cancelación y reanudación aislados [96.22ms]
+
+tests/reasoning.test.ts:
+(pass) SSE reasoning_content: UTF-8 fragmentado y snapshots de calls independientes [1.77ms]
+(pass) SSE reasoning: UTF-8 fragmentado y snapshots de calls independientes [0.62ms]
+(pass) stream cortado conserva razonamiento y calls parciales sin inventar texto [0.66ms]
+(pass) chat muestra reasoning, argumentos parciales, ejecución y resultado antes del fin; persiste cancelación/reapertura [211.54ms]
+
+tests/mcp.test.ts:
+(pass) modern HTTP JSON/SSE, mirrored Unicode headers, progress, pagination y tool error [3.49ms]
+(pass) legacy HTTP initialize, session/auth, cancel notification y DELETE; auth failure no fallback [33.84ms]
+(pass) stdio legacy newline RPC; cancellation kills server descendant; disabled server never starts; names unique [309.60ms]
+(pass) config v1 migration, MCP/skills persisted validation [0.58ms]
+
+tests/agent.test.ts:
+(pass) tools read/search/edit exacto/write y shell con exit code real [4.04ms]
+(pass) loop fixture lee, edita y verifica archivo; persiste call/result sin reejecutar [32.10ms]
+(pass) cancelar shell mata también al descendiente de su grupo [6.84ms]
+(pass) salida abundante se drena, timeout y JSON inválido sin efectos [22.98ms]
+(pass) límite del loop devuelve resultados por cada call sin ejecutar las siguientes [13.82ms]
+
+tests/ui.test.ts:
+(pass) interacciones de escritorio > botón activa una vez al soltar dentro, cancela fuera y omite deshabilitados [0.85ms]
+(pass) interacciones de escritorio > capas bloquean controles tapados; arrastre y cierre conservan captura [0.17ms]
+(pass) interacciones de escritorio > modal bloquea ventanas y menú y restaura foco previo al cerrar [0.16ms]
+(pass) interacciones de escritorio > menú por mouse y teclado, Escape, clic fuera y opción deshabilitada [0.18ms]
+(pass) interacciones de escritorio > input edita por grafemas y paste conserva texto sin ejecutar comandos [0.13ms]
+(pass) interacciones de escritorio > rueda desplaza la lista bajo el mouse sin cambiar el foco [0.31ms]
+(pass) render y composición > paleta DOS RGB conserva fallback ANSI, monocromo y repintado al cambiar perfil [0.11ms]
+(pass) render y composición > Unicode ancho, capas parciales y clipping mantienen el ancho de cada fila [0.13ms]
+(pass) render y composición > idle no emite bytes; un cambio solo repinta la fila afectada [0.19ms]
+(pass) render y composición > cursor sobre un carácter ancho al borde sigue visible [0.10ms]
+(pass) render y composición > demo soporta resize, conserva controles y presenta foco sin color [2.97ms]
+
+ 81 pass
+ 0 fail
+ 741 expect() calls
+Ran 81 tests across 16 files. [12.79s]

@@ -156,8 +156,8 @@ El proceso hereda el entorno y el comportamiento de carga de Bun al iniciarse;
 Bun puede cargar archivos de entorno existentes. Para usar solamente variables
 exportadas: `bun run --no-env-file index.ts`. Consultar
 [variables de entorno en Bun](https://bun.com/docs/runtime/environment-variables).
-No se modificó `bunfig.toml`; el comportamiento del futuro binario debe verificarse
-al distribuirlo, por separado del runtime fuente.
+No se modificó `bunfig.toml`; el smoke del binario utiliza un entorno mínimo,
+sin ficheros de configuración del checkout.
 
 El loop dispone de read/list/search/write/edit/shell, instrucciones AGENTS raíz y
 subcarpetas y resultados por llamada. Edit requiere una coincidencia exacta única.
@@ -179,9 +179,10 @@ bun test
 
 [Specs](docs/SPECS.md), [fases](docs/phases/README.md) y
 [evidencia del agente](docs/qa/agent-mvp.md). Streaming y coding se comprobaron
-con endpoints fixture. Pendientes: modelo local real, mouse/drop físicos, prueba
-prolongada y plataformas de distribución. Solo la limpieza de descendientes en
-Linux está comprobada; Windows todavía no tiene terminación de árbol implementada.
+con fixtures y [GLM-4.7-Flash real](docs/qa/local-llm.md), incluyendo MCP/skill,
+edición y bun test, razonamiento, cancelación y reapertura. Pendientes externos:
+mouse/drop físicos y ejecución macOS/Windows/arm64. Descendientes Linux comprobados; taskkill implementado en Windows, con ejecución
+en destino pendiente.
 
 La apariencia usa azul DOS, gris y turquesa. `COLORTERM=truecolor`/`24bit` activa
 RGB; de otro modo usa ANSI16. Respeta `NO_COLOR`, `--no-color` y `TERM=dumb`.
@@ -191,8 +192,59 @@ Sin TTY devuelve un mensaje limpio. Renderer por filas modificadas, sin frames i
 `src/ui/components/`. `src/llm`, `src/agent` y `src/storage` mantienen contratos
 pequeños. No hay dependencias de runtime externas.
 
-Distribución queda para una entrega explícita. Los scripts `build` y `bench:tui`
-conservan el hito inicial de la demo; no representan un binario actualizado del agente.
+Distribución local del harness disponible; no hay release publicada.
+
+## Binario y QA
+
+```bash
+bun run build             # target del host en dist/s42-agent
+bun run build:targets     # Linux x64/arm64, macOS x64/arm64, Windows x64
+```
+
+Artefactos locales `dist/s42-agent-0.1.0-<target>` (Windows .exe), versión Bun
+y checksums en `dist/build-targets.json` y `dist/build-targets.sha256`.
+Linux x64 ejecutado fuera del checkout con PATH sin Bun/Node: configuración,
+sesión, streaming fixture, MCP, YAML/skill, edit, shell y cierre. Otros targets
+están **compilados, con runtime pendiente**; no se declaran soportados todavía.
+
+Instalación Linux x64 desde los artefactos generados localmente:
+
+```bash
+cd dist
+sha256sum --check build-targets.sha256
+mkdir -p ~/.local/bin
+install -m 755 s42-agent-0.1.0-linux-x64 ~/.local/bin/s42-agent
+~/.local/bin/s42-agent --version
+~/.local/bin/s42-agent --cwd /ruta/proyecto
+```
+
+No necesita Bun/Node para ejecutar la TUI. El servidor LLM sigue siendo externo.
+Shell requiere el shell/programas usados por la tarea; instalar skills requiere
+Git y los servidores MCP stdio requieren su propio comando instalado.
+
+```bash
+bun run qa:stress        # 50 ciclos; permisos/resize/cancelación/cleanup
+bun run qa:soak          # 30 minutos, fuente PTY, errores HTTP y cancelación
+bun run qa:llm -- http://127.0.0.1:8080/v1
+bun run qa:skills        # catálogo real, instalación temporal de Vercel
+bun run build:compare   # normal/minify+sourcemap/bytecode
+bun run bench:tui -- dist/s42-agent-0.1.0-linux-x64
+bun run smoke:binary -- dist/s42-agent-0.1.0-linux-x64
+```
+
+QA real usa archivos/config temporales y no modifica tu configuración personal.
+qa:llm es un escenario de GLM con contexto 32768 y tools; Models del producto
+permite otros IDs/capacidades. Bench/stress/soak actuales usan PTY y /proc de Linux.
+Las métricas miden bytes recibidos en PTY y excluyen pintura gráfica e inferencia.
+[Validación integral](docs/qa/final-validation.md).
+
+Errores: endpoint caído o ID incorrecto → revisar Models/base URL y /models;
+contexto excedido → /new o contexto real del servidor; key ausente → exportar
+la variable configurada; EACCES → usar un directorio de config escribible;
+MCP command/args → probar conexión y revisar command instalado/args JSON;
+Shift+Enter no distinguible → Ctrl+J; menú largo → flechas/páginas/rueda;
+lock vivo → cerrar la otra instancia o crear otra sesión. No borrar datos
+para ocultar una corrupción: el harness informa el archivo/registro afectado.
 
 
 ## MCP

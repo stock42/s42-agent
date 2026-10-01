@@ -5,6 +5,24 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Completado — QA local, rendimiento y targets
+
+- Suite final fuente: 81 tests, 741 assertions, 16 archivos, cero fallas;
+  typecheck correcto. 50 procesos con stream/cancel/resize/cierre restaurados;
+  directorio protegido devuelve EACCES. Soak de 30 min sigue activo y se registra
+  en una entrada posterior solo cuando finalice.
+- Benchmark Linux x64 final: startup p95 24.43 ms, input p95 35.95 ms, SSE/frame
+  p95 4.07 ms, RSS idle 46.64 MiB, 1000 mensajes/379463 B en 42.07 ms;
+  cero bytes durante 10 s idle. PTY, caché caliente, excluye pintura e inferencia.
+- Comparación normal/minify-map/bytecode; se mantiene build normal por objetivos
+  cumplidos, menor tamaño y flags mínimos. main async permite compilar bytecode.
+- Cinco targets locales con versión/checksum; Linux x64 probado fuera del repo
+  y PATH sin Bun/Node: config, sesión, MCP/YAML/skill, read/edit/shell y cleanup.
+  macOS/Windows/arm64 solo compilados; mouse/drop físicos y procesos por esos
+  SO siguen pendientes explícitos. No se publica release ni se hace push.
+- Scripts Bun de build/benchmark/stress/soak/smoke y QA real, README de instalación,
+  SPECS/AGENTS/fases conciliados y evidencia final. Pull sin upstream; commit local.
+
 ### Corregido — Estado de operaciones auxiliares
 
 - Búsqueda/probe/instalación restablecen Listo al finalizar y conservan el error

@@ -19,7 +19,8 @@ export function parseArgs(args: string[]): AppOptions & { demo: boolean; color: 
   return options;
 }
 
-if (import.meta.main) {
+// Keep startup inside an async function for Bun bytecode compilation.
+async function main():Promise<void> {
   const args = Bun.argv.slice(2);
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`s42-agent ${version} · TUI estilo QBasic
@@ -53,3 +54,5 @@ Tab: foco · Ctrl+N: panel · Alt+Y: ayuda · Ctrl+Q: salir`);
     }
   }
 }
+
+if(import.meta.main)void main();

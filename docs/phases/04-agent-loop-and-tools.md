@@ -63,7 +63,7 @@ su verificación, con eventos visibles, resultados persistidos y cancelación.
 | --- | --- | --- |
 | Loop y herramientas | `bun run typecheck`; `bun test tests/agent.test.ts tests/storage.test.ts` | 10 casos pasan; fixture HTTP lee, edita y ejecuta Bun con resultado 4. Edición ambigua/JSON inválido sin cambios; límite de pasos; stdout/stderr abundantes; timeout. |
 | Cancelación/recuperación | Tests de grupo de procesos y sesión interrumpida | Linux: descendiente detenido al cancelar; lock de PID muerto y pares call/result reparados sin repetir efectos. Otros SO pendientes. |
-| Modelo real / fuente interactiva | Pendiente | No hay endpoint/modelo real disponible; fixture no demuestra inferencia real. |
+| Modelo real / fuente | [GLM local](../qa/local-llm.md) | Skill/MCP/read/edit/shell reales, diff correcto y verificación independiente exit0. Fuente App; PTY por separado. |
 | Chat durante ejecución | `bun test tests/reasoning.test.ts tests/app-terminal.test.ts`; [capturas](../qa/explorer-and-reasoning-captures.txt) | Call parcial visible antes del fin, shell ejecutándose, resultado con nombre/exit/duración y reapertura sin repetir efectos. |
 
 ## Cierre

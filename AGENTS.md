@@ -45,12 +45,18 @@ Módulos nuevos: `src/mcp/`, `src/skills/`, `src/ui/extensions.ts`.
 Módulos: `src/app.ts`, `src/ui/`, `src/agent/`, `src/llm/` y `src/storage/`.
 Bun/tipos 1.4.2; TypeScript 7.0.2; cero dependencias de runtime.
 
-Fase 02 completada. Fases 00/01/03/04/05 en curso por validaciones externas
-pendientes; fase 06 integra QA fuente y documentación, con distribución diferida.
-Evidencia actual: [explorador/chat](docs/qa/explorer-and-reasoning.md), [agente MVP](docs/qa/agent-mvp.md), [apariencia QBasic](docs/qa/qbasic-style.md),
-[layout](docs/qa/workspace.md) y [Shift+Enter](docs/qa/shift-enter.md).
-Fixtures y eventos inyectados no prueban inferencia real, mouse físico ni drop
-real. Linux es el entorno de QA; Windows tiene taskkill de árboles implementado; falta validar su runtime. No afirmar compatibilidad con otros SO por usar APIs multiplataforma.
+Fases 02/03/07/08 completadas. 00/01/04/05 tienen implementación y QA fuente,
+con mouse/drop físicos o runtime por SO pendientes. Fase 06 mide rendimiento y
+estabilidad, genera cinco targets y verifica Linux x64 fuera del checkout con
+PATH sin Bun/Node. No afirmar compatibilidad macOS/Windows/arm64 por cross-build.
+[QA integral](docs/qa/final-validation.md), [GLM real](docs/qa/local-llm.md),
+[MCP/skills](docs/qa/mcp-and-skills.md). Fixtures/SGR no prueban mouse/drop físicos.
+Windows tiene taskkill de árboles implementado; falta validar su runtime.
+
+Scripts: dev, typecheck, test, build, build:targets, build:compare, bench:tui,
+smoke:binary, qa:stress, qa:soak, qa:llm y qa:skills. QA siempre usa config/carpeta
+temporal; no reemplazar la config personal para hacer pruebas. No publicar
+artefactos ni hacer push sin pedido explícito.
 
 ## Preferencias globales del usuario
 

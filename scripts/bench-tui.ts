@@ -1,81 +1,26 @@
-import { chmod, mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { resolve } from "node:path";
-
-// Medición local de la demo compilada: transporte PTY, sin LLM ni terminal gráfico.
-const source = resolve(import.meta.dir, "../dist/s42-agent");
-const directory = await mkdtemp(`${tmpdir()}/s42-tui-bench-`);
-const binary = `${directory}/s42-agent`;
-await Bun.write(binary, Bun.file(source)); await chmod(binary, 0o755);
-const startup: number[] = [];
-const input: number[] = [];
-let rssKiB = 0;
-
-async function until(check: () => boolean, stage: string): Promise<void> {
-  const deadline = performance.now() + 3000;
-  while (!check()) {
-    if (performance.now() > deadline) throw new Error(`Timeout en benchmark PTY: ${stage}`);
-    await Bun.sleep(1);
-  }
+import {chmod,mkdir,mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join,resolve,basename} from 'node:path';
+import {defaultConfig} from '../src/storage/config.ts';
+const source=resolve(Bun.argv[2]??join(import.meta.dir,'../dist/s42-agent')),root=await mkdtemp(join(tmpdir(),'s42-bench-')),binary=join(root,'s42-agent');
+await Bun.write(binary,Bun.file(source));await chmod(binary,0o755);
+let emitted=0;const delta:number[]=[];
+const server=Bun.serve({port:0,async fetch(req){await req.json();return new Response(new ReadableStream({async start(c){for(let i=0;i<20;i++){await Bun.sleep(80);emitted=performance.now();c.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({choices:[{delta:{content:`BENCH_DELTA_${i}\n`}}]})}\n\n`));}c.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));c.close();}}));}});
+const config=defaultConfig();config.providers[0]!.baseUrl=`http://127.0.0.1:${server.port}/v1`;config.providers[0]!.models=[{id:'bench',name:'Bench',contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:false,images:false}}];config.defaults.modelId='bench';const path=join(root,'config.json');await Bun.write(path,JSON.stringify(config));
+async function until(check:()=>boolean,stage:string){const deadline=performance.now()+4000;while(!check()){if(performance.now()>deadline)throw new Error('Timeout bench '+stage);await Bun.sleep(1);}}
+function session(resume=false){let output='',firstFrame=0,last=-1;const decoder=new TextDecoder(),start=performance.now();const terminal=new Bun.Terminal({cols:80,rows:24,data:(_,data)=>{output+=decoder.decode(data,{stream:true});if(!firstFrame&&output.includes('\x1b[?7h'))firstFrame=performance.now()-start;const matches=[...output.matchAll(/BENCH_DELTA_(\d+)/g)];const next=Number(matches.at(-1)?.[1]??-1);if(next>last){last=next;delta.push(performance.now()-emitted);}}});
+ const args=resume?['--project','bench','--session','resume']:['--cwd',root];const child=Bun.spawn([binary,'--config',path,...args],{cwd:root,terminal,env:{TERM:'xterm-256color',PATH:'/nonexistent'}});
+ return {terminal,child,get output(){return output;},get firstFrame(){return firstFrame;},async close(){terminal.write('\x11');await child.exited;await until(()=>output.includes('\x1b[?1049l'),'cleanup');terminal.close();},dispose(){child.kill();terminal.close();}};
 }
-
-function session() {
-  let output = "";
-  let firstFrame = 0;
-  const decoder = new TextDecoder();
-  let start = 0;
-  const terminal = new Bun.Terminal({ cols: 80, rows: 24, data: (_, data) => {
-    output += decoder.decode(data, { stream: true });
-    if (!firstFrame && output.includes("\x1b[?7h")) firstFrame = performance.now() - start;
-  } });
-  start = performance.now();
-  // PATH sin Bun/Node; cwd externo. No equivale a desinstalarlos del host.
-  const child = Bun.spawn([binary], { cwd: directory, terminal, env: { TERM: "xterm-256color", PATH: "/nonexistent" } });
-  return { terminal, child, get output() { return output; }, get firstFrame() { return firstFrame; },
-    async close() { terminal.write("\x11"); await child.exited; await until(() => output.includes("\x1b[?1049l"), "cleanup"); terminal.close(); },
-    dispose() { child.kill(); terminal.close(); } };
-}
-
-function metrics(values: number[]) {
-  const sorted = values.toSorted((a, b) => a - b);
-  return { samples: values.length, minMs: sorted[0], p50Ms: sorted[Math.ceil(sorted.length * 0.5) - 1],
-    p95Ms: sorted[Math.ceil(sorted.length * 0.95) - 1], maxMs: sorted.at(-1) };
-}
-
-try {
-  for (let cycle = 0; cycle < 30; cycle++) {
-    const run = session();
-    try { await until(() => run.firstFrame > 0, `startup ${cycle}`); startup.push(run.firstFrame); await run.close(); }
-    finally { run.dispose(); }
-  }
-  const run = session();
-  try {
-    await until(() => run.firstFrame > 0, "startup input");
-    const status = await Bun.file(`/proc/${run.child.pid}/status`).text();
-    rssKiB = Number(status.match(/^VmRSS:\s+(\d+)/m)?.[1]);
-    for (let entry = 0; entry < 100; entry++) {
-      const offset = run.output.length; const start = performance.now(); run.terminal.write(String.fromCharCode(97 + entry % 26));
-      await until(() => run.output.slice(offset).includes("\x1b[?7h"), `input ${entry}`); input.push(performance.now() - start);
-    }
-    for (let cycle = 0; cycle < 50; cycle++) {
-      const opened = run.output.length; run.terminal.write("\x1bOP");
-      await until(() => run.output.slice(opened).includes("Mouse: clic"), `modal open ${cycle}`);
-      const closed = run.output.length; run.terminal.write("\x1b");
-      await until(() => run.output.slice(closed).includes("\x1b[?7h"), `modal close ${cycle}`);
-    }
-    await run.close();
-  } finally { run.dispose(); }
-  const cpuInfo = await Bun.file("/proc/cpuinfo").text();
-  const memInfo = await Bun.file("/proc/meminfo").text();
-  const os = await Bun.file("/etc/os-release").text();
-  const bytes = await Bun.file(binary).arrayBuffer();
-  const result = { measuredAt: new Date().toISOString(), bun: Bun.version, platform: process.platform, arch: process.arch,
-    cpu: cpuInfo.match(/^model name\s*:\s*(.+)$/m)?.[1], ramKiB: Number(memInfo.match(/^MemTotal:\s+(\d+)/m)?.[1]),
-    os: os.match(/^PRETTY_NAME="(.+)"/m)?.[1], terminal: "Bun.Terminal · 80×24 · xterm-256color",
-    binaryBytes: bytes.byteLength, sha256: new Bun.CryptoHasher("sha256").update(bytes).digest("hex"),
-    startup: metrics(startup), input: metrics(input), idleRSSMiB: rssKiB / 1024, modalOpenCloseCycles: 50,
-    limits: "Caché del SO caliente; frame medido al recibir bytes en PTY, sin pintura gráfica. Binario copiado fuera del checkout con PATH sin Bun/Node; no se desinstalaron runtimes del host." };
-  const path = resolve(import.meta.dir, "../docs/qa/tui-benchmark.json");
-  await Bun.write(path, JSON.stringify(result, null, 2) + "\n");
-  console.log(JSON.stringify(result, null, 2));
-} finally { await rm(directory, { recursive: true, force: true }); }
+function metrics(values:number[]){const s=values.toSorted((a,b)=>a-b);return {samples:s.length,minMs:s[0],p50Ms:s[Math.ceil(s.length*.5)-1],p95Ms:s[Math.ceil(s.length*.95)-1],maxMs:s.at(-1)};}
+try{
+ const startup:number[]=[],input:number[]=[];for(let i=0;i<30;i++){const run=session();try{await until(()=>run.firstFrame>0,'startup');startup.push(run.firstFrame);await run.close();}finally{run.dispose();}}
+ const run=session();let rss=0,idleBytes=0;
+ try{await until(()=>run.firstFrame>0,'startup input');rss=Number((await Bun.file(`/proc/${run.child.pid}/status`).text()).match(/^VmRSS:\s+(\d+)/m)?.[1])/1024;
+ for(let i=0;i<100;i++){const length=run.output.length,start=performance.now();run.terminal.write(String.fromCharCode(97+i%26));await until(()=>run.output.slice(length).includes('\x1b[?7h'),'input');input.push(performance.now()-start);}
+ for(let i=0;i<50;i++){const offset=run.output.length;run.terminal.write('\x05');await until(()=>run.output.slice(offset).includes('Explorador'),'explorer open');const closed=run.output.length;run.terminal.write('\x1b');await until(()=>run.output.slice(closed).includes('\x1b[?7h'),'explorer close');}
+ run.terminal.write('\x01measure streaming\r');await until(()=>delta.length===20,'SSE deltas');await Bun.sleep(150);const idle=run.output.length;await Bun.sleep(10000);idleBytes=run.output.length-idle;await run.close();}finally{run.dispose();}
+ const saved=await Bun.file(path).json();saved.projects[0].name='bench';await Bun.write(path,JSON.stringify(saved));const projectId=saved.projects[0].id;const events=Array.from({length:1000},(_,i)=>({version:1,id:String(i),projectId,at:new Date().toISOString(),type:'message',message:{role:i%2?'assistant':'user',content:`Message ${i}: `+'contenido de coding '.repeat(10)}}));const sessionPath=join(root,'sessions',projectId,'resume.jsonl');await mkdir(join(root,'sessions',projectId),{recursive:true});await Bun.write(sessionPath,events.map(e=>JSON.stringify(e)).join('\n')+'\n');const resume=session(true);let resumedMs=0;try{await until(()=>resume.firstFrame>0,'resume 1000');resumedMs=resume.firstFrame;await resume.close();}finally{resume.dispose();}
+ const cpu=await Bun.file('/proc/cpuinfo').text(),mem=await Bun.file('/proc/meminfo').text(),os=await Bun.file('/etc/os-release').text(),bytes=await Bun.file(binary).arrayBuffer();const result={at:new Date().toISOString(),bun:Bun.version,platform:process.platform,arch:process.arch,cpu:cpu.match(/^model name\s*:\s*(.+)$/m)?.[1],ramKiB:Number(mem.match(/^MemTotal:\s+(\d+)/m)?.[1]),os:os.match(/^PRETTY_NAME="(.+)"/m)?.[1],terminal:'Bun.Terminal 80x24',binary:basename(source),binaryBytes:bytes.byteLength,sha256:new Bun.CryptoHasher('sha256').update(bytes).digest('hex'),startup:metrics(startup),input:metrics(input),deltaEmitToFrame:metrics(delta),idleRSSMiB:rss,idle10sBytes:idleBytes,modalOpenCloseCycles:50,resume:{messages:1000,bytes:Bun.file(sessionPath).size,firstFrameMs:resumedMs},limits:'Hot OS cache; received PTY bytes, not graphical painting; SSE measured from fixture emit (includes local HTTP). Copied outside checkout with PATH without Bun/Node; host runtimes not uninstalled.'};
+ const out=resolve(import.meta.dir,'../docs/qa',`benchmark-${basename(source)}.json`);await Bun.write(out,JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));
+}finally{server.stop(true);await rm(root,{recursive:true,force:true});}

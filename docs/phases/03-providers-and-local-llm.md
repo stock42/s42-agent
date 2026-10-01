@@ -58,7 +58,7 @@ administrar otros endpoints/modelos mediante el mismo contrato inicial.
 | Transporte fixture | `bun run typecheck`; `bun test tests/llm.test.ts tests/storage.test.ts` | 7 casos: SSE, deltas, calls intercaladas, credencial por endpoint y desconexión parcial. |
 | Dos proveedores / errores | `bun test tests/llm.test.ts` | Endpoints independientes con el mismo model ID y keys diferentes; HTTP 401/404/429/503, idle y cancelación parcial. |
 | TUI fuente | `bun test tests/app-terminal.test.ts` | Host/puerto/key configurados desde Models; clave en memoria y fuera de config/sesión. |
-| Servidor real | Endpoint default no disponible | El usuario pidió configuración inicial en Models; no se eligió un modelo ni se descargó uno. |
+| Servidor real | [GLM local](../qa/local-llm.md) | Endpoint del usuario; skill/MCP/read/edit/shell, bun test exit0, reasoning, cancelación y reapertura. |
 | Reasoning / calls progresivas | `bun test tests/reasoning.test.ts` | Ambos campos con UTF-8 fragmentado, snapshots independientes, cancelación/reapertura y reasoning conservado en el request siguiente. [QA](../qa/explorer-and-reasoning.md). |
 
 ## Cierre

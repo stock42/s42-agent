@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-01T16:48:42.129Z",
+  "platform": "linux",
+  "arch": "x64",
+  "version": "0.1.0",
+  "sha256": "bca157ed0e5e504b4b96065fd63c517e73b9a6ede2c773423beae6e18e3cd776",
+  "calls": 5,
+  "mcpEffects": 1,
+  "skillLoaded": true,
+  "edited": true,
+  "shell": true,
+  "restored": true,
+  "cwd": "temporary outside checkout",
+  "PATH": "/nonexistent",
+  "limits": "Host Bun exists for fixture/PTY driver; agent executable invoked directly without Bun/Node or checkout files; LLM/MCP are external HTTP fixtures; no physical mouse/drop"
+}
