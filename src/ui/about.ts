@@ -18,6 +18,7 @@ export function showAbout(desktop: Desktop): void {
   text.readOnly = true;
   text.setValue([
     "Powered by César Casas. · MIT.",
+    "Building with Codex & GPT-6.1 Sol",
     "",
     desktop.t("La potencia de un agente de coding. El espíritu del viejo QBasic."),
     desktop.t("Un escritorio de texto con ventanas, menús, mouse y atajos Vim. Tu prompt siempre a mano."),

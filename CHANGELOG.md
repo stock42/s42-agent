@@ -5,6 +5,13 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Agregado — Crédito de desarrollo en About
+
+- Ayuda → About muestra `Building with Codex & GPT-6.1 Sol` debajo del autor,
+  conservando el texto literal en español e inglés.
+- Typecheck y prueba existente de About correctos; sin builds ni push.
+  Pull falló por main sin upstream; cambios ajenos preservados.
+
 ### Agregado — Agente desde command line sin TUI
 
 - --prompting activa src/cli.ts desde index.ts antes de cargar App/terminal;
