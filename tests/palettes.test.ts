@@ -6,7 +6,7 @@ import { App } from "../src/app.ts";
 import { ConfigStore, defaultConfig } from "../src/storage/config.ts";
 import { Canvas, Renderer } from "../src/ui/canvas.ts";
 import { SelectList } from "../src/ui/components/select-list.ts";
-import { theme } from "../src/ui/theme.ts";
+import { palettes, theme, type PaletteId } from "../src/ui/theme.ts";
 
 const roots: string[] = [];
 afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }); });
@@ -21,8 +21,8 @@ function contrast(a: number[], b: number[]) {
   const x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 }
 
-test("paletas grises/verdes cubren los controles con contraste y fallback ANSI16 de su gama", () => {
-  for (const palette of ["grayscale", "green"] as const) {
+test("paletas oscuras cubren los controles con contraste y fallback ANSI16 legible", () => {
+  for (const palette of ["grayscale", "green", "nord", "dracula", "gruvbox"] as const) {
     const styles = Object.values(theme).filter(style => style !== theme.shadow);
     const canvas = new Canvas(styles.length, 1, palette);
     styles.forEach((style, x) => canvas.text(x, 0, "X", style));
@@ -33,23 +33,29 @@ test("paletas grises/verdes cubren los controles con contraste y fallback ANSI16
       const fg = code.slice(1, 4).map(Number), bg = code.slice(4, 7).map(Number);
       for (const [r, g, b] of [fg, bg]) {
         if (palette === "grayscale") { expect(r).toBe(g!); expect(g).toBe(b!); }
-        else { expect(g!).toBeGreaterThanOrEqual(r!); expect(g!).toBeGreaterThanOrEqual(b!); }
+        else if (palette === "green") { expect(g!).toBeGreaterThanOrEqual(r!); expect(g!).toBeGreaterThanOrEqual(b!); }
       }
       // Includes inactive titles and disabled buttons, not just body text.
       expect(contrast(fg, bg)).toBeGreaterThanOrEqual(3);
     }
+    for (const style of [theme.window, theme.menu, theme.title, theme.menuHotkey, theme.selected, theme.focused, theme.button, theme.footer]) {
+      const sample = new Canvas(1, 1, palette); sample.text(0, 0, "X", style);
+      const code = new Renderer().frame(sample, true, true).match(/\x1b\[38;2;(\d+);(\d+);(\d+);48;2;(\d+);(\d+);(\d+)m/)!;
+      expect(contrast(code.slice(1, 4).map(Number), code.slice(4, 7).map(Number))).toBeGreaterThanOrEqual(4.5);
+    }
     const fallback = new Renderer().frame(canvas);
     expect(fallback).not.toContain("38;2;");
     for (const code of fallback.matchAll(/\x1b\[(\d+);(\d+)m/g)) {
-      const allowed = palette === "grayscale" ? [30, 37, 90, 97] : [30, 32, 92];
+      const allowed = palette === "grayscale" ? [30, 37, 90, 97] : palette === "green" ? [30, 32, 92] : [30,31,32,33,34,35,36,37,90,91,92,93,94,95,96,97];
       expect(allowed).toContain(Number(code[1])); expect(allowed.map(value => value + 10)).toContain(Number(code[2]));
+      expect(Number(code[1]) + 10).not.toBe(Number(code[2]));
     }
   }
 });
 
 test("cambiar paleta repinta sin resize, conserva contenido y vuelve a idle; sin color mantiene foco", () => {
   const renderer = new Renderer();
-  for (const palette of ["qbasic", "grayscale", "green", "qbasic"] as const) {
+  for (const palette of [...Object.keys(palettes), "qbasic"] as PaletteId[]) {
     const canvas = new Canvas(12, 2, palette); canvas.text(0, 0, "Prompt: á文", theme.window); canvas.text(0, 1, "Cursor", theme.focused);
     const output = renderer.frame(canvas, true, true);
     expect(output).toContain("\x1b[2J"); expect(Bun.stripANSI(output)).toContain("Prompt: á文");
@@ -64,6 +70,10 @@ test("config antigua conserva QBasic; paleta inválida no modifica el archivo", 
   delete (old.ui as Partial<typeof old.ui>).palette;
   const original = JSON.stringify(old); await Bun.write(path, original);
   expect((await ConfigStore.load(path)).value.ui.palette).toBe("qbasic"); expect(await Bun.file(path).text()).toBe(original);
+  for (const palette of ["grayscale", "green", "nord", "dracula", "gruvbox"] as const) {
+    await Bun.write(path, JSON.stringify({ ...old, ui: { ...old.ui, palette } }));
+    expect((await ConfigStore.load(path)).value.ui.palette).toBe(palette);
+  }
   for (const palette of ["unknown", "toString", null, ["green"]]) {
     const invalid = JSON.stringify({ ...old, ui: { ...old.ui, palette } }); await Bun.write(path, invalid);
     await expect(ConfigStore.load(path)).rejects.toThrow("Paleta inválida"); expect(await Bun.file(path).text()).toBe(invalid);
@@ -95,9 +105,14 @@ test("selector por menú/teclado/mouse persiste, marca actual y conserva prompt/
     expect(app.view.prompt.value).toBe("borrador\ncon á文");
     app.colorPalette(); key("home"); key("escape"); expect(app.desktop.palette).toBe("green");
     expect((await Bun.file(config).json()).ui.palette).toBe("green");
+    for (const palette of ["nord", "dracula", "gruvbox"] as const) {
+      app.colorPalette(); key("down"); key("enter"); await until(() => app.desktop.palette === palette);
+      expect((await Bun.file(config).json()).ui.palette).toBe(palette); expect(app.view.prompt.value).toBe("borrador\ncon á文");
+      expect(other.desktop.draw().palette).toBe("qbasic");
+    }
   } finally { app.busy = false; await app.desktop.onBeforeExit!(); await other.desktop.onBeforeExit!(); }
   const reopened = await App.open({ config });
-  try { expect(reopened.desktop.draw().palette).toBe("green"); expect(reopened.view.prompt.value).toBe("borrador\ncon á文"); }
+  try { expect(reopened.desktop.draw().palette).toBe("gruvbox"); expect(reopened.view.prompt.value).toBe("borrador\ncon á文"); }
   finally { await reopened.desktop.onBeforeExit!(); }
 });
 
@@ -109,19 +124,19 @@ test("index.ts en PTY cambia paletas en vivo, reabre en ANSI16 y respeta NO_COLO
   let child = Bun.spawn([process.execPath, index, "--config", config, "--cwd", root], { cwd: root, env, terminal });
   const openPalette = async () => {
     text = ""; terminal.write("\x1bv" + "\x1b[B".repeat(2) + "\r");
-    await until(() => text.includes("Blanco y negro"));
+    await until(() => text.includes("Dark · Grafito"));
   };
   try {
     await until(() => text.includes("No hay modelo configurado"));
     expect(text).toContain("\x1b[38;2;170;170;170;48;2;0;0;170m");
     terminal.write("borrador PTY\x1b[13;2usegunda línea"); await until(() => text.includes("segunda línea"));
     await openPalette(); text = ""; terminal.write("\x1b[B\r");
-    await until(() => text.includes("\x1b[38;2;208;208;208;48;2;36;36;36m"));
+    await until(() => text.includes("\x1b[38;2;208;208;208;48;2;27;27;27m"));
     expect(Bun.stripANSI(text)).toContain("Prompt"); expect(Bun.stripANSI(text)).toContain("borrador PTY");
     expect((await Bun.file(config).json()).ui.palette).toBe("grayscale");
     terminal.resize(60, 16); text = ""; child.kill("SIGWINCH"); await until(() => text.includes("Prompt"));
     await openPalette(); expect(text).toContain("(actual)"); text = ""; terminal.write("\x1b[B\r");
-    await until(() => text.includes("\x1b[38;2;195;219;195;48;2;18;48;30m"));
+    await until(() => text.includes("\x1b[38;2;196;223;205;48;2;16;30;23m"));
     expect(Bun.stripANSI(text)).toContain("Prompt"); expect((await Bun.file(config).json()).ui.palette).toBe("green");
     terminal.write("\x11"); expect(await child.exited).toBe(0); expect(text).toContain("\x1b[?1049l");
     text = "";

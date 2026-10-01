@@ -195,12 +195,20 @@ y ventanas que simulan una interfaz de escritorio dentro del terminal.
 - Botones con estados normal, enfocado, presionado y deshabilitado.
 - Barra inferior con atajos y estado; estilos y paletas centralizados.
 
-**Vista → Paleta de colores** configura tres opciones: **Clásica · QBasic**,
-**Blanco y negro · Grises** y **Verdes**. `ui.palette` guarda `qbasic`, `grayscale`
-o `green`; los archivos existentes sin el campo conservan QBasic. La opción actual
+**Vista → Paleta de colores** configura seis opciones: **Clásica · QBasic**,
+**Dark · Grafito**, **Green · Bosque**, **Nord · Ártico**, **Dracula · Violeta** y
+**Gruvbox · Retro cálido**. `ui.palette` guarda `qbasic`, `grayscale`, `green`,
+`nord`, `dracula` o `gruvbox`; los IDs de grises/verdes mantienen compatibilidad.
+Los archivos existentes sin el campo conservan QBasic. La opción actual
 queda seleccionada al abrir. Elegir con teclado/mouse repinta toda la TUI en vivo,
 sin cambiar borrador, sesión o foco del prompt; Escape descarta la elección.
 La escala de grises usa tonos neutros, no equivale a desactivar color.
+Dark/Green ofrecen fondo profundo, texto suave, superficies elevadas oscuras y
+selección plateada/menta. Nord/Dracula/Gruvbox adaptan sus colores oficiales a los
+roles de ventanas, títulos, menús, botones, foco, estados y barra inferior.
+El renderer resuelve estilos por escritorio; no modifica la paleta del emulador.
+RGB mantiene contraste de texto normal ≥4.5:1 y estados secundarios ≥3:1 en las
+cinco paletas oscuras; ANSI16 aproxima sus tonos conservando selecciones legibles.
 [Validación desde fuente](qa/color-palettes.md).
 
 No es una interfaz gráfica del sistema operativo: todas las ventanas y controles

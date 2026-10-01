@@ -1,0 +1,337 @@
+=== Dark · Grafito · About · 120×40 ===
+  Archivo   Projects   Models   Promptings   Tools   Vista                                                       Ayuda
+ <  1:S42 · Paletas    ×                                                                                          >  +
+┌─────────────────────────────────────────────────── S42 · Paletas ────────────────────────────────────────────────────┐
+│ No hay modelo c┌────────────────────────────────────── About ───────────────────────────────────[X]─┐                │
+│ /tmp/s42-colors│  S42 Agent.                                                        Version: 0.1.0  │                │
+│                │                                                                                    │                │
+│ No hay modelo c│ Powered by César Casas. · MIT.                                                     │                │
+│                │                                                                                    │                │
+│                │ La potencia de un agente de coding. El espíritu del viejo QBasic.                  │                │
+│                │ Un escritorio de texto con ventanas, menús, mouse y atajos Vim. Tu prompt siempre  │                │
+│                │ a mano.                                                                            │                │
+│                │                                                                                    │                │
+│                │ Qué puede hacer por vos                                                            │                │
+│                │ • Leer, crear y editar archivos; buscar nombres y contenido por todo el disco.     │                │
+│                │ • Ejecutar comandos y hacer requests HTTP con JSON, formularios o texto.           │                │
+│                │ • Separar proyectos en pestañas y guardar promptings con {{metavariables}}.        │                │
+│                │ • Sumar tools con MCP y skills desde SKILL.md o el catálogo skills.sh.             │                │
+│                │                                                                                    │                │
+│                │ Tu modelo, tu espacio de trabajo                                                   │                │
+│                │ llama.cpp en local; DeepSeek y APIs compatibles. Vos elegís el modelo.             │                │
+│                │ Streaming, tools a la vista y razonamiento opcional si tu proveedor lo ofrece.     │                │
+│                │                                                                                    │                │
+│                │ 100% Bun · Portable                                                                │                │
+│                │ Binarios independientes para Windows, Linux y macOS.                               │                │
+│                │ Se ejecutan sin instalar Bun ni Node.js.                                           │                │
+│                │ Simple, rápido y open source. Nostalgia QBasic para el coding de hoy.              │                │
+│                │                                                                                    │                │
+│                │ LinkedIn: https://www.linkedin.com/in/cesarcasas/                                  │                │
+│                │                                                                                    │                │
+│                │ ↑/↓ · PgUp/PgDn · Esc cerrar                                           < Cerrar >  │                │
+│                └────────────────────────────────────────────────────────────────────────────────────┘                │
+└─────────────────                                                                                      ───────────────┘
+┌─────────────────────────────────────────────────────── Prompt ───────────────────────────────────────────────────────┐
+│ Borrador conservado · á文                                                                               < Enviar >   │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│ INSERT · Paleta: Dark · Grafito                                                                 · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ U/L · CPU 39%/61% · RAM 28.9G/33.3G · Disco 747.2G/158.1G · VRAM N/D · Tokens E/S N/D/N/D
+
+=== Green · Bosque · About · 120×40 ===
+  Archivo   Projects   Models   Promptings   Tools   Vista                                                       Ayuda
+ <  1:S42 · Paletas    ×                                                                                          >  +
+┌─────────────────────────────────────────────────── S42 · Paletas ────────────────────────────────────────────────────┐
+│ No hay modelo c┌────────────────────────────────────── About ───────────────────────────────────[X]─┐                │
+│ /tmp/s42-colors│  S42 Agent.                                                        Version: 0.1.0  │                │
+│                │                                                                                    │                │
+│ No hay modelo c│ Powered by César Casas. · MIT.                                                     │                │
+│                │                                                                                    │                │
+│                │ La potencia de un agente de coding. El espíritu del viejo QBasic.                  │                │
+│                │ Un escritorio de texto con ventanas, menús, mouse y atajos Vim. Tu prompt siempre  │                │
+│                │ a mano.                                                                            │                │
+│                │                                                                                    │                │
+│                │ Qué puede hacer por vos                                                            │                │
+│                │ • Leer, crear y editar archivos; buscar nombres y contenido por todo el disco.     │                │
+│                │ • Ejecutar comandos y hacer requests HTTP con JSON, formularios o texto.           │                │
+│                │ • Separar proyectos en pestañas y guardar promptings con {{metavariables}}.        │                │
+│                │ • Sumar tools con MCP y skills desde SKILL.md o el catálogo skills.sh.             │                │
+│                │                                                                                    │                │
+│                │ Tu modelo, tu espacio de trabajo                                                   │                │
+│                │ llama.cpp en local; DeepSeek y APIs compatibles. Vos elegís el modelo.             │                │
+│                │ Streaming, tools a la vista y razonamiento opcional si tu proveedor lo ofrece.     │                │
+│                │                                                                                    │                │
+│                │ 100% Bun · Portable                                                                │                │
+│                │ Binarios independientes para Windows, Linux y macOS.                               │                │
+│                │ Se ejecutan sin instalar Bun ni Node.js.                                           │                │
+│                │ Simple, rápido y open source. Nostalgia QBasic para el coding de hoy.              │                │
+│                │                                                                                    │                │
+│                │ LinkedIn: https://www.linkedin.com/in/cesarcasas/                                  │                │
+│                │                                                                                    │                │
+│                │ ↑/↓ · PgUp/PgDn · Esc cerrar                                           < Cerrar >  │                │
+│                └────────────────────────────────────────────────────────────────────────────────────┘                │
+└─────────────────                                                                                      ───────────────┘
+┌─────────────────────────────────────────────────────── Prompt ───────────────────────────────────────────────────────┐
+│ Borrador conservado · á文                                                                               < Enviar >   │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│ INSERT · Paleta: Green · Bosque                                                                 · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ U/L · CPU 39%/61% · RAM 28.9G/33.3G · Disco 747.2G/158.1G · VRAM N/D · Tokens E/S N/D/N/D
+
+=== Nord · Ártico · About · 120×40 ===
+  Archivo   Projects   Models   Promptings   Tools   Vista                                                       Ayuda
+ <  1:S42 · Paletas    ×                                                                                          >  +
+┌─────────────────────────────────────────────────── S42 · Paletas ────────────────────────────────────────────────────┐
+│ No hay modelo c┌────────────────────────────────────── About ───────────────────────────────────[X]─┐                │
+│ /tmp/s42-colors│  S42 Agent.                                                        Version: 0.1.0  │                │
+│                │                                                                                    │                │
+│ No hay modelo c│ Powered by César Casas. · MIT.                                                     │                │
+│                │                                                                                    │                │
+│                │ La potencia de un agente de coding. El espíritu del viejo QBasic.                  │                │
+│                │ Un escritorio de texto con ventanas, menús, mouse y atajos Vim. Tu prompt siempre  │                │
+│                │ a mano.                                                                            │                │
+│                │                                                                                    │                │
+│                │ Qué puede hacer por vos                                                            │                │
+│                │ • Leer, crear y editar archivos; buscar nombres y contenido por todo el disco.     │                │
+│                │ • Ejecutar comandos y hacer requests HTTP con JSON, formularios o texto.           │                │
+│                │ • Separar proyectos en pestañas y guardar promptings con {{metavariables}}.        │                │
+│                │ • Sumar tools con MCP y skills desde SKILL.md o el catálogo skills.sh.             │                │
+│                │                                                                                    │                │
+│                │ Tu modelo, tu espacio de trabajo                                                   │                │
+│                │ llama.cpp en local; DeepSeek y APIs compatibles. Vos elegís el modelo.             │                │
+│                │ Streaming, tools a la vista y razonamiento opcional si tu proveedor lo ofrece.     │                │
+│                │                                                                                    │                │
+│                │ 100% Bun · Portable                                                                │                │
+│                │ Binarios independientes para Windows, Linux y macOS.                               │                │
+│                │ Se ejecutan sin instalar Bun ni Node.js.                                           │                │
+│                │ Simple, rápido y open source. Nostalgia QBasic para el coding de hoy.              │                │
+│                │                                                                                    │                │
+│                │ LinkedIn: https://www.linkedin.com/in/cesarcasas/                                  │                │
+│                │                                                                                    │                │
+│                │ ↑/↓ · PgUp/PgDn · Esc cerrar                                           < Cerrar >  │                │
+│                └────────────────────────────────────────────────────────────────────────────────────┘                │
+└─────────────────                                                                                      ───────────────┘
+┌─────────────────────────────────────────────────────── Prompt ───────────────────────────────────────────────────────┐
+│ Borrador conservado · á文                                                                               < Enviar >   │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│ INSERT · Paleta: Nord · Ártico                                                                  · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ U/L · CPU 39%/61% · RAM 28.9G/33.3G · Disco 747.2G/158.1G · VRAM N/D · Tokens E/S N/D/N/D
+
+=== Dracula · Violeta · About · 120×40 ===
+  Archivo   Projects   Models   Promptings   Tools   Vista                                                       Ayuda
+ <  1:S42 · Paletas    ×                                                                                          >  +
+┌─────────────────────────────────────────────────── S42 · Paletas ────────────────────────────────────────────────────┐
+│ No hay modelo c┌────────────────────────────────────── About ───────────────────────────────────[X]─┐                │
+│ /tmp/s42-colors│  S42 Agent.                                                        Version: 0.1.0  │                │
+│                │                                                                                    │                │
+│ No hay modelo c│ Powered by César Casas. · MIT.                                                     │                │
+│                │                                                                                    │                │
+│                │ La potencia de un agente de coding. El espíritu del viejo QBasic.                  │                │
+│                │ Un escritorio de texto con ventanas, menús, mouse y atajos Vim. Tu prompt siempre  │                │
+│                │ a mano.                                                                            │                │
+│                │                                                                                    │                │
+│                │ Qué puede hacer por vos                                                            │                │
+│                │ • Leer, crear y editar archivos; buscar nombres y contenido por todo el disco.     │                │
+│                │ • Ejecutar comandos y hacer requests HTTP con JSON, formularios o texto.           │                │
+│                │ • Separar proyectos en pestañas y guardar promptings con {{metavariables}}.        │                │
+│                │ • Sumar tools con MCP y skills desde SKILL.md o el catálogo skills.sh.             │                │
+│                │                                                                                    │                │
+│                │ Tu modelo, tu espacio de trabajo                                                   │                │
+│                │ llama.cpp en local; DeepSeek y APIs compatibles. Vos elegís el modelo.             │                │
+│                │ Streaming, tools a la vista y razonamiento opcional si tu proveedor lo ofrece.     │                │
+│                │                                                                                    │                │
+│                │ 100% Bun · Portable                                                                │                │
+│                │ Binarios independientes para Windows, Linux y macOS.                               │                │
+│                │ Se ejecutan sin instalar Bun ni Node.js.                                           │                │
+│                │ Simple, rápido y open source. Nostalgia QBasic para el coding de hoy.              │                │
+│                │                                                                                    │                │
+│                │ LinkedIn: https://www.linkedin.com/in/cesarcasas/                                  │                │
+│                │                                                                                    │                │
+│                │ ↑/↓ · PgUp/PgDn · Esc cerrar                                           < Cerrar >  │                │
+│                └────────────────────────────────────────────────────────────────────────────────────┘                │
+└─────────────────                                                                                      ───────────────┘
+┌─────────────────────────────────────────────────────── Prompt ───────────────────────────────────────────────────────┐
+│ Borrador conservado · á文                                                                               < Enviar >   │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│ INSERT · Paleta: Dracula · Violeta                                                              · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ U/L · CPU 39%/61% · RAM 28.9G/33.3G · Disco 747.2G/158.1G · VRAM N/D · Tokens E/S N/D/N/D
+
+=== Gruvbox · Retro cálido · About · 120×40 ===
+  Archivo   Projects   Models   Promptings   Tools   Vista                                                       Ayuda
+ <  1:S42 · Paletas    ×                                                                                          >  +
+┌─────────────────────────────────────────────────── S42 · Paletas ────────────────────────────────────────────────────┐
+│ No hay modelo c┌────────────────────────────────────── About ───────────────────────────────────[X]─┐                │
+│ /tmp/s42-colors│  S42 Agent.                                                        Version: 0.1.0  │                │
+│                │                                                                                    │                │
+│ No hay modelo c│ Powered by César Casas. · MIT.                                                     │                │
+│                │                                                                                    │                │
+│                │ La potencia de un agente de coding. El espíritu del viejo QBasic.                  │                │
+│                │ Un escritorio de texto con ventanas, menús, mouse y atajos Vim. Tu prompt siempre  │                │
+│                │ a mano.                                                                            │                │
+│                │                                                                                    │                │
+│                │ Qué puede hacer por vos                                                            │                │
+│                │ • Leer, crear y editar archivos; buscar nombres y contenido por todo el disco.     │                │
+│                │ • Ejecutar comandos y hacer requests HTTP con JSON, formularios o texto.           │                │
+│                │ • Separar proyectos en pestañas y guardar promptings con {{metavariables}}.        │                │
+│                │ • Sumar tools con MCP y skills desde SKILL.md o el catálogo skills.sh.             │                │
+│                │                                                                                    │                │
+│                │ Tu modelo, tu espacio de trabajo                                                   │                │
+│                │ llama.cpp en local; DeepSeek y APIs compatibles. Vos elegís el modelo.             │                │
+│                │ Streaming, tools a la vista y razonamiento opcional si tu proveedor lo ofrece.     │                │
+│                │                                                                                    │                │
+│                │ 100% Bun · Portable                                                                │                │
+│                │ Binarios independientes para Windows, Linux y macOS.                               │                │
+│                │ Se ejecutan sin instalar Bun ni Node.js.                                           │                │
+│                │ Simple, rápido y open source. Nostalgia QBasic para el coding de hoy.              │                │
+│                │                                                                                    │                │
+│                │ LinkedIn: https://www.linkedin.com/in/cesarcasas/                                  │                │
+│                │                                                                                    │                │
+│                │ ↑/↓ · PgUp/PgDn · Esc cerrar                                           < Cerrar >  │                │
+│                └────────────────────────────────────────────────────────────────────────────────────┘                │
+└─────────────────                                                                                      ───────────────┘
+┌─────────────────────────────────────────────────────── Prompt ───────────────────────────────────────────────────────┐
+│ Borrador conservado · á文                                                                               < Enviar >   │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│ INSERT · Paleta: Gruvbox · Retro cálido                                                         · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ U/L · CPU 39%/61% · RAM 28.9G/33.3G · Disco 747.2G/158.1G · VRAM N/D · Tokens E/S N/D/N/D
+
+=== Seis paletas · Gruvbox actual · 120×40 ===
+  Archivo   Projects   Models   Promptings   Tools   Vista                                                       Ayuda
+ <  1:S42 · Paletas    ×                                                                                          >  +
+┌─────────────────────────────────────────────────── S42 · Paletas ────────────────────────────────────────────────────┐
+│ No hay modelo configurado. Models → Proveedores                                                                      │
+│ /tmp/s42-colors-preview-Kf5QSv/project                                                                               │
+│                                                                                                                      │
+│ No hay modelo configurado. Abrí Models → Proveedores.                                                                │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                              ┌────────────────── Paleta de colores ───────────────[X]─┐                              │
+│                              │┌──────────────────────────────────────────────────────┐│                              │
+│                              ││Clásica · QBasic                                      ││                              │
+│                              ││Dark · Grafito                                        ││                              │
+│                              ││Green · Bosque                                        ││                              │
+│                              ││Nord · Ártico                                         ││                              │
+│                              ││Dracula · Violeta                                     ││                              │
+│                              ││Gruvbox · Retro cálido (actual)                       ││                              │
+│                              ││                                                      ││                              │
+│                              ││                                                      ││                              │
+│                              │└──────────────────────────────────────────────────────┘│                              │
+│                              │   < Elegir >                                           │                              │
+│                              └────────────────────────────────────────────────────────┘                              │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────── Prompt ───────────────────────────────────────────────────────┐
+│ Borrador conservado · á文                                                                               < Enviar >   │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│ INSERT · Paleta: Gruvbox · Retro cálido                                                         · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ U/L · CPU 39%/61% · RAM 28.9G/33.3G · Disco 747.2G/158.1G · VRAM N/D · Tokens E/S N/D/N/D
+
+=== Selector · scroll hasta Gruvbox · 60×16 ===
+  Archivo Projects Models Promptings Tools Vista     Ayuda
+ <  1:S42 · Paletas    ×                              >  +
+┌┌────────────────── Paleta de colores ───────────────[X]─┐┐
+││┌─────────────────────────────────────────────────────↑┐│
+│││Nord · Ártico                                         ││
+│││Dracula · Violeta                                     ││
+│││Gruvbox · Retro cálido (actual)                       ││
+││└──────────────────────────────────────────────────────┘│
+││   < Elegir >                                           │
+└└────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│ Borrador conservado · á文                   < Enviar >   │
+│ INSERT · Paleta: Gruvbox · Retro cá · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ U/L · CPU 39%/61% · RAM 28.9G/33.3G · Disco 747.2G/158.1G
+ VRAM N/D · Tokens E/S N/D/N/D
+
+=== Dark · explorador compacto · 60×16 ===
+  Archivo Projects Models Promptings Tools Vista     Ayuda
+ <  1:S42 · Paletas    ×                              >  +
+┌┌──────────────── Explorador de archivos ────────────[X]─┐┐
+││/tmp/s42-colors-preview-Kf5QSv/project           < Ir > │
+││Nombre o glob (*.ts) · busca desde la ruta   < Buscar > │
+││[D] ../                                                 │
+││[F] index.ts                                            │
+││                                                        │
+││< Subir >  < Raíz >  < Abrir >           < Adjuntar >   │
+└└────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│ Borrador conservado · á文                   < Enviar >   │
+│ INSERT · Paleta: Dark · Grafito     · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ U/L · CPU 39%/61% · RAM 28.9G/33.3G · Disco 747.2G/158.1G
+ VRAM N/D · Tokens E/S N/D/N/D
+
+=== Green · explorador compacto · 60×16 ===
+  Archivo Projects Models Promptings Tools Vista     Ayuda
+ <  1:S42 · Paletas    ×                              >  +
+┌┌──────────────── Explorador de archivos ────────────[X]─┐┐
+││/tmp/s42-colors-preview-Kf5QSv/project           < Ir > │
+││Nombre o glob (*.ts) · busca desde la ruta   < Buscar > │
+││[D] ../                                                 │
+││[F] index.ts                                            │
+││                                                        │
+││< Subir >  < Raíz >  < Abrir >           < Adjuntar >   │
+└└────────────────────────────────────────────────────────┘
+┌───────────────────────── Prompt ─────────────────────────┐
+│ Borrador conservado · á文                   < Enviar >   │
+│ INSERT · Paleta: Green · Bosque     · Shift+Enter: línea │
+└──────────────────────────────────────────────────────────┘
+ U/L · CPU 39%/61% · RAM 28.9G/33.3G · Disco 747.2G/158.1G
+ VRAM N/D · Tokens E/S N/D/N/D
+
+=== English · seis paletas · 100×30 ===
+  File   Projects   Models   Promptings   Tools   View                                        Help
+ <  1:S42 · Paletas    ×                                                                      >  +
+┌───────────────────────────────────────── S42 · Paletas ──────────────────────────────────────────┐
+│ No model configured. Models → Providers                                                          │
+│ /tmp/s42-colors-preview-Kf5QSv/project                                                           │
+│                    ┌──────────────────── Color palette ─────────────────[X]─┐                    │
+│ No model configured│┌──────────────────────────────────────────────────────┐│                    │
+│                    ││Classic · QBasic                                      ││                    │
+│                    ││Dark · Graphite                                       ││                    │
+│                    ││Green · Forest (current)                              ││                    │
+│                    ││Nord · Arctic                                         ││                    │
+│                    ││Dracula · Purple                                      ││                    │
+│                    ││Gruvbox · Warm retro                                  ││                    │
+│                    ││                                                      ││                    │
+│                    ││                                                      ││                    │
+│                    │└──────────────────────────────────────────────────────┘│                    │
+│                    │   < Select >                                           │                    │
+│                    └────────────────────────────────────────────────────────┘                    │
+│                                                                                                  │
+│                                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────── Prompt ─────────────────────────────────────────────┐
+│ Borrador conservado · á文                                                            < Send >    │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│ INSERT · Palette: Green · Forest                                          · Shift+Enter: newline │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+ U/F · CPU 9%/91% · RAM 29.0G/33.3G · Disk 747.2G/158.1G
+ VRAM N/A · Tokens I/O N/A/N/A

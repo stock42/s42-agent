@@ -241,8 +241,23 @@ Espacio seguido de `p/m/s/e/f/c/k/t/?` abre proyecto/modelo/sesión/explorador/
 adjuntos/MCP/Skills/Promptings/ayuda. Menús/modales tienen prioridad sobre Vim.
 No se asignan acciones a F1–F12.
 
-**Vista → Paleta de colores** cambia en vivo y guarda **QBasic**, **Grises** o
-**Verdes**. **Vista → Activar / desactivar Vim** configura el modo. Se respetan
+**Vista → Paleta de colores** cambia en vivo y guarda la selección:
+
+| Paleta | Aspecto |
+| --- | --- |
+| Clásica · QBasic | Azul DOS y barras grises; predeterminada. |
+| Dark · Grafito | Grises neutros, fondo carbón, superficies oscuras y selección plateada. |
+| Green · Bosque | Fondo verde profundo, texto suave y acentos menta. |
+| [Nord · Ártico](https://www.nordtheme.com/docs/colors-and-palettes/) | Azul pizarra, texto frío y acentos cian. |
+| [Dracula · Violeta](https://draculatheme.com/contribute) | Grafito azulado, texto claro y acentos violetas. |
+| [Gruvbox · Retro cálido](https://github.com/morhetz/gruvbox) | Grises cálidos, texto crema y acentos ámbar. |
+
+Menús, diálogos, bordes, foco y selección tienen colores por función; cambiar de
+paleta conserva pestañas, borrador y sesión. Los IDs `grayscale` y `green` siguen
+funcionando en configuraciones anteriores. Las tres nuevas paletas adaptan los
+colores originales al escritorio QBasic.
+
+**Vista → Activar / desactivar Vim** configura el modo. Se respetan
 `NO_COLOR`, `--no-color` y `--no-mouse`; RGB con `COLORTERM=truecolor`, fallback
 ANSI16 para otros terminales. Renderer por filas modificadas; las métricas se
 muestrean cada 2 s y solo se emiten filas cuyo contenido cambió. La demo mantiene

@@ -68,7 +68,7 @@ export class Canvas {
 
 function ansi(style: Style, trueColor: boolean, palette: PaletteId): string {
   const colors = palettes[palette];
-  const resolved = style === theme.footer ? colors.footer : style;
+  const resolved = colors.styles.get(style) ?? style;
   if (trueColor) return `\x1b[38;2;${colors.colors[resolved.fg]};48;2;${colors.colors[resolved.bg]}m`;
   const fg = colors.ansi[resolved.fg]!, bg = colors.ansi[resolved.bg]!;
   return `\x1b[${fg < 8 ? 30 + fg : 90 + fg - 8};${bg < 8 ? 40 + bg : 100 + bg - 8}m`;

@@ -81,8 +81,12 @@ el chat. Sin modelo, conserva el prompt resuelto. `src/prompts.ts` y
 `src/ui/promptings.ts`; [QA](docs/qa/promptings.md).
 Módulos: `src/app.ts`, `src/ui/`, `src/agent/`, `src/llm/` y `src/storage/`.
 **Vista → Paleta de colores** cambia toda la TUI en vivo y guarda `ui.palette`:
-`qbasic` (actual/default), `grayscale` (escala de grises) o `green` (gama de verdes).
+`qbasic` (default), `grayscale` (Dark · Grafito), `green` (Green · Bosque),
+`nord`, `dracula` o `gruvbox`. Grises/verdes mantienen sus IDs existentes.
+Paletas oscuras con superficies/foco por rol semántico en `src/ui/theme.ts`;
+renderer resuelve esos roles por escritorio sin modificar componentes ni QBasic.
 RGB y fallback ANSI16; `NO_COLOR`/`--no-color`/`ui.color: "never"` siguen vigentes.
+[QA de paletas](docs/qa/color-palettes.md): contraste y terminal desde fuente.
 **Vista → Language** cambia la UI español/inglés en vivo; **Ver razonamiento:
 on/off** controla historial y streaming sin borrar reasoning ni ocultar tools.
 Persistencia global `ui.language: "es" | "en"` y `ui.showReasoning: boolean`;

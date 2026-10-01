@@ -5,6 +5,20 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Mejorado — Paletas oscuras y tres combinaciones clásicas
+
+- Dark · Grafito y Green · Bosque reemplazan los tonos planos de grises/verdes:
+  fondos profundos, menús/diálogos oscuros, texto suave y selección plateada/menta.
+  Estilos por rol semántico y escritorio; QBasic sigue como default, sin cambios.
+- Nord · Ártico, Dracula · Violeta y Gruvbox · Retro cálido disponibles en Vista
+  → Paleta de colores, en español/inglés y con persistencia. Config conserva
+  IDs grayscale/green y acepta nord/dracula/gruvbox. RGB y fallback ANSI16.
+- Typecheck y 41 tests relevantes correctos (6 archivos, 1018 assertions):
+  contraste, seis paletas, selección/persistencia/aislamiento, scroll en 60×16,
+  repintado e idle, PTY, ANSI16 y NO_COLOR. Diez capturas tmux desde index.ts
+  revisadas; README/specs/AGENTS/QA actualizados. Sin builds ni push.
+  Pull fallido por main sin upstream.
+
 ### Mejorado — About con identidad y capacidades
 
 - Ayuda → About presenta el espíritu QBasic, tools de archivos/búsqueda/comandos/

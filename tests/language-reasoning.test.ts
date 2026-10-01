@@ -77,7 +77,7 @@ test("View keyboard/mouse: switch language, translate surfaces, persist and pres
       app.extensions.search(); expect(screen(app)).toContain("Search · https://skills.sh"); key(app, "escape");
       app.promptings.editor(); expect(screen(app)).toContain("New prompting"); expect(screen(app)).toContain("Write the prompt"); expect(screen(app)).toContain("< Cancel >"); key(app, "escape");
       app.desktop.onHelp(); expect(app.desktop.modal!.title).toContain("Help"); expect((app.desktop.modal!.controls[0] as TextArea).value).toContain("Shift+Enter newline"); key(app, "escape");
-      app.colorPalette(); expect((app.desktop.modal!.controls[0] as SelectList).items[1]).toContain("Grayscale"); key(app, "escape");
+      app.colorPalette(); expect((app.desktop.modal!.controls[0] as SelectList).items[1]).toContain("Graphite"); key(app, "escape");
       await Bun.write(join(root, "Ayuda"), "Guardar\nArchivo\ntexto del usuario");
       const explorer = new FileExplorer(app.desktop, root); await explorer.show(); expect(screen(app)).toContain("File explorer"); expect(screen(app)).toContain("< Search >"); expect(screen(app)).toContain("< Root >");
       explorer.list.selected = explorer.entries.findIndex(entry => entry.name === "Ayuda"); await explorer.openSelected();

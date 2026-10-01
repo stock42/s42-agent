@@ -50,7 +50,7 @@ export function validateConfig(value: unknown): Config {
   if (!c || c.version !== 1 || !Array.isArray(c.projects) || !Array.isArray(c.providers) || !c.defaults || !text(c.defaults.providerId)
     || !c.ui || typeof c.ui.vimMode !== "boolean" || !["auto", "never"].includes(c.ui.color)) throw new Error("Configuración v1 inválida");
   if (c.ui.palette === undefined) c.ui.palette = "qbasic";
-  if (typeof c.ui.palette !== "string" || !Object.hasOwn(palettes, c.ui.palette)) throw new Error("Paleta inválida: usá qbasic, grayscale o green");
+  if (typeof c.ui.palette !== "string" || !Object.hasOwn(palettes, c.ui.palette)) throw new Error("Paleta inválida: usá qbasic, grayscale, green, nord, dracula o gruvbox");
   if (c.ui.language === undefined) c.ui.language = "es";
   if (c.ui.language !== "es" && c.ui.language !== "en") throw new Error("Idioma inválido: usá es o en");
   if (c.ui.showReasoning === undefined) c.ui.showReasoning = true;
