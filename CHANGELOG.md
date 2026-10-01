@@ -5,6 +5,15 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-01
 
+### Ajustado — Atajos de MCP/skills y recursos instalados
+
+- MCP/skills participan de los bindings configurables: Alt+C/Alt+S y
+  leader+c/leader+k. Validación de colisiones y ayuda integrada.
+- Instalación conserva symlinks relativos y excluye metadata .git; nombres de
+  skill admiten el formato alfanumérico de la especificación. taskkill usa ruta
+  SystemRoot para no depender del PATH en Windows (runtime pendiente).
+- Validación pertinente y typecheck; pull sin upstream, commit local.
+
 ### Corregido — Alias de skills en el catálogo
 
 - Una segunda instalación real falló porque Vercel publica el name

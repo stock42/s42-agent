@@ -74,7 +74,7 @@ mantiene el laboratorio QBasic. `--demo` abre la demo sin persistencia ni provee
 
 Vim arranca en **INSERT**. En NORMAL, el prompt admite `h/j/k/l`, `w/b`, `0/$`,
 `i/a/I/A`, `x`, `dd` y `u`. En la conversación: `j/k`, Ctrl+D/U, `gg/G`.
-Espacio seguido de `p/m/s/e/f/?` abre proyectos/modelos/sesiones/explorador/adjuntos/ayuda.
+Espacio seguido de `p/m/s/e/f/c/k/?` abre proyectos/modelos/sesiones/explorador/adjuntos/MCP/skills/ayuda.
 Ayuda permite activar/desactivar Vim; `ui.vimMode` también puede configurarse en JSON.
 
 Comandos: `/help`, `/projects`, `/providers`, `/models`, `/sessions`, `/files`, `/new`,
@@ -96,7 +96,7 @@ Bindings opcionales, asociados a acciones conocidas, con colisiones rechazadas:
 ```
 
 Las acciones configurables son `projects`, `models`, `providers`, `sessions`,
-`attachments`, `explorer` y `help`. Los atajos de lifecycle/foco/edición permanecen reservados.
+`attachments`, `explorer`, `mcp`, `skills` y `help`. Los atajos de lifecycle/foco/edición permanecen reservados.
 
 ## Explorador y chat
 

@@ -13,7 +13,7 @@ export async function readSkill(path:string,requireMatchingFolder=true):Promise<
   const text=(await file.text()).replace(/^\uFEFF/,'').replace(/\r\n/g,'\n');
   const match=/^---\n([\s\S]*?)\n---(?:\n|$)/.exec(text);if(!match)throw new Error('SKILL.md requiere frontmatter YAML');
   const meta=Bun.YAML.parse(match[1]!) as {name?:unknown;description?:unknown};
-  if(!meta||typeof meta.name!=='string'||!meta.name||meta.name.length>64||!/^\p{Ll}[\p{Ll}\p{N}-]*$/u.test(meta.name)||meta.name.endsWith('-')||meta.name.includes('--'))throw new Error('Nombre de skill inválido');
+  if(!meta||typeof meta.name!=='string'||!meta.name||meta.name.length>64||!/^[\p{Ll}\p{N}][\p{Ll}\p{N}-]*$/u.test(meta.name)||meta.name.endsWith('-')||meta.name.includes('--'))throw new Error('Nombre de skill inválido');
   if(requireMatchingFolder && basename(dirname(path))!==meta.name)throw new Error('El name de SKILL.md debe coincidir con su carpeta');
   if(typeof meta.description!=='string'||!meta.description.trim()||meta.description.length>1024)throw new Error('Skill requiere description (hasta 1024 caracteres)');
   return {name:meta.name,description:meta.description.trim(),path,body:text.slice(match[0].length).trim()};
@@ -51,7 +51,7 @@ export async function installSkill(result:SkillResult,destination:string,signal:
     signal.throwIfAborted();if(exit!==0)throw new Error(`Git clone falló: ${stderr.slice(-500)}`);
     const matches:LoadedSkill[]=[];const glob=new Bun.Glob('**/SKILL.md');for await(const path of glob.scan({cwd:join(temp,'repo'),absolute:true,onlyFiles:true})){try{const skill=await readSkill(path,false);if(skill.name===result.skillId||basename(dirname(path))===result.skillId)matches.push(skill);}catch{}}
     if(matches.length!==1)throw new Error(matches.length?'Skill ambigua en el repositorio':'No se encontró la skill del catálogo en el repositorio');
-    const selected=matches[0]!;copied=join(resolve(destination),crypto.randomUUID());await mkdir(copied,{recursive:true});const target=join(copied,selected.name);await cp(dirname(selected.path),target,{recursive:true});
+    const selected=matches[0]!;copied=join(resolve(destination),crypto.randomUUID());await mkdir(copied,{recursive:true});const target=join(copied,selected.name);await cp(dirname(selected.path),target,{recursive:true,verbatimSymlinks:true,filter:path=>basename(path)!==".git"});
     const license=new Bun.Glob('{LICENSE*,COPYING*,NOTICE*}');for await(const path of license.scan({cwd:join(temp,'repo'),absolute:true,onlyFiles:true}))await cp(path,join(copied,basename(path)));
     signal.throwIfAborted();return {...await readSkill(target),source:catalogUrl(result)};
   }catch(error){if(copied)await rm(copied,{recursive:true,force:true});throw error;}

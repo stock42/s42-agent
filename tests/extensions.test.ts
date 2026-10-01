@@ -11,6 +11,7 @@ test('MCP CRUD y skill registro/toggle/removal, compact menu mouse and modal sav
  const root=await mkdtemp(join(tmpdir(),'s42-ext-ui-')),app=await App.open({config:join(root,'config.json'),cwd:root});
  const save=async(values:string[])=>{const modal=app.desktop.modal!;const inputs=modal.controls.filter(c=>c instanceof Input) as Input[];values.forEach((value,i)=>inputs[i]!.setValue(value));modal.focusedId='save';key(app,'enter');await until(()=>!app.desktop.modal);};
  try{app.desktop.resize(60,16);const header=app.desktop.draw().lines()[0]!;for(const name of ['Projects','Models','MCP','Skills','Ayuda'])expect(header).toContain(name);
+ key(app,"alt+c");expect(app.desktop.modal!.title).toContain("MCP");key(app,"escape");
  app.extensions.serverForm('http');await save(['Local MCP','http://127.0.0.1:3000/mcp','']);expect(app.store.value.mcpServers[0]!.enabled).toBe(true);
  app.extensions.servers();key(app,'enter');key(app,'down');key(app,'enter');await until(()=>!app.store.value.mcpServers[0]!.enabled);
  app.extensions.serverForm('http',app.store.value.mcpServers[0]);await save(['Renamed MCP','http://127.0.0.1:3001/mcp','']);expect(app.store.value.mcpServers[0]!.url).toContain('3001');
@@ -18,6 +19,7 @@ test('MCP CRUD y skill registro/toggle/removal, compact menu mouse and modal sav
  const skill=join(root,'guide');await mkdir(skill);await Bun.write(join(skill,'SKILL.md'),'---\nname: guide\ndescription: Make precise edits\n---\nUse read before edit.');app.extensions.skillForm();await save([skill,'proyecto']);expect(app.store.value.skills[0]!.projectId).toBe(app.project!.id);
  app.extensions.skills();key(app,'enter');key(app,'down');key(app,'enter');await until(()=>!app.store.value.skills[0]!.enabled);
  app.extensions.skills();key(app,'enter');key(app,'down');key(app,'down');key(app,'down');key(app,'enter');await until(()=>!app.store.value.skills.length);
+ key(app,"escape");app.desktop.handle({type:"key",key:"space",text:" "});app.desktop.handle({type:"key",key:"k",text:"k"});expect(app.desktop.modal!.title).toContain("Skills");key(app,"escape");
  expect(app.view.response.readOnly).toBe(true);expect(app.desktop.draw().lines().join('\n')).toContain('Prompt');
  }finally{await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}
 });

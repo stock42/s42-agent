@@ -95,7 +95,7 @@ export class App {
       ] },
       { label: "Ayuda", hotkey: "y", align: "right", items: [{ label: "Atajos y mouse", run: () => this.desktop.onHelp() }, {label:"Activar / desactivar Vim",run:()=>this.run(async()=>{ const next=structuredClone(this.store.value); next.ui.vimMode=!next.ui.vimMode; await this.store.save(next); this.mode="INSERT"; this.pending="";this.status=`Vim ${next.ui.vimMode ? "activado" : "desactivado"}`; })}] },
     );
-    const actionLabels:Record<Action,string>={projects:"Elegir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",explorer:"Explorador de archivos",help:"Atajos y mouse"};
+    const actionLabels:Record<Action,string>={projects:"Elegir proyecto",models:"Elegir modelo",providers:"Proveedores",sessions:"Sesiones",attachments:"Adjuntos",explorer:"Explorador de archivos",mcp:"Servidores / CRUD",skills:"Skills registradas",help:"Atajos y mouse"};
     for(const menu of this.desktop.menu.menus) for(const item of menu.items) {
       const action=(Object.keys(actionLabels) as Action[]).find(action=>actionLabels[action]===item.label);if(action)item.shortcut=this.bindingLabel(action);
     }
@@ -288,7 +288,7 @@ export class App {
     } finally {this.busy=false;this.controller=undefined;this.view.send.label="Enviar";this.desktop.invalidate();}
   }
   private action(action: Action): void {
-    ({projects:()=>this.projects(),models:()=>this.models(),providers:()=>this.providers(),sessions:()=>this.sessions(),attachments:()=>this.attachmentMenu(),explorer:()=>this.explore(),help:()=>this.desktop.onHelp()})[action]();
+    ({projects:()=>this.projects(),models:()=>this.models(),providers:()=>this.providers(),sessions:()=>this.sessions(),attachments:()=>this.attachmentMenu(),explorer:()=>this.explore(),mcp:()=>this.extensions.servers(),skills:()=>this.extensions.skills(),help:()=>this.desktop.onHelp()})[action]();
   }
   explore(): void {
     if(this.desktop.modal)return;
@@ -314,7 +314,7 @@ export class App {
       this.pending=""; const action=Object.entries(bindings(this.store.value.ui.bindings).normal).find(([,binding])=>binding===`leader+${key}`)?.[0] as Action|undefined;
       if (action) this.action(action); return true;
     }
-    if (key === " ") { this.pending="leader"; this.status="Leader: p proyecto · m modelo · s sesión · e archivos · f adjunto · ? ayuda"; return true; }
+    if (key === " ") { this.pending="leader"; this.status="Leader: p proyecto · m modelo · s sesión · e archivos · f adjunto · c MCP · k skills · ? ayuda"; return true; }
     const prior=this.pending; this.pending="";
     if (control === this.view.response) {
       if (prior==='g' && key==='g') return this.view.response.vim('gg');
