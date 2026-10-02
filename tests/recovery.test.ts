@@ -59,7 +59,7 @@ test("length conserva parcial, entrega etapas, oculta control fragmentado y no r
     expect(requests[4].messages.filter((m:any)=>m.role==="user" && m.content.includes("Esta es la etapa"))).toHaveLength(1);
     expect(requests[2].messages.some((m: any) => m.content === "Pedido original completo")).toBe(true);
     expect(requests[2].messages.some((m: any) => m.content === "Código á文🙂 incompleto" && !m.tool_calls)).toBe(true);
-    expect(requests.every(body => !Object.hasOwn(body, "max_tokens"))).toBe(true);
+    expect(requests.every(body => !Object.hasOwn(body,"max_tokens"))).toBe(true);
     expect(await Bun.file(join(root, "first.txt")).text()).toBe("realizado una vez");
     expect(await Bun.file(join(root, "second.txt")).text()).toBe("segunda etapa");
     expect(await Bun.file(join(root, "discarded.txt")).exists()).toBe(false);

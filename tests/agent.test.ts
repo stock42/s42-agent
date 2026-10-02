@@ -21,8 +21,8 @@ test("loop envía historial completo sin bloquear por contexto estimado y usa el
     session.state.messages.push({ role: "assistant", content: history }, { role: "user", content: "Continuá" });
     const options = { project: { id: "project", name: "Fixture", path: root }, session, provider, model, signal: new AbortController().signal,
       onDelta: () => {}, onState: () => {}, onMessage: () => {} };
-    await runTurn(options); metadata = false; await runTurn(options);
-    expect(requests).toHaveLength(2); expect(requests[0].max_tokens).toBe(393216); expect(Object.hasOwn(requests[1], "max_tokens")).toBe(false);
+    await runTurn(options); metadata = false; await runTurn({ ...options, model: { ...model, contextWindow: 1048576 } });
+    expect(requests).toHaveLength(2); expect(requests[0].max_tokens).toBe(393216); expect(Object.hasOwn(requests[1],"max_tokens")).toBe(false);
     expect(requests.every(body => body.messages.some((message: any) => message.content === history))).toBe(true);
     expect(requests[1].messages[0].content).not.toContain("2048"); expect(session.state.notices).toHaveLength(0);
   } finally { server.stop(true); await session.close(); await rm(root, { recursive: true, force: true }); }

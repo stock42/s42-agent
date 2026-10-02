@@ -54,10 +54,10 @@ test("index.ts sin TTY descubre modelo, autentica, lee/escribe/ejecuta y reabre 
     const result = await launch([...base, "--prompting", "Desarrollá tetris\nsegunda línea", "--reasoning", "off"], cwd).done;
     expect(result.code).toBe(0); expect(result.stdout).toBe("Juego escrito y ejecutado á文🙂.\n");
     expect(result.stderr).toContain("Tool read:"); expect(result.stderr).toContain("Tool write:"); expect(result.stderr).toContain("Tool shell:"); expect(result.stderr).toContain("tetris fixture");
-    expect(result.stderr).toMatch(/Tokens E\/S 400\/40 · Prom\. \d+\.\d tok\/s/);
+    expect(result.stderr).toMatch(/Tokens E\/S 400\/40 · Prom\. \d+\.\d[kMG]? tok\/s · Contexto/);
     expect(result.stderr).not.toContain("pensamiento"); expect(result.stderr + result.stdout).not.toContain("\x1b");
     expect(result.stderr).not.toContain("cli-test-key"); expect(discoveries).toBe(1); expect(auth.every(value => value === "Bearer cli-test-key")).toBe(true);
-    expect(bodies.every(body => !Object.hasOwn(body, "max_tokens"))).toBe(true);
+    expect(bodies.every(body => !Object.hasOwn(body,"max_tokens"))).toBe(true);
     expect(bodies[0].model).toBe("fixture"); expect(bodies[0].messages[0].content).toContain("CLI_GUIDANCE");
     expect(bodies[0].messages.at(-1).content).toBe("Desarrollá tetris\nsegunda línea"); expect(bodies[0].tools.map((tool: any) => tool.function.name)).toContain("internal_skill");
     expect(await Bun.file(join(cwd, "game.ts")).text()).toBe("console.log('tetris fixture');\n"); expect(await Bun.file(config).exists()).toBe(false);
@@ -66,7 +66,7 @@ test("index.ts sin TTY descubre modelo, autentica, lee/escribe/ejecuta y reabre 
     const id = basename(files[0]!, ".jsonl");
     const resumed = await launch([...base, "--model", "fixture", "--session", id, "--prompting", "continuar", "--reasoning", "on"], cwd).done;
     expect(resumed.code).toBe(0); expect(resumed.stdout).toBe("Continuación.\n"); expect(resumed.stderr).toContain("Razonamiento: pensamiento visible");
-    expect(discoveries).toBe(1); expect(Object.hasOwn(bodies[4], "max_tokens")).toBe(false); expect(bodies[4].messages.filter((message: any) => message.role === "tool")).toHaveLength(3);
+    expect(discoveries).toBe(1); expect(Object.hasOwn(bodies[4],"max_tokens")).toBe(false); expect(bodies[4].messages.filter((message: any) => message.role === "tool")).toHaveLength(3);
     expect((await Bun.file(files[0]!).text()).match(/"type":"tool-start"/g)).toHaveLength(3);
     expect(await Bun.file(files[0]! + ".lock").exists()).toBe(false);
   } finally { server.stop(true); await rm(root, { recursive: true, force: true }); }

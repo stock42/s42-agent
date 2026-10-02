@@ -3,7 +3,7 @@ import type { Attachment } from "./agent/attachments.ts";
 import type { Project } from "./storage/config.ts";
 import type { Session } from "./storage/sessions.ts";
 import { TextArea } from "./ui/components/text-area.ts";
-import type { TokenUsage } from "./agent/usage.ts";
+import type { ContextUsage, TokenUsage } from "./agent/usage.ts";
 
 export interface ProjectTab {
   id: string; project?: Project; session?: Session;
@@ -14,6 +14,7 @@ export interface ProjectTab {
   response: TextArea; prompt: TextArea;
   panel: "editor" | "prompt"; focusedId?: string;
   tokens?: TokenUsage;
+  contextUsage?: ContextUsage;
   agentState?: string;
   live: { id: string; label: string; text: string; reasoning: boolean }[];
 }

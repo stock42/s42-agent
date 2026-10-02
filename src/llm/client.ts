@@ -5,7 +5,8 @@ export { credential } from "../storage/credentials.ts";
 
 export interface ToolDefinition { type: "function"; function: { name: string; description: string; parameters: Record<string, unknown> } }
 export interface Completion { message: Message; usage?: ProviderUsage; finishReason?: string }
-export class CompletionError extends Error { constructor(message: string, readonly partial: Message, readonly finishReason?: string, readonly usage?: ProviderUsage) { super(message); } }
+export class CompletionError extends Error { constructor(message: string, readonly partial: Message, readonly finishReason?: string, readonly usage?: ProviderUsage,
+  readonly contextExceeded = false, readonly contextWindow?: number) { super(message); } }
 
 export class SSEParser {
   private decoder = new TextDecoder(); private buffer = ""; private lines: string[] = [];
@@ -25,12 +26,13 @@ export class SSEParser {
 // llama.cpp publishes template capabilities/context in /props; remote providers use /models.
 // Never reuse guessed output ceilings from old automatic catalogs.
 export async function runtimeModel(provider: Provider, model: Model, key?: string, signal?: AbortSignal): Promise<Model> {
-  if (model.manual) return { ...model, maxOutputTokens: undefined };
+  if (model.manual && model.contextWindow !== undefined) return { ...model, maxOutputTokens: undefined };
   const automatic = { ...model, maxOutputTokens: undefined };
   if (provider.kind !== "llama.cpp") {
     // Refresh actual provider metadata when a turn starts; startup stays offline.
     try {
-      return (await discoverModels(provider, key, signal)).find(m => m.id === model.id) ?? automatic;
+      const detected = (await discoverModels(provider, key, signal)).find(m => m.id === model.id);
+      return model.manual ? { ...automatic, contextWindow: detected?.contextWindow } : detected ?? automatic;
     } catch (error) { if (signal?.aborted) throw error; return automatic; }
   }
   const url = new URL(provider.baseUrl); url.pathname = url.pathname.replace(/\/v1\/?$/, "").replace(/\/$/, "") + "/props";
@@ -44,7 +46,7 @@ export async function runtimeModel(provider: Provider, model: Model, key?: strin
     const context = props.default_generation_settings?.n_ctx;
     const contextWindow = Number.isSafeInteger(context) && context! > 1 ? context! : model.contextWindow;
     const tools = props.chat_template_caps?.supports_tools;
-    return { ...automatic, contextWindow, capabilities: {
+    return { ...automatic, contextWindow, capabilities: model.manual ? model.capabilities : {
       tools: typeof tools === "boolean" ? tools : model.capabilities.tools,
       images: typeof props.modalities?.vision === "boolean" ? props.modalities.vision : model.capabilities.images,
     } };
@@ -69,7 +71,7 @@ export async function discoverModels(provider: Provider, key?: string, signal?: 
 }
 
 export async function complete(options: { provider: Provider; model: Model; messages: Message[]; tools?: ToolDefinition[]; key?: string; signal: AbortSignal;
-  onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void; onProgress?: (usage: ProviderUsage) => void }): Promise<Completion> {
+  contextTokens?: number; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void; onProgress?: (usage: ProviderUsage) => void }): Promise<Completion> {
   const controller = new AbortController(), relay = () => controller.abort(options.signal.reason);
   if (options.signal.aborted) relay(); else options.signal.addEventListener("abort", relay, { once: true });
   let reader: { cancel(): Promise<void> } | undefined;
@@ -80,16 +82,24 @@ export async function complete(options: { provider: Provider; model: Model; mess
     // DeepSeek rejects reasoning-only partials with null content. An empty
     // string preserves their reasoning in context without changing the session.
     const messages = options.messages.map(message => message.role === "assistant" && message.content === null && !message.tool_calls?.length ? { ...message, content: "" } : message);
+    const providerMaximum = options.model.manual ? undefined : options.model.maxOutputTokens;
+    const remaining = options.model.contextWindow !== undefined && options.contextTokens !== undefined ? Math.max(1, Math.floor(options.model.contextWindow - options.contextTokens)) : undefined;
+    // Unknown output metadata is decided by the server. Never send a guessed
+    // maximum that could exceed the provider's real per-response capacity.
+    const maximum = providerMaximum === undefined ? undefined : Math.min(providerMaximum, remaining ?? providerMaximum);
     const response = await fetch(`${options.provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST", signal: controller.signal, headers: { "Content-Type": "application/json", ...(options.key ? { Authorization: `Bearer ${options.key}` } : {}) },
-      body: JSON.stringify({ model: options.model.id, messages, stream: true, stream_options: { include_usage: true }, max_tokens: options.model.manual ? undefined : options.model.maxOutputTokens,
+      body: JSON.stringify({ model: options.model.id, messages, stream: true, stream_options: { include_usage: true }, max_tokens: maximum,
         ...(options.tools?.length ? { tools: options.tools } : {}), ...(options.provider.kind === "llama.cpp" ? { timings_per_token: true } : {}) }),
     });
     if (!response.ok) {
       const body = await response.text(); let detail = body.trim();
       try { const error = JSON.parse(body)?.error; if (typeof error?.message === "string") detail = error.message; } catch {}
       const hint = response.status === 401 ? " · revisar API key" : response.status === 404 ? " · revisar endpoint/modelo" : response.status === 429 ? " · límite del proveedor" : "";
-      throw new Error(`Proveedor: HTTP ${response.status}${hint}${detail ? `: ${detail}` : ""}`);
+      const contextExceeded = [400, 413].includes(response.status) && /(?:context[_ -](?:length|window|size)|(?:context|prompt|input).*(?:exceed|too (?:long|large)|maximum|limit))/i.test(body);
+      const capacity = /(?:maximum context length|context (?:length|window|size)(?: is| of|:|=)?)[^\d]{0,30}([\d,]+)/i.exec(detail)?.[1]?.replaceAll(",", "");
+      throw new CompletionError(`Proveedor: HTTP ${response.status}${hint}${detail ? `: ${detail}` : ""}`, partial(), undefined, usage,
+        contextExceeded, capacity && Number.isSafeInteger(Number(capacity)) && Number(capacity) > 0 ? Number(capacity) : undefined);
     }
     if (!response.body) throw new Error("El proveedor no devolvió un stream");
     const parser = new SSEParser(data => {

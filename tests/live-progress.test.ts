@@ -41,6 +41,7 @@ test("tokens y promedio se actualizan antes del final y acumulan sin duplicar; t
    await until(()=>app.tabs[0]!.tokens!.output===15);expect(app.tabs[0]!.tokens!.input).toBe(100);expect(app.tabs[0]!.tokens!.requests).toBe(1);expect(app.tabs[0]!.tokens!.generationMs).toBeGreaterThan(previous);
    controller!.enqueue(data({choices:[{finish_reason:"stop",delta:{}}],usage:{prompt_tokens:100,completion_tokens:15,total_tokens:115}}));controller!.enqueue(data("[DONE]"));controller!.close();await app.tabs[0]!.turn;
    expect(app.tabs[0]!.tokens!.output).toBe(15);expect(app.tabs[0]!.tokens!.requests).toBe(1);expect(app.tabs[0]!.tokens!.partial).toBe(false);
+   expect(app.tabs[0]!.contextUsage).toMatchObject({window:128768,used:115,estimated:false});
  }finally{await app.desktop.onBeforeExit!();server.stop(true);await rm(root,{recursive:true,force:true});}
 });
 

@@ -37,7 +37,7 @@ export function createWorkspaceView(project: ProjectContext = { name: basename(p
     prompt.bounds.width = Math.max(1, client.width - 2); prompt.bounds.height = Math.max(1, client.height - 2);
   };
   promptWindow.onDraw = (canvas, client) => {
-    const tokens = tokenLine(undefined, desktop.t);
+    const tokens = tokenLine(undefined, desktop.t, undefined, client.width - 2);
     canvas.text(client.x + client.width - 1 - Bun.stringWidth(tokens), client.y, tokens, theme.window);
     canvas.text(client.x + 1, client.y + client.height - 1,
       `${submitted ? "Respuesta demo" : "Demo sin LLM"} · Enter enviar · Shift+Enter nueva línea`, theme.window, client.width - 2);

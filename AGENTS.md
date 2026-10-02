@@ -34,8 +34,11 @@ separa prompt, loop y herramientas; `llm/`, `mcp/`, `skills/`, `storage/` y
 ## Contratos del producto
 
 - No imponer cuotas ni cortes propios por tokens, pasos, tiempo, tamaño de
-  archivos, adjuntos o resultados. Respetar la capacidad real del proveedor y
-  mantener cancelación explícita; no reactivar límites de configuración legacy.
+  archivos, adjuntos o resultados. La ventana real del LLM es el límite de
+  contexto: compactar todo el contexto activo al acercarse al 85%, conservando
+  historial original y continuidad. Mostrar su porcentaje junto a Tokens E/S;
+  distinguir uso reportado, estimación y capacidad desconocida. Mantener
+  cancelación explícita; no reactivar límites de configuración legacy.
 - El panel central de respuestas/archivos es de solo lectura y el prompt queda
   siempre visible. Conservar selección, scroll, Unicode y números de línea
   lógica en un margen separado; no insertar números ni ANSI en mensajes/sesiones.

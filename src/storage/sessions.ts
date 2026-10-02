@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { Database } from "bun:sqlite";
 import { isDatabase, openDatabase, insertEvent } from "./database.ts";
 import type { Message, Selection } from "../agent/messages.ts";
-import type { TokenUsage } from "../agent/usage.ts";
+import type { ContextUsage, TokenUsage } from "../agent/usage.ts";
 
 export type EventData =
   | { type: "notice"; text: string }
@@ -11,16 +11,25 @@ export type EventData =
   | { type: "selection"; selection: Selection }
   | { type: "draft"; text: string; attachments: string[] }
   | { type: "message"; message: Message }
+  | { type: "context-usage"; usage: ContextUsage }
+  | { type: "compaction"; through: number; summary: string }
+  | { type: "compaction-part"; message: Message }
   | { type: "tool-start"; callId: string; name: string; arguments: string }
   | { type: "tool-result"; callId: string; output: string; failed: boolean }
   | { type: "turn"; state: "completed" | "cancelled" | "failed"; detail: string; tokens?: TokenUsage };
 export type SessionEvent = EventData & { version: 1; id: string; projectId: string; at: string };
-export interface SessionState { id: string; projectId: string; title: string; selection?: Selection; draft: string; attachments: string[]; messages: Message[]; events: SessionEvent[]; notices: string[] }
+export interface SessionState { id: string; projectId: string; title: string; selection?: Selection; draft: string; attachments: string[]; messages: Message[]; events: SessionEvent[]; notices: string[];
+  compaction?: { through: number; summary: string }; contextUsage?: ContextUsage }
 
 function parseEvent(value: unknown, projectId: string): SessionEvent {
   const e = value as SessionEvent;
   if (!e || e.version !== 1 || typeof e.id !== "string" || e.projectId !== projectId || typeof e.at !== "string") throw new Error("Evento de sesión inválido");
   switch (e.type) {
+    case "context-usage": if (e.usage && typeof e.usage.providerId === "string" && typeof e.usage.modelId === "string" && typeof e.usage.estimated === "boolean"
+      && [e.usage.window, e.usage.used, e.usage.inputWeight, e.usage.inputTokens].every(v => v === undefined || Number.isSafeInteger(v) && v >= 0)) return e; break;
+    case "compaction": if (Number.isSafeInteger(e.through) && e.through >= 0 && typeof e.summary === "string" && e.summary.trim()) return e; break;
+    case "compaction-part": if (e.message?.role === "assistant" && typeof e.message.content === "string"
+      && (e.message.reasoning_content === undefined || typeof e.message.reasoning_content === "string") && (e.message.reasoning === undefined || typeof e.message.reasoning === "string")) return e; break;
     case "notice": if(typeof e.text==="string")return e;break;
     case "session": if (typeof e.title === "string") return e; break;
     case "selection": if (e.selection && typeof e.selection.providerId === "string" && (e.selection.modelId === undefined || typeof e.selection.modelId === "string")) return e; break;
@@ -75,6 +84,11 @@ export class Session {
       }
       const pending = new Map<string, string>();
       for (const e of state.events) {
+        if (e.type === "context-usage") state.contextUsage = e.usage;
+        if (e.type === "compaction") {
+          if (e.through > state.messages.length) throw new Error("Compactación inválida: historial incompleto");
+          state.compaction = { through: e.through, summary: e.summary };
+        }
         if(e.type==="notice")state.notices.push(e.text);
         if (e.type === "session") state.title = e.title;
         if (e.type === "draft") { state.draft = e.text; state.attachments = e.attachments; }

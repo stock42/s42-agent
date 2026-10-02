@@ -161,8 +161,11 @@ la [API oficial de modelos](https://api-docs.deepseek.com/api/list-models/).
 Elegir un modelo lo recuerda automáticamente en la sesión, el proyecto y el
 default global para proyectos nuevos. Cada pestaña conserva su elección. Una
 config anterior con un único modelo local registrado lo recupera sin red; con
-varios modelos sin elección válida se mantiene el selector. Un historial con
-imágenes requiere un modelo que las acepte o una sesión nueva. Sin modelo seleccionado, el chat lo indica y conserva el borrador.
+varios modelos sin elección válida se mantiene el selector. Un contexto activo
+con imágenes requiere un modelo que las acepte o una sesión nueva. Las imágenes
+ya compactadas en un resumen de texto permanecen en el historial original sin
+impedir elegir un modelo de texto. Sin modelo seleccionado, el chat lo indica y
+conserva el borrador.
 
 ### Servidor llama.cpp
 
@@ -264,7 +267,7 @@ revierte cambios ni reejecuta herramientas interrumpidas al reabrir.
 [Contratos y ejemplos de cada tool](TOOLS.es.md).
 
 El panel **Prompt** muestra siempre **tokens de entrada/salida (E/S) y promedio tok/s**
-arriba a la derecha, por ejemplo `Tokens E/S 1200/120 · Prom. 28.5 tok/s`
+arriba a la derecha, por ejemplo `Tokens E/S 1200/120 · Prom. 28.5 tok/s · Contexto 12.0%`
 (`Avg.` en inglés). No tiene botón Enviar: **Enter envía**, Shift+Enter inserta
 una línea y Ctrl+C cancela. El borrador usa todo el ancho bajo los contadores.
 Tokens por turno/pestaña incluyen todas sus requests, tools y continuaciones;
@@ -276,6 +279,26 @@ deltas SSE como tokens. Conteo incompleto → parcial; dato ausente → **N/D**.
 Cantidades grandes se abrevian (`k`, `M`, etc.); la sesión conserva cifras exactas.
 Tok/s es el promedio observado: salida reportada dividida por tiempo de las
 requests con salida reportada, incluyendo red/primer token y excluyendo tools.
+
+**Contexto** muestra el porcentaje de la ventana del LLM, independiente de los
+tokens acumulados del turno. Usa entrada/salida de la última petición cuando el
+proveedor las informa. Antes de recibirlas y entre peticiones, **≈** identifica
+una estimación local de mensajes, reasoning, adjuntos y schemas de herramientas,
+calibrada con el uso reportado. Capacidad desconocida → **N/D**, sin inventar una
+ventana. El indicador pertenece a cada proyecto y se restaura con su sesión;
+también aparece en el resumen de CLI. En terminales estrechos se abrevian los
+contadores para mantener visible el porcentaje.
+
+Al acercarse al **85%** se muestra **Compactando contexto…** y el LLM resume todo
+el contexto activo: pedido, restricciones, decisiones, reasoning relevante,
+adjuntos, cambios, resultados de tools, errores, validación y pendientes. Si el
+material ya supera la ventana, se procesa completo por partes y se integran los
+resúmenes; no se recorta el historial. El nuevo checkpoint sustituye ese material
+solo en futuras peticiones, conservando el chat original en JSONL/SQLite. Cancelar
+o fallar la compactación conserva el checkpoint anterior y los efectos previos.
+Las instrucciones del proyecto y los schemas actuales se mantienen al continuar.
+Un rechazo específico de contexto puede activar compactación y continuar; otros
+errores HTTP no se reintentan automáticamente.
 
 La barra inferior muestra **CPU: % · RAM: usado/total · Disco: usado/total ·
 VRAM: usado/total**, en GiB/MiB (`G`/`M`). Se distribuye en las filas necesarias
@@ -300,8 +323,8 @@ las siguientes se solicitan mientras el modelo indique trabajo pendiente. Se
 conservan la sesión y el modelo; las herramientas ya realizadas
 no se vuelven a ejecutar automáticamente y las calls truncadas se descartan.
 **Ctrl+C** cancela la etapa activa. Las continuaciones y las herramientas no
-tienen tope de pasos ni timeouts del harness. Errores HTTP o desconexiones reales
-se informan sin reintentar el turno.
+tienen tope de pasos ni timeouts del harness. Errores HTTP ajenos a la ventana y
+desconexiones reales se informan sin reintentar el turno.
 
 ### MCP
 
@@ -451,15 +474,17 @@ Acciones: `projects`, `models`, `providers`, `sessions`, `attachments`, `explore
 reservados. El agente no impone límites de pasos, etapas, tiempo, payloads,
 archivos, adjuntos ni historial de undo. Los campos legacy `limits` se retiran
 al cargar configuración v1; no pueden volver a activar cortes antiguos.
-El proveedor valida el contexto; no se rechazan pedidos por una estimación local
-ni se reserva una fracción fija para la respuesta.
+La ventana del modelo es la única restricción de contexto. El agente compacta
+antes de agotarla; el proveedor valida el conteo real. No se aplican cuotas de
+tokens al turno ni reservas fijas de salida.
 llama.cpp detecta contexto/tools/visión mediante `/props` al descubrir modelos y
 al enviar. Repara catálogos antiguos “sin tools” cuando la plantilla del servidor
 sí las soporta. llama.cpp determina su propia salida; el harness no envía
 `max_tokens` para modelos automáticos locales. Los proveedores remotos actualizan
 su catálogo automático al enviar un turno: el máximo de salida informado se usa
-íntegro, sin techos agregados por el harness. Sin metadata de salida, o si la
-consulta falla, se omite `max_tokens` y decide el proveedor; no se reutilizan
+sin techos agregados por el harness, ajustándolo únicamente al espacio restante
+de la ventana. Sin metadata de salida, o si la consulta falla, se omite
+`max_tokens` y decide el proveedor; no se reutilizan
 los techos inventados de catálogos antiguos. El inicio no consulta la red.
 Los parciales de solo razonamiento se
 conservan en la sesión y se envían con texto vacío para que DeepSeek acepte el

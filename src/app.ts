@@ -20,6 +20,7 @@ import { TabBar } from "./ui/components/tab-bar.ts";
 import { createProjectTab, type ProjectTab } from "./project-tab.ts";
 import { showAbout } from "./ui/about.ts";
 import { SystemMonitor, metricLines, tokenLine } from "./system/metrics.ts";
+import { activeHistory } from "./agent/context.ts";
 import { nativeTools } from "./agent/tools.ts";
 import { emptyUsage } from "./agent/usage.ts";
 import type { Language } from "./ui/i18n.ts";
@@ -109,7 +110,7 @@ export class App {
       prompt.bounds.height = Math.max(1, client.height - 2 - (this.attachments.length ? 1 : 0));
     };
     promptWindow.onDraw = (canvas, client) => {
-      const tokens = tokenLine(this.activeTab.tokens, this.desktop.t);
+      const tokens = tokenLine(this.activeTab.tokens, this.desktop.t, this.activeTab.contextUsage, client.width - 2);
       canvas.text(client.x + client.width - 1 - Bun.stringWidth(tokens), client.y, tokens, theme.window);
       if (this.attachments.length) canvas.text(client.x + 1, client.y + client.height - 2,
         this.desktop.t(`Adjuntos (${this.attachments.length}): ${this.attachments.map(a => `${a.name} ${a.size} B`).join(" · ")} · ${this.bindingLabel("attachments")}`), theme.window, client.width - 2);
@@ -354,6 +355,7 @@ export class App {
     tab.prompt.setValue(next.state.draft); tab.rendered = new WeakMap(); tab.status = "Listo";
     const lastTurn = next.state.events.findLast(event => event.type === "turn");
     tab.tokens = lastTurn?.type === "turn" ? lastTurn.tokens : undefined;
+    tab.contextUsage = next.state.contextUsage;
     project.lastSessionId = next.state.id;
     this.bindTab(tab); if (!this.tabs.includes(tab)) this.tabs.push(tab);
     this.showHistory(true, tab); this.showContext(tab);
@@ -500,6 +502,16 @@ export class App {
     return this.status === context.source ? context.text : this.desktop.t(this.status);
   }
   showContext(tab = this.activeTab): void {
+    try {
+      const { provider, model } = this.current(tab);
+      let usage = tab.contextUsage;
+      if (usage?.providerId !== provider.id || usage.modelId !== model.id) {
+        const saved = tab.session?.state.contextUsage;
+        if (saved?.providerId === provider.id && saved.modelId === model.id) usage = tab.contextUsage = saved;
+      }
+      if (usage?.providerId !== provider.id || usage.modelId !== model.id) tab.contextUsage = { providerId: provider.id, modelId: model.id, window: model.contextWindow, estimated: true };
+      else if (model.contextWindow !== undefined) tab.contextUsage = { ...usage, window: model.contextWindow };
+    } catch { tab.contextUsage = undefined; }
     const selected = this.contextLabel(tab);
     tab.response.placeholder = `${tab.project?.path ?? this.desktop.t("Abrí un proyecto en Projects o registrá uno con Name y Folder.")}\n\n${selected.text}`;
     if (!tab.session?.state.messages.length && tab.status === "Listo") tab.status = selected.source;
@@ -534,6 +546,11 @@ export class App {
       } else fragments.push({ text });
     }
     if (tab.session?.state.notices.length) fragments.push({ text: "\n\n" + tab.session.state.notices.map(this.desktop.t).join("\n") });
+    if (this.store.value.ui.showReasoning) for (const event of tab.session?.state.events ?? []) {
+      if (event.type !== "compaction-part") continue;
+      const reasoning = event.message.reasoning_content ?? event.message.reasoning;
+      if (reasoning) fragments.push({ text: `\n\n${this.desktop.t("Razonamiento · compactación:")}\n${reasoning}`, style: theme.chatAgent });
+    }
     for (const chunk of tab.live.filter(chunk => !chunk.reasoning || this.store.value.ui.showReasoning)) {
       fragments.push({ text: `\n\n${this.desktop.t(chunk.label)}\n`, style: chunk.id === "answer" || chunk.reasoning ? theme.chatAgent : undefined }, { text: chunk.text });
     }
@@ -541,7 +558,7 @@ export class App {
   }
   async selectModel(selection: Selection): Promise<void> { const tab = this.activeTab; this.requireIdle(tab); const old = tab.selection; tab.selection = selection;
     try {
-      const {model} = this.current(tab); if (!model.capabilities.images && hasImages(tab.session?.state.messages ?? [])) throw new Error("La sesión contiene imágenes: elegí un modelo con imágenes o creá /new");
+      const {model} = this.current(tab); if (!model.capabilities.images && hasImages(tab.session ? activeHistory(tab.session.state) : [])) throw new Error("La sesión contiene imágenes: elegí un modelo con imágenes o creá /new");
       const next = structuredClone(this.store.value);
       next.defaults = { ...next.defaults, ...selection };
       if (tab.project) next.projects.find(p => p.id === tab.project!.id)!.selection = { ...selection };
@@ -753,7 +770,7 @@ export class App {
     this.requireIdle(tab); if (!text.trim() && !tab.attachments.length) return;
     if (!tab.project || !tab.session) throw new Error("Registrá o elegí un proyecto antes de enviar");
     const { provider, model } = this.current(tab), session = tab.session, project = tab.project;
-    if(!model.capabilities.images && hasImages(session.state.messages)) throw new Error("La sesión contiene imágenes; elegí otro modelo o /new");
+    if(!model.capabilities.images && hasImages(activeHistory(session.state))) throw new Error("La sesión contiene imágenes; elegí otro modelo o /new");
     const refreshed=await Promise.all(tab.attachments.map(a=>snapshot(a.path,project.path)));
     const changed=refreshed.some((a,i)=>a.hash!==tab.attachments[i]!.hash); tab.attachments=refreshed;
     validateAttachments(tab.attachments,model.capabilities.images);
@@ -787,12 +804,13 @@ export class App {
         const result = await runTurn({ project, session, provider, model, key, signal: controller.signal, ...context,
           onModel: detected => this.change(async () => {
             const next = structuredClone(this.store.value), configured = next.providers.find(p => p.id === provider.id && p.baseUrl === provider.baseUrl);
-            const index = configured?.models.findIndex(m => m.id === model.id && !m.manual) ?? -1;
+            const index = configured?.models.findIndex(m => m.id === model.id) ?? -1;
             if (configured && index >= 0 && JSON.stringify(configured.models[index]) !== JSON.stringify(detected)) {
               configured.models[index] = detected; await this.store.save(next); this.showContext(tab); this.desktop.invalidate();
             }
           }),
           onUsage: usage => { tab.tokens = usage; this.desktop.invalidate(); },
+          onContext: usage => { tab.contextUsage = usage; this.desktop.invalidate(); },
           onState: state => { if(state==="Conectando…")resetLive();tab.status = state; tab.agentState = state === "Respondiendo…" ? "Razonando…" : state; this.desktop.invalidate(); },
           onMessage: () => { resetLive();this.showHistory(false, tab);this.desktop.invalidate(); },
           onReasoning: delta => { tab.status=tab.agentState="Razonando…";appendLive("reasoning","Razonamiento:",delta); },

@@ -4,7 +4,9 @@ import { ConfigStore, normalizeFolder, storagePaths, type Model, type Provider }
 import { Session } from "./storage/sessions.ts";
 import { CompletionError, credential, discoverModels } from "./llm/client.ts";
 import { runTurn } from "./agent/loop.ts";
-import { emptyUsage, tokensPerSecond } from "./agent/usage.ts";
+import { activeHistory } from "./agent/context.ts";
+import { emptyUsage } from "./agent/usage.ts";
+import { tokenLine } from "./system/metrics.ts";
 import type { Message } from "./agent/messages.ts";
 
 export interface CliOptions extends AppOptions {
@@ -68,7 +70,7 @@ export async function runCli(options: CliOptions): Promise<number> {
       if (!model) throw new Error("El servidor no tiene modelos disponibles. Indicá un ID con --model.");
       if (!provider.models.length) model = { ...model, capabilities: { ...model.capabilities, tools: true } };
     }
-    if (!model.capabilities.images && session.state.messages.some(message => Array.isArray(message.content) && message.content.some(part => part.type === "image_url")))
+    if (!model.capabilities.images && activeHistory(session.state).some(message => Array.isArray(message.content) && message.content.some(part => part.type === "image_url")))
       throw new Error("La sesión contiene imágenes; elegí otro modelo o una sesión nueva");
     controller.signal.throwIfAborted();
     if (!session.state.events.length) await session.append({ type: "session", title: options.prompting.slice(0, 80) });
@@ -96,13 +98,12 @@ export async function runCli(options: CliOptions): Promise<number> {
       onState: state => { if (state === "Conectando…") answerBoundary = true; },
       onMessage: () => {
         const message = session!.state.messages.at(-1);
-        if (message?.role === "tool") log(`Resultado ${toolNames.get(message.tool_call_id!) ?? message.tool_call_id}: ${message.content}`);
+        if (session!.state.events.at(-1)?.type === "message" && message?.role === "tool") log(`Resultado ${toolNames.get(message.tool_call_id!) ?? message.tool_call_id}: ${message.content}`);
       },
     });
     tokens = result.tokens;
     await session.append({ type: "turn", state: "completed", detail: "CLI: completado", tokens });
-    const rate = tokensPerSecond(tokens);
-    log(`Tokens E/S ${tokens.input ?? "N/D"}/${tokens.output ?? "N/D"} · Prom. ${rate === undefined ? "N/D" : rate.toFixed(1)} tok/s${tokens.partial ? " (parcial)" : ""}`);
+    log(tokenLine(tokens, undefined, session.state.contextUsage));
     return 0;
   } catch (error) {
     if (session) {

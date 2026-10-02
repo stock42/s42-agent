@@ -160,9 +160,11 @@ survive catalog rediscovery. DeepSeek uses the
 Selecting a model automatically remembers it in the session, project and global
 default for new projects. Each tab retains its selection. An older configuration
 with a single registered local model recovers it without network access; several
-models without a valid selection leave the selector open. History containing
-images requires a model that accepts them or a new session. Without a selected
-model, the chat reports this and preserves the draft.
+models without a valid selection leave the selector open. Active context containing
+images requires a model that accepts them or a new session. Images already
+compacted into a text summary remain in the original history without preventing
+selection of a text model. Without a selected model, the chat reports this and
+preserves the draft.
 
 ### llama.cpp server
 
@@ -265,7 +267,7 @@ changes or automatically rerun interrupted tools when reopening.
 [Contracts and examples for each tool](TOOLS.md).
 
 **Prompt** always shows **input/output tokens (I/O) and average tok/s** at the top
-right, for example `Tokens I/O 1200/120 · Avg. 28.5 tok/s` (`Prom.` in Spanish).
+right, for example `Tokens I/O 1200/120 · Avg. 28.5 tok/s · Context 12.0%` (`Prom.` in Spanish).
 There is no Send button: **Enter sends**, Shift+Enter inserts a line and Ctrl+C
 cancels. The draft uses the full width below the counters. Per-turn/tab tokens
 include all requests, tools and continuations and are saved at completion.
@@ -276,6 +278,24 @@ as tokens. Incomplete count → partial; missing data → **N/A**. Large quantit
 are abbreviated (`k`, `M`, etc.); sessions retain exact figures. Tok/s is the
 observed average: reported output divided by time spent on requests with reported
 output, including network/first-token time and excluding tools.
+
+**Context** shows the percentage of the LLM window, independently of accumulated
+turn tokens. It uses input/output from the latest request when reported by the
+provider. Before those reports and between requests, **≈** marks a local estimate
+of messages, reasoning, attachments and tool schemas, calibrated with reported
+usage. Unknown capacity → **N/A**, without inventing a window. Each project owns
+its indicator, which is restored with its session and also appears in CLI's
+summary. Narrow terminals abbreviate counters to keep the percentage visible.
+
+Near **85%**, **Compacting context…** appears and the LLM summarizes the complete
+active context: request, constraints, decisions, relevant reasoning, attachments,
+changes, tool results, errors, validation and pending work. Material exceeding the
+window is fully processed in chunks and their summaries are integrated; history
+is not clipped. The new checkpoint replaces that material only in future requests,
+preserving original chat in JSONL/SQLite. Cancellation or failed compaction retains
+the previous checkpoint and prior effects. Current project instructions and tool
+schemas remain in subsequent requests. A specific context rejection can trigger
+compaction and continuation; other HTTP errors are not automatically retried.
 
 The bottom bar shows **CPU: % · RAM: used/total · Disk: used/total · VRAM: used/total**,
 in GiB/MiB (`G`/`M`). It uses as many rows as needed without covering Prompt.
@@ -300,7 +320,7 @@ chat; subsequent stages are requested while the model indicates pending work.
 Session and model are preserved; completed tools are not automatically
 rerun and truncated calls are discarded. **Ctrl+C** cancels the active stage.
 Continuations and tools have no step ceilings or harness timeouts.
-Actual HTTP errors and disconnections are reported without
+HTTP errors unrelated to context capacity and disconnections are reported without
 retrying the turn.
 
 ### MCP
@@ -450,14 +470,16 @@ Actions: `projects`, `models`, `providers`, `sessions`, `attachments`, `explorer
 reserved. The agent imposes no step, stage, time, payload, file, attachment or
 undo-history quotas. Legacy `limits` fields are removed when loading v1
 configuration and cannot reactivate old cutoffs.
-The provider validates context; requests are not rejected by a local estimate
-and no fixed share of context is reserved for the response.
+The model window is the only context restriction. The agent compacts before it
+fills; the provider validates actual counts. There are no turn-token quotas or
+fixed output reservations.
 llama.cpp detects context/tools/vision through `/props` during discovery and
 requests. It repairs older “no tools” catalogs when the server template supports
 tools. llama.cpp determines its own output; the harness does not send `max_tokens`
 for automatic local models. Remote providers refresh their automatic catalog
-when a turn starts: the full advertised output maximum is used, with no extra
-harness ceiling. Without output metadata, or if discovery fails, `max_tokens`
+when a turn starts: the advertised output maximum has no extra harness ceiling
+and is adjusted only to the remaining context space. Without output metadata,
+or if discovery fails, `max_tokens`
 is omitted and the provider decides; guessed ceilings from older catalogs are
 not reused. Startup does not query the network.
 Reasoning-only partials remain in the session and are sent with empty text so

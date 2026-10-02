@@ -1,5 +1,7 @@
 export interface TokenUsage { input?: number; output?: number; total?: number; requests: number; reported: number; partial: boolean; timedOutput?: number; generationMs?: number }
 export interface ProviderUsage { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
+// Window occupancy is per request, never the accumulated input/output counters.
+export interface ContextUsage { providerId: string; modelId: string; window?: number; used?: number; estimated: boolean; inputWeight?: number; inputTokens?: number }
 export const emptyUsage = (): TokenUsage => ({ requests: 0, reported: 0, partial: false });
 export function addUsage(current: TokenUsage, usage?: ProviderUsage, durationMs?: number): TokenUsage {
   const next = { ...current, requests: current.requests + 1 };

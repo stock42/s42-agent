@@ -5,6 +5,33 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Agregado — Compactación completa e indicador de ventana de contexto
+
+- Compactación automática al acercarse al 85% de la ventana real del LLM:
+  procesa todo el contexto activo, incluyendo instrucciones, reasoning,
+  adjuntos, herramientas y sus efectos; material grande se resume por partes
+  y se integra antes de continuar. Conserva instrucciones vigentes y schemas.
+- El checkpoint reemplaza el material solo en las siguientes peticiones.
+  Historial original y reasoning recibido permanecen en JSONL/SQLite;
+  cancelación o fallo conserva el checkpoint anterior. Un rechazo específico
+  de contexto puede activar compactación; otros errores no se reintentan.
+- Prompt muestra Contexto/Context en porcentaje junto a Tokens E/S y tok/s,
+  independiente de los contadores acumulados. Usa el reporte de la última
+  petición, marca estimaciones calibradas con ≈ y capacidad desconocida con
+  N/D. Se restaura por sesión/proyecto, aparece en CLI y cabe al redimensionar.
+- Capacidad detectada también para modelos manuales sin ventana conocida.
+  El máximo de salida anunciado se ajusta únicamente al espacio restante;
+  sin metadata de salida decide el servidor. No se agregan cuotas del agente.
+- Typecheck correcto; 205 pass/0 fail, 3.308 assertions, 39 archivos.
+  Regresiones cubren contexto completo, integración jerárquica, resultados
+  grandes sin repetir efectos, cancelación, persistencia, HTTP 400, ES/EN,
+  porcentajes independientes y `bun run dev` en PTY con Unicode/resize/cierre.
+- DeepSeek real resumió material sintético de QA conservando objetivo,
+  restricciones, efecto previo y validación pendiente: 14.438 tokens de entrada
+  y 778 de salida. No prueba una ventana de un millón llena ni el Tetris real.
+  Evidencia local en `private/qa/`; sin nuevos binarios ni cambios a la
+  configuración o sesión personal.
+
 ### Corregido — Retirar cuotas y cortes propios del agente
 
 - Eliminados maxSteps y los timeouts del modelo, descubrimiento, shell, HTTP,

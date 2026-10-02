@@ -1,7 +1,7 @@
 import { cpus, freemem, totalmem } from "node:os";
 import { readdir, statfs } from "node:fs/promises";
 import { join } from "node:path";
-import { tokensPerSecond, type TokenUsage } from "../agent/usage.ts";
+import { tokensPerSecond, type ContextUsage, type TokenUsage } from "../agent/usage.ts";
 import type { ResourceIndicators } from "../storage/config.ts";
 import { runCommand } from "./command.ts";
 
@@ -99,8 +99,19 @@ function count(value: number): string {
   while (value >= 1000 && unit < units.length - 1) { value /= 1000; unit++; }
   return `${value.toFixed(1)}${units[unit]}`;
 }
-export function tokenLine(tokens?: TokenUsage, t: (text: string) => string = text => text): string {
+export function tokenLine(tokens?: TokenUsage, t: (text: string) => string = text => text, context?: ContextUsage, width = Infinity): string {
   const rate = tokensPerSecond(tokens);
   const number = (value?: number) => value === undefined ? t("N/D") : count(value);
-  return `${t("Tokens E/S")} ${number(tokens?.input)}/${number(tokens?.output)} · ${t("Prom.")} ${rate === undefined ? t("N/D") : rate >= 10000 ? count(rate) : rate.toFixed(1)} tok/s${tokens?.partial ? t(" (parcial)") : ""}`;
+  const percentage = context?.window && context.used !== undefined ? `${context.estimated ? "≈" : ""}${(context.used * 100 / context.window).toFixed(1)}%` : t("N/D");
+  const occupancy = `${t("Contexto")} ${percentage}`, partial = tokens?.partial ? t(" (parcial)") : "";
+  const speed = rate === undefined ? t("N/D") : rate >= 10000 ? count(rate) : rate.toFixed(1);
+  const counts = `${number(tokens?.input)}/${number(tokens?.output)}`;
+  const variants = [
+    `${t("Tokens E/S")} ${counts} · ${t("Prom.")} ${speed} tok/s · ${occupancy}${partial}`,
+    `${t("Tokens E/S")} ${counts} · ${speed} tok/s · ${occupancy}${partial}`,
+    `${t("E/S")} ${counts} · ${speed}/s · ${occupancy}${partial}`,
+    `${t("E/S")} ${counts} · ${occupancy}${partial}`,
+    occupancy,
+  ];
+  return variants.find(line => Bun.stringWidth(line) <= width) ?? occupancy;
 }
