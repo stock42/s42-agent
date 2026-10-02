@@ -25,7 +25,8 @@
   <a href="#ejecutar-desde-código-fuente">Ejecutar desde fuente</a> ·
   <a href="#capturas-reales">Capturas reales</a> ·
   <a href="docs/USAGE.es.md">Manual de uso</a> ·
-  <a href="CONTRIBUTING.es.md">Contribuir</a>
+  <a href="CONTRIBUTING.es.md">Contribuir</a> ·
+  <a href="https://github.com/stock42/s42-agent/discussions">Comunidad</a>
 </p>
 
 ---

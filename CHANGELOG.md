@@ -5,6 +5,19 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Configurado — Bienvenida en GitHub Discussions
+
+- Discussions ya estaba habilitado con seis categorías. Publicada y fijada en
+  la portada la [bienvenida EN/ES](https://github.com/stock42/s42-agent/discussions/1)
+  en Announcements, con portada del proyecto, instalación, manuales, capturas,
+  contribuciones y v0.1.0. Autor: lortmorris.
+- README EN/ES incorporan acceso a la comunidad. Categoría, contenido publicado
+  y pin comprobados mediante API y navegador; captura local en `private/`.
+  Sin cambios de runtime, builds ni visibilidad del repositorio.
+- El usuario eligió PayPal para financiación. El fragmento SDK recibido no
+  incluye enlace de pago ni hostedButtonId; se pidió ese dato para completar
+  FUNDING.yml. No se publicó el SDK como enlace de aportes.
+
 ### Publicado — Prerelease v0.1.0
 
 - Publicada [v0.1.0](https://github.com/stock42/s42-agent/releases/tag/v0.1.0)

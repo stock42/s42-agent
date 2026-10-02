@@ -25,7 +25,8 @@
   <a href="#run-from-source">Run from source</a> ·
   <a href="#screenshots">Real screenshots</a> ·
   <a href="docs/USAGE.md">User guide</a> ·
-  <a href="CONTRIBUTING.md">Contribute</a>
+  <a href="CONTRIBUTING.md">Contribute</a> ·
+  <a href="https://github.com/stock42/s42-agent/discussions">Community</a>
 </p>
 
 ---
