@@ -5,6 +5,18 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Eliminado — Campaña española anterior
+
+- Confirmada `s42-agent-real-tui-2026-10-01` como campaña final: cinco PNG en
+  español y cinco en inglés, conservados en private/assets/banners/.
+- Eliminada por pedido del usuario la campaña española reemplazada
+  `s42-agent-launch-2026-10-01`: cinco PNG, README y prompts de generación.
+  Retirada también su carpeta original vacía; índice, referencias e inventario
+  privados actualizados.
+- Verificados los diez hashes de las imágenes finales y la eliminación de
+  ambas ubicaciones de la serie anterior. Pull correcto; sin cambios de código,
+  regeneración de imágenes ni publicación.
+
 ### Limpieza — Contenido público y archivo privado
 
 - 152 archivos (aproximadamente 31 MiB) archivados en `private/`: informes y
