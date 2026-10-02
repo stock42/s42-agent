@@ -2,10 +2,10 @@
 // control text in the chat. Normal completions do not use this protocol.
 export const nextStage = "[[S42_CONTINUE]]";
 
-export function stageRequest(stage: number, outputTokens: number): string {
+export function stageRequest(stage: number, outputTokens?: number): string {
   return `La respuesta anterior alcanzó el límite de salida. Conservá el pedido original y dividilo en etapas pequeñas.
 Esta es la etapa ${stage}. ${stage === 1 ? "Mostrá un plan breve y resolvé solo la primera etapa pendiente." : "Resolvé solo la siguiente etapa pendiente, sin repetir el plan."}
-Encabezá la respuesta con "Etapa ${stage}". Entregá resultados breves, con razonamiento conciso: el límite de ${outputTokens} tokens incluye razonamiento, texto y argumentos de herramientas.
+Encabezá la respuesta con "Etapa ${stage}". Entregá resultados breves, con razonamiento conciso.${outputTokens === undefined ? "" : ` El máximo de salida de ${outputTokens} tokens incluye razonamiento, texto y argumentos de herramientas.`}
 Usá herramientas para cambiar archivos; si un archivo es grande, escribilo en partes mediante cambios pequeños y exactos. No vuelvas a ejecutar herramientas ya realizadas. Las llamadas truncadas no se ejecutaron.
 Si todavía quedan etapas, terminá el texto con ${nextStage}; el harness te pedirá la siguiente. Si ya completaste el pedido, terminá sin ese marcador. No afirmes que completaste trabajo pendiente.`;
 }

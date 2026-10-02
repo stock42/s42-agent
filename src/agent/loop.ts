@@ -43,10 +43,6 @@ export async function runTurn(options: { project: Project; session: Session; pro
     const messages: Message[] = stage
       ? [system, ...history.slice(0, stageStart), { role: "user", content: stageRequest(stage, model.maxOutputTokens) }, ...history.slice(stageStart)]
       : [system, ...history];
-    let images = 0;
-    const estimated = messages.map(m => ({...m, content:Array.isArray(m.content)?m.content.map(p=>p.type==='image_url'?(images++,{type:'image_url',image_url:{url:'[image]'}}):p):m.content}));
-    const approximateTokens = Math.ceil(Buffer.byteLength(JSON.stringify({ messages:estimated, tools })) / 4) + images * 1024;
-    if (approximateTokens + model.maxOutputTokens > model.contextWindow) throw new Error(`Contexto estimado excedido (${approximateTokens} tokens aprox.). Usá /new.`);
     options.onState("Respondiendo…");
     const stream = stage ? stageStream(options.onDelta) : undefined;
     let result: Completion;

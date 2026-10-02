@@ -6,6 +6,27 @@ import { execute } from "../src/agent/tools.ts";
 import { runTurn } from "../src/agent/loop.ts";
 import { Session } from "../src/storage/sessions.ts";
 import { defaultConfig, type Model, type Provider } from "../src/storage/config.ts";
+test("loop envía historial completo sin bloquear por contexto estimado y usa el máximo real del proveedor", async () => {
+  const root = await mkdtemp(join(tmpdir(), "s42-no-token-ceiling-")), session = await Session.open(join(root, "sessions"), "project");
+  const history = "á文🙂 contexto previo ".repeat(10000), requests: any[] = [];
+  const model: Model = { id: "remote", name: "Remote", contextWindow: 8192, maxOutputTokens: 2048, capabilities: { tools: true, images: false } };
+  let metadata = true;
+  const server = Bun.serve({ port: 0, async fetch(req) {
+    if (req.method === "GET") return metadata ? Response.json({ data: [{ id: model.id, context_window: 1048576, max_output_tokens: 393216 }] }) : new Response("", { status: 404 });
+    requests.push(await req.json());
+    return new Response('data: {"choices":[{"delta":{"content":"Recibido"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n');
+  } });
+  const provider: Provider = { id: "remote", name: "Remote", kind: "openai-compatible", baseUrl: `http://127.0.0.1:${server.port}`, models: [model] };
+  try {
+    session.state.messages.push({ role: "assistant", content: history }, { role: "user", content: "Continuá" });
+    const options = { project: { id: "project", name: "Fixture", path: root }, session, provider, model, signal: new AbortController().signal,
+      limits: defaultConfig().limits, onDelta: () => {}, onState: () => {}, onMessage: () => {} };
+    await runTurn(options); metadata = false; await runTurn(options);
+    expect(requests).toHaveLength(2); expect(requests[0].max_tokens).toBe(393216); expect(Object.hasOwn(requests[1], "max_tokens")).toBe(false);
+    expect(requests.every(body => body.messages.some((message: any) => message.content === history))).toBe(true);
+    expect(requests[1].messages[0].content).not.toContain("2048"); expect(session.state.notices).toHaveLength(0);
+  } finally { server.stop(true); await session.close(); await rm(root, { recursive: true, force: true }); }
+});
 test("tools read/search/edit exacto/write y shell con exit code real", async () => {
   const root = await mkdtemp(join(tmpdir(),'s42-tools-')), signal = new AbortController().signal;
   try {

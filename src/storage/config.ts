@@ -9,7 +9,7 @@ import { palettes, type PaletteId } from "../ui/theme.ts";
 import type { Language } from "../ui/i18n.ts";
 
 export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string }
-export interface Model { manual?: boolean; id: string; name: string; contextWindow: number; maxOutputTokens: number; capabilities: { tools: boolean; images: boolean } }
+export interface Model { manual?: boolean; id: string; name: string; contextWindow?: number; maxOutputTokens?: number; capabilities: { tools: boolean; images: boolean } }
 export interface Provider { id: string; name: string; kind: "llama.cpp" | "openai-compatible"; baseUrl: string; apiKeyEnv?: string; apiKeySecret?: string; models: Model[] }
 export interface McpServer { id:string; name:string; enabled:boolean; transport:"stdio"|"http"; command?:string; args?:string[]; cwd?:string; envRefs?:Record<string,string>; url?:string; apiKeyEnv?:string }
 export interface Skill { id:string; name:string; path:string; enabled:boolean; projectId?:string; source?:string }
@@ -84,8 +84,8 @@ export function validateConfig(value: unknown): Config {
       || (p.apiKeySecret !== undefined && !text(p.apiKeySecret))) throw new Error("Proveedor inválido en config");
     let url: URL; try { url = new URL(p.baseUrl); } catch { throw new Error(`Endpoint inválido: ${p.name}`); }
     if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error(`Endpoint inválido: ${p.name}`);
-    for (const m of p.models) if (!m || !text(m.id) || !text(m.name) || !positive(m.contextWindow) || !positive(m.maxOutputTokens)
-      || (m.manual !== undefined && typeof m.manual !== "boolean") || m.maxOutputTokens >= m.contextWindow || !m.capabilities || typeof m.capabilities.tools !== "boolean" || typeof m.capabilities.images !== "boolean") throw new Error(`Modelo inválido: ${p.name}`);
+    for (const m of p.models) if (!m || !text(m.id) || !text(m.name) || (m.contextWindow !== undefined && !positive(m.contextWindow)) || (m.maxOutputTokens !== undefined && !positive(m.maxOutputTokens))
+      || (m.manual !== undefined && typeof m.manual !== "boolean") || !m.capabilities || typeof m.capabilities.tools !== "boolean" || typeof m.capabilities.images !== "boolean") throw new Error(`Modelo inválido: ${p.name}`);
     if (!unique(p.models.map(m => m.id))) throw new Error(`Modelos duplicados: ${p.name}`);
   }
   if (!unique(c.projects.map(p => p.id)) || !unique(c.projects.map(p => p.path)) || !unique(c.providers.map(p => p.id))) throw new Error("IDs o carpetas duplicados en config");

@@ -60,7 +60,7 @@ export async function runCli(options: CliOptions): Promise<number> {
     let model: Model | undefined = provider.models.find(model => model.id === selectedId);
     if (!model && selectedId) {
       // An explicit ID also works with servers that do not expose /models.
-      model = { id: selectedId, name: selectedId, contextWindow: 8192, maxOutputTokens: 2048, capabilities: { tools: true, images: false } };
+      model = { id: selectedId, name: selectedId, capabilities: { tools: true, images: false } };
     }
     if (!model) {
       const available = provider.models.length ? provider.models : await discoverModels(provider, key,

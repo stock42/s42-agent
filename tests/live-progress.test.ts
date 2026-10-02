@@ -17,10 +17,10 @@ test("llama.cpp detecta tools/contexto reales, respeta manual y fallback sin /pr
  const server=Bun.serve({port:0,fetch(req){calls++; if(req.url.endsWith("/models"))return Response.json({data:[{id:"local"}]});return supported ? Response.json(props) : new Response("",{status:404});}});
  const provider=defaultProviders()[0]!;provider.baseUrl=`http://127.0.0.1:${server.port}/v1`;
  try {
-   expect((await discoverModels(provider))[0]).toMatchObject({contextWindow:128768,maxOutputTokens:8192,capabilities:{tools:true,images:false}});
-   expect(await runtimeModel(provider,model)).toMatchObject({contextWindow:128768,maxOutputTokens:8192,capabilities:{tools:true}});
+   expect((await discoverModels(provider))[0]).toMatchObject({contextWindow:128768,maxOutputTokens:undefined,capabilities:{tools:true,images:false}});
+   expect(await runtimeModel(provider,model)).toMatchObject({contextWindow:128768,maxOutputTokens:undefined,capabilities:{tools:true}});
    const before=calls; expect(await runtimeModel(provider,{...model,manual:true})).toEqual({...model,manual:true});expect(calls).toBe(before);
-   supported=false;expect(await runtimeModel(provider,model)).toEqual(model);
+   supported=false;expect(await runtimeModel(provider,model)).toEqual({...model,maxOutputTokens:undefined});
  }finally{server.stop(true);}
 });
 
@@ -32,7 +32,7 @@ test("tokens y promedio se actualizan antes del final y acumulan sin duplicar; t
  const app=await App.open({config,cwd:root});
  try {
    app.view.prompt.setValue("Hola");await app.submit();await until(()=>!!controller);
-   expect(request.max_tokens).toBe(8192);expect(request.timings_per_token).toBe(true);expect(request.tools.some((t:any)=>t.function.name==="write")).toBe(true);
+   expect(Object.hasOwn(request,"max_tokens")).toBe(false);expect(request.timings_per_token).toBe(true);expect(request.tools.some((t:any)=>t.function.name==="write")).toBe(true);
    expect(app.current().model.capabilities.tools).toBe(true); expect(app.desktop.draw().lines().join("\n")).not.toContain("sin tools");
    controller!.enqueue(data({choices:[{delta:{reasoning_content:"Pensando"}}],timings:{cache_n:20,prompt_n:80,predicted_n:5}}));
    await until(()=>app.tabs[0]!.tokens!.output===5);expect(app.tabs[0]!.busy).toBe(true);expect(tokensPerSecond(app.tabs[0]!.tokens)).toBeGreaterThan(0);
@@ -49,7 +49,7 @@ test("props opcional tiene timeout corto y conserva fallback; cancelación del t
  const server=Bun.serve({port:0,fetch:()=>new Response(new ReadableStream())});
  const provider=defaultProviders()[0]!;provider.baseUrl=`http://127.0.0.1:${server.port}/v1`;
  try {
-   expect(await runtimeModel(provider,model,undefined,undefined,20)).toEqual(model);
+   expect(await runtimeModel(provider,model,undefined,undefined,20)).toEqual({...model,maxOutputTokens:undefined});
    const controller=new AbortController();const pending=runtimeModel(provider,model,undefined,controller.signal,1000);controller.abort(new Error("Cancelado por usuario"));
    await expect(pending).rejects.toThrow("Cancelado por usuario");
  }finally{server.stop(true);}

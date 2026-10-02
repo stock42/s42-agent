@@ -60,7 +60,7 @@ bun run index.ts \
 | `--llm_server host_or_url` | HTTP/HTTPS host or base URL. A host without a path uses `/v1`; a URL with a path keeps it. |
 | `--llm_port port` | Overrides the port; integer from 1 to 65535. |
 | `--llm_apikey "key"` | Bearer credential for this run, kept in memory; optional for unauthenticated llama.cpp. |
-| `--model id` | Explicit ID. llama.cpp queries `/props` for actual context/tool capabilities; manually edited models keep their settings. Without metadata, the fallback is 8192/2048. |
+| `--model id` | Explicit ID. llama.cpp queries `/props` for actual context/tool capabilities; manually edited models keep their settings. Without output metadata, the server decides; token capacities are not guessed. |
 | `--reasoning on\|off` | Shows/hides received reasoning on stderr. Defaults to the configuration preference; does not change how the model reasons. |
 | `--cwd folder` / `--project name_or_id` | Working folder or registered project; without either, uses the current folder. |
 | `--provider id`, `--config file` | Select an existing provider and configuration. |
@@ -448,17 +448,21 @@ Optional bindings for known actions, with collisions rejected:
 Actions: `projects`, `models`, `providers`, `sessions`, `attachments`, `explorer`,
 `mcp`, `skills`, `promptings`, `help`. Editing/focus/lifecycle shortcuts remain
 reserved. Initial limits: 30 steps and 120 s for shell/first event/inactivity.
-Context is estimated without a tokenizer; the server's limit takes precedence.
+The provider validates context; requests are not rejected by a local estimate
+and no fixed share of context is reserved for the response.
 llama.cpp detects context/tools/vision through `/props` during discovery and
 requests. It repairs older “no tools” catalogs when the server template supports
-tools. Automatic output budget is up to 8,192 tokens, bounded by a quarter of
-context. Remote catalogs with output metadata use up to 32,768 tokens, bounded
-by the provider's advertised limit and a quarter of context; without metadata
-the fallback remains 2,048. DeepSeek refreshes automatic catalog values when a turn starts,
-including older catalogs limited to 2,048; startup does not query the network.
+tools. llama.cpp determines its own output; the harness does not send `max_tokens`
+for automatic local models. Remote providers refresh their automatic catalog
+when a turn starts: the full advertised output maximum is used, with no extra
+harness ceiling. Without output metadata, or if discovery fails, `max_tokens`
+is omitted and the provider decides; guessed ceilings from older catalogs are
+not reused. Startup does not query the network.
 Reasoning-only partials remain in the session and are sent with empty text so
 DeepSeek can accept the next request. Provider HTTP errors include the returned
-error detail. Editing a model in Models fixes its manual values. `write` supports
+error detail. Editing a model in Models fixes the chosen manual values. Context
+window and Max output are optional: empty fields leave the decision to the
+provider; an explicit Max output is sent as `max_tokens`. `write` supports
 `append: true` to build files in parts; the agent prompt instructs it to complete
 functionality on disk before finishing.
 

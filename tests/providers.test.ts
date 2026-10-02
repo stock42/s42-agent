@@ -63,17 +63,17 @@ test("catálogo usa Bearer, metadata y modelos únicos; IDs simples siguen siend
   try {
     const discovered = await discoverModels(provider, "fixture-secret");
     expect(requests).toEqual(["/models:Bearer fixture-secret"]); expect(discovered.map(m => m.id)).toEqual(["remote-alpha", "remote-beta", "legacy"]);
-    expect(discovered[0]).toMatchObject({ name: "Alpha disponible", contextWindow: 1048576, maxOutputTokens: 32768, capabilities: { tools: true, images: true } });
+    expect(discovered[0]).toMatchObject({ name: "Alpha disponible", contextWindow: 1048576, maxOutputTokens: 393216, capabilities: { tools: true, images: true } });
     expect(discovered[1]).toMatchObject({ maxOutputTokens: 1024, capabilities: { tools: true, images: false } });
     provider.id = "llama.cpp"; provider.kind = "llama.cpp"; provider.apiKeyEnv = undefined; provider.baseUrl += "/v1/";
-    expect((await discoverModels(provider))[2]).toMatchObject({ contextWindow: 8192, maxOutputTokens: 2048, capabilities: { tools: true, images: false } });
+    expect((await discoverModels(provider))[2]).toMatchObject({ contextWindow: undefined, maxOutputTokens: undefined, capabilities: { tools: true, images: false } });
     expect(requests[1]).toBe("/v1/models:null");
     provider.apiKeyEnv = `S42_MISSING_${crypto.randomUUID().replaceAll("-", "")}`;
     expect(await credential(provider, "explicit-session-key")).toBe("explicit-session-key"); await expect(credential(provider)).rejects.toThrow("Falta la variable");
   } finally { server.stop(true); }
 });
 
-test("DeepSeek actualiza el catálogo antiguo al enviar, respeta manual y conserva fallback", async () => {
+test("proveedor remoto actualiza el catálogo antiguo; sin metadata no reutiliza techos inventados", async () => {
   let requests = 0, unavailable = false;
   const server = Bun.serve({ port: 0, fetch() {
     requests++; return unavailable ? new Response("", { status: 503 }) : Response.json(catalog);
@@ -81,23 +81,46 @@ test("DeepSeek actualiza el catálogo antiguo al enviar, respeta manual y conser
   const provider = defaultProviders()[1]!; provider.baseUrl = `http://127.0.0.1:${server.port}`;
   const old = { id: "remote-alpha", name: "Alpha anterior", contextWindow: 1048576, maxOutputTokens: 2048, capabilities: { tools: true, images: false } };
   try {
-    expect(await runtimeModel(provider, old)).toMatchObject({ maxOutputTokens: 32768, capabilities: { images: true } });
+    expect(await runtimeModel(provider, old)).toMatchObject({ maxOutputTokens: 393216, capabilities: { images: true } });
     expect(requests).toBe(1);
     expect(await runtimeModel(provider, { ...old, manual: true })).toEqual({ ...old, manual: true }); expect(requests).toBe(1);
-    expect(await runtimeModel(provider, { ...old, id: "missing" })).toEqual({ ...old, id: "missing" });
-    unavailable = true; expect(await runtimeModel(provider, old)).toEqual(old);
+    expect(await runtimeModel(provider, { ...old, id: "missing" })).toEqual({ ...old, id: "missing", maxOutputTokens: undefined });
+    provider.id = "custom-remote";
+    expect((await runtimeModel(provider, old)).maxOutputTokens).toBe(393216);
+    unavailable = true; expect(await runtimeModel(provider, old)).toEqual({ ...old, maxOutputTokens: undefined });
     const controller = new AbortController(); controller.abort(new Error("Cancelado"));
     await expect(runtimeModel(provider, old, undefined, controller.signal)).rejects.toThrow("Cancelado");
   } finally { server.stop(true); }
 });
 
-test("catálogo con salida grande conserva espacio de entrada cuando el contexto es pequeño o falta", async () => {
+test("metadata de salida se conserva íntegra sin reservar una fracción del contexto ni inventarlo", async () => {
   const server = Bun.serve({ port: 0, fetch: () => Response.json({ data: [
     { id: "small", context_window: 8192, max_output_tokens: 393216 }, { id: "unknown-context", max_output_tokens: 393216 },
   ] }) });
   const provider = defaultProviders()[1]!; provider.baseUrl = `http://127.0.0.1:${server.port}`;
-  try { expect((await discoverModels(provider)).map(m => m.maxOutputTokens)).toEqual([2048, 2048]); }
+  try {
+    const models = await discoverModels(provider);
+    expect(models.map(m => m.maxOutputTokens)).toEqual([393216, 393216]);
+    expect(models.map(m => m.contextWindow)).toEqual([8192, undefined]);
+  }
   finally { server.stop(true); }
+});
+
+test("formulario Models deja capacidades de tokens vacías y persiste sin introducir límites ES/EN", async () => {
+  const root = await fixture(), path = join(root, "config.json"), app = await App.open({ config: path, cwd: root });
+  try {
+    for (const language of ["es", "en"] as const) {
+      await app.setLanguage(language); app.modelForm(true);
+      inputs(app)[0]!.setValue(`automatic-${language}`);
+      button(app, "next"); button(app, "next");
+      expect(inputs(app).slice(0, 2).map(input => input.value)).toEqual(["", ""]);
+      expect(inputs(app)[1]!.placeholder).toBe(language === "es" ? "Vacío: decide el proveedor" : "Empty: provider decides");
+      button(app, "save"); await until(() => !app.desktop.modal);
+      expect(app.current().model.maxOutputTokens).toBeUndefined(); expect(app.current().model.contextWindow).toBeUndefined();
+    }
+    const saved = JSON.parse(await Bun.file(path).text());
+    expect(saved.providers[0].models.every((m: any) => !("maxOutputTokens" in m) && !("contextWindow" in m))).toBe(true);
+  } finally { await app.desktop.onBeforeExit!(); }
 });
 
 test("DeepSeek corrige 401, guarda key en llavero y recupera modelo/clave tras reinicio", async () => {

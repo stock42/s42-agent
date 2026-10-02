@@ -5,6 +5,28 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Corregido — Eliminar techos arbitrarios de tokens
+
+- Retirados los techos automáticos de 2.048, 8.192 y 32.768 tokens y la reserva
+  fija de un cuarto del contexto. Los catálogos remotos usan íntegro el máximo
+  informado; llama.cpp y proveedores sin metadata de salida deciden en el
+  servidor, omitiendo `max_tokens`. Al enviar se actualiza metadata remota;
+  catálogos antiguos no reintroducen el techo si la consulta falla. Inicio sin red.
+- Eliminado el rechazo de pedidos por una estimación local sin tokenizador.
+  El proveedor valida el contexto y conserva sus límites reales; continúa la
+  recuperación de parciales cuando el servidor devuelve `finish_reason: length`.
+- Contexto y Máximo salida pasan a ser opcionales en configuración y Models,
+  sin cifras prefijadas para modelos nuevos. Se respetan valores manuales
+  explícitos. Placeholder ES/EN y manuales actualizados. Se conservan el máximo
+  configurado de pasos y los timeouts, independientes del presupuesto de tokens.
+- Typecheck correcto y suite completa: 188 pass/0 fail, con PTY desde la fuente.
+  Regresiones cubren historial íntegro, máximo real, metadata ausente y fallida,
+  catálogos antiguos, formulario sin cifras ES/EN y CLI sin `max_tokens` inventado.
+- DeepSeek real: catálogo personal antiguo de 2.048 leído sin modificarlo,
+  máximo anunciado y enviado 393.216, contexto informado 1.048.576; petición
+  aceptada con `finish_reason: stop`. La prueba produjo una respuesta breve,
+  no una generación de 393.216 tokens. Evidencia local en `private/qa/`.
+
 ### Corregido — Recuperación y presupuesto de salida de DeepSeek
 
 - Reproducido con DeepSeek real el HTTP 400 tras un parcial de solo razonamiento:

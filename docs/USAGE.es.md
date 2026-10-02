@@ -60,7 +60,7 @@ bun run index.ts \
 | `--llm_server host_o_url` | Host o URL base HTTP/HTTPS. Host sin path usa `/v1`; una URL con path conserva ese path. |
 | `--llm_port puerto` | Sobrescribe el puerto; entero de 1 a 65535. |
 | `--llm_apikey "clave"` | Bearer de esta ejecución, en memoria; opcional para llama.cpp sin autenticación. |
-| `--model id` | ID explícito. llama.cpp consulta `/props` para contexto/tools reales; modelos editados manualmente conservan sus valores. Sin metadata, fallback 8192/2048. |
+| `--model id` | ID explícito. llama.cpp consulta `/props` para contexto/tools reales; modelos editados manualmente conservan sus valores. Sin metadata de salida, el servidor decide; no se inventan capacidades de tokens. |
 | `--reasoning on\|off` | Muestra/oculta razonamiento recibido en stderr. Por defecto usa la preferencia de config; no cambia cómo razona el modelo. |
 | `--cwd carpeta` / `--project nombre_o_id` | Carpeta de trabajo o proyecto registrado; sin ambos, trabaja en la carpeta actual. |
 | `--provider id`, `--config archivo` | Seleccionan proveedor y configuración existentes. |
@@ -449,19 +449,22 @@ Bindings opcionales por acción conocida, con colisiones rechazadas:
 Acciones: `projects`, `models`, `providers`, `sessions`, `attachments`, `explorer`,
 `mcp`, `skills`, `promptings`, `help`. Atajos de edición/foco/lifecycle permanecen
 reservados. Límites iniciales: 30 pasos y 120 s para shell/primer evento/inactividad.
-El contexto se estima sin tokenizador; prevalece el límite del servidor.
+El proveedor valida el contexto; no se rechazan pedidos por una estimación local
+ni se reserva una fracción fija para la respuesta.
 llama.cpp detecta contexto/tools/visión mediante `/props` al descubrir modelos y
 al enviar. Repara catálogos antiguos “sin tools” cuando la plantilla del servidor
-sí las soporta. El presupuesto automático de salida es hasta 8.192 tokens,
-limitado a un cuarto del contexto. Los catálogos remotos con metadata de salida
-usan hasta 32.768 tokens, limitados por el máximo informado y un cuarto del
-contexto; sin metadata se conserva el fallback de 2.048. DeepSeek actualiza los valores
-automáticos al enviar un turno, incluidos los catálogos antiguos limitados a
-2.048; el inicio no consulta la red. Los parciales de solo razonamiento se
+sí las soporta. llama.cpp determina su propia salida; el harness no envía
+`max_tokens` para modelos automáticos locales. Los proveedores remotos actualizan
+su catálogo automático al enviar un turno: el máximo de salida informado se usa
+íntegro, sin techos agregados por el harness. Sin metadata de salida, o si la
+consulta falla, se omite `max_tokens` y decide el proveedor; no se reutilizan
+los techos inventados de catálogos antiguos. El inicio no consulta la red.
+Los parciales de solo razonamiento se
 conservan en la sesión y se envían con texto vacío para que DeepSeek acepte el
 siguiente pedido. Los errores HTTP incluyen el detalle devuelto por el proveedor.
-Editar un modelo en Models fija sus valores
-manuales. `write` permite `append: true` para construir archivos por partes; el
+Editar un modelo en Models fija los valores manuales elegidos. Contexto y Máximo
+salida son opcionales: vacíos dejan la decisión al proveedor; una cifra explícita
+en Máximo salida se envía como `max_tokens`. `write` permite `append: true` para construir archivos por partes; el
 prompt del agente indica completar la funcionalidad en disco antes de terminar.
 
 Bun hereda el entorno y puede cargar archivos existentes; `--cwd` fija la carpeta

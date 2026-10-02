@@ -602,7 +602,7 @@ export class App {
     form(this.desktop, this.desktop.t("Models · host, puerto y modelo"), [
       { label: this.desktop.t("ID del modelo"), value: model?.id ?? "" }, { label: this.desktop.t("Nombre"), value: model?.name ?? "" }, { label: this.desktop.t("Host / URL base"), value: url.href.replace(/\/$/, "") },
       { label: this.desktop.t("Puerto"), value: port }, { label: this.desktop.t("API key · llavero"), value: "", secret: true, placeholder: !newProvider && provider?.apiKeySecret ? "Guardada · vacío conserva" : "Opcional · guardar en el SO" }, { label: this.desktop.t("Variable API key"), value: newProvider ? "" : provider?.apiKeyEnv ?? "" },
-      { label: this.desktop.t("Contexto"), value: String(model?.contextWindow ?? 8192) }, { label: this.desktop.t("Máximo salida"), value: String(model?.maxOutputTokens ?? 2048) },
+      { label: this.desktop.t("Contexto"), value: String(model?.contextWindow ?? ""), placeholder: "Vacío: decide el proveedor" }, { label: this.desktop.t("Máximo salida"), value: String(model?.maxOutputTokens ?? ""), placeholder: "Vacío: decide el proveedor" },
       { label: this.desktop.t("Tools / imágenes (sí/no)"), value: `${model?.capabilities.tools ? (this.desktop.language === "en" ? "yes" : "sí") : "no"}/${model?.capabilities.images ? (this.desktop.language === "en" ? "yes" : "sí") : "no"}` },
     ], ([id, name, host, port, apiKey, apiKeyEnv, context, max, caps]) => this.change(async () => {
       this.requireIdle(); if (!id?.trim()) throw new Error("Escribí el ID real del modelo");
@@ -614,7 +614,7 @@ export class App {
       if (changedEndpoint) configured.apiKeySecret = undefined;
       configured.baseUrl = endpoint.href.replace(/\/$/, ""); configured.apiKeyEnv = apiKeyEnv?.trim() || undefined;
       const capabilities = caps!.toLowerCase().split("/"); if (capabilities.length !== 2 || !capabilities.every(c => ["sí", "si", "yes", "no"].includes(c))) throw new Error("Capacidades: sí/no, no/no o sí/sí");
-      const saved: Model = { manual: true, id: id.trim(), name: name?.trim() || id.trim(), contextWindow: Number(context), maxOutputTokens: Number(max), capabilities: { tools: capabilities[0] !== "no", images: capabilities[1] !== "no" } };
+      const saved: Model = { manual: true, id: id.trim(), name: name?.trim() || id.trim(), contextWindow: context?.trim() ? Number(context) : undefined, maxOutputTokens: max?.trim() ? Number(max) : undefined, capabilities: { tools: capabilities[0] !== "no", images: capabilities[1] !== "no" } };
       if (add && configured.models.some(m => m.id === saved.id)) throw new Error("Ese modelo ya está registrado");
       configured.models = [...configured.models.filter(m => m.id !== (model?.id ?? saved.id)), saved];
       validateConfig(next);

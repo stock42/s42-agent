@@ -22,35 +22,34 @@ export class SSEParser {
   end(): void { this.buffer += this.decoder.decode(); this.drain(); if (this.buffer.trim() || this.lines.length) throw new Error("SSE incompleto al desconectarse"); }
 }
 
-// llama.cpp publishes template capabilities/context in /props; DeepSeek uses /models.
-// Old catalogs used conservative guesses; explicitly edited models keep their settings.
+// llama.cpp publishes template capabilities/context in /props; remote providers use /models.
+// Never reuse guessed output ceilings from old automatic catalogs.
 export async function runtimeModel(provider: Provider, model: Model, key?: string, signal?: AbortSignal, timeoutMs = 5000): Promise<Model> {
   if (model.manual) return model;
+  const automatic = { ...model, maxOutputTokens: undefined };
   if (provider.kind !== "llama.cpp") {
-    if (provider.id !== "deepseek") return model;
-    // Refresh catalogs saved with the old 2048-token ceiling when a turn starts.
-    // Startup remains offline and explicitly edited models keep their budget.
+    // Refresh actual provider metadata when a turn starts; startup stays offline.
     try {
       const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs);
-      return (await discoverModels(provider, key, requestSignal)).find(m => m.id === model.id) ?? model;
-    } catch (error) { if (signal?.aborted) throw error; return model; }
+      return (await discoverModels(provider, key, requestSignal)).find(m => m.id === model.id) ?? automatic;
+    } catch (error) { if (signal?.aborted) throw error; return automatic; }
   }
   const url = new URL(provider.baseUrl); url.pathname = url.pathname.replace(/\/v1\/?$/, "").replace(/\/$/, "") + "/props";
   url.searchParams.set("model", model.id);
   try {
     const response = await fetch(url, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs) });
-    if (!response.ok) return model;
+    if (!response.ok) return automatic;
     const props = await response.json() as { model_alias?: string; default_generation_settings?: { n_ctx?: number }; chat_template_caps?: { supports_tools?: boolean; supports_tool_calls?: boolean }; modalities?: { vision?: boolean } };
-    if (props.model_alias && props.model_alias !== model.id) return model;
-    if (!props.default_generation_settings && !props.chat_template_caps && !props.modalities) return model;
+    if (props.model_alias && props.model_alias !== model.id) return automatic;
+    if (!props.default_generation_settings && !props.chat_template_caps && !props.modalities) return automatic;
     const context = props.default_generation_settings?.n_ctx;
     const contextWindow = Number.isSafeInteger(context) && context! > 1 ? context! : model.contextWindow;
     const tools = props.chat_template_caps?.supports_tools;
-    return { ...model, contextWindow, maxOutputTokens: Number.isSafeInteger(context) && context! > 1 ? Math.min(8192, Math.max(1, Math.floor(contextWindow / 4)), contextWindow - 1) : Math.min(model.maxOutputTokens, contextWindow - 1), capabilities: {
+    return { ...automatic, contextWindow, capabilities: {
       tools: typeof tools === "boolean" ? tools : model.capabilities.tools,
       images: typeof props.modalities?.vision === "boolean" ? props.modalities.vision : model.capabilities.images,
     } };
-  } catch (error) { if (signal?.aborted) throw error; return model; }
+  } catch (error) { if (signal?.aborted) throw error; return automatic; }
 }
 
 export async function discoverModels(provider: Provider, key?: string, signal?: AbortSignal): Promise<Model[]> {
@@ -61,10 +60,10 @@ export async function discoverModels(provider: Provider, key?: string, signal?: 
   const models = new Map<string, Model>();
   for (const m of body.data) {
     if (!m || typeof m.id !== "string" || !m.id.trim() || models.has(m.id)) continue;
-    const contextWindow = Number.isSafeInteger(m.context_window) && m.context_window! > 1 ? m.context_window! : 8192;
-    const outputLimit = Number.isSafeInteger(m.max_output_tokens) && m.max_output_tokens! > 0 ? m.max_output_tokens! : 2048;
+    const contextWindow = Number.isSafeInteger(m.context_window) && m.context_window! > 1 ? m.context_window! : undefined;
+    const maxOutputTokens = Number.isSafeInteger(m.max_output_tokens) && m.max_output_tokens! > 0 ? m.max_output_tokens! : undefined;
     models.set(m.id, { id: m.id, name: typeof m.name === "string" && m.name.trim() ? m.name : m.id,
-      contextWindow, maxOutputTokens: Math.min(32768, outputLimit, Math.max(1, Math.floor(contextWindow / 4))),
+      contextWindow, maxOutputTokens,
       capabilities: { tools: true, images: Array.isArray(m.input_modalities) && m.input_modalities.includes("image") } });
   }
   return provider.kind === "llama.cpp" ? Promise.all([...models.values()].map(model => runtimeModel(provider, model, key, signal))) : [...models.values()];
