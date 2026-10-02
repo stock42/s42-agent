@@ -5,7 +5,7 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
-### Preparado — Prerelease v0.1.1
+### Publicado — Prerelease v0.1.1
 
 - Versión, metadata, instaladores, README y guía de distribución alineados con
   v0.1.1; notas ES/EN reúnen los cambios posteriores a v0.1.0: contexto completo,
@@ -20,6 +20,13 @@ cierre de cada tarea e incluirlo en su commit.
 - Corregida sincronización del test PTY entre respuesta en streaming y estado
   Listo antes de enviar el siguiente prompt; el test de seis WebViews dispone
   de 60 s en runners CI. Son ajustes de QA, sin timeouts nuevos en el agente.
+- [v0.1.1](https://github.com/stock42/s42-agent/releases/tag/v0.1.1) publicada
+  como prerelease sobre `eaee649`, con los 12 assets. CI y workflow de release
+  completados correctamente; este último ejecutó 214 pruebas sin fallos antes
+  de construir los seis destinos y validar Linux x64.
+- Descargados los 12 assets de GitHub: hashes, tamaños, manifest y contenido
+  del tar.gz verificados. Smoke del binario descargado e instalación pública
+  sin autenticación correctos en Linux x64, sin modificar el perfil del usuario.
 
 ### Corregido — Salida de shell en vivo y cronología del chat
 
