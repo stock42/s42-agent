@@ -5,6 +5,19 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Preparado — Prerelease v0.1.1
+
+- Versión, metadata, instaladores, README y guía de distribución alineados con
+  v0.1.1; notas ES/EN reúnen los cambios posteriores a v0.1.0: contexto completo,
+  copia automática, shell en vivo, cronología, búsqueda y correcciones DeepSeek.
+- Seis ejecutables generados con Bun 1.4.2 para Linux/macOS/Windows x64/ARM64,
+  checksums SHA-256 y paquete conjunto. Smoke Linux x64 fuera del checkout y
+  sin Bun/Node en PATH verifica CLI/TUI, skills, MCP, edición, shell y restauración.
+  El resto de destinos conserva solo evidencia de cross-build.
+- Instalación frozen y typecheck correctos; 214 pass/0 fail, 3.397 assertions
+  en 42 archivos. Metadata y links apuntan a las nuevas notas; package.json
+  mantiene private: true y no se cambia la visibilidad del repositorio.
+
 ### Corregido — Salida de shell en vivo y cronología del chat
 
 - stdout/stderr llega al chat del proyecto mientras el comando sigue activo,

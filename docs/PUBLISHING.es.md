@@ -18,7 +18,7 @@ bun install --frozen-lockfile
 bun run typecheck
 bun test
 bun run build:release
-bun run smoke:binary dist/s42-agent-0.1.0-linux-x64
+bun run smoke:binary dist/s42-agent-0.1.1-linux-x64
 bun run scripts/build-release.ts --package-only
 bun run scripts/release-draft.ts
 ```
@@ -37,13 +37,13 @@ defecto solo imprime el plan de once assets; no crea ni publica una release.
 
 La [metadata de release](releases/metadata.json) contiene únicamente repositorio,
 tag, título y ruta de notas. Mantenerla alineada con `package.json` y las
-[notas](releases/v0.1.0.es.md). Los nombres de archivos y el tag forman parte del
+[notas](releases/v0.1.1.es.md). Los nombres de archivos y el tag forman parte del
 contrato de los instaladores. Los comandos anteriores no necesitan `private/`.
 
 ## Workflow manual
 
 El usuario autorizó al asistente a administrar packages y releases del proyecto.
-La preferencia actual es publicar prereleases en el repositorio privado. Usar
+La preferencia es publicar prereleases en este repositorio. Usar
 el acceso GitHub configurado, sin guardar credenciales en la fuente ni cambiar
 la visibilidad del repositorio.
 
@@ -78,7 +78,7 @@ GitHub puede iniciar el workflow y publicar su borrador verificado.
 Conservar los README [EN](../README.md)/[ES](../README.es.md), manual
 [EN](USAGE.md)/[ES](USAGE.es.md), contratos de tools [EN](TOOLS.md)/[ES](TOOLS.es.md),
 guía de contribución [EN](../CONTRIBUTING.md)/[ES](../CONTRIBUTING.es.md), LICENSE
-y notas de release [EN](releases/v0.1.0.md)/[ES](releases/v0.1.0.es.md).
+y notas de release [EN](releases/v0.1.1.md)/[ES](releases/v0.1.1.es.md).
 La galería [EN](../screenshots/README.md)/[ES](../screenshots/README.es.md) muestra
 la TUI real; el [JPEG social](../assets/github/social-preview.jpg) sirve como
 portada para GitHub. Campañas, anuncios, prompts de imágenes, planes e informes

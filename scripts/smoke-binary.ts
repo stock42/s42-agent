@@ -2,7 +2,7 @@ import {chmod,mkdir,mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {defaultConfig} from '../src/storage/config.ts';
-const root=await mkdtemp(join(tmpdir(),'s42-binary-smoke-')),source=resolve(Bun.argv[2]??'dist/s42-agent-0.1.0-linux-x64'),binary=join(root,'s42-agent');await Bun.write(binary,Bun.file(source));await chmod(binary,0o755);await Bun.write(join(root,'code.ts'),'const value = 1;');
+const root=await mkdtemp(join(tmpdir(),'s42-binary-smoke-')),source=resolve(Bun.argv[2]??'dist/s42-agent-0.1.1-linux-x64'),binary=join(root,'s42-agent');await Bun.write(binary,Bun.file(source));await chmod(binary,0o755);await Bun.write(join(root,'code.ts'),'const value = 1;');
 await mkdir(join(root,'smoke'));await Bun.write(join(root,'smoke/SKILL.md'),'---\nname: smoke\ndescription: Smoke test coding\n---\nPreserve code and report checked results.');
 let calls=0,mcpEffects=0,skillLoaded=false,output='';
 const mcp=Bun.serve({port:0,async fetch(req){const p=await req.json() as any;return Response.json({jsonrpc:'2.0',id:p.id,result:p.method==='server/discover'?{supportedVersions:['2026-07-28'],capabilities:{tools:{}}}:p.method==='tools/list'?{tools:[{name:'check',description:'Smoke check',inputSchema:{type:'object',properties:{}}}]}:{content:[{type:'text',text:'BINARY_MCP '+(++mcpEffects)}]}});}});

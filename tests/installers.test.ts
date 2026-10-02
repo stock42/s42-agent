@@ -6,9 +6,9 @@ import { join, resolve } from "node:path";
 
 const installer = resolve(import.meta.dir, "../install.sh");
 const roots: string[] = [];
-const contents = "#!/bin/sh\nprintf '0.1.0\\n'\n";
+const contents = "#!/bin/sh\nprintf '0.1.1\\n'\n";
 const digest = new Bun.CryptoHasher("sha256").update(contents).digest("hex");
-const asset = `s42-agent-0.1.0-${process.platform}-${process.arch}`;
+const asset = `s42-agent-0.1.1-${process.platform}-${process.arch}`;
 
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), "s42 installer "));
@@ -31,7 +31,7 @@ describe.skipIf(process.platform === "win32")("Unix release installer", () => {
     const result = await $`bash ${installer} --from-dir ${release} --install-dir ${bin} --no-modify-path`.cwd(root).quiet().nothrow();
     expect(result.exitCode).toBe(0);
     expect(await Bun.file(join(bin, "s42-agent")).text()).toBe(contents);
-    expect((await $`${join(bin, "s42-agent")} --version`.quiet().text()).trim()).toBe("0.1.0");
+    expect((await $`${join(bin, "s42-agent")} --version`.quiet().text()).trim()).toBe("0.1.1");
   });
 
   test("checksum mismatch preserves an existing installation", async () => {
@@ -83,11 +83,11 @@ describe.skipIf(process.platform === "win32")("Unix release installer", () => {
     const uname = join(mockBin, "uname");
     await Bun.write(uname, '#!/bin/sh\ncase "$1" in -s) printf "Darwin\\n" ;; -m) printf "arm64\\n" ;; esac\n');
     await chmod(uname, 0o755);
-    const macAsset = "s42-agent-0.1.0-darwin-arm64";
+    const macAsset = "s42-agent-0.1.1-darwin-arm64";
     await Bun.write(join(release, macAsset), contents);
     await Bun.write(join(release, "SHASUMS256.txt"), `${digest}  ${macAsset}\n`);
     const result = await $`bash ${installer} --from-dir ${release} --install-dir ${bin} --no-modify-path`.cwd(root).env({ ...process.env, PATH: `${mockBin}:${process.env.PATH}` }).quiet().nothrow();
     expect(result.exitCode).toBe(0);
-    expect(result.stdout.toString()).toContain("Installed S42 Agent 0.1.0");
+    expect(result.stdout.toString()).toContain("Installed S42 Agent 0.1.1");
   });
 });
