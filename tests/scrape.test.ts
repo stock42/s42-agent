@@ -36,4 +36,6 @@ test.skipIf(!browser)("WebView real extrae DOM JavaScript, HTML, todos los enlac
     expect(full.content).toStartWith("á文🙂".repeat(10000)); expect(full.content).not.toContain("�");
     expect(full.linkCount).toBe(30); expect(full.links).toHaveLength(30);
   } finally { server.stop(true); }
-}, 15000);
+// Six fresh browser instances can take longer on a hosted CI runner. This is
+// only the test-runner budget; scrape still has no production timeout.
+}, 60000);

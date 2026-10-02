@@ -27,6 +27,8 @@ test('entrypoint real: Models primer uso, host/puerto/key, coding, cancelación 
     await until(()=>text.includes('Local · llama.cpp · fixture'));expect(await Bun.file(config).text()).not.toContain('fixture-secret');
     write('cambiar suma\x1b[13;2u');write('y verificar\r');await until(()=>text.includes('Resultado verificado: 4'));
     expect(await Bun.file(join(root,'code.ts')).text()).toBe('console.log(2 + 2);');expect(auth as string|null).toBe('Bearer fixture-secret');expect(requests).toBe(4);
+    // The last streamed fragment arrives before the turn is persisted and idle.
+    await until(()=>text.includes('Listo · uso no reportado'));
     write('lento\r');await until(()=>text.includes('parcial cancelable'));write('\x03');await until(()=>text.includes('Turno cancelado'));
     write('borrador conservado');await until(()=>text.includes('borrador conservado'));write('\x11');expect(await child.exited).toBe(0);expect(text).toContain('\x1b[?1049l');
     text='';child=Bun.spawn([process.execPath,index,'--config',config,'--no-color'],{cwd:root,env:{...process.env,TERM:'xterm-256color'},terminal});

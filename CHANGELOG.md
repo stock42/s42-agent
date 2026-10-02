@@ -17,6 +17,9 @@ cierre de cada tarea e incluirlo en su commit.
 - Instalación frozen y typecheck correctos; 214 pass/0 fail, 3.397 assertions
   en 42 archivos. Metadata y links apuntan a las nuevas notas; package.json
   mantiene private: true y no se cambia la visibilidad del repositorio.
+- Corregida sincronización del test PTY entre respuesta en streaming y estado
+  Listo antes de enviar el siguiente prompt; el test de seis WebViews dispone
+  de 60 s en runners CI. Son ajustes de QA, sin timeouts nuevos en el agente.
 
 ### Corregido — Salida de shell en vivo y cronología del chat
 
