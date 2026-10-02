@@ -85,6 +85,6 @@ stay in ignored `private/`.
 
 Finish each task with its CHANGELOG update, commit and push to the configured
 remote branch, as instructed by the user. Distribution tasks include running
-the release workflow and publishing verified prereleases in this private repo.
+the release workflow and publishing verified prereleases in this repository.
 Visibility changes and external announcements still require an explicit request.
 `package.json` retains `private: true` because no npm package is published.

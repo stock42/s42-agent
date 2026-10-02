@@ -86,6 +86,6 @@ locales permanecen en `private/`, ignorado por Git.
 
 Terminar cada tarea con su actualización de CHANGELOG, commit y push a la rama
 remota configurada, por pedido del usuario. Las tareas de distribución incluyen
-ejecutar el workflow y publicar prereleases verificadas en este repo privado.
+ejecutar el workflow y publicar prereleases verificadas en este repositorio.
 Cambios de visibilidad y anuncios externos siguen requiriendo pedido explícito.
 `package.json` conserva `private: true` porque no se publica un paquete npm.

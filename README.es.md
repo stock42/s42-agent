@@ -60,10 +60,10 @@ sin instalar Bun por separado. El servidor/modelo LLM y los programas externos
 usados por shell/MCP se configuran aparte.
 [Ejecutables independientes de Bun](https://bun.com/docs/bundler/executables).
 
-> **Repositorio privado:** descargar releases requiere acceso GitHub autorizado.
-> Los comandos de descarga de un paso usan URLs públicas y requieren acceso
-> público al repositorio y sus assets. Para instalar desde el repo privado,
-> descargá el paquete conjunto desde Releases, extraelo y usá el instalador local.
+> **[Prerelease v0.1.0](https://github.com/stock42/s42-agent/releases/tag/v0.1.0):**
+> incluye seis binarios y un paquete para todas las plataformas. Los comandos de
+> descarga de un paso requieren assets públicos. Si el repositorio es privado,
+> descargá el paquete con acceso GitHub autorizado, extraelo y usá el instalador local.
 > [Preparar la release](docs/PUBLISHING.es.md).
 
 ### Linux · un comando
@@ -94,7 +94,7 @@ PATH del usuario en Windows. Abrí otro terminal y ejecutá:
 s42-agent
 ```
 
-Archivos preparados para la release. Linux x64 tiene validación de ejecución
+Archivos publicados en la release. Linux x64 tiene validación de ejecución
 local; los otros cinco destinos cuentan con cross-builds:
 
 | Plataforma | Arquitectura | Binario |
@@ -106,8 +106,8 @@ local; los otros cinco destinos cuentan con cross-builds:
 | Windows | x64 | `s42-agent-0.1.0-windows-x64.exe` |
 | Windows | ARM64 | `s42-agent-0.1.0-windows-arm64.exe` |
 
-Disponibles en [GitHub Releases](https://github.com/stock42/s42-agent/releases)
-una vez publicados. Los ejecutables se acompañan de `SHASUMS256.txt`.
+Disponibles en [GitHub Releases](https://github.com/stock42/s42-agent/releases/tag/v0.1.0).
+Los ejecutables se acompañan de `SHASUMS256.txt`.
 Windows requiere Windows 10 1809 o posterior; macOS requiere 13 o posterior.
 Los binarios Linux usan glibc; Alpine/musl requiere otro target.
 [Requisitos de Bun por plataforma](https://bun.com/docs/installation).

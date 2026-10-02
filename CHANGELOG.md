@@ -5,6 +5,25 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Publicado — Prerelease v0.1.0
+
+- Publicada [v0.1.0](https://github.com/stock42/s42-agent/releases/tag/v0.1.0)
+  como prerelease, sin marcarla latest. Tag sobre `0ae2315`; doce assets:
+  seis ejecutables Linux/macOS/Windows x64/ARM64, instaladores Bash/PowerShell,
+  licencia, manifiesto, checksums y paquete conjunto tar.gz.
+- [CI](https://github.com/stock42/s42-agent/actions/runs/37012524161) y
+  [workflow de release](https://github.com/stock42/s42-agent/actions/runs/37012748815)
+  completados correctamente. SHA-256 de assets comprobados; paquete descargado
+  y sus doce archivos internos cotejados con los assets y la metadata.
+- Instalador Linux del paquete descargado probado en carpeta temporal. Smoke
+  del ejecutable Linux x64 fuera del checkout y sin Bun/Node en PATH: versión
+  0.1.0, TUI, edición, shell, MCP y skill con fixtures; cierre restaurado.
+  Otros sistemas fueron cross-compilados; no se probó su ejecución nativa.
+- Comprobación actualizada de GitHub detectó repositorio público, con PublicEvent
+  del usuario el 1 de octubre. El estado privado de la consulta inicial estaba
+  desactualizado. No se modificó la visibilidad; se pidió confirmar la preferencia.
+  README y notas EN/ES reflejan la publicación y explican acceso privado condicional.
+
 ### Preparado — Administración GitHub y prerelease privada
 
 - Acceso GitHub configurado verificado con permisos de administración sobre

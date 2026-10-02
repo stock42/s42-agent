@@ -59,10 +59,10 @@ The compiled agent includes the Bun runtime: you can install and run it without
 installing Bun separately. Your LLM server/model and external shell/MCP programs
 remain separate. [How Bun standalone executables work](https://bun.com/docs/bundler/executables).
 
-> **Private repository:** release downloads require authorized GitHub access.
-> The one-command downloads below use public URLs and require public access to
-> the repository and release assets. For private installation, download the
-> combined package from Releases, extract it and use the local installer below.
+> **[v0.1.0 prerelease](https://github.com/stock42/s42-agent/releases/tag/v0.1.0):**
+> includes six binaries and an all-platforms package. The one-command downloads
+> below require publicly accessible release assets. If the repository is private,
+> download the package with authorized GitHub access, extract it and use the local installer below.
 > [Release preparation](docs/PUBLISHING.md).
 
 ### Linux · one command
@@ -93,8 +93,8 @@ Windows user PATH. Open a new terminal and run:
 s42-agent
 ```
 
-Release files are named as follows. These are prepared artifacts; Linux x64
-has local runtime validation, while the other five targets have cross-builds.
+Published release files are named as follows. Linux x64 has local runtime
+validation, while the other five targets have cross-builds.
 
 | Platform | Architecture | Binary |
 | --- | --- | --- |
@@ -105,8 +105,8 @@ has local runtime validation, while the other five targets have cross-builds.
 | Windows | x64 | `s42-agent-0.1.0-windows-x64.exe` |
 | Windows | ARM64 | `s42-agent-0.1.0-windows-arm64.exe` |
 
-Download from [GitHub Releases](https://github.com/stock42/s42-agent/releases)
-after publication. `SHASUMS256.txt` accompanies the raw executables.
+Download from [GitHub Releases](https://github.com/stock42/s42-agent/releases/tag/v0.1.0).
+`SHASUMS256.txt` accompanies the raw executables.
 Windows requires Windows 10 1809 or later; macOS requires 13 or later.
 Linux binaries target glibc, rather than Alpine/musl.
 [Bun platform requirements](https://bun.com/docs/installation).
