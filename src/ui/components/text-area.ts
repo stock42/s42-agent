@@ -24,6 +24,7 @@ export class TextArea extends Component {
   private undo: { value: string; cursor: number }[] = [];
   private spans: { start: number; end: number; style: Style }[] = [];
   onSubmit?: () => void;
+  onSelect?: (text: string) => void;
   readOnly = false;
   lineNumbers = false;
   placeholder = "";
@@ -107,6 +108,11 @@ export class TextArea extends Component {
   private get selection(): [number, number] | undefined {
     return this.anchor !== undefined && this.anchor !== this.cursor
       ? [Math.min(this.anchor, this.cursor), Math.max(this.anchor, this.cursor)] : undefined;
+  }
+
+  private copySelection(): void {
+    const range = this.selection;
+    if (range) this.onSelect?.(this.chars.slice(range[0], range[1]).join(""));
   }
 
   private replace(text: string): void {
@@ -203,12 +209,16 @@ export class TextArea extends Component {
         return this.top !== before;
       }
       if (event.button !== 0) return false;
-      if (event.action === "release") { this.dragging = false; return false; }
+      if (event.action === "release") {
+        const dragged = this.dragging; this.dragging = false;
+        if (dragged && !event.cancelled) this.copySelection();
+        return false;
+      }
       if (event.action !== "press" && !(event.action === "move" && this.dragging)) return false;
       const index = Math.max(0, Math.min(rows.length - 1, this.top + event.y));
       const before = this.cursor; this.cursor = this.position(rows[index]!, event.x - this.gutterWidth);
       if (event.action === "press") { this.anchor = this.cursor; this.dragging = true; }
-      this.reveal = true; this.following = true; this.column = undefined;
+      this.reveal = true; this.following = false; this.column = undefined;
       return event.action === "press" || before !== this.cursor;
     }
     if (this.readOnly && (event.type === "paste" || event.text || ["enter", "shift+enter", "ctrl+j", "backspace", "delete"].includes(event.key))) return false;
@@ -216,7 +226,7 @@ export class TextArea extends Component {
     if (event.text) { this.replace(event.text); return true; }
     if (event.key === "enter" && this.onSubmit) { this.onSubmit(); return true; }
     if (event.key === "enter" || event.key === "shift+enter" || event.key === "ctrl+j") { this.replace("\n"); return true; }
-    if (event.key === "ctrl+a") { this.anchor = 0; this.cursor = this.chars.length; this.reveal = true; this.following = true; return true; }
+    if (event.key === "ctrl+a") { this.anchor = 0; this.cursor = this.chars.length; this.reveal = true; this.following = !this.selection; this.copySelection(); return true; }
     if (event.key === "backspace" || event.key === "delete") {
       if (!this.selection) {
         this.anchor = event.key === "backspace" ? Math.max(0, this.cursor - 1) : Math.min(this.chars.length, this.cursor + 1);
@@ -240,6 +250,8 @@ export class TextArea extends Component {
     }
     if (["left", "right", "home", "end", "ctrl+home", "ctrl+end"].includes(key)) this.column = undefined;
     if (!shift) this.anchor = undefined;
-    this.reveal = true; this.following = true; return true;
+    this.reveal = true; this.following = !this.selection;
+    if (shift && (selection?.[0] !== this.selection?.[0] || selection?.[1] !== this.selection?.[1])) this.copySelection();
+    return true;
   }
 }

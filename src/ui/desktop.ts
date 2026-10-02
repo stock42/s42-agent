@@ -24,6 +24,7 @@ export class Desktop {
   invalidate: () => void = () => {};
   onBeforeExit?: () => Promise<void>;
   onStart?: () => void;
+  copyToClipboard: (text: string) => void = () => {};
   statusLines?: () => string[];
   onShortcut?: (event: InputEvent) => boolean;
   onControlInput?: (event: InputEvent) => boolean;
@@ -104,7 +105,7 @@ export class Desktop {
     const capture = this.capture;
     this.capture = undefined;
     if (!capture) return;
-    if ("control" in capture) capture.control.handle({ type: "mouse", action: "release", x: -1, y: -1, button: 0, delta: 0 });
+    if ("control" in capture) capture.control.handle({ type: "mouse", action: "release", x: -1, y: -1, button: 0, delta: 0, cancelled: true });
     if ("close" in capture) capture.window.closePressed = false;
   }
 

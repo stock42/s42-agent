@@ -370,6 +370,13 @@ preserves files.
 | Menu / help | Esc from NORMAL / Alt+Y. |
 | Close tab or auxiliary window / exit | Ctrl+W / Ctrl+Q. |
 
+Selecting chat text automatically copies it to the clipboard: on mouse release,
+or when selecting with Ctrl+A/Shift+arrows. Unicode and source line breaks are
+preserved, without line-number gutters or ANSI colors. Selecting the prompt
+draft does not change the clipboard. Copy uses OSC 52 and requires the hosting
+terminal to support and allow clipboard writes; unsupported terminals can ignore
+the request.
+
 Vim starts in **INSERT**. Esc switches to NORMAL; in Prompt: `h/j/k/l`, `w/b`,
 `0/$`, `i/a/I/A`, `x`, `dd`, `u`. In chat: `j/k`, Ctrl+D/U and `gg/G` scroll.
 Space followed by `p/m/s/e/f/c/k/t/?` opens project/model/session/explorer/

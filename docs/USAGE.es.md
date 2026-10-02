@@ -374,6 +374,13 @@ no ejecuta scripts; quitar el registro conserva los archivos.
 | Menú / ayuda | Esc desde NORMAL / Alt+Y. |
 | Cerrar pestaña o auxiliar / salir | Ctrl+W / Ctrl+Q. |
 
+Seleccionar texto del chat lo copia automáticamente al portapapeles: al soltar
+el mouse, o al seleccionar con Ctrl+A/Shift+flechas. Conserva Unicode y saltos
+de línea del texto, sin el margen de numeración ni colores ANSI. Seleccionar
+el borrador del prompt no modifica el portapapeles. La copia usa OSC 52 y
+requiere que el terminal admita y permita escribir en el portapapeles; un
+terminal sin ese soporte puede ignorar la solicitud.
+
 Vim inicia en **INSERT**. Esc pasa a NORMAL; en el prompt: `h/j/k/l`, `w/b`,
 `0/$`, `i/a/I/A`, `x`, `dd`, `u`. En el chat: `j/k`, Ctrl+D/U, `gg/G` para scroll.
 Espacio seguido de `p/m/s/e/f/c/k/t/?` abre proyecto/modelo/sesión/explorador/

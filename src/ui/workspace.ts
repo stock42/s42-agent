@@ -19,6 +19,7 @@ export function createWorkspaceView(project: ProjectContext = { name: basename(p
   const editor = new TextArea("response", { x: 1, y: 0, width: 76, height: 13 });
   editor.readOnly = true;
   editor.lineNumbers = true;
+  editor.onSelect = text => desktop.copyToClipboard(text);
   editor.placeholder = `La respuesta aparecerá en este editor.\n\n${project.path}\n\nEscribí tu prompt en el panel inferior.`;
   const prompt = new TextArea("draft", { x: 1, y: 1, width: 76, height: 3 });
   let submitted = false;
@@ -58,7 +59,7 @@ export function createWorkspaceView(project: ProjectContext = { name: basename(p
   const demo = createDemoPanels(desktop);
   const help = () => demo.dialog("Ayuda", [
     "Enter: enviar · Shift+Enter: nueva línea.", "Ctrl+N: cambiar entre paneles.", "Tab / Shift+Tab: foco · Esc: menú.",
-    "Ctrl+A / Shift+flechas: seleccionar.", "Mouse: foco, scroll y selección.",
+    "Ctrl+A / Shift+flechas: seleccionar.", "Mouse: foco, scroll y selección.", "Seleccionar texto del chat lo copia automáticamente.",
   ]);
   desktop.onHelp = help;
   desktop.menu.menus.push(

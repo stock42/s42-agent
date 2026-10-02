@@ -122,6 +122,7 @@ const english: Readonly<Record<string, string>> = {
   "El resumen no redujo el contexto; historial conservado": "The summary did not reduce context; history preserved",
   "El resumen no redujo el contexto lo suficiente para la ventana del modelo; historial conservado": "The summary did not reduce context enough for the model window; history preserved",
   "Razonamiento · compactación:": "Reasoning · compaction:",
+  "Seleccionar texto del chat lo copia automáticamente.": "Selecting chat text copies it automatically.",
   "Máximo salida": "Max output",
   "Vacío: decide el proveedor": "Empty: provider decides",
   "Tools / imágenes": "Tools / images",

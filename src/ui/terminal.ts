@@ -29,6 +29,7 @@ export function runTerminal(desktop: Desktop, options: { color: boolean; mouse: 
       process.stdin.setRawMode(wasRaw ?? false); process.stdin.pause();
       process.stdout.write(leave);
       desktop.invalidate = () => {};
+      desktop.copyToClipboard = () => {};
       Promise.resolve().then(() => desktop.onBeforeExit?.()).then(() => error ? reject(error) : resolve(), reject);
     };
     const frame = () => {
@@ -56,6 +57,11 @@ export function runTerminal(desktop: Desktop, options: { color: boolean; mouse: 
     const stop = () => finish();
     desktop.onExit = stop;
     desktop.invalidate = requestFrame;
+    // OSC 52 writes the system clipboard through the hosting terminal, including
+    // remote sessions. Encode only selected text; never include UI/ANSI/gutters.
+    desktop.copyToClipboard = text => {
+      if (!done && text) process.stdout.write(`\x1b]52;c;${Buffer.from(text, "utf8").toString("base64")}\x07`);
+    };
     try {
       process.stdin.setRawMode(true); process.stdin.resume();
       process.stdin.on("data", data); process.stdout.on("resize", resize);

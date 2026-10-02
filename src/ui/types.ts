@@ -15,6 +15,7 @@ export type InputEvent =
       y: number;
       button: number;
       delta: number;
+      cancelled?: boolean;
     };
 
 export function contains(rect: Rect, x: number, y: number): boolean {

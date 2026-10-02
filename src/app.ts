@@ -196,6 +196,7 @@ export class App {
     this.desktop.onHelp = () => info(this.desktop, this.desktop.t("Ayuda · " + this.mode), [
       "Enter enviar · Shift+Enter nueva línea", ...Object.entries(bindings(this.store.value.ui.bindings).global).map(([action,key])=>`${key}: ${this.desktop.t(actionLabels[action as Action])}`), "Ctrl+C: cancelar turno · Ctrl+Q: salir",
       "Esc: INSERT → NORMAL → menú; modal: cerrar", "NORMAL: h/j/k/l w/b 0/$ · i/a/I/A · x dd u", "Conversación: j/k Ctrl+D/U gg/G; solo lectura",
+      "Seleccionar texto del chat lo copia automáticamente.",
       ...Object.entries(bindings(this.store.value.ui.bindings).normal).map(([action,key])=>`${key}: ${this.desktop.t(actionLabels[action as Action])}`), "Ctrl+N: cambiar panel",
       "Comandos: /help /projects /models /providers", "/sessions /files /new /attach ruta /detach /quit", "/mcp /skills /skill nombre prompt · Alt+C MCP · Alt+S Skills",
       "/promptings: biblioteca · menú Promptings: guardar borrador",
@@ -363,6 +364,7 @@ export class App {
   }
   private bindTab(tab: ProjectTab): void {
     tab.prompt.onSubmit = () => this.run(() => this.submit());
+    tab.response.onSelect = text => this.desktop.copyToClipboard(text);
   }
   private tabItems(): TabItem[] {
     return this.tabs.flatMap(tab => [

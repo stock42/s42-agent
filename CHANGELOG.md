@@ -5,6 +5,23 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Agregado — Copia automática de la selección del chat
+
+- Seleccionar texto de respuestas copia automáticamente al soltar el mouse;
+  Ctrl+A y Shift+flechas también copian. Mantiene grafemas Unicode y saltos
+  reales, sin numeración, wrap visual ni ANSI. No copia selecciones vacías,
+  releases repetidos, arrastres cancelados por un modal ni el borrador del prompt.
+- El texto seleccionado se conserva al llegar nuevos fragmentos del LLM.
+  Cada pestaña del proyecto conecta su selección al portapapeles del terminal.
+  OSC 52 envía el texto completo en UTF-8/base64, sin helpers ni dependencias;
+  requiere soporte y permiso de escritura del emulador. Ayuda/manuales ES/EN
+  actualizados; no se modifica configuración personal ni se generan binarios.
+- Typecheck correcto; 85 pass/0 fail en 13 archivos de TUI, selección, tabs,
+  input y terminal. `bun run dev` en PTY recibe una respuesta LLM de fixture,
+  selecciona mediante SGR y verifica el payload OSC 52 exacto; Ctrl+A copia
+  todo el chat y seleccionar Prompt no emite copia. Cierre restaura terminal.
+  PTY no prueba mouse físico ni pegado en una aplicación del SO.
+
 ### Agregado — Compactación completa e indicador de ventana de contexto
 
 - Compactación automática al acercarse al 85% de la ventana real del LLM:
