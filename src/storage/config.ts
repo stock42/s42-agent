@@ -21,7 +21,6 @@ export interface Config {
   defaults: Selection & { projectId?: string }; lastProjectId?: string;
   workspace?: { openProjectIds: string[] };
   ui: { vimMode: boolean; color: "auto" | "never"; palette: PaletteId; language: Language; showReasoning: boolean; resources: ResourceIndicators; bindings?: Bindings };
-  limits: { maxSteps: number; shellTimeoutMs: number; firstEventMs: number; idleMs: number };
 }
 
 export function storagePaths(configPath?: string, env = process.env, platform = process.platform) {
@@ -57,8 +56,7 @@ export function defaultProviders(): Provider[] {
 
 export function defaultConfig(): Config {
   return { version: 1, projects: [], mcpServers:[], skills:[], promptings: [], providers: defaultProviders(),
-    defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto", palette: "qbasic", language: "es", showReasoning: true, resources: { cpu: true, ram: true, disk: true, gpu: true } },
-    limits: { maxSteps: 30, shellTimeoutMs: 120000, firstEventMs: 120000, idleMs: 120000 } };
+    defaults: { providerId: "llama.cpp" }, ui: { vimMode: true, color: "auto", palette: "qbasic", language: "es", showReasoning: true, resources: { cpu: true, ram: true, disk: true, gpu: true } } };
 }
 const text = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 const positive = (value: unknown) => Number.isSafeInteger(value) && Number(value) > 0;
@@ -108,8 +106,8 @@ export function validateConfig(value: unknown): Config {
   if (c.workspace !== undefined && (!c.workspace || !Array.isArray(c.workspace.openProjectIds)
     || !c.workspace.openProjectIds.every(id => text(id) && c.projects.some(p => p.id === id))
     || !unique(c.workspace.openProjectIds))) throw new Error("Pestañas inválidas en config");
-  c.limits ??= defaultConfig().limits;
-  if (![c.limits.maxSteps, c.limits.shellTimeoutMs, c.limits.firstEventMs, c.limits.idleMs].every(positive)) throw new Error("Límites inválidos en config");
+  // Accept old v1 files, but never reactivate retired execution limits.
+  delete (c as Config & { limits?: unknown }).limits;
   bindings(c.ui.bindings);
   return c;
 }

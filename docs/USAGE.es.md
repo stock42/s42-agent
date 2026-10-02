@@ -152,8 +152,8 @@ sesiones no guardan claves.
 En Linux debe estar disponible/desbloqueado GNOME Keyring, KWallet u otro Secret
 Service; si falla, el formulario informa el error. No se crean `.env.local`.
 
-**Configurar modelo** permite indicar ID/nombre, endpoint/puerto, credencial,
-contexto, máximo de salida y capacidades `Tools / imágenes` (`sí/no`, `no/no` o
+**Configurar modelo** permite indicar ID/nombre, endpoint/puerto, credencial
+y capacidades `Tools / imágenes` (`sí/no`, `no/no` o
 `sí/sí`). Habilitá herramientas solo si el modelo y su chat template las soportan.
 Los valores configurados se conservan al redescubrir el catálogo. DeepSeek usa
 la [API oficial de modelos](https://api-docs.deepseek.com/api/list-models/).
@@ -229,29 +229,29 @@ El explorador ocupa el área disponible del chat, se adapta al resize y conserva
 el prompt visible. Escribí la ruta donde buscar arriba (podés usar la raíz del
 disco), un nombre o glob como `*.ts` debajo y pulsá **Buscar** o Enter en ese
 campo. Recorre subcarpetas, incluidos ocultos y carpetas de dependencias; devuelve
-hasta 1.000 archivos con su ubicación. **Cancelar** detiene la búsqueda. Abrir
+todos los archivos coincidentes con su ubicación. **Cancelar** detiene la búsqueda. Abrir
 y Adjuntar funcionan sobre los resultados; **Ir** vuelve a navegar la ruta.
 No sigue enlaces al buscar y muestra cuántas carpetas fueron inaccesibles.
 
 Pegar/arrastrar rutas prepara adjuntos. **Ctrl+F** o `/attach ruta` permite revisar,
 agregar o quitar. En terminales sin bracketed paste, el primer Enter reconoce rutas
 existentes y adjunta; el siguiente envía. Los bloques de código quedan como texto.
-Texto UTF-8 hasta 1 MiB; PNG/JPEG/WebP hasta 5 MiB si el modelo acepta imágenes.
-Máximo 10 archivos y 10 MiB incluyendo base64. Si un adjunto cambia, revisar su
+Texto UTF-8 completo; PNG/JPEG/WebP si el modelo acepta imágenes. El agente no
+impone cuotas de tamaño o cantidad de adjuntos. Si un adjunto cambia, revisar su
 versión actualizada antes de volver a enviar. El historial conserva lo enviado.
 
 Las herramientas nativas son **read/write/edit/list/find/search/fetch/shell**,
 con un archivo por tool en `src/agent/tools/` y un catálogo en **Tools → Nativas**.
 Incluye también `internal_skill`, `markdown_html` y `websocket`: guías internas
 bajo demanda, conversión Markdown→HTML y pruebas ws/wss con headers, mensajes,
-timeout y cancelación.
+cancelación y payloads completos.
 `find` busca nombres/globs; `search` busca contenido. `fetch` hace HTTP con
 método, headers y body JSON, form URL-encoded, multipart o texto. Edit exige
 una coincidencia exacta única; shell devuelve stdout/stderr, duración y exit code.
 Los comandos usan [Bun Shell](https://bun.com/docs/runtime/shell), también Git
 para instalar skills y nvidia-smi para métricas. Admiten pipes/redirecciones y
 builtins sin Bash/cmd externo; la sintaxis es la de Bun (por ejemplo `1>&2`,
-sin comandos en background con `&`). Mantienen timeout y cancelación del árbol.
+sin comandos en background con `&`). Conservan cancelación del árbol, sin timeout.
 
 **scrape** usa [Bun.WebView](https://bun.com/docs/runtime/webview) para leer
 páginas renderizadas, incluido JavaScript, con selector CSS, texto/HTML y enlaces.
@@ -261,7 +261,7 @@ el browser se inicia al usar la tool y se cierra al salir. [Contrato](TOOLS.es.m
 Se leen instrucciones AGENTS del proyecto y sus subcarpetas. Las herramientas
 tienen los permisos del usuario y efectos reales; no hay sandbox. Cancelar no
 revierte cambios ni reejecuta herramientas interrumpidas al reabrir.
-[Contratos, ejemplos y límites de cada tool](TOOLS.es.md).
+[Contratos y ejemplos de cada tool](TOOLS.es.md).
 
 El panel **Prompt** muestra siempre **tokens de entrada/salida (E/S) y promedio tok/s**
 arriba a la derecha, por ejemplo `Tokens E/S 1200/120 · Prom. 28.5 tok/s`
@@ -297,11 +297,11 @@ solo ejecuta llamadas completas. Selección, scroll y lectura permanecen disponi
 Si el modelo alcanza el límite de salida, el agente conserva la respuesta parcial
 y le pide dividir el pedido en etapas pequeñas. Cada etapa aparece en el chat;
 las siguientes se solicitan mientras el modelo indique trabajo pendiente. Se
-conservan la sesión, modelo y presupuesto de tokens; las herramientas ya realizadas
+conservan la sesión y el modelo; las herramientas ya realizadas
 no se vuelven a ejecutar automáticamente y las calls truncadas se descartan.
-**Ctrl+C** cancela la etapa activa. El límite de pasos también acota las
-continuaciones; al agotarlo, el avance queda guardado para un pedido más pequeño.
-Errores HTTP, desconexión o timeout se informan sin reintentar el turno.
+**Ctrl+C** cancela la etapa activa. Las continuaciones y las herramientas no
+tienen tope de pasos ni timeouts del harness. Errores HTTP o desconexiones reales
+se informan sin reintentar el turno.
 
 ### MCP
 
@@ -448,7 +448,9 @@ Bindings opcionales por acción conocida, con colisiones rechazadas:
 
 Acciones: `projects`, `models`, `providers`, `sessions`, `attachments`, `explorer`,
 `mcp`, `skills`, `promptings`, `help`. Atajos de edición/foco/lifecycle permanecen
-reservados. Límites iniciales: 30 pasos y 120 s para shell/primer evento/inactividad.
+reservados. El agente no impone límites de pasos, etapas, tiempo, payloads,
+archivos, adjuntos ni historial de undo. Los campos legacy `limits` se retiran
+al cargar configuración v1; no pueden volver a activar cortes antiguos.
 El proveedor valida el contexto; no se rechazan pedidos por una estimación local
 ni se reserva una fracción fija para la respuesta.
 llama.cpp detecta contexto/tools/visión mediante `/props` al descubrir modelos y
@@ -462,9 +464,9 @@ los techos inventados de catálogos antiguos. El inicio no consulta la red.
 Los parciales de solo razonamiento se
 conservan en la sesión y se envían con texto vacío para que DeepSeek acepte el
 siguiente pedido. Los errores HTTP incluyen el detalle devuelto por el proveedor.
-Editar un modelo en Models fija los valores manuales elegidos. Contexto y Máximo
-salida son opcionales: vacíos dejan la decisión al proveedor; una cifra explícita
-en Máximo salida se envía como `max_tokens`. `write` permite `append: true` para construir archivos por partes; el
+Editar un modelo en Models fija las capacidades elegidas y deja la salida al
+proveedor. El formulario no ofrece cuotas de tokens; los máximos manuales de
+configuraciones antiguas no se envían. `write` permite `append: true` para construir archivos por partes; el
 prompt del agente indica completar la funcionalidad en disco antes de terminar.
 
 Bun hereda el entorno y puede cargar archivos existentes; `--cwd` fija la carpeta

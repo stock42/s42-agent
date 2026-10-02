@@ -8,7 +8,7 @@ export async function openDatabase(path: string): Promise<Database> {
   await mkdir(dirname(path), { recursive: true });
   const db = new Database(path, { create: true, strict: true });
   try {
-    db.run("PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
+    db.run("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
     db.run(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS sessions (project_id TEXT NOT NULL, id TEXT NOT NULL, title TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(project_id, id));
       CREATE TABLE IF NOT EXISTS events (seq INTEGER PRIMARY KEY, event_id TEXT NOT NULL UNIQUE, project_id TEXT NOT NULL, session_id TEXT NOT NULL, data TEXT NOT NULL,

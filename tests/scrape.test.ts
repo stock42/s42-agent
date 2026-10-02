@@ -11,7 +11,7 @@ test("scrape valida protocolo, argumentos y cancelación antes de abrir el naveg
   const controller = new AbortController(); controller.abort(new Error("cancelled-before-browser"));
   expect((await run({ url: "https://example.com" }, controller.signal)).output).toContain("cancelled-before-browser");
 });
-test.skipIf(!browser)("WebView real extrae DOM JavaScript, HTML, enlaces y Unicode; limita y cancela", async () => {
+test.skipIf(!browser)("WebView real extrae DOM JavaScript, HTML, todos los enlaces y Unicode; permite cancelar", async () => {
   const server = Bun.serve({ port: 0, fetch(req) {
     if (new URL(req.url).pathname === "/large") return new Response(`<meta charset="utf-8"><main id="ready">${"á文🙂".repeat(10000)}${'<a href="/link">Enlace</a>'.repeat(30)}</main>`, { headers: { "content-type": "text/html; charset=utf-8" } });
     return new Response(`<meta charset="utf-8"><title>Scraping QA</title><body><script>setTimeout(() => {
@@ -25,7 +25,6 @@ test.skipIf(!browser)("WebView real extrae DOM JavaScript, HTML, enlaces y Unico
     expect(data.title).toBe("Scraping QA"); expect(data.content).toContain("Dinámico á文🙂"); expect(data.content).not.toContain("<h1>");
     expect(data.links).toEqual([{ text: "Siguiente", href: `http://127.0.0.1:${server.port}/next` }]);
     expect(JSON.parse((await run({ ...args, format: "html" })).output).content).toContain("<h1>Dinámico á文🙂</h1>");
-    expect((await run({ ...args, selector: "#missing", timeoutMs: 150 })).output).toContain("Timeout de scraping");
     const controller = new AbortController(); const pending = run({ ...args, selector: "#missing" }, controller.signal);
     setTimeout(() => controller.abort(new Error("cancelled-browser")), 100);
     expect((await pending).output).toContain("cancelled-browser");
@@ -33,8 +32,8 @@ test.skipIf(!browser)("WebView real extrae DOM JavaScript, HTML, enlaces y Unico
     // A fresh call still works after cancellation/selector failure.
     expect((await run(args)).failed).toBe(false);
     const large = await run({ ...args, url: `http://127.0.0.1:${server.port}/large` });
-    expect(large.truncated).toBe(true); const clipped = JSON.parse(large.output);
-    expect(clipped.content).toContain("recortada"); expect(clipped.content).not.toContain("�");
-    expect(clipped.linkCount).toBe(30); expect(clipped.links).toHaveLength(25);
+    expect(large.truncated).toBe(false); const full = JSON.parse(large.output);
+    expect(full.content).toStartWith("á文🙂".repeat(10000)); expect(full.content).not.toContain("�");
+    expect(full.linkCount).toBe(30); expect(full.links).toHaveLength(30);
   } finally { server.stop(true); }
 }, 15000);

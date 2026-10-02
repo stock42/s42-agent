@@ -54,7 +54,7 @@ test("doble clic solo abre filas válidas; preview UTF-8/binario es de solo lect
     click(explorer.entries.length+1);click(explorer.entries.length+1);await Bun.sleep(10);expect(view.desktop.modal).toBe(explorer.window);
     const row=explorer.list.selected+1;click(row);click(row);await until(()=>view.desktop.modal!==explorer.window);
     const preview=view.desktop.modal!,text=preview.controls[0] as TextArea;
-    expect(text.value).toContain("á文🙂");expect(text.value).toContain("64 KiB");expect(text.value).not.toContain("�");expect(text.readOnly).toBe(true);
+    expect(text.value.split("\n\n")[1]).toBe(code);expect(text.value).not.toContain("�");expect(text.readOnly).toBe(true);
     preview.focusedId="info";const before=text.value;view.desktop.handle({type:"paste",text:"cambiar"});view.desktop.handle({type:"key",key:"backspace"});expect(text.value).toBe(before);
     view.desktop.handle({type:"key",key:"escape"});expect(view.desktop.modal).toBe(explorer.window);expect(explorer.window.focusedId).toBe("files");
     expect(await Bun.file(join(root,"code.ts")).text()).toBe(code);

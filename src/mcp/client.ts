@@ -22,7 +22,7 @@ export class McpClient {
   dirty=false;
   tools:McpTool[]=[];
   private lifetime=new AbortController();
-  constructor(readonly server:McpServer,private cwd:string,private onProgress:(text:string)=>void=()=>{},private timeoutMs=120000){}
+  constructor(readonly server:McpServer,private cwd:string,private onProgress:(text:string)=>void=()=>{}){}
 
   async connect(signal:AbortSignal):Promise<void>{
     signal.throwIfAborted();
@@ -34,7 +34,7 @@ export class McpClient {
       void this.child.exited.then(code=>this.fail(new Error(`MCP ${this.server.name} terminó (${code})`)));
     }
     try{
-      const discovered=await this.request("server/discover",{},signal,Math.min(2000,this.timeoutMs));
+      const discovered=await this.request("server/discover",{},signal);
       if(!Array.isArray(discovered.supportedVersions)||!discovered.supportedVersions.includes(modern))throw new Error("MCP sin versión compatible");
     }catch(error){
       signal.throwIfAborted();
@@ -42,7 +42,7 @@ export class McpClient {
         if(!error.error.data.supported.includes(modern))throw new Error(`MCP requiere versión no soportada: ${error.error.data.supported.join(", ")}`);
         throw error;
       }
-      if(!(error instanceof RpcError) && !(error as Error).message.startsWith("Timeout MCP"))throw error;
+      if(!(error instanceof RpcError))throw error;
       this.protocol=legacy[0]!;
       const initialized=await this.request("initialize",{protocolVersion:this.protocol,capabilities:this.child?{roots:{listChanged:false}}:{},clientInfo:{name:"s42-agent",version}},signal);
       if(!legacy.includes(initialized.protocolVersion))throw new Error("Versión MCP legacy no soportada");this.protocol=initialized.protocolVersion;
@@ -54,7 +54,7 @@ export class McpClient {
   private fail(error:Error):void{this.fatal=error;for(const p of this.pending.values())p.reject(error);this.pending.clear();}
   private async readStdout(stream:ReadableStream<Uint8Array>):Promise<void>{
     const decoder=new TextDecoder();let buffer="";
-    for await(const chunk of stream){buffer+=decoder.decode(chunk,{stream:true});if(buffer.length>8*1024*1024)throw new Error("Mensaje MCP excede 8 MiB");let end:number;
+    for await(const chunk of stream){buffer+=decoder.decode(chunk,{stream:true});let end:number;
       while((end=buffer.indexOf("\n"))>=0){const line=buffer.slice(0,end).trim();buffer=buffer.slice(end+1);if(line)this.receive(JSON.parse(line));}}
     buffer+=decoder.decode();if(buffer.trim())throw new Error("Mensaje MCP incompleto");if(!this.closed)this.fail(new Error("MCP cerró stdout"));
   }
@@ -70,7 +70,7 @@ export class McpClient {
     const id=packet.id;if(typeof id!=="number")return;const pending=this.pending.get(id);if(!pending)return;
     this.pending.delete(id);if(packet.error)pending.reject(new RpcError(packet.error));else if("result" in packet)pending.resolve(packet.result);else pending.reject(new Error("Respuesta MCP sin result/error"));
   }
-  private async reply(packet:Rpc):Promise<void>{if(this.child)await this.sendStdio(packet);else await this.http(packet,AbortSignal.timeout(2000));}
+  private async reply(packet:Rpc):Promise<void>{if(this.child)await this.sendStdio(packet);else await this.http(packet,this.lifetime.signal);}
   private async sendStdio(packet:Rpc):Promise<void>{if(!this.child||this.closed)throw new Error("MCP cerrado");this.child.stdin.write(JSON.stringify(packet)+"\n");await this.child.stdin.flush();}
   private headers(method:string,params:any,schema?:Record<string,any>):Headers{
     const headers=new Headers({"Content-Type":"application/json",Accept:"application/json, text/event-stream","MCP-Protocol-Version":this.protocol});
@@ -94,10 +94,9 @@ export class McpClient {
     if(result?.error)throw new RpcError(result.error);if(!response.ok)throw new Error(`MCP HTTP ${response.status}`);
     if(result?.jsonrpc!=="2.0"||result.id!==packet.id||!("result" in result))throw new Error("MCP respuesta ausente o ID incorrecto");return result.result;
   }
-  async request(method:string,params:any,signal:AbortSignal,timeout=this.timeoutMs,schema?:Record<string,any>):Promise<any>{
+  async request(method:string,params:any,signal:AbortSignal,schema?:Record<string,any>):Promise<any>{
     if(this.closed)throw new Error("MCP cerrado");if(this.fatal)throw this.fatal;signal.throwIfAborted();const controller=new AbortController(),id=++this.serial;
     const packet:Rpc={jsonrpc:"2.0",id,method,params:{...params,_meta:{progressToken:id,...(this.protocol===modern?{"io.modelcontextprotocol/protocolVersion":this.protocol,"io.modelcontextprotocol/clientInfo":{name:"s42-agent",version},"io.modelcontextprotocol/clientCapabilities":{}}:{})}}};
-    let timer:ReturnType<typeof setTimeout>;
     const abort=()=>controller.abort(signal.reason??new Error("MCP cancelado")),closed=()=>controller.abort(new Error("MCP cerrado"));
     signal.addEventListener("abort",abort,{once:true});this.lifetime.signal.addEventListener("abort",closed,{once:true});
     const work=this.server.transport==="http"?this.http(packet,controller.signal,schema):new Promise<any>((resolve,reject)=>{
@@ -106,10 +105,10 @@ export class McpClient {
     const cancelled=new Promise<never>((_resolve,reject)=>controller.signal.addEventListener("abort",()=>{
       this.pending.delete(id);if(method!=="initialize"&&(this.child||this.protocol!==modern))void this.notify("notifications/cancelled",{requestId:id,reason:"Cancelado"}).catch(()=>{});reject(controller.signal.reason);
     },{once:true}));
-    timer=setTimeout(()=>controller.abort(new Error(`Timeout MCP ${method}`)),timeout);
-    try{return await Promise.race([work,cancelled]);}finally{clearTimeout(timer);signal.removeEventListener("abort",abort);this.lifetime.signal.removeEventListener("abort",closed);this.pending.delete(id);}
+    if(signal.aborted)abort();if(this.lifetime.signal.aborted)closed();
+    try{return await Promise.race([work,cancelled]);}finally{signal.removeEventListener("abort",abort);this.lifetime.signal.removeEventListener("abort",closed);this.pending.delete(id);}
   }
-  private async notify(method:string,params:any):Promise<void>{const packet:Rpc={jsonrpc:"2.0",method,params};if(this.child)await this.sendStdio(packet);else await this.http(packet,AbortSignal.timeout(2000));}
+  private async notify(method:string,params:any):Promise<void>{const packet:Rpc={jsonrpc:"2.0",method,params};if(this.child)await this.sendStdio(packet);else await this.http(packet,this.lifetime.signal);}
   async refresh(signal:AbortSignal):Promise<void>{
     const tools:McpTool[]=[],seen=new Set<string>();let cursor:string|undefined;
     do{const result=await this.request("tools/list",cursor?{cursor}:{},signal);if(!Array.isArray(result.tools))throw new Error("MCP tools/list inválido");
@@ -118,19 +117,19 @@ export class McpClient {
     }while(cursor);if(new Set(tools.map(t=>t.name)).size!==tools.length)throw new Error("MCP herramientas duplicadas");this.tools=tools;this.dirty=false;
   }
   async call(tool:McpTool,args:Record<string,unknown>,signal:AbortSignal):Promise<ToolResult>{
-    const started=performance.now();try{const result=await this.request("tools/call",{name:tool.name,arguments:args},signal,this.timeoutMs,tool.inputSchema);
+    const started=performance.now();try{const result=await this.request("tools/call",{name:tool.name,arguments:args},signal,tool.inputSchema);
       if(!result || !Array.isArray(result.content))throw new Error("MCP tools/call inválido");
       if(result.inputRequests)throw new Error("MCP requiere una capacidad cliente no habilitada");
       const text=(result.content??[]).map((part:any)=>part.type==="text"?part.text:part.type==="resource"?part.resource?.text??JSON.stringify(part.resource):`[${part.type??"contenido"} MCP]`).join("\n");
-      const output=text+(result.structuredContent?"\n"+JSON.stringify(result.structuredContent):"");const bytes=Buffer.from(output),truncated=bytes.length>65536;
-      return {output:truncated?bytes.subarray(0,65536).toString()+"\n[Salida MCP recortada a 64 KiB]":output,failed:Boolean(result.isError),durationMs:Math.round(performance.now()-started),truncated};
+      const output=text+(result.structuredContent?"\n"+JSON.stringify(result.structuredContent):"");
+      return {output,failed:Boolean(result.isError),durationMs:Math.round(performance.now()-started),truncated:false};
     }catch(error){return {output:(error as Error).message,failed:true,durationMs:Math.round(performance.now()-started)};}
   }
   async close():Promise<void>{
     if(this.closed)return;this.closed=true;this.lifetime.abort();this.fail(new Error("MCP cerrado"));
     if(this.child){const child=this.child;try{await child.stdin.end();}catch{}
       await Promise.race([child.exited,Bun.sleep(300)]);await killTree(child);await child.exited;
-    }else if(this.sessionId && this.protocol!==modern){await fetch(this.server.url!,{method:"DELETE",headers:this.headers("",{}),signal:AbortSignal.timeout(2000)}).catch(()=>{});}
+    }else if(this.sessionId && this.protocol!==modern){void fetch(this.server.url!,{method:"DELETE",headers:this.headers("",{})}).catch(()=>{});}
   }
 }
 
@@ -138,8 +137,8 @@ function encodeHeader(value:string):string{return /^[\x20-\x7e\t]*$/.test(value)
 export class McpConnections {
   private clients:McpClient[]=[];
   private tools=new Map<string,{client:McpClient;tool:McpTool}>();
-  async open(servers:McpServer[],cwd:string,signal:AbortSignal,progress:(text:string)=>void,timeoutMs:number):Promise<void>{
-    await Promise.all(servers.filter(s=>s.enabled).map(async server=>{const client=new McpClient(server,cwd,progress,timeoutMs);this.clients.push(client);
+  async open(servers:McpServer[],cwd:string,signal:AbortSignal,progress:(text:string)=>void):Promise<void>{
+    await Promise.all(servers.filter(s=>s.enabled).map(async server=>{const client=new McpClient(server,cwd,progress);this.clients.push(client);
       try{await client.connect(signal);progress(`MCP ${server.name}: ${client.tools.length} herramientas disponibles`);}catch(error){await client.close();progress(`MCP ${server.name}: ${(error as Error).message}`);this.clients=this.clients.filter(c=>c!==client);}
     }));signal.throwIfAborted();
   }

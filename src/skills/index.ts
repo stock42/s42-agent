@@ -9,13 +9,13 @@ import {runCommand} from '../system/command.ts';
 export interface LoadedSkill {name:string;description:string;path:string;body:string;source?:string}
 export async function readSkill(path:string,requireMatchingFolder=true):Promise<LoadedSkill>{
   path=await realpath(path);if((await stat(path)).isDirectory())path=join(path,'SKILL.md');
-  const file=Bun.file(path);if(file.size>262144)throw new Error('SKILL.md excede 256 KiB');
+  const file=Bun.file(path);
   const text=(await file.text()).replace(/^\uFEFF/,'').replace(/\r\n/g,'\n');
   const match=/^---\n([\s\S]*?)\n---(?:\n|$)/.exec(text);if(!match)throw new Error('SKILL.md requiere frontmatter YAML');
   const meta=Bun.YAML.parse(match[1]!) as {name?:unknown;description?:unknown};
-  if(!meta||typeof meta.name!=='string'||!meta.name||meta.name.length>64||!/^[\p{Ll}\p{N}][\p{Ll}\p{N}-]*$/u.test(meta.name)||meta.name.endsWith('-')||meta.name.includes('--'))throw new Error('Nombre de skill inválido');
+  if(!meta||typeof meta.name!=='string'||!meta.name||!/^[\p{Ll}\p{N}][\p{Ll}\p{N}-]*$/u.test(meta.name)||meta.name.endsWith('-')||meta.name.includes('--'))throw new Error('Nombre de skill inválido');
   if(requireMatchingFolder && basename(dirname(path))!==meta.name)throw new Error('El name de SKILL.md debe coincidir con su carpeta');
-  if(typeof meta.description!=='string'||!meta.description.trim()||meta.description.length>1024)throw new Error('Skill requiere description (hasta 1024 caracteres)');
+  if(typeof meta.description!=='string'||!meta.description.trim())throw new Error('Skill requiere description');
   return {name:meta.name,description:meta.description.trim(),path,body:text.slice(match[0].length).trim()};
 }
 export class SkillCatalog {
@@ -35,8 +35,8 @@ export class SkillCatalog {
 }
 export interface SkillResult {id:string;name:string;skillId:string;source:string;installs:number}
 export async function searchSkills(query:string,signal:AbortSignal,base='https://skills.sh'):Promise<SkillResult[]>{
-  if(!query.trim())throw new Error('Escribí una búsqueda');const url=new URL('/api/search',base);url.searchParams.set('q',query.trim());url.searchParams.set('limit','20');
-  const response=await fetch(url,{signal:AbortSignal.any([signal,AbortSignal.timeout(15000)])});if(!response.ok)throw new Error(`skills.sh HTTP ${response.status}`);
+  if(!query.trim())throw new Error('Escribí una búsqueda');const url=new URL('/api/search',base);url.searchParams.set('q',query.trim());
+  const response=await fetch(url,{signal});if(!response.ok)throw new Error(`skills.sh HTTP ${response.status}`);
   const data=await response.json() as {skills?:SkillResult[]};if(!Array.isArray(data.skills))throw new Error('Respuesta skills.sh inválida');
   return data.skills.filter(s=>typeof s.id==='string'&&typeof s.name==='string'&&typeof s.skillId==='string'&&typeof s.source==='string'&&Number.isFinite(s.installs)).toSorted((a,b)=>b.installs-a.installs);
 }
@@ -45,8 +45,8 @@ export async function installSkill(result:SkillResult,destination:string,signal:
   if(!/^[\w.-]+\/[\w.-]+$/.test(result.source))throw new Error(`Origen sin repositorio GitHub instalable. Consultá ${catalogUrl(result)}`);
   const temp=await mkdtemp(join(tmpdir(),'s42-skill-'));let copied:string|undefined;
   try{
-    const cloned=await runCommand(['git','clone','--depth','1',`https://github.com/${result.source}.git`,join(temp,'repo')],{timeoutMs:120000,signal,env:{...process.env,GIT_TERMINAL_PROMPT:'0'}});
-    signal.throwIfAborted();if(cloned.failed)throw new Error(`Git clone falló: ${cloned.timedOut?'timeout':cloned.stderr.slice(-500)}`);
+    const cloned=await runCommand(['git','clone',`https://github.com/${result.source}.git`,join(temp,'repo')],{signal,env:{...process.env,GIT_TERMINAL_PROMPT:'0'}});
+    signal.throwIfAborted();if(cloned.failed)throw new Error(`Git clone falló: ${cloned.stderr}`);
     const matches:LoadedSkill[]=[];const glob=new Bun.Glob('**/SKILL.md');for await(const path of glob.scan({cwd:join(temp,'repo'),absolute:true,onlyFiles:true})){try{const skill=await readSkill(path,false);if(skill.name===result.skillId||basename(dirname(path))===result.skillId)matches.push(skill);}catch{}}
     if(matches.length!==1)throw new Error(matches.length?'Skill ambigua en el repositorio':'No se encontró la skill del catálogo en el repositorio');
     const selected=matches[0]!;copied=join(resolve(destination),crypto.randomUUID());await mkdir(copied,{recursive:true});const target=join(copied,selected.name);await cp(dirname(selected.path),target,{recursive:true,verbatimSymlinks:true,filter:path=>basename(path)!==".git"});

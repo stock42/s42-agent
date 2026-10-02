@@ -35,7 +35,7 @@ export class TextArea extends Component {
   append(text: string, style?: Style): void {
     const start = this.chars.length;
     const added = graphemes(normalize(text));
-    this.chars.push(...added); this.lineCount += added.filter(char => char === "\n").length; this.rows = undefined;
+    for (const char of added) { this.chars.push(char); if (char === "\n") this.lineCount++; } this.rows = undefined;
     if (style) this.spans.push({ start, end: this.chars.length, style });
     if (this.following) { this.cursor = this.chars.length; this.reveal = true; }
   }
@@ -110,10 +110,11 @@ export class TextArea extends Component {
   }
 
   private replace(text: string): void {
-    this.undo.push({ value: this.value, cursor: this.cursor }); if (this.undo.length > 100) this.undo.shift();
+    this.undo.push({ value: this.value, cursor: this.cursor });
     const [start, end] = this.selection ?? [this.cursor, this.cursor];
     const added = graphemes(normalize(text));
-    const removed = this.chars.splice(start, end - start, ...added);
+    const removed = this.chars.slice(start, end);
+    this.chars = this.chars.slice(0, start).concat(added, this.chars.slice(end));
     this.lineCount += added.filter(char => char === "\n").length - removed.filter(char => char === "\n").length;
     this.cursor = start + added.length;
     this.anchor = undefined; this.rows = undefined; this.reveal = true; this.following = true; this.column = undefined;

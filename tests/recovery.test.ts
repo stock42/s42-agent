@@ -11,13 +11,25 @@ async function until(check: () => boolean) {
   for (let i = 0; i < 600; i++) { if (check()) return; await Bun.sleep(5); }
   throw new Error("Timeout en recuperación por etapas");
 }
-async function fixture(port: number, maxSteps = 30) {
+async function fixture(port: number) {
   const root = await mkdtemp(join(tmpdir(), "s42-recovery-")), config = defaultConfig(), path = join(root, "config.json");
   config.providers[0]!.baseUrl = `http://127.0.0.1:${port}/v1`;
   config.providers[0]!.models = [{ id: "fixture", name: "Fixture", manual: true, contextWindow: 32000, maxOutputTokens: 1000, capabilities: { tools: true, images: false } }];
-  config.defaults.modelId = "fixture"; config.limits.maxSteps = maxSteps;
-  await Bun.write(path, JSON.stringify(config)); return { root, path };
+  config.defaults.modelId = "fixture";
+  await Bun.write(path, JSON.stringify({ ...config, limits: { maxSteps: 1, shellTimeoutMs: 1, firstEventMs: 1, idleMs: 1 } })); return { root, path };
 }
+test('TUI ignora timeouts legacy durante primer evento y pausas SSE, sin recortar tokens manuales',async()=>{
+ let body:any;
+ const server=Bun.serve({port:0,async fetch(req){body=await req.json();return new Response(new ReadableStream({async start(c){
+  await Bun.sleep(30);c.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"reasoning_content":"Parcial"}}]}\n\n'));
+  await Bun.sleep(30);c.enqueue(new TextEncoder().encode(packet({content:'Completado'})));c.close();
+ }}));}});
+ const {root,path}=await fixture(server.port!),app=await App.open({config:path,cwd:root});
+ try{app.view.prompt.setValue('Continuá');await app.submit();await until(()=>!app.busy);
+  expect(app.status).toStartWith('Listo');expect(app.view.response.value).toContain('Completado');expect(app.view.response.value).toContain('Parcial');
+  expect(Object.hasOwn(body,'max_tokens')).toBe(false);expect(Object.hasOwn(JSON.parse(await Bun.file(path).text()),'limits')).toBe(false);
+ }finally{await app.desktop.onBeforeExit!();server.stop(true);await rm(root,{recursive:true,force:true});}
+});
 
 test("length conserva parcial, entrega etapas, oculta control fragmentado y no repite tools previas", async () => {
   const requests: any[] = [], seen: string[] = [];
@@ -47,7 +59,7 @@ test("length conserva parcial, entrega etapas, oculta control fragmentado y no r
     expect(requests[4].messages.filter((m:any)=>m.role==="user" && m.content.includes("Esta es la etapa"))).toHaveLength(1);
     expect(requests[2].messages.some((m: any) => m.content === "Pedido original completo")).toBe(true);
     expect(requests[2].messages.some((m: any) => m.content === "Código á文🙂 incompleto" && !m.tool_calls)).toBe(true);
-    expect(requests.every(body => body.max_tokens === 1000)).toBe(true);
+    expect(requests.every(body => !Object.hasOwn(body, "max_tokens"))).toBe(true);
     expect(await Bun.file(join(root, "first.txt")).text()).toBe("realizado una vez");
     expect(await Bun.file(join(root, "second.txt")).text()).toBe("segunda etapa");
     expect(await Bun.file(join(root, "discarded.txt")).exists()).toBe(false);
@@ -63,14 +75,14 @@ test("length conserva parcial, entrega etapas, oculta control fragmentado y no r
   } finally { if (!closed) await app.desktop.onBeforeExit!(); server.stop(true); await rm(root, { recursive: true, force: true }); }
 });
 
-test("length es tipado; HTTP, timeout y cancelación no disparan etapas ni nuevos requests", async () => {
+test("length es tipado; HTTP y cancelación no disparan etapas ni nuevos requests", async () => {
   const limited = Bun.serve({ port: 0, fetch: () => new Response(packet({ content: "parcial" }, "length")) });
   const f = await fixture(limited.port!), app = await App.open({ config: f.path, cwd: f.root });
   try {
-    try { await complete({ provider: app.store.value.providers[0]!, model: app.current().model, messages: [], signal: new AbortController().signal, firstEventMs: 1000, idleMs: 1000, onDelta: () => {} }); throw Error("Debe fallar"); }
+    try { await complete({ provider: app.store.value.providers[0]!, model: app.current().model, messages: [], signal: new AbortController().signal, onDelta: () => {} }); throw Error("Debe fallar"); }
     catch (e) { expect(e).toBeInstanceOf(CompletionError); expect((e as CompletionError).finishReason).toBe("length"); expect((e as CompletionError).partial.content).toBe("parcial"); }
   } finally { await app.desktop.onBeforeExit!(); limited.stop(true); await rm(f.root, { recursive: true, force: true }); }
-  for (const mode of ["http", "idle", "cancel"] as const) {
+  for (const mode of ["http", "cancel"] as const) {
     let requests = 0;
     const server = Bun.serve({ port: 0, fetch() {
       requests++;
@@ -78,7 +90,7 @@ test("length es tipado; HTTP, timeout y cancelación no disparan etapas ni nuevo
     } });
     const { root, path } = await fixture(server.port!), app = await App.open({ config: path, cwd: root });
     try {
-      app.store.value.limits.idleMs = 20; app.view.prompt.setValue("Pedido"); await app.submit();
+      app.view.prompt.setValue("Pedido"); await app.submit();
       if (mode === "cancel") { await until(() => app.view.response.value.includes("parcial de fallo")); app.cancel(); }
       await until(() => !app.busy); expect(requests).toBe(1);
       expect(app.session!.state.notices.some(n => n.includes("dividiendo"))).toBe(false);
@@ -122,23 +134,25 @@ test("reasoning sin texto recupera tools y una sesión reabierta sin HTTP 400", 
   }
 });
 
-test("recuperación repetida está acotada por maxSteps y cancelación detiene la etapa activa", async () => {
+test("recuperación continúa más de 30 etapas, ignora límites legacy y permite cancelar la etapa activa", async () => {
   for (const mode of ["length", "next", "cancel"] as const) {
     let requests = 0;
     const server = Bun.serve({ port: 0, fetch() {
       requests++;
+      if (requests > 35) return new Response(packet({ content: "Pedido completado" }));
       if (requests === 1 || mode === "length") return new Response(packet({ content: `parcial ${requests}` }, "length"));
       if (mode === "cancel") return new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"etapa activa\\n[[S42_CON"}}]}\n\n')); } }));
       return new Response(packet({ content: "Etapa pequeña\n[[S42_CONTINUE]]" }));
     } });
-    const { root, path } = await fixture(server.port!, 2), app = await App.open({ config: path, cwd: root });
+    const { root, path } = await fixture(server.port!), app = await App.open({ config: path, cwd: root });
     try {
       app.view.prompt.setValue("Pedido"); await app.submit();
       if (mode === "cancel") { await until(() => app.view.response.value.includes("etapa activa")); app.cancel(); }
-      await until(() => !app.busy); expect(requests).toBe(mode === "cancel" ? 2 : 3);
-      expect(app.status).toContain(mode === "cancel" ? "cancelado" : "Límite de etapas");
+      await until(() => !app.busy); expect(requests).toBe(mode === "cancel" ? 2 : 36);
+      expect(app.status).toContain(mode === "cancel" ? "cancelado" : "Listo");
+      expect(Object.hasOwn(app.store.value, "limits")).toBe(false);
       expect(app.view.response.value).toContain("parcial 1"); expect(app.view.response.value).not.toContain("[[S42_");
-      expect(app.session!.state.events.some(e => e.type === "turn" && e.state === (mode === "cancel" ? "cancelled" : "failed"))).toBe(true);
+      expect(app.session!.state.events.some(e => e.type === "turn" && e.state === (mode === "cancel" ? "cancelled" : "completed"))).toBe(true);
     } finally { await app.desktop.onBeforeExit!(); server.stop(true); await rm(root, { recursive: true, force: true }); }
   }
 });

@@ -329,7 +329,7 @@ and searches [skills.sh](https://skills.sh). Included internal guides cover
 software project structure, debugging/verification and PDF workflows.
 Scraping needs an installed browser on Linux/Windows; PDF generation needs an
 installed renderer. MCP implements tools; resources/prompts, OAuth, sampling and
-elicitation are not implemented. [Contracts and limits](docs/TOOLS.md).
+elicitation are not implemented. [Tool contracts](docs/TOOLS.md).
 
 ## Keyboard, language and themes
 

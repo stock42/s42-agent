@@ -7,6 +7,21 @@ import { parsePaths, pastedPaths, snapshot, validateAttachments } from '../src/a
 import { TextArea } from '../src/ui/components/text-area.ts';
 import { bindings } from '../src/ui/bindings.ts';
 import { Session } from '../src/storage/sessions.ts';
+test('adjuntos conservan archivos de más de 5 MiB y permiten más de 10 archivos sin cuota total',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'s42-full-attachments-'));
+  try{
+    const text='á文🙂'.repeat(600000),path=join(root,'large.txt');await Bun.write(path,text);
+    const item=await snapshot(path,root);expect(item.content).toBe(text);expect(item.size).toBeGreaterThan(5*1024*1024);
+    expect(()=>validateAttachments(Array(11).fill(item),false)).not.toThrow();
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+test('panel de texto admite deltas grandes y conserva más de 100 undo',()=>{
+  const area=new TextArea('full',{x:0,y:0,width:20,height:3}),text='á文🙂'.repeat(100000);
+  area.append(text);expect(area.value).toBe(text);area.setValue('');area.handle({type:'paste',text});expect(area.value).toBe(text);area.setValue('');
+  for(let i=0;i<120;i++)area.handle({type:'key',key:'x',text:'x'});
+  for(let i=0;i<120;i++)area.vim('u');
+  expect(area.value).toBe('');
+});
 const event=(text:string)=>({type:'key' as const,key:text,text});
 async function settled(app:App){for(let i=0;i<200 && app.busy;i++)await Bun.sleep(5);expect(app.busy).toBe(false);}
 test('rutas POSIX, quotes, Windows/UNC, file URL y bloques no convertidos',async()=>{

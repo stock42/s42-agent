@@ -140,10 +140,10 @@ export class FileExplorer {
     try {
       const folder=await normalizeFolder(this.pathInput.value,this.folder); controller.signal.throwIfAborted();
       this.folder=folder;this.pathInput.setValue(folder);update([],0);
-      const result=await findFiles(folder,this.searchInput.value,controller.signal,{limit:1000,includeIgnored:true,onProgress:update});
+      const result=await findFiles(folder,this.searchInput.value,controller.signal,{includeIgnored:true,onProgress:update});
       update(result.matches.toSorted((a,b)=>a.name.localeCompare(b.name,this.desktop.language,{numeric:true})),result.scanned);
       this.list.emptyText=this.desktop.t("Sin resultados");
-      if(active())this.status=`${result.matches.length} resultados${result.truncated?" · límite 1000":""} · ${result.skipped} carpetas inaccesibles · Enter ${this.options.openFile ? "abrir" : "preview"}`;
+      if(active())this.status=`${result.matches.length} resultados · ${result.skipped} carpetas inaccesibles · Enter ${this.options.openFile ? "abrir" : "preview"}`;
     } catch(error) { if(active()){this.status=controller.signal.aborted?"Búsqueda cancelada · resultados parciales":(error as Error).message;this.list.emptyText=this.desktop.t(this.status);} }
     finally { if(active()){this.searchController=undefined;this.searchButton.label="Buscar";this.loading=false;this.select.disabled=!this.options.pickFolder&&!this.options.attach;this.window.focusedId=this.list.id;this.desktop.invalidate();} }
   }
@@ -156,12 +156,12 @@ export class FileExplorer {
     if (metadata.isDirectory()) { await this.navigate(entry.path); return; }
     if (!metadata.isFile()) throw new Error("Esta entrada no es un archivo regular");
     if (this.options.openFile) { this.desktop.close(this.window); await this.options.openFile(entry.path); return; }
-    const bytes = new Uint8Array(await Bun.file(entry.path).slice(0, 65536).arrayBuffer());
+    const bytes = new Uint8Array(await Bun.file(entry.path).arrayBuffer());
     let text: string;
     try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes, { stream: metadata.size > bytes.length }); if (text.includes("\0")) throw new Error(); }
     catch { text = this.desktop.t("Archivo binario; la vista previa admite texto UTF-8."); }
     if (!this.desktop.windows.includes(this.window) || revision!==this.generation) return;
     // info is a child modal: keep navigation state/focus underneath the preview.
-    info(this.desktop, basename(entry.path), [entry.path, this.desktop.t(`${metadata.size} bytes · solo lectura`), "", text, ...(metadata.size > bytes.length ? ["", this.desktop.t("[Vista recortada a 64 KiB]")] : [])],this.window);
+    info(this.desktop, basename(entry.path), [entry.path, this.desktop.t(`${metadata.size} bytes · solo lectura`), "", text],this.window);
   }
 }

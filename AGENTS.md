@@ -18,7 +18,7 @@ si se reutiliza código MIT.
 
 - [README.md](README.md) / [README.es.md](README.es.md): instalación y uso inicial.
 - [docs/USAGE.md](docs/USAGE.md) / [docs/USAGE.es.md](docs/USAGE.es.md): manual detallado del producto.
-- [docs/TOOLS.md](docs/TOOLS.md) / [docs/TOOLS.es.md](docs/TOOLS.es.md): contratos y límites de las herramientas.
+- [docs/TOOLS.md](docs/TOOLS.md) / [docs/TOOLS.es.md](docs/TOOLS.es.md): contratos de las herramientas.
 - [CONTRIBUTING.md](CONTRIBUTING.md) / [CONTRIBUTING.es.md](CONTRIBUTING.es.md): desarrollo, validación y contribuciones.
 - [docs/PUBLISHING.md](docs/PUBLISHING.md) / [docs/PUBLISHING.es.md](docs/PUBLISHING.es.md): builds y preparación de releases.
 - [screenshots/README.md](screenshots/README.md) / [screenshots/README.es.md](screenshots/README.es.md): galería real.
@@ -33,6 +33,9 @@ separa prompt, loop y herramientas; `llm/`, `mcp/`, `skills/`, `storage/` y
 
 ## Contratos del producto
 
+- No imponer cuotas ni cortes propios por tokens, pasos, tiempo, tamaño de
+  archivos, adjuntos o resultados. Respetar la capacidad real del proveedor y
+  mantener cancelación explícita; no reactivar límites de configuración legacy.
 - El panel central de respuestas/archivos es de solo lectura y el prompt queda
   siempre visible. Conservar selección, scroll, Unicode y números de línea
   lógica en un margen separado; no insertar números ni ANSI en mensajes/sesiones.
@@ -44,15 +47,16 @@ separa prompt, loop y herramientas; `llm/`, `mcp/`, `skills/`, `storage/` y
   Bun.secrets; CLI conserva overrides en memoria. No guardar claves en JSON.
   No consultar la red al iniciar ni modificar configuración personal en QA.
 - El loop conserva respuestas/reasoning parciales al cancelar y recupera
-  `finish_reason: length` mediante etapas, respetando maxSteps y efectos previos.
+  `finish_reason: length` mediante etapas sin tope de pasos y conservando efectos
+  previos.
   `--reasoning` y `ui.showReasoning` controlan visibilidad sin borrar contexto.
 - Tools nativas en `src/agent/tools/`, un módulo por herramienta; conservar el
   contrato reexportado por `src/agent/tools.ts` y actualizar el catálogo.
   Skills internas importan SKILL.md como texto. Cargar instrucciones no ejecuta
   scripts. MCP stdio mantiene Bun.spawn para RPC bidireccional.
 - Shell, Git y comandos internos comparten `src/system/command.ts` y el worker
-  `--internal-shell`, con cancelación de árbol/timeout. Usar Bun Shell y escapar
-  argv internos. No sustituir MCP stdio por Bun Shell.
+  `--internal-shell`, con cancelación de árbol sin timeouts automáticos. Usar Bun
+  Shell y escapar argv internos. No sustituir MCP stdio por Bun Shell.
 - UI ES/EN en `src/ui/i18n.ts`; actualizar el catálogo al agregar texto UI.
   Conservar prompts, nombres, archivos y resultados del modelo/tools originales.
   Colores por roles semánticos en `src/ui/theme.ts`; QBasic sigue como default.

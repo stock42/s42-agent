@@ -326,7 +326,7 @@ administra guías y busca en [skills.sh](https://skills.sh). Las guías internas
 incluidas cubren estructura de proyectos, debugging/verificación y flujos PDF. Scraping requiere
 un navegador instalado en Linux/Windows; crear PDF requiere un renderizador.
 MCP implementa tools; resources/prompts, OAuth, sampling y elicitation no están
-implementados. [Contratos y límites](docs/TOOLS.es.md).
+implementados. [Contratos de herramientas](docs/TOOLS.es.md).
 
 ## Teclado, idioma y paletas
 

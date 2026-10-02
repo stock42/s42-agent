@@ -2,25 +2,25 @@
 
 [English](TOOLS.md) · **Español** · [Manual de uso](USAGE.es.md)
 
-Contrato vigente, 2026-10-01. Un módulo por herramienta en `src/agent/tools/`.
+Contrato vigente, 2026-10-02. Un módulo por herramienta en `src/agent/tools/`.
 `index.ts` registra sus schemas/handlers; `shared.ts` conserva únicamente tipos,
 validación, recorrido e instrucciones comunes. `src/agent/tools.ts` reexporta
 el contrato para integraciones existentes. Catálogo visible en **Tools → Nativas**.
 
-| Tool / módulo | Argumentos | Resultado / límites |
+| Tool / módulo | Argumentos | Resultado |
 | --- | --- | --- |
-| `read` / read.ts | `path`; `offset=1`, `limit=200` | UTF-8 numerado; offset en líneas desde 1 dentro del primer MiB. Lectura hasta 1 MiB y salida hasta 64 KiB con aviso de recorte. |
+| `read` / read.ts | `path`; `offset=1`, `limit` opcional | Texto UTF-8 completo numerado. offset/limit seleccionan un rango pedido; sin limit lee hasta el final. |
 | `write` / write.ts | `path`, `content`; `append=false` | Crea padres y crea/reemplaza texto mediante Bun.write; append=true agrega el fragmento al final con fs incluido en Bun. Devuelve ruta escrita. |
-| `edit` / edit.ts | `path`, `oldText`, `newText` | Reemplazo literal único, hasta 1 MiB. Cero/múltiples coincidencias o oldText vacío: error sin escribir. |
-| `list` / list.ts | `path="."`; `glob` opcional | Un nivel con carpetas `/`; con glob recorre archivos. Hasta 200 entradas. |
-| `find` / find.ts | `pattern`; `path="."`, `limit=200`, `includeIgnored=false` | Nombres sin distinguir mayúsculas o glob Bun. Rutas absolutas, conteos y recorte. Límite máximo 1.000. |
-| `search` / search.ts | `pattern`; `path="."`, `glob="**/*"` | Contenido literal sensible a mayúsculas. `archivo:línea:texto`; hasta 100 coincidencias, primer MiB por archivo. Omite binarios/UTF-8 inválido. |
-| `fetch` / fetch.ts | `url`; `method="GET"`, `headers`, `body`, `bodyType="json"`, `timeoutMs=30000` | HTTP/S con fetch nativo; JSON con URL final, status/statusText, headers, body texto y truncated. Body hasta 64 KiB. |
-| `shell` / shell.ts | `command`; `timeoutMs=limits.shellTimeoutMs` (120 s inicial) | Bun Shell ($) en subproceso Bun propio con cwd del proyecto; stdout/stderr, exitCode, timedOut/cancelled/truncated. Drena ambos streams, conserva hasta 64 KiB por stream y recorta cada salida a 30.000 bytes. |
+| `edit` / edit.ts | `path`, `oldText`, `newText` | Reemplazo literal único en el archivo completo. Cero/múltiples coincidencias o oldText vacío: error sin escribir. |
+| `list` / list.ts | `path="."`; `glob` opcional | Todas las entradas; `/` para carpetas. Un glob recorre los archivos. |
+| `find` / find.ts | `pattern`; `path="."`, `limit` opcional, `includeIgnored=false` | Todas las coincidencias por nombre o glob Bun, con rutas absolutas y conteos. limit solo selecciona la cantidad pedida explícitamente, sin techo agregado. |
+| `search` / search.ts | `pattern`; `path="."`, `glob="**/*"` | Contenido literal sensible a mayúsculas en archivos completos. Todas las coincidencias `archivo:línea:texto`; omite binarios/UTF-8 inválido. |
+| `fetch` / fetch.ts | `url`; `method="GET"`, `headers`, `body`, `bodyType="json"` | HTTP/S con fetch nativo; URL final, status/statusText, headers y body texto completo, sin timeout del harness. |
+| `shell` / shell.ts | `command` | Bun Shell ($) en subproceso Bun propio con cwd del proyecto. stdout/stderr completos, exitCode y cancelled. Espera finalización o cancelación, sin timeout. |
 | `internal_skill` / internal_skill.ts | `name` opcional | Sin nombre, catálogo de internas; con nombre, instrucciones software-project/debug-and-verify/create-pdf. Sin ejecución de scripts. |
-| `markdown_html` / markdown_html.ts | Exactamente uno: `markdown` o `path`; `outputPath`, `standalone=false`, `title="S42 Agent"` opcionales | Bun.markdown.html; input UTF-8 hasta 1 MiB. Archivo HTML completo o JSON con preview hasta 64 KiB y truncated. |
-| `websocket` / websocket.ts | `url`; `headers`, `protocols`, `messages` opcionales; `receiveCount=1` (máximo 100), `timeoutMs=10000` | ws/wss, una conexión por call. Envía textos, recibe textos/binarios base64, desconecta. JSON con resultados parciales; máximo 64 KiB de payload recibido. |
-| `scrape` / scrape.ts | `url`; `selector="body"`, `format="text"` o `"html"`, `timeoutMs=30000` | Bun.WebView: URL final, título, contenido del primer elemento CSS y hasta 25 enlaces (texto 100/href 500 caracteres), linkCount y truncated. Contenido hasta 30.000 bytes; espera que exista el selector. |
+| `markdown_html` / markdown_html.ts | Exactamente uno: `markdown` o `path`; `outputPath`, `standalone=false`, `title="S42 Agent"` opcionales | Bun.markdown.html sobre el input completo. Guarda el HTML o lo devuelve íntegro como JSON. |
+| `websocket` / websocket.ts | `url`; `headers`, `protocols`, `messages` opcionales; `receiveCount=1` | ws/wss, una conexión por call. Recibe la cantidad pedida sin techo agregado, con textos/binarios base64 completos. Espera respuestas, cierre remoto o cancelación. |
+| `scrape` / scrape.ts | `url`; `selector="body"`, `format="text"` o `"html"` | Bun.WebView: URL final, título, contenido completo del primer elemento CSS y todos sus enlaces, sin recortar textos/hrefs. Espera el selector o cancelación. |
 
 Las tools reciben un objeto JSON; nombres/campos desconocidos, tipos inválidos
 y enteros no positivos devuelven error. Rutas relativas usan el proyecto del
@@ -28,20 +28,23 @@ turno; rutas absolutas pueden apuntar fuera de él. No cambia el cwd global.
 `list/search/find` omiten `.git`, `node_modules`, `dist`, `out` inicialmente;
 find admite `includeIgnored: true`. Búsqueda incremental sin seguir enlaces;
 subcarpetas inaccesibles/desaparecidas se omiten, y find reporta su cantidad.
-El explorador usa la misma búsqueda con includeIgnored=true y límite 1.000.
+El explorador usa la misma búsqueda con includeIgnored=true, sin tope de resultados.
 
 Todo corre dentro de Bun: Bun.file/write, Bun.Glob.match, fetch, FormData,
 URLSearchParams, AbortController, streams y Bun.spawn. `node:fs/promises`/path
 son implementaciones incluidas en Bun para directorios/paths, según la
 [documentación de archivos](https://bun.sh/docs/runtime/file-io). No hay
 dependencias de runtime ni procesos externos find/rg/curl. Shell usa el intérprete de Bun; los programas externos invocados deben estar
-instalados. `src/system/command.ts` conserva timeout, cancelación de árbol y
-captura acotada del padre; el intérprete Bun Shell mantiene su propio buffer
-mientras ejecuta. Un output muy abundante puede consumir memoria en ese proceso.
+instalados. `src/system/command.ts` conserva cancelación del árbol y captura
+completa de stdout/stderr, sin timeout ni recortes.
 Argv internos se escapan; el texto command de la tool es un programa Shell.
 Bun Shell admite pipes/redirecciones/builtins, pero no toda la sintaxis Bash/cmd:
 redirigir stderr con `1>&2`; background `&` no está soportado. Para sintaxis de
 un shell externo, invocarlo explícitamente si está instalado.
+
+El harness no impone cuotas de pasos, tiempo, tamaño de archivo, cantidad de
+adjuntos o payloads. Ctrl+C cancela el trabajo. Se conservan validación de
+argumentos/formatos y los errores reales del proveedor, sistema operativo o runtime.
 
 ## HTTP
 
@@ -67,15 +70,14 @@ JSON POST:
 Formulario PUT:
 
 ```json
-{"url":"https://example.com/profile","method":"PUT","bodyType":"form","body":{"name":"César","city":"Buenos Aires"},"timeoutMs":5000}
+{"url":"https://example.com/profile","method":"PUT","bodyType":"form","body":{"name":"César","city":"Buenos Aires"}}
 ```
 
 Cambiar bodyType a multipart envía esos campos como multipart/form-data. Esta
 versión admite campos de texto; no se añadió un contrato de upload de archivos.
 Body de respuesta se devuelve como texto, incluso si el servidor devuelve JSON;
 el modelo puede interpretar ese texto. Binarios descargados no se escriben
-automáticamente a disco. El sobre JSON puede superar 64 KiB por escaping y
-headers: el límite de fetch corresponde al body retenido, sin romper el JSON.
+automáticamente a disco. El body se conserva completo y el JSON queda parseable.
 [Contrato oficial de fetch/headers/forms](https://bun.sh/docs/runtime/networking/fetch).
 
 ## Skills internas y Markdown
@@ -100,9 +102,8 @@ viewport y título escapado. Tablas/code/headings usan el renderer de Bun.
 
 Alternativa: `{"path":"docs/informe.md","outputPath":"docs/informe.html"}`.
 Guardar crea padres y reemplaza el destino; devuelve path/bytes y AGENTS.md
-aplicable al destino. Sin outputPath devuelve html/bytes/truncated; un preview
-recortado no es un documento completo. El límite se mide en bytes y conserva
-UTF-8 válido; el JSON queda parseable. Guardar no recorta el archivo HTML.
+aplicable al destino. Sin outputPath devuelve html/bytes/truncated con el HTML
+completo y truncated=false; al guardar también conserva el documento íntegro.
 No agrega CSS, assets ni sanitización; no crea un PDF. `create-pdf` enseña a
 usar ese HTML y un Chrome/Chromium u otro renderizador ya instalado mediante
 shell, con comprobación de salida y límites de revisión visual.
@@ -115,23 +116,22 @@ Enviar JSON consiste en un mensaje de texto serializado. No hay allowlist de
 hosts; ws/wss usa la red y permisos del proceso, como fetch.
 
 ```json
-{"url":"ws://127.0.0.1:3000/echo","headers":{"Authorization":"Bearer ejemplo"},"protocols":["v1"],"messages":["{\"event\":\"ping\"}"],"receiveCount":1,"timeoutMs":5000}
+{"url":"ws://127.0.0.1:3000/echo","headers":{"Authorization":"Bearer ejemplo"},"protocols":["v1"],"messages":["{\"event\":\"ping\"}"],"receiveCount":1}
 ```
 
 Resultado: url, opened, subprotocolo elegido protocol, cantidad sent, received y
 reason. Cada mensaje incluye type (text/binary), data (texto/base64), bytes
 originales y truncated. En cierre remoto devuelve closeCode/closeReason/wasClean.
 reason=received es éxito al alcanzar receiveCount. closed antes de alcanzar la
-cantidad, timeout, cancelled, error o limit son failed; conservan el parcial.
-Al completar/cancelar/fallar se retiran timers/listeners y se termina el socket;
+cantidad, cancelled o error son failed; conservan el parcial.
+Al completar/cancelar/fallar se retiran listeners y se termina el socket;
 no queda una conexión disponible para futuras calls. No se reporta un código
 de cierre remoto cuando el cliente finaliza por recibir la cantidad esperada.
-El límite de 64 KiB es payload retenido, antes de escaping JSON o base64;
-no limita la longitud del frame que la API WebSocket ya recibió.
+Los payloads se conservan completos, sin cuota de bytes.
 
 ## Ejecución y eventos
 
-`execute(name, argumentsJSON, cwd, signal, shellTimeoutMs)` devuelve
+`execute(name, argumentsJSON, cwd, signal)` devuelve
 `{output, failed, durationMs, exitCode?, truncated?}`. Archivo/texto añade las
 instrucciones AGENTS aplicables como antes; HTTP y shell mantienen salida
 estructurada parseable, al igual que Markdown/WebSocket. internal_skill carga
@@ -152,7 +152,7 @@ o HTML; selector como dato, sin ejecutar JavaScript provisto como argumento.
 Seleccionar un elemento que aparece después de la carga permite esperar contenido
 dinámico. No garantiza network idle ni que todo el sitio haya finalizado.
 Navegación resuelve en load; errores HTTP con una página de error se extraen como
-DOM (para status/headers usar fetch). Timeout y señal cierran la vista, incluidos
+DOM (para status/headers usar fetch). La cancelación cierra la vista, incluidos
 los requests de esa pestaña. Cada call usa una vista efímera; el browser compartido
 permanece hasta salir del entrypoint y se cierra en su finally.
 
@@ -162,5 +162,5 @@ sin conectarse al perfil personal ni descargar navegadores. API experimental en
 Bun 1.4.2; runtime Linux comprobado, macOS/Windows pendientes.
 
 ```json
-{"url":"https://example.com","selector":"main","format":"text","timeoutMs":30000}
+{"url":"https://example.com","selector":"main","format":"text"}
 ```

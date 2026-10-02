@@ -21,7 +21,7 @@ for(const field of ["reasoning_content","reasoning"] as const) test(`SSE ${field
   const server=Bun.serve({port:0,fetch(){return new Response(new ReadableStream({start(controller){for(const byte of encoder.encode(source))controller.enqueue(new Uint8Array([byte]));controller.close();}}));}});
   const thoughts:string[]=[],calls:{index:number;call:ToolCall}[]=[];
   try {
-    const result=await complete({provider:provider(server.port!),model,messages:[],signal:new AbortController().signal,firstEventMs:1000,idleMs:1000,onDelta:()=>{},onReasoning:delta=>thoughts.push(delta),onToolCall:(index,call)=>calls.push({index,call})});
+    const result=await complete({provider:provider(server.port!),model,messages:[],signal:new AbortController().signal,onDelta:()=>{},onReasoning:delta=>thoughts.push(delta),onToolCall:(index,call)=>calls.push({index,call})});
     expect(thoughts).toEqual(["Analizo á文🙂"," y verifico"]);expect(result.message[field]).toBe("Analizo á文🙂 y verifico");expect(result.message.content).toBe("Respuesta");
     expect(calls.map(c=>c.index)).toEqual([1,0,0,1]);expect(calls[0]!.call.function.arguments).toBe('{"path":');expect(calls[3]!.call.function.arguments).toBe('{"path":"code.ts"}');
     expect(result.message.tool_calls?.map(c=>c.id)).toEqual(["a","b"]);
@@ -31,7 +31,7 @@ for(const field of ["reasoning_content","reasoning"] as const) test(`SSE ${field
 test("stream cortado conserva razonamiento y calls parciales sin inventar texto",async()=>{
   const server=Bun.serve({port:0,fetch(){return new Response(event({reasoning_content:"Todavía analizando",tool_calls:[{index:0,id:"parcial",function:{name:"write",arguments:'{"path":'}}]}));}});
   try {
-    await complete({provider:provider(server.port!),model,messages:[],signal:new AbortController().signal,firstEventMs:1000,idleMs:1000,onDelta:()=>{}});throw new Error("Debe fallar");
+    await complete({provider:provider(server.port!),model,messages:[],signal:new AbortController().signal,onDelta:()=>{}});throw new Error("Debe fallar");
   } catch(error) {
     expect(error).toBeInstanceOf(CompletionError);expect((error as CompletionError).partial.reasoning_content).toBe("Todavía analizando");expect((error as CompletionError).partial.content).toBeNull();expect((error as CompletionError).partial.tool_calls?.[0]?.function.arguments).toBe('{"path":');
   } finally {server.stop(true);}

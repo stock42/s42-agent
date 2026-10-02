@@ -3,6 +3,13 @@ import {mkdtemp,rm,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {readSkill,SkillCatalog,searchSkills,installSkill} from '../src/skills/index.ts';
+test('skills conservan cuerpos de más de 256 KiB y descripciones completas',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'s42-full-skill-')),path=join(root,'large-guide');await mkdir(path);
+ const body='Instrucción á文🙂\n'.repeat(25000),description='Descripción '.repeat(1000);
+ await Bun.write(join(path,'SKILL.md'),'---\nname: large-guide\ndescription: '+JSON.stringify(description)+'\n---\n'+body);
+ try{const skill=await readSkill(path);expect(skill.description).toBe(description.trim());expect(skill.body).toBe(body.trim());}
+ finally{await rm(root,{recursive:true,force:true});}
+});
 test('native YAML frontmatter, progressive loading, disabled/project isolation and exact base directory',async()=>{
  const root=await mkdtemp(join(tmpdir(),'s42-skills-')),path=join(root,'bun-guide');await mkdir(path);await Bun.write(join(path,'SKILL.md'),'---\nname: bun-guide\ndescription: >\n  Build with Bun.\n  Use native APIs.\n---\nRead scripts/check.ts and report actual results.');
  try{const loaded=await readSkill(path);expect(loaded.description).toContain('Build with Bun. Use native APIs.');const catalog=new SkillCatalog(),notices:string[]=[];

@@ -602,9 +602,8 @@ export class App {
     form(this.desktop, this.desktop.t("Models · host, puerto y modelo"), [
       { label: this.desktop.t("ID del modelo"), value: model?.id ?? "" }, { label: this.desktop.t("Nombre"), value: model?.name ?? "" }, { label: this.desktop.t("Host / URL base"), value: url.href.replace(/\/$/, "") },
       { label: this.desktop.t("Puerto"), value: port }, { label: this.desktop.t("API key · llavero"), value: "", secret: true, placeholder: !newProvider && provider?.apiKeySecret ? "Guardada · vacío conserva" : "Opcional · guardar en el SO" }, { label: this.desktop.t("Variable API key"), value: newProvider ? "" : provider?.apiKeyEnv ?? "" },
-      { label: this.desktop.t("Contexto"), value: String(model?.contextWindow ?? ""), placeholder: "Vacío: decide el proveedor" }, { label: this.desktop.t("Máximo salida"), value: String(model?.maxOutputTokens ?? ""), placeholder: "Vacío: decide el proveedor" },
       { label: this.desktop.t("Tools / imágenes (sí/no)"), value: `${model?.capabilities.tools ? (this.desktop.language === "en" ? "yes" : "sí") : "no"}/${model?.capabilities.images ? (this.desktop.language === "en" ? "yes" : "sí") : "no"}` },
-    ], ([id, name, host, port, apiKey, apiKeyEnv, context, max, caps]) => this.change(async () => {
+    ], ([id, name, host, port, apiKey, apiKeyEnv, caps]) => this.change(async () => {
       this.requireIdle(); if (!id?.trim()) throw new Error("Escribí el ID real del modelo");
       const endpoint = new URL(host!); if (port && (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535)) throw new Error("Puerto inválido"); endpoint.port = port ?? "";
       const next = structuredClone(this.store.value), providerId = newProvider ? crypto.randomUUID() : provider?.id ?? "llama.cpp";
@@ -614,7 +613,7 @@ export class App {
       if (changedEndpoint) configured.apiKeySecret = undefined;
       configured.baseUrl = endpoint.href.replace(/\/$/, ""); configured.apiKeyEnv = apiKeyEnv?.trim() || undefined;
       const capabilities = caps!.toLowerCase().split("/"); if (capabilities.length !== 2 || !capabilities.every(c => ["sí", "si", "yes", "no"].includes(c))) throw new Error("Capacidades: sí/no, no/no o sí/sí");
-      const saved: Model = { manual: true, id: id.trim(), name: name?.trim() || id.trim(), contextWindow: context?.trim() ? Number(context) : undefined, maxOutputTokens: max?.trim() ? Number(max) : undefined, capabilities: { tools: capabilities[0] !== "no", images: capabilities[1] !== "no" } };
+      const saved: Model = { manual: true, id: id.trim(), name: name?.trim() || id.trim(), capabilities: { tools: capabilities[0] !== "no", images: capabilities[1] !== "no" } };
       if (add && configured.models.some(m => m.id === saved.id)) throw new Error("Ese modelo ya está registrado");
       configured.models = [...configured.models.filter(m => m.id !== (model?.id ?? saved.id)), saved];
       validateConfig(next);
@@ -640,7 +639,7 @@ export class App {
     tab.controller = controller; tab.busy = true;
     tab.status = `Consultando modelos de ${provider.name}…`; this.desktop.invalidate();
     try {
-      const models = await discoverModels(provider, key, AbortSignal.any([controller.signal,AbortSignal.timeout(this.store.value.limits.firstEventMs)]));
+      const models = await discoverModels(provider, key, controller.signal);
       if (!models.length) throw new Error(`${provider.name}: no hay modelos disponibles`);
       tab.status = `${models.length} modelos disponibles · elegí uno`; return models;
     } catch (error) { tab.status = (error as Error).message; throw error; }
@@ -763,7 +762,7 @@ export class App {
     if (this.activeFile) { this.displayTab(tab); this.desktop.focus(this.view.promptWindow); }
     const key = await credential(provider, this.keys.get(provider.id));
     this.requireIdle(tab);
-    const controller = new AbortController(), context = structuredClone({ limits: this.store.value.limits, mcpServers: this.store.value.mcpServers, skills: this.store.value.skills });
+    const controller = new AbortController(), context = structuredClone({ mcpServers: this.store.value.mcpServers, skills: this.store.value.skills });
     tab.busy = true; tab.controller = controller; tab.tokens = emptyUsage();
     tab.agentState = "Conectando…"; this.startActivity();
     tab.prompt.setValue(""); tab.attachments=[]; tab.status = "Conectando…"; this.desktop.invalidate();

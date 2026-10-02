@@ -1,9 +1,9 @@
-import { definition, positiveInteger, string, type NativeTool } from "./shared.ts";
+import { definition, string, type NativeTool } from "./shared.ts";
 
 const stringMap = { type: "object", additionalProperties: { type: "string" } };
 export const httpFetch: NativeTool = {
-  definition: definition("fetch", "HTTP request to any http/https URL with method, headers and optional JSON, URL-encoded form, multipart form or text body. Returns status, headers and text body (max 64 KiB); HTTP errors fail the tool.",
-    { url: string, method: string, headers: stringMap, body: {}, bodyType: { type: "string", enum: ["json", "form", "multipart", "text"] }, timeoutMs: positiveInteger }, ["url"]),
+  definition: definition("fetch", "HTTP request to any http/https URL with method, headers and optional JSON, URL-encoded form, multipart form or text body. Returns status, headers and complete text body; HTTP errors fail the tool.",
+    { url: string, method: string, headers: stringMap, body: {}, bodyType: { type: "string", enum: ["json", "form", "multipart", "text"] } }, ["url"]),
   async run(args, { signal }) {
     const url = new URL(String(args.url));
     if (!["http:", "https:"].includes(url.protocol)) throw new Error("fetch requiere una URL http/https");
@@ -23,20 +23,17 @@ export const httpFetch: NativeTool = {
     }
     const controller = new AbortController(), relay = () => controller.abort(signal.reason);
     signal.addEventListener("abort", relay, { once: true }); if (signal.aborted) relay();
-    const timer = setTimeout(() => controller.abort(new Error("Timeout de fetch")), Number(args.timeoutMs ?? 30000));
     let reader: { read(): Promise<{ done: boolean; value?: Uint8Array }>; cancel(): Promise<void> } | undefined;
     try {
       const response = await fetch(url, { method, headers, body, signal: controller.signal });
-      reader = response.body?.getReader(); const decoder = new TextDecoder(); let text = "", retained = 0, truncated = false;
+      reader = response.body?.getReader(); const decoder = new TextDecoder(); let text = "";
       while (reader) {
         const chunk = await reader.read(); if (chunk.done || !chunk.value) { text += decoder.decode(); break; }
-        const remaining = 65536 - retained, part = chunk.value.subarray(0, remaining); retained += part.length;
-        text += decoder.decode(part, { stream: true });
-        if (chunk.value.length > remaining) { truncated = true; break; }
+        text += decoder.decode(chunk.value, { stream: true });
       }
       controller.signal.throwIfAborted();
-      return { output: JSON.stringify({ url: response.url, status: response.status, statusText: response.statusText, headers: Object.fromEntries(response.headers), body: text, truncated }), failed: !response.ok, truncated };
+      return { output: JSON.stringify({ url: response.url, status: response.status, statusText: response.statusText, headers: Object.fromEntries(response.headers), body: text, truncated: false }), failed: !response.ok, truncated: false };
     } catch (error) { if (controller.signal.aborted) throw controller.signal.reason; throw error; }
-    finally { clearTimeout(timer); signal.removeEventListener("abort", relay); await reader?.cancel().catch(() => {}); }
+    finally { signal.removeEventListener("abort", relay); await reader?.cancel().catch(() => {}); }
   },
 };

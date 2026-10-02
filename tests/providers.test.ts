@@ -83,7 +83,7 @@ test("proveedor remoto actualiza el catálogo antiguo; sin metadata no reutiliza
   try {
     expect(await runtimeModel(provider, old)).toMatchObject({ maxOutputTokens: 393216, capabilities: { images: true } });
     expect(requests).toBe(1);
-    expect(await runtimeModel(provider, { ...old, manual: true })).toEqual({ ...old, manual: true }); expect(requests).toBe(1);
+    expect(await runtimeModel(provider, { ...old, manual: true })).toEqual({ ...old, manual: true, maxOutputTokens: undefined }); expect(requests).toBe(1);
     expect(await runtimeModel(provider, { ...old, id: "missing" })).toEqual({ ...old, id: "missing", maxOutputTokens: undefined });
     provider.id = "custom-remote";
     expect((await runtimeModel(provider, old)).maxOutputTokens).toBe(393216);
@@ -106,15 +106,14 @@ test("metadata de salida se conserva íntegra sin reservar una fracción del con
   finally { server.stop(true); }
 });
 
-test("formulario Models deja capacidades de tokens vacías y persiste sin introducir límites ES/EN", async () => {
+test("formulario Models no ofrece límites y persiste sin introducirlos ES/EN", async () => {
   const root = await fixture(), path = join(root, "config.json"), app = await App.open({ config: path, cwd: root });
   try {
     for (const language of ["es", "en"] as const) {
       await app.setLanguage(language); app.modelForm(true);
       inputs(app)[0]!.setValue(`automatic-${language}`);
       button(app, "next"); button(app, "next");
-      expect(inputs(app).slice(0, 2).map(input => input.value)).toEqual(["", ""]);
-      expect(inputs(app)[1]!.placeholder).toBe(language === "es" ? "Vacío: decide el proveedor" : "Empty: provider decides");
+      expect(inputs(app)).toHaveLength(1); expect(inputs(app)[0]!.id).toBe("field-6");
       button(app, "save"); await until(() => !app.desktop.modal);
       expect(app.current().model.maxOutputTokens).toBeUndefined(); expect(app.current().model.contextWindow).toBeUndefined();
     }

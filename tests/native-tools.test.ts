@@ -47,7 +47,7 @@ test("fetch ejecuta métodos/headers, JSON, forms, multipart y texto; HTTP falli
   }finally{server.stop(true);}
 });
 
-test("fetch recorta stream sin romper JSON/Unicode y cancela por timeout o señal",async()=>{
+test("fetch conserva stream completo y Unicode, sin recortes; cancelación por señal",async()=>{
   let bodyCancelled=false;
   const server=Bun.serve({port:0,fetch(req){
     if(req.url.endsWith("/slow"))return new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode("inicio"));},cancel(){bodyCancelled=true;}}));
@@ -56,10 +56,29 @@ test("fetch recorta stream sin romper JSON/Unicode y cancela por timeout o seña
   }});
   const run=(path:string,args:object={},signal=new AbortController().signal)=>execute("fetch",JSON.stringify({url:`http://127.0.0.1:${server.port}${path}`,...args}),process.cwd(),signal);
   try {
-    const large=await run("/big");expect(large.failed).toBe(false);expect(large.truncated).toBe(true);const body=JSON.parse(large.output).body;expect(Buffer.byteLength(body)).toBeLessThanOrEqual(65536);expect(body).not.toContain("�");
+    const large=await run("/big");expect(large.failed).toBe(false);expect(large.truncated).toBe(false);const body=JSON.parse(large.output).body;expect(body).toBe("á文🙂".repeat(100000));
     const exact=await run("/exact");expect(exact.truncated).toBe(false);expect(JSON.parse(exact.output).body.length).toBe(65536);
-    const timeout=await run("/slow",{timeoutMs:25});expect(timeout.failed).toBe(true);expect(timeout.output).toContain("Timeout");
     const controller=new AbortController(),pending=run("/slow",{},controller.signal);await Bun.sleep(20);controller.abort(new Error("Cancelado por usuario"));const cancelled=await pending;expect(cancelled.failed).toBe(true);expect(cancelled.output).toContain("Cancelado por usuario");
     for(let i=0;i<20&&!bodyCancelled;i++)await Bun.sleep(5);expect(bodyCancelled).toBe(true);
   }finally{server.stop(true);}
+});
+
+test("read/edit/search/list/find conservan archivos y resultados por encima de los antiguos techos",async()=>{
+  const root=await mkdtemp(join(tmpdir(),"s42-full-files-")),signal=new AbortController().signal;
+  const run=(name:string,args:object)=>execute(name,JSON.stringify(args),root,signal);
+  try{
+    const prefix="á文🙂 relleno\n".repeat(100000),tail="UNIQUE_END después del primer MiB\n",path=join(root,"large.txt");
+    await Bun.write(path,prefix+tail);
+    const read=await run("read",{path});expect(read.failed).toBe(false);expect(read.output).toContain("UNIQUE_END");expect(read.output).not.toContain("recortad");
+    expect((await run("edit",{path,oldText:"UNIQUE_END",newText:"EDITED_END"})).failed).toBe(false);
+    expect(await Bun.file(path).text()).toBe(prefix+tail.replace("UNIQUE_END","EDITED_END"));
+    expect((await run("search",{path:root,pattern:"EDITED_END"})).output).toContain("large.txt:100001:");
+    await Bun.write(join(root,"matches.txt"),"needle á文🙂\n".repeat(1200));
+    const search=await run("search",{path:root,pattern:"needle"});expect(search.output).toContain("matches.txt:1200:");expect(search.output).not.toContain("recortad");
+    for(let i=0;i<1100;i++)await Bun.write(join(root,`entry-${String(i).padStart(4,"0")}.txt`),"");
+    const list=await run("list",{});expect(list.output.split("\n")).toHaveLength(1102);
+    const find=await run("find",{pattern:"entry-"});expect(find.output).toContain("1100 archivos");expect(find.truncated).toBe(false);
+    expect((await run("find",{pattern:"entry-",limit:1100})).output).toContain("1100 archivos");
+    expect((await run("read",{path,offset:100001,limit:1})).output).toContain("100001: EDITED_END");
+  }finally{await rm(root,{recursive:true,force:true});}
 });

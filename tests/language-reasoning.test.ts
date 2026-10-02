@@ -171,7 +171,7 @@ test("English forms keep CRUD action IDs and accept yes/project without changing
     app.modelForm(); const modelWindow = app.desktop.modal!;
     (modelWindow.controls.find(control => control.id === "next") as Button).onClick();
     (modelWindow.controls.find(control => control.id === "next") as Button).onClick();
-    const caps = modelWindow.controls.find(control => control.id === "field-8") as Input;
+    const caps = modelWindow.controls.find(control => control.id === "field-6") as Input;
     expect(caps.value).toBe("yes/no"); caps.setValue("yes/yes");
     (modelWindow.controls.find(control => control.id === "save") as Button).onClick();
     await until(() => !app.desktop.modal);

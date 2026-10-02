@@ -5,6 +5,32 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Corregido — Retirar cuotas y cortes propios del agente
+
+- Eliminados maxSteps y los timeouts del modelo, descubrimiento, shell, HTTP,
+  WebSocket, scraping, MCP, skills y métricas. El turno y sus recuperaciones
+  continúan hasta completar, cancelar explícitamente o recibir un error real.
+  Configuraciones v1 antiguas se cargan sin reactivar el bloque `limits`.
+- Retirados los recortes de lecturas, ediciones, búsquedas, listados, previews,
+  Markdown, stdout/stderr, HTTP, WebSocket, scraping y mensajes/resultados MCP.
+  Archivos, adjuntos, skills y undo dejan de tener cuotas de tamaño/cantidad.
+  Rangos de lectura o cantidades pedidos explícitamente conservan su semántica.
+- Models deja de ofrecer Contexto/Máximo salida; valores manuales anteriores
+  no se envían como presupuesto de tokens. Solo se utiliza el máximo anunciado
+  por el proveedor automático; sin metadata se omite `max_tokens`. Se conservan
+  cancelación del árbol de procesos y validaciones de formatos/argumentos.
+- Catálogo ES/EN, manuales e instrucciones del proyecto actualizados para
+  registrar la política solicitada. Sin dependencias ni builds de distribución.
+- Typecheck correcto y suite completa: 194 pass/0 fail. Regresiones ejecutan
+  35 acciones y 35 recuperaciones, ignoran timeouts legacy de 1 ms, conservan
+  archivos/adjuntos grandes, más de 1.000 resultados, 101 respuestas WebSocket,
+  un frame MCP mayor a 8 MiB y más de 100 undo. PTY desde el entrypoint verifica
+  formulario, Unicode, herramientas, cancelación y reapertura.
+- DeepSeek real aceptó nuevamente el máximo anunciado de 393.216 tokens y
+  terminó una respuesta breve con stop. Esta prueba no demuestra un Tetris
+  completado ni una generación de ese tamaño. Evidencia local en `private/qa/`,
+  sin modificar configuración personal ni la sesión original.
+
 ### Corregido — Eliminar techos arbitrarios de tokens
 
 - Retirados los techos automáticos de 2.048, 8.192 y 32.768 tokens y la reserva

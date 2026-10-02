@@ -63,8 +63,7 @@ export async function runCli(options: CliOptions): Promise<number> {
       model = { id: selectedId, name: selectedId, capabilities: { tools: true, images: false } };
     }
     if (!model) {
-      const available = provider.models.length ? provider.models : await discoverModels(provider, key,
-        AbortSignal.any([controller.signal, AbortSignal.timeout(config.limits.firstEventMs)]));
+      const available = provider.models.length ? provider.models : await discoverModels(provider, key, controller.signal);
       model = available[0];
       if (!model) throw new Error("El servidor no tiene modelos disponibles. Indicá un ID con --model.");
       if (!provider.models.length) model = { ...model, capabilities: { ...model.capabilities, tools: true } };
@@ -80,7 +79,7 @@ export async function runCli(options: CliOptions): Promise<number> {
     const showReasoning = options.reasoning ? options.reasoning === "on" : config.ui.showReasoning;
     const toolNames = new Map<string, string>();
     const result = await runTurn({ project, session, provider, model, key, signal: controller.signal,
-      limits: config.limits, mcpServers: config.mcpServers, skills: config.skills,
+      mcpServers: config.mcpServers, skills: config.skills,
       onDelta: text => {
         if (!text) return;
         if (answerBoundary && wroteAnswer) process.stdout.write("\n\n");

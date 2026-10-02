@@ -35,9 +35,7 @@ export async function pastedPaths(text: string, cwd: string): Promise<string[] |
 export async function snapshot(path: string, cwd: string): Promise<Attachment> {
   path = localPath(path,cwd); const info = await stat(path);
   if (!info.isFile()) throw new Error("El adjunto debe ser un archivo; no se incluyen carpetas");
-  if (info.size > 5*1024*1024) throw new Error("Adjunto mayor a 5 MiB");
-  const bytes = new Uint8Array(await Bun.file(path).slice(0,5*1024*1024+1).arrayBuffer());
-  if(bytes.length>5*1024*1024)throw new Error("Adjunto mayor a 5 MiB");
+  const bytes = new Uint8Array(await Bun.file(path).arrayBuffer());
   let mime: string | undefined;
   if (bytes.slice(0,8).every((v,i)=>v===[137,80,78,71,13,10,26,10][i]) && bytes.length >= 8) mime="image/png";
   else if (bytes[0]===255 && bytes[1]===216 && bytes[2]===255) mime="image/jpeg";
@@ -46,16 +44,13 @@ export async function snapshot(path: string, cwd: string): Promise<Attachment> {
   if (mime) content=`data:${mime};base64,${Buffer.from(bytes).toString('base64')}`;
   else {
     if (/\.(pdf|zip|gz|mp3|mp4|wav|gif|exe|dll|bin)$/i.test(path)) throw new Error("Formato no admitido: texto UTF-8 o PNG/JPEG/WebP");
-    if (bytes.length > 1024*1024) throw new Error("Texto mayor a 1 MiB");
     try { content = new TextDecoder('utf-8',{fatal:true}).decode(bytes); } catch { throw new Error("El archivo no es texto UTF-8 ni una imagen admitida"); }
     if (content.includes('\0')) throw new Error("Archivo binario no admitido");
   }
   return {path,name:basename(path),size:bytes.length,hash:createHash('sha256').update(bytes).digest('hex'),kind:mime?'image':'text',content};
 }
 export function validateAttachments(items: Attachment[], images: boolean): void {
-  if (items.length > 10) throw new Error("Máximo 10 adjuntos");
   if (items.some(a=>a.kind==='image') && !images) throw new Error("Este modelo no admite imágenes. Elegí otro en Models o quitá el adjunto.");
-  if (items.reduce((total,a)=>total+Buffer.byteLength(a.content),0)>10*1024*1024) throw new Error("Adjuntos exceden 10 MiB incluyendo base64");
 }
 export function contentWithAttachments(text: string, items: Attachment[]): string | ContentPart[] {
   if (!items.length) return text;

@@ -72,7 +72,7 @@ test('About bilingüe tiene scroll y conserva prompt en 60x16; buscador usa el s
  key(app,'ctrl+end');expect(app.desktop.draw().lines().join('\n')).toContain('Windows, Linux and macOS');key(app,'enter');expect(app.desktop.modal).toBeUndefined();await app.setLanguage('es');
  app.extensions.search();expect(app.desktop.modal?.title).toBe('Buscar · https://skills.sh');
  const modal=app.desktop.modal!,input=modal.controls.find(c=>c instanceof Input) as Input;input.setValue('react + bun');modal.focusedId='save';key(app,'enter');await until(()=>app.desktop.modal?.title==='https://skills.sh · resultados');
- expect(target!.origin).toBe('https://skills.sh');expect(target!.pathname).toBe('/api/search');expect(target!.searchParams.get('q')).toBe('react + bun');expect(target!.searchParams.get('limit')).toBe('20');
+ expect(target!.origin).toBe('https://skills.sh');expect(target!.pathname).toBe('/api/search');expect(target!.searchParams.get('q')).toBe('react + bun');expect(target!.searchParams.has('limit')).toBe(false);
  key(app,'enter');key(app,'enter');expect(app.desktop.draw().lines().join('\n')).toContain('https://skills.sh/');expect(app.view.prompt.value).toBe('Borrador conservado');
  }finally{fetch.mockRestore();await app.desktop.onBeforeExit!();await rm(root,{recursive:true,force:true});}
 });

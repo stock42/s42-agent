@@ -3,7 +3,7 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import type { ToolDefinition } from "../../llm/client.ts";
 
 export interface ToolResult { output: string; failed: boolean; durationMs: number; exitCode?: number; truncated?: boolean }
-export interface ToolContext { cwd: string; signal: AbortSignal; shellTimeoutMs: number }
+export interface ToolContext { cwd: string; signal: AbortSignal }
 export interface NativeTool {
   definition: ToolDefinition;
   run(args: Record<string, unknown>, context: ToolContext): Promise<Omit<ToolResult, "durationMs">>;
@@ -57,7 +57,3 @@ export async function instructions(root: string, path = root): Promise<string> {
   for (const folder of folders) { const file = Bun.file(join(folder, "AGENTS.md")); if (await file.exists()) found.push(`${folder}/AGENTS.md:\n${await file.text()}`); }
   return found.join("\n\n");
 }
-export const clip = (text: string, bytes = 65536) => {
-  const data = Buffer.from(text);
-  return data.length > bytes ? new TextDecoder().decode(data.subarray(0, bytes), { stream: true }) + `\n[Salida recortada a ${bytes} bytes]` : text;
-};

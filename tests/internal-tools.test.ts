@@ -50,7 +50,7 @@ test("markdown_html convierte texto/archivo con Bun y escribe HTML completo en r
     }
     await Bun.write(join(root, "bin.md"), new Uint8Array([255, 254]));
     expect((await run("markdown_html", { path: "bin.md" }, root)).failed).toBe(true);
-    expect((await run("markdown_html", { markdown: "a".repeat(1048577) }, root)).failed).toBe(true);
+    expect((await run("markdown_html", { markdown: "a".repeat(1048577) }, root)).failed).toBe(false);
     const abort = new AbortController(); abort.abort();
     expect((await run("markdown_html", { markdown, outputPath: "cancelado.html" }, root, abort.signal)).failed).toBe(true);
     expect(await Bun.file(join(root, "cancelado.html")).exists()).toBe(false);
@@ -62,8 +62,8 @@ test("Markdown grande conserva JSON parseable, UTF-8 y guarda HTML sin recortar"
   try {
     const markdown = "á文🙂".repeat(14000);
     const result = await run("markdown_html", { markdown }, root), output = JSON.parse(result.output);
-    expect(result.truncated).toBe(true); expect(output.truncated).toBe(true); expect(output.html).not.toContain("�");
-    expect(Buffer.byteLength(output.html)).toBeLessThanOrEqual(65536);
+    expect(result.truncated).toBe(false); expect(output.truncated).toBe(false); expect(output.html).toBe(Bun.markdown.html(markdown, { headings: { ids: true } }));
+    expect(Buffer.byteLength(output.html)).toBeGreaterThan(65536);
     const saved = JSON.parse((await run("markdown_html", { markdown, outputPath: "full.html" }, root)).output);
     expect(await Bun.file(saved.path).text()).toBe(Bun.markdown.html(markdown, { headings: { ids: true } }));
     expect(saved.bytes).toBeGreaterThan(65536);
@@ -89,13 +89,13 @@ test("WebSocket real con Bun: headers, subprotocolo, texto Unicode y binario; ci
     expect(output.received[0]).toMatchObject({ type: "text", data: '{"text":"á文🙂"}', truncated: false });
     expect(output.received[1]).toMatchObject({ type: "binary", data: "AP8q", bytes: 3 });
     await until(() => closed === 1); expect(server.pendingWebSockets).toBe(0);
-    for (const args of [{ url: "https://example.com" }, { url: "invalid" }, { url: server.url.href, messages: [1] }, { url: server.url.href, headers: { invalid: 5 } }, { url: server.url.href, protocols: "x" }, { url: `ws://127.0.0.1:${server.port}`, receiveCount: 101 }]) {
+    for (const args of [{ url: "https://example.com" }, { url: "invalid" }, { url: server.url.href, messages: [1] }, { url: server.url.href, headers: { invalid: 5 } }, { url: server.url.href, protocols: "x" }]) {
       expect((await run("websocket", args)).failed).toBe(true);
     }
   } finally { server.stop(true); }
 });
 
-test("WebSocket conserva parciales en timeout/cancelación, close temprano y handshake fallido", async () => {
+test("WebSocket conserva parciales al cancelar, close temprano y handshake fallido", async () => {
   let messages = 0, closed = 0;
   const server = Bun.serve<boolean>({
     port: 0,
@@ -108,27 +108,25 @@ test("WebSocket conserva parciales en timeout/cancelación, close temprano y han
   });
   const url = `ws://127.0.0.1:${server.port}`;
   try {
-    const timed = await run("websocket", { url, messages: ["ping"], receiveCount: 2, timeoutMs: 50 });
-    expect(timed.failed).toBe(true); expect(JSON.parse(timed.output)).toMatchObject({ reason: "timeout", sent: 1, received: [{ data: "partial" }] });
-    await until(() => closed === 1);
     const abort = new AbortController(), pending = run("websocket", { url, messages: ["ping"], receiveCount: 2 }, process.cwd(), abort.signal);
-    await until(() => messages === 2); await Bun.sleep(10); abort.abort(new Error("cancelled"));
+    await until(() => messages === 1); await Bun.sleep(50); abort.abort(new Error("cancelled"));
     const cancelled = await pending; expect(cancelled.failed).toBe(true);
     expect(JSON.parse(cancelled.output)).toMatchObject({ reason: "cancelled", received: [{ data: "partial" }] });
     const early = JSON.parse((await run("websocket", { url: url + "/close", messages: ["ping"], receiveCount: 2 })).output);
     expect(early.reason).toBe("closed"); expect(early.closeCode).toBe(1000); expect(early.closeReason).toBe("done");
     const rejected = await run("websocket", { url: url + "/reject" }); expect(rejected.failed).toBe(true); expect(JSON.parse(rejected.output).reason).toBe("error");
-    await until(() => closed === 3); expect(server.pendingWebSockets).toBe(0);
+    await until(() => closed === 2); expect(server.pendingWebSockets).toBe(0);
   } finally { server.stop(true); }
 });
 
-test("WebSocket limita payload recibido sin cortar JSON ni caracteres UTF-8", async () => {
-  const server = Bun.serve({ port: 0, fetch(req, server) { if (server.upgrade(req)) return; return new Response("no", { status: 400 }); }, websocket: { open(ws) { ws.send("á文🙂".repeat(20000)); }, message() {} } });
+test("WebSocket conserva payload completo y admite más de 100 respuestas", async () => {
+  const payload="á文🙂".repeat(20000);
+  const server = Bun.serve({ port: 0, fetch(req, server) { if (server.upgrade(req)) return; return new Response("no", { status: 400 }); }, websocket: { open(ws) { for(let i=0;i<101;i++)ws.send(i===0?payload:String(i)); }, message() {} } });
   try {
-    const result = await run("websocket", { url: `ws://127.0.0.1:${server.port}` });
-    expect(result.failed).toBe(true); expect(result.truncated).toBe(true);
-    const output = JSON.parse(result.output); expect(output.reason).toBe("limit"); expect(output.received[0].data).not.toContain("�");
-    expect(Buffer.byteLength(output.received[0].data)).toBeLessThanOrEqual(65536); expect(output.received[0].truncated).toBe(true);
+    const result = await run("websocket", { url: `ws://127.0.0.1:${server.port}`,receiveCount:101 });
+    expect(result.failed).toBe(false); expect(result.truncated).toBe(false);
+    const output = JSON.parse(result.output); expect(output.reason).toBe("received"); expect(output.received[0].data).toBe(payload);
+    expect(output.received).toHaveLength(101);expect(output.received.at(-1).data).toBe("100");
   } finally { server.stop(true); }
 });
 

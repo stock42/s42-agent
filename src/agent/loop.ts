@@ -1,6 +1,6 @@
 import { dirname } from "node:path";
 import type { Message, ToolCall } from "./messages.ts";
-import type { Model, Project, Provider, Config, McpServer, Skill } from "../storage/config.ts";
+import type { Model, Project, Provider, McpServer, Skill } from "../storage/config.ts";
 import type { Session } from "../storage/sessions.ts";
 import { McpConnections } from "../mcp/client.ts";
 import { SkillCatalog } from "../skills/index.ts";
@@ -11,11 +11,10 @@ import { addUsage, emptyUsage, type TokenUsage, type ProviderUsage } from "./usa
 import { agentPrompt } from "./prompt.ts";
 
 export async function runTurn(options: { project: Project; session: Session; provider: Provider; model: Model; key?: string; signal: AbortSignal;
-  limits: Config["limits"]; mcpServers?:McpServer[]; skills?:Skill[]; onNotice?:(text:string)=>void; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
+  mcpServers?:McpServer[]; skills?:Skill[]; onNotice?:(text:string)=>void; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
   onModel?: (model: Model) => Promise<void>; onToolStart?: (call: ToolCall) => void; onUsage?: (usage: TokenUsage) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number; tokens: TokenUsage }> {
   const { session, project, signal } = options;
-  const model = await runtimeModel(options.provider, options.model, options.key,
-    signal, Math.min(5000, options.limits.firstEventMs));
+  const model = await runtimeModel(options.provider, options.model, options.key, signal);
   await options.onModel?.(model);
   const save = async (message: Message) => { await session.append({ type: "message", message }); session.state.messages.push(message); options.onMessage(); };
   const mcp=new McpConnections(),skills=new SkillCatalog();
@@ -23,7 +22,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
   const pendingNotices:Promise<void>[]=[];const progress=(text:string)=>{const pending=notice(text);pendingNotices.push(pending);void pending.catch(()=>{});};
   try {
   await skills.open(options.skills??[],project.id,progress);
-  if(model.capabilities.tools)await mcp.open(options.mcpServers??[],project.path,signal,progress,options.limits.shellTimeoutMs);
+  if(model.capabilities.tools)await mcp.open(options.mcpServers??[],project.path,signal,progress);
   await Promise.all(pendingNotices);
   const user=session.state.messages.findLast(m=>m.role==="user");const content=typeof user?.content==="string"?user.content:user?.content?.filter(p=>p.type==="text").map(p=>p.text).join("\n")??"";
   const invoked=/^\/skill\s+(\S+)/.exec(content)?.[1];const explicit=invoked?skills.entries.find(s=>s.name===invoked):undefined;
@@ -36,7 +35,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
   const recordUsage = (usage: ProviderUsage | undefined, durationMs: number) => { tokens=addUsage(tokens,usage,durationMs); options.onUsage?.(tokens); };
   let stage = 0;
   let stageStart = 0;
-  for (let step = 0; ; step++) {
+  for (;;) {
     signal.throwIfAborted(); options.onState("Conectando…");
     const tools = model.capabilities.tools ? [...toolDefinitions,...(skills.entries.length?[skills.definition]:[]),...await mcp.definitions(signal)] : undefined;
     const history = session.state.messages;
@@ -49,8 +48,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
     const started = performance.now();
     try {
       result = await complete({ ...options, model, messages, tools,
-        onProgress: usage => options.onUsage?.(addUsage(tokens, usage, performance.now() - started)), onDelta: stream?.push ?? options.onDelta,
-        firstEventMs: options.limits.firstEventMs, idleMs: options.limits.idleMs });
+        onProgress: usage => options.onUsage?.(addUsage(tokens, usage, performance.now() - started)), onDelta: stream?.push ?? options.onDelta });
     } catch (error) {
       recordUsage(error instanceof CompletionError ? error.usage : undefined, performance.now() - started);
       stream?.end();
@@ -60,7 +58,6 @@ export async function runTurn(options: { project: Project; session: Session; pro
       if (typeof partial.content === "string" && stage) partial.content = stageReply(partial.content).text;
       if (partial.content || partial.reasoning_content || partial.reasoning) await save(partial);
       await notice("Límite de salida alcanzado; conservando el parcial y dividiendo el pedido en etapas pequeñas.");
-      if (step >= options.limits.maxSteps) throw new Error("Límite de etapas alcanzado; el avance quedó guardado. Continuá con un pedido más pequeño.");
       stage ||= 1;
       stageStart = session.state.messages.length;
       await notice(`Etapa ${stage} · recuperando respuesta`);
@@ -74,19 +71,18 @@ export async function runTurn(options: { project: Project; session: Session; pro
     await save(result.message);
     if (!calls.length) {
       if (!reply?.more) return { usage: tokens.total, tokens };
-      if (step >= options.limits.maxSteps) throw new Error("Límite de etapas alcanzado; el avance quedó guardado. Continuá con un pedido más pequeño.");
       stage++; stageStart = session.state.messages.length; await notice(`Etapa ${stage} · continuando el pedido`); continue;
     }
     let aborted: Error | undefined;
     for (const call of calls) {
-      const stopped = signal.aborted || step >= options.limits.maxSteps || !model.capabilities.tools;
+      const stopped = signal.aborted || !model.capabilities.tools;
       let output: string, failed: boolean;
-      if (stopped) { output = signal.aborted ? "Cancelado: herramienta no ejecutada" : !model.capabilities.tools ? "El modelo no tiene tools habilitadas" : "Límite de pasos alcanzado; herramienta no ejecutada"; failed = true; aborted = new Error(output); }
+      if (stopped) { output = signal.aborted ? "Cancelado: herramienta no ejecutada" : "El modelo no tiene tools habilitadas"; failed = true; aborted = new Error(output); }
       else {
         await session.append({ type: "tool-start", callId: call.id, name: call.function.name, arguments: call.function.arguments });
         options.onState(`Ejecutando ${call.function.name}…`);
         options.onToolStart?.(call);
-        const tool = call.function.name==="skill" ? await skills.execute(call.function.arguments,signal) : mcp.has(call.function.name) ? await mcp.execute(call.function.name,call.function.arguments,signal) : await execute(call.function.name, call.function.arguments, project.path, signal, options.limits.shellTimeoutMs);
+        const tool = call.function.name==="skill" ? await skills.execute(call.function.arguments,signal) : mcp.has(call.function.name) ? await mcp.execute(call.function.name,call.function.arguments,signal) : await execute(call.function.name, call.function.arguments, project.path, signal);
         failed = tool.failed; output = JSON.stringify(tool);
         if (signal.aborted) aborted = new Error("Turno cancelado; los efectos ya realizados se conservan");
       }

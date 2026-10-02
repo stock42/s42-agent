@@ -19,7 +19,7 @@ test("llama.cpp detecta tools/contexto reales, respeta manual y fallback sin /pr
  try {
    expect((await discoverModels(provider))[0]).toMatchObject({contextWindow:128768,maxOutputTokens:undefined,capabilities:{tools:true,images:false}});
    expect(await runtimeModel(provider,model)).toMatchObject({contextWindow:128768,maxOutputTokens:undefined,capabilities:{tools:true}});
-   const before=calls; expect(await runtimeModel(provider,{...model,manual:true})).toEqual({...model,manual:true});expect(calls).toBe(before);
+   const before=calls; expect(await runtimeModel(provider,{...model,manual:true})).toEqual({...model,manual:true,maxOutputTokens:undefined});expect(calls).toBe(before);
    supported=false;expect(await runtimeModel(provider,model)).toEqual({...model,maxOutputTokens:undefined});
  }finally{server.stop(true);}
 });
@@ -45,12 +45,13 @@ test("tokens y promedio se actualizan antes del final y acumulan sin duplicar; t
 });
 
 
-test("props opcional tiene timeout corto y conserva fallback; cancelación del turno sí interrumpe",async()=>{
+test("props espera sin timeout automático y cancelación del turno sí interrumpe",async()=>{
  const server=Bun.serve({port:0,fetch:()=>new Response(new ReadableStream())});
  const provider=defaultProviders()[0]!;provider.baseUrl=`http://127.0.0.1:${server.port}/v1`;
  try {
-   expect(await runtimeModel(provider,model,undefined,undefined,20)).toEqual({...model,maxOutputTokens:undefined});
-   const controller=new AbortController();const pending=runtimeModel(provider,model,undefined,controller.signal,1000);controller.abort(new Error("Cancelado por usuario"));
+   const controller=new AbortController();let settled=false;
+   const pending=runtimeModel(provider,model,undefined,controller.signal).finally(()=>{settled=true;});
+   await Bun.sleep(50);expect(settled).toBe(false);controller.abort(new Error("Cancelado por usuario"));
    await expect(pending).rejects.toThrow("Cancelado por usuario");
  }finally{server.stop(true);}
 });

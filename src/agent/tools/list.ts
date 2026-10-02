@@ -9,10 +9,10 @@ export const list: NativeTool = {
     const path = resolve(cwd, String(args.path ?? ".")), entries: string[] = [];
     if (args.glob) {
       const glob = new Bun.Glob(String(args.glob));
-      for await (const file of files(path, signal)) { if (glob.match(relative(path, file))) entries.push(relative(path, file)); if (entries.length >= 200) break; }
+      for await (const file of files(path, signal)) { if (glob.match(relative(path, file))) entries.push(relative(path, file)); }
     } else for (const entry of await readdir(path, { withFileTypes: true })) {
-      signal.throwIfAborted(); if (!ignored.has(entry.name)) entries.push(entry.name + (entry.isDirectory() ? "/" : "")); if (entries.length >= 200) break;
+      signal.throwIfAborted(); if (!ignored.has(entry.name)) entries.push(entry.name + (entry.isDirectory() ? "/" : ""));
     }
-    return { output: entries.join("\n") + (entries.length >= 200 ? "\n[Listado recortado a 200 entradas]" : ""), failed: false };
+    return { output: entries.join("\n"), failed: false };
   },
 };

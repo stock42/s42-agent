@@ -151,8 +151,8 @@ Configuration stores only its reference; sessions do not store keys.
 On Linux, GNOME Keyring, KWallet or another Secret Service must be available and
 unlocked; the form reports failures. No `.env.local` files are created.
 
-**Configure model** accepts ID/name, endpoint/port, credential, context, maximum
-output and `Tools / images` capabilities (`yes/no`, `no/no` or `yes/yes`). Enable
+**Configure model** accepts ID/name, endpoint/port, credential
+and `Tools / images` capabilities (`yes/no`, `no/no` or `yes/yes`). Enable
 tools only when the model and chat template support them. Configured values
 survive catalog rediscovery. DeepSeek uses the
 [official models API](https://api-docs.deepseek.com/api/list-models/).
@@ -228,7 +228,7 @@ to the model. Prompt has no line numbers.
 The explorer uses the available chat area, adapts to resize and keeps the prompt
 visible. Type a search path at the top (a disk root is allowed), a name or glob
 such as `*.ts` below, then select **Search** or press Enter in that field. It scans
-subfolders, including hidden and dependency folders, and returns up to 1,000
+subfolders, including hidden and dependency folders, and returns all matching
 files with locations. **Cancel** stops the search. Open and Attach work on results;
 **Go** resumes navigation. Searches do not follow links and report inaccessible
 folder counts.
@@ -236,15 +236,15 @@ folder counts.
 Pasting or dragging paths prepares attachments. **Ctrl+F** or `/attach path`
 lets you review, add or remove them. Without bracketed paste, the first Enter
 recognizes existing paths and attaches them; the next sends. Code blocks remain
-text. UTF-8 text is limited to 1 MiB; PNG/JPEG/WebP to 5 MiB when the model accepts
-images. The total limit is 10 files and 10 MiB including base64. If an attachment
+text. Complete UTF-8 text and PNG/JPEG/WebP images are supported when the model
+accepts images. The agent imposes no attachment size/count quotas. If an attachment
 changes, review its updated version before sending again. History retains what
 was sent.
 
 Native tools are **read/write/edit/list/find/search/fetch/shell**, with one file
 per tool in `src/agent/tools/` and a catalog in **Tools → Native tools · catalog**. The catalog
 also includes `internal_skill`, `markdown_html` and `websocket`: on-demand internal
-guides, Markdown→HTML conversion and ws/wss tests with headers, messages, timeout
+guides, Markdown→HTML conversion and ws/wss tests with headers, messages
 and cancellation.
 `find` searches names/globs; `search` searches content. `fetch` supports HTTP
 methods, headers and JSON, URL-encoded form, multipart or text bodies. Edit
@@ -252,7 +252,7 @@ requires one unique exact match; shell returns stdout/stderr, duration and exit
 code. Commands use [Bun Shell](https://bun.com/docs/runtime/shell), including Git
 for skill installation and nvidia-smi for metrics. Pipes, redirects and builtins
 do not require external Bash/cmd; syntax follows Bun (for example `1>&2`, without
-background commands using `&`). Tree cancellation and timeout remain active.
+background commands using `&`). Tree cancellation remains active, without timeouts.
 
 **scrape** uses [Bun.WebView](https://bun.com/docs/runtime/webview) for rendered
 pages, including JavaScript, CSS selectors, text/HTML and links. macOS uses system
@@ -262,7 +262,7 @@ when the tool is used and closes on exit. [Contract](TOOLS.md).
 Project and subfolder AGENTS instructions are read. Tools have the user's
 permissions and real effects; there is no sandbox. Cancellation does not undo
 changes or automatically rerun interrupted tools when reopening.
-[Contracts, examples and limits for each tool](TOOLS.md).
+[Contracts and examples for each tool](TOOLS.md).
 
 **Prompt** always shows **input/output tokens (I/O) and average tok/s** at the top
 right, for example `Tokens I/O 1200/120 · Avg. 28.5 tok/s` (`Prom.` in Spanish).
@@ -297,10 +297,10 @@ and reading remain available.
 If the model reaches its output limit, the agent preserves the partial response
 and asks it to split the request into smaller stages. Each stage appears in
 chat; subsequent stages are requested while the model indicates pending work.
-Session, model and token budget are preserved; completed tools are not automatically
+Session and model are preserved; completed tools are not automatically
 rerun and truncated calls are discarded. **Ctrl+C** cancels the active stage.
-The step limit also bounds continuations; when exhausted, progress is saved for
-a smaller request. HTTP errors, disconnections and timeouts are reported without
+Continuations and tools have no step ceilings or harness timeouts.
+Actual HTTP errors and disconnections are reported without
 retrying the turn.
 
 ### MCP
@@ -447,7 +447,9 @@ Optional bindings for known actions, with collisions rejected:
 
 Actions: `projects`, `models`, `providers`, `sessions`, `attachments`, `explorer`,
 `mcp`, `skills`, `promptings`, `help`. Editing/focus/lifecycle shortcuts remain
-reserved. Initial limits: 30 steps and 120 s for shell/first event/inactivity.
+reserved. The agent imposes no step, stage, time, payload, file, attachment or
+undo-history quotas. Legacy `limits` fields are removed when loading v1
+configuration and cannot reactivate old cutoffs.
 The provider validates context; requests are not rejected by a local estimate
 and no fixed share of context is reserved for the response.
 llama.cpp detects context/tools/vision through `/props` during discovery and
@@ -460,9 +462,9 @@ is omitted and the provider decides; guessed ceilings from older catalogs are
 not reused. Startup does not query the network.
 Reasoning-only partials remain in the session and are sent with empty text so
 DeepSeek can accept the next request. Provider HTTP errors include the returned
-error detail. Editing a model in Models fixes the chosen manual values. Context
-window and Max output are optional: empty fields leave the decision to the
-provider; an explicit Max output is sent as `max_tokens`. `write` supports
+error detail. Editing a model in Models fixes the chosen capabilities and leaves
+output to the provider. The form does not offer token quotas; manual maxima from
+older configurations are not sent. `write` supports
 `append: true` to build files in parts; the agent prompt instructs it to complete
 functionality on disk before finishing.
 

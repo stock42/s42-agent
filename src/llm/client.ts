@@ -24,20 +24,19 @@ export class SSEParser {
 
 // llama.cpp publishes template capabilities/context in /props; remote providers use /models.
 // Never reuse guessed output ceilings from old automatic catalogs.
-export async function runtimeModel(provider: Provider, model: Model, key?: string, signal?: AbortSignal, timeoutMs = 5000): Promise<Model> {
-  if (model.manual) return model;
+export async function runtimeModel(provider: Provider, model: Model, key?: string, signal?: AbortSignal): Promise<Model> {
+  if (model.manual) return { ...model, maxOutputTokens: undefined };
   const automatic = { ...model, maxOutputTokens: undefined };
   if (provider.kind !== "llama.cpp") {
     // Refresh actual provider metadata when a turn starts; startup stays offline.
     try {
-      const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs);
-      return (await discoverModels(provider, key, requestSignal)).find(m => m.id === model.id) ?? automatic;
+      return (await discoverModels(provider, key, signal)).find(m => m.id === model.id) ?? automatic;
     } catch (error) { if (signal?.aborted) throw error; return automatic; }
   }
   const url = new URL(provider.baseUrl); url.pathname = url.pathname.replace(/\/v1\/?$/, "").replace(/\/$/, "") + "/props";
   url.searchParams.set("model", model.id);
   try {
-    const response = await fetch(url, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs) });
+    const response = await fetch(url, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal });
     if (!response.ok) return automatic;
     const props = await response.json() as { model_alias?: string; default_generation_settings?: { n_ctx?: number }; chat_template_caps?: { supports_tools?: boolean; supports_tool_calls?: boolean }; modalities?: { vision?: boolean } };
     if (props.model_alias && props.model_alias !== model.id) return automatic;
@@ -53,7 +52,7 @@ export async function runtimeModel(provider: Provider, model: Model, key?: strin
 }
 
 export async function discoverModels(provider: Provider, key?: string, signal?: AbortSignal): Promise<Model[]> {
-  const response = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/models`, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal: signal ?? AbortSignal.timeout(120000) });
+  const response = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/models`, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal });
   if (!response.ok) throw new Error(`Models: HTTP ${response.status}${response.status === 401 ? " · revisar API key" : ""}`);
   const body = await response.json() as { data?: { id?: string; name?: string; context_window?: number; max_output_tokens?: number; input_modalities?: string[] }[] };
   if (!Array.isArray(body?.data)) throw new Error("/models no devolvió una lista válida");
@@ -70,34 +69,31 @@ export async function discoverModels(provider: Provider, key?: string, signal?: 
 }
 
 export async function complete(options: { provider: Provider; model: Model; messages: Message[]; tools?: ToolDefinition[]; key?: string; signal: AbortSignal;
-  firstEventMs: number; idleMs: number; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void; onProgress?: (usage: ProviderUsage) => void }): Promise<Completion> {
+  onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void; onProgress?: (usage: ProviderUsage) => void }): Promise<Completion> {
   const controller = new AbortController(), relay = () => controller.abort(options.signal.reason);
   if (options.signal.aborted) relay(); else options.signal.addEventListener("abort", relay, { once: true });
-  let timer: ReturnType<typeof setTimeout>, reader: { cancel(): Promise<void> } | undefined;
-  const arm = (ms: number, detail: string) => { clearTimeout(timer); timer = setTimeout(() => controller.abort(new Error(detail)), ms); };
-  let text = "", reasoning = "", reasoningField: "reasoning_content" | "reasoning" = "reasoning_content", done = false, received = false, finishReason: string | undefined, usage: Completion["usage"];
+  let reader: { cancel(): Promise<void> } | undefined;
+  let text = "", reasoning = "", reasoningField: "reasoning_content" | "reasoning" = "reasoning_content", done = false, finishReason: string | undefined, usage: Completion["usage"];
   const calls = new Map<number, ToolCall>();
   const partial = (): Message => ({ role: "assistant", content: text || null, ...(reasoning ? {[reasoningField]:reasoning} : {}), ...(calls.size ? { tool_calls: [...calls.entries()].sort(([a], [b]) => a - b).map(([, c]) => c) } : {}) });
   try {
-    arm(options.firstEventMs, "Timeout esperando el primer evento del modelo");
     // DeepSeek rejects reasoning-only partials with null content. An empty
     // string preserves their reasoning in context without changing the session.
     const messages = options.messages.map(message => message.role === "assistant" && message.content === null && !message.tool_calls?.length ? { ...message, content: "" } : message);
     const response = await fetch(`${options.provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST", signal: controller.signal, headers: { "Content-Type": "application/json", ...(options.key ? { Authorization: `Bearer ${options.key}` } : {}) },
-      body: JSON.stringify({ model: options.model.id, messages, stream: true, stream_options: { include_usage: true }, max_tokens: options.model.maxOutputTokens,
+      body: JSON.stringify({ model: options.model.id, messages, stream: true, stream_options: { include_usage: true }, max_tokens: options.model.manual ? undefined : options.model.maxOutputTokens,
         ...(options.tools?.length ? { tools: options.tools } : {}), ...(options.provider.kind === "llama.cpp" ? { timings_per_token: true } : {}) }),
     });
     if (!response.ok) {
       const body = await response.text(); let detail = body.trim();
       try { const error = JSON.parse(body)?.error; if (typeof error?.message === "string") detail = error.message; } catch {}
       const hint = response.status === 401 ? " · revisar API key" : response.status === 404 ? " · revisar endpoint/modelo" : response.status === 429 ? " · límite del proveedor" : "";
-      throw new Error(`Proveedor: HTTP ${response.status}${hint}${detail ? `: ${detail.slice(0, 2000)}` : ""}`);
+      throw new Error(`Proveedor: HTTP ${response.status}${hint}${detail ? `: ${detail}` : ""}`);
     }
     if (!response.body) throw new Error("El proveedor no devolvió un stream");
     const parser = new SSEParser(data => {
       if (done) return;
-      received = true; arm(options.idleMs, "Stream sin actividad del modelo");
       if (data.trim() === "[DONE]") { done = true; return; }
       const packet = JSON.parse(data);
       if (packet.error) throw new Error("El proveedor reportó un error durante el stream");
@@ -130,7 +126,7 @@ export async function complete(options: { provider: Provider; model: Model; mess
     const streamReader = response.body.getReader(); reader = streamReader;
     while (!done) {
       const chunk = await streamReader.read(); if (chunk.done) break;
-      if (received) arm(options.idleMs, "Stream sin actividad del modelo"); parser.feed(chunk.value);
+      parser.feed(chunk.value);
     }
     if (!done) { parser.end(); if (!finishReason) throw new Error("El stream se desconectó sin completar la respuesta"); }
     if (controller.signal.aborted) throw controller.signal.reason;
@@ -142,5 +138,5 @@ export async function complete(options: { provider: Provider; model: Model; mess
     if (e instanceof CompletionError && !controller.signal.aborted) throw e;
     throw new CompletionError(controller.signal.aborted ? (controller.signal.reason as Error)?.message ?? "Cancelado" : (e as Error).message, partial(), undefined, usage);
   }
-  finally { clearTimeout(timer!); options.signal.removeEventListener("abort", relay); await reader?.cancel().catch(() => {}); }
+  finally { options.signal.removeEventListener("abort", relay); await reader?.cancel().catch(() => {}); }
 }

@@ -23,7 +23,7 @@ test('entrypoint real: Models primer uso, host/puerto/key, coding, cancelación 
     write('\x1bm\x1b[B\r');await until(()=>text.includes('ID del modelo'));
     paste('fixture');write('\t');paste('Fixture');write('\t');paste('http://127.0.0.1/v1');write('\t\r');await until(()=>text.includes('API key · llavero'));
     paste(String(server.port));write('\t');paste('fixture-secret');write('\t\t\t\r');await until(()=>text.includes('Tools / imágenes'));
-    paste('32000');write('\t');paste('1000');write('\t');paste('sí/no');write('\t\t\r');
+    paste('sí/no');write('\t\t\r');
     await until(()=>text.includes('Local · llama.cpp · fixture'));expect(await Bun.file(config).text()).not.toContain('fixture-secret');
     write('cambiar suma\x1b[13;2u');write('y verificar\r');await until(()=>text.includes('Resultado verificado: 4'));
     expect(await Bun.file(join(root,'code.ts')).text()).toBe('console.log(2 + 2);');expect(auth as string|null).toBe('Bearer fixture-secret');expect(requests).toBe(4);

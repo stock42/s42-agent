@@ -6,7 +6,6 @@ export const edit: NativeTool = {
   fileInstructions: true,
   async run(args, { cwd, signal }) {
     const path = resolve(cwd, String(args.path)), file = Bun.file(path);
-    if (file.size > 1048576) throw new Error("edit admite archivos de hasta 1 MiB");
     const content = await file.text(), old = String(args.oldText);
     if (!old) throw new Error("oldText no puede estar vacío");
     const index = content.indexOf(old);
