@@ -5,6 +5,23 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Corregido — Documentación pública bilingüe
+
+- Completadas las versiones faltantes: manual detallado inglés, contratos de
+  tools y guía de publicación EN/ES, notas de v0.1.0 y galería en español.
+  README, CONTRIBUTING y esas cinco guías forman siete pares con navegación
+  recíproca; los enlaces de cada idioma apuntan a su propia versión.
+- README español incorpora la sección de teclado/idioma/paletas y la tabla de
+  tools presentes en inglés. Guías de contribución alineadas con SQLite temporal,
+  pruebas de navegador y llavero aislado; indican mantener ambos idiomas.
+  Índice de AGENTS actualizado. Sin cambios en fuente, instaladores ni imágenes.
+- Validación: 365 enlaces locales/de fuente y 14 anchors; las 16 URLs absolutas
+  de las notas resuelven a archivos del árbol preparado para el tag. Siete pares
+  con igual cantidad de secciones y bloques de código; Markdown renderizado para
+  los 14 documentos. Galerías conservan las mismas imágenes originales.
+- Cuatro tests del plan de release correctos y plan local con seis binarios/once
+  assets verificado. Pull correcto; sin rebuild, push ni publicación.
+
 ### Mejorado — Portada e instalación en README
 
 - README inglés/español con título y navegación centrados, cinco badges y

@@ -24,7 +24,7 @@
   <a href="#installation">Install</a> ·
   <a href="#run-from-source">Run from source</a> ·
   <a href="#screenshots">Real screenshots</a> ·
-  <a href="docs/USAGE.es.md">User guide</a> ·
+  <a href="docs/USAGE.md">User guide</a> ·
   <a href="CONTRIBUTING.md">Contribute</a>
 </p>
 
@@ -315,7 +315,7 @@ and searches [skills.sh](https://skills.sh). Included internal guides cover
 software project structure, debugging/verification and PDF workflows.
 Scraping needs an installed browser on Linux/Windows; PDF generation needs an
 installed renderer. MCP implements tools; resources/prompts, OAuth, sampling and
-elicitation are not implemented.
+elicitation are not implemented. [Contracts and limits](docs/TOOLS.md).
 
 ## Keyboard, language and themes
 
@@ -353,7 +353,7 @@ bun run index.ts --demo   # Component laboratory, without project persistence.
 An optional `bun run build` creates a host binary. The compiled harness includes
 Bun; the LLM and external commands remain separate.
 
-- [Detailed user guide · Español](docs/USAGE.es.md)
+- [Detailed user guide](docs/USAGE.md)
 - [Tool contracts](docs/TOOLS.md)
 - [Contributing](CONTRIBUTING.md) and [changelog](CHANGELOG.md)
 - [Release preparation](docs/PUBLISHING.md) and [release notes](docs/releases/v0.1.0.md)

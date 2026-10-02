@@ -1,6 +1,6 @@
 # Manual de S42 Agent
 
-[English overview](../README.md) · [Presentación en español](../README.es.md)
+[English](USAGE.md) · **Español** · [Presentación del proyecto](../README.es.md)
 
 Un agente de coding pequeño, rápido y estable, escrito en **TypeScript/Bun**,
 con mouse, colores y cero dependencias de runtime externas. La conversación es
@@ -9,8 +9,10 @@ y puede seguir trabajando mientras usás otro.
 
 ## Empezar
 
-Necesitás **Bun 1.4.2**. Para la TUI, un terminal ANSI de al menos **60×16**;
+Para ejecutar desde fuente necesitás **Bun 1.4.2**. Para la TUI, un terminal ANSI de al menos **60×16**;
 recomendado 80×24. El servidor LLM se configura aparte.
+Consultá la [instalación](../README.es.md#instalación) para los binarios y
+[configuración de Bun](../README.es.md#ejecutar-desde-código-fuente) para el entorno fuente.
 
 ```bash
 git clone https://github.com/stock42/s42-agent.git
@@ -18,6 +20,8 @@ cd s42-agent
 bun install --frozen-lockfile
 bun run dev
 ```
+
+La UI inicia en español. **Vista → Language → English** cambia al inglés.
 
 1. Registrá un proyecto en **Projects → Agregar proyecto**: solo **Nombre/Name** y
    **Carpeta/Folder**. **Explorar** permite elegir la carpeta con mouse o teclado.
@@ -253,11 +257,11 @@ sin comandos en background con `&`). Mantienen timeout y cancelación del árbol
 páginas renderizadas, incluido JavaScript, con selector CSS, texto/HTML y enlaces.
 macOS usa WebKit del sistema; Linux/Windows necesitan Chrome, Chromium, Edge
 o Brave instalado. También acepta `BUN_CHROME_PATH`. Sin descargas automáticas;
-el browser se inicia al usar la tool y se cierra al salir. [Contrato](TOOLS.md).
+el browser se inicia al usar la tool y se cierra al salir. [Contrato](TOOLS.es.md).
 Se leen instrucciones AGENTS del proyecto y sus subcarpetas. Las herramientas
 tienen los permisos del usuario y efectos reales; no hay sandbox. Cancelar no
 revierte cambios ni reejecuta herramientas interrumpidas al reabrir.
-[Contratos, ejemplos y límites de cada tool](TOOLS.md).
+[Contratos, ejemplos y límites de cada tool](TOOLS.es.md).
 
 El panel **Prompt** muestra siempre **tokens de entrada/salida (E/S) y promedio tok/s**
 arriba a la derecha, por ejemplo `Tokens E/S 1200/120 · Prom. 28.5 tok/s`
@@ -477,7 +481,7 @@ de tareas puntuales se archivan en `private/`; los resultados de distribución
 se generan en `dist/`. Ambos directorios están ignorados por Git.
 
 Para contribuir: [CONTRIBUTING.es.md](../CONTRIBUTING.es.md). Preparación de publicación:
-[PUBLISHING.md](PUBLISHING.md). Licencia: [MIT](../LICENSE).
+[PUBLISHING.es.md](PUBLISHING.es.md). Licencia: [MIT](../LICENSE).
 
 
 ## WebServer para previews del proyecto

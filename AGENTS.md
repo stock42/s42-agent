@@ -17,10 +17,12 @@ si se reutiliza código MIT.
 ## Documentación y módulos
 
 - [README.md](README.md) / [README.es.md](README.es.md): instalación y uso inicial.
-- [docs/USAGE.es.md](docs/USAGE.es.md): manual detallado del producto.
-- [docs/TOOLS.md](docs/TOOLS.md): contratos y límites de las herramientas.
-- [CONTRIBUTING.md](CONTRIBUTING.md): desarrollo, validación y contribuciones.
-- [docs/PUBLISHING.md](docs/PUBLISHING.md): builds y preparación de releases.
+- [docs/USAGE.md](docs/USAGE.md) / [docs/USAGE.es.md](docs/USAGE.es.md): manual detallado del producto.
+- [docs/TOOLS.md](docs/TOOLS.md) / [docs/TOOLS.es.md](docs/TOOLS.es.md): contratos y límites de las herramientas.
+- [CONTRIBUTING.md](CONTRIBUTING.md) / [CONTRIBUTING.es.md](CONTRIBUTING.es.md): desarrollo, validación y contribuciones.
+- [docs/PUBLISHING.md](docs/PUBLISHING.md) / [docs/PUBLISHING.es.md](docs/PUBLISHING.es.md): builds y preparación de releases.
+- [screenshots/README.md](screenshots/README.md) / [screenshots/README.es.md](screenshots/README.es.md): galería real.
+- [Notas EN](docs/releases/v0.1.0.md) / [Notas ES](docs/releases/v0.1.0.es.md): preview v0.1.0.
 - [CHANGELOG.md](CHANGELOG.md): cambios efectivamente realizados.
 
 Implementación en `src/`: `app.ts` coordina proyectos; `cli.ts` ejecuta sin TUI;

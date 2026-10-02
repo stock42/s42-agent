@@ -1,5 +1,7 @@
 # S42 Agent — real screenshot gallery
 
+**English** · [Español](README.es.md)
+
 **35 original screenshots: 28 new captures and 7 preserved from earlier QA.**
 Click a thumbnail to open the full-size JPEG. [English README](../README.md) ·
 [README en español](../README.es.md) · [Capture manifest](manifest.json).

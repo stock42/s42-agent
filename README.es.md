@@ -6,11 +6,11 @@
 </p>
 
 <p align="center">
-  <a href="docs/releases/v0.1.0.md"><img src="https://img.shields.io/badge/preview-v0.1.0-00c9df?style=flat-square" alt="v0.1.0 preview"></a>
+  <a href="docs/releases/v0.1.0.es.md"><img src="https://img.shields.io/badge/preview-v0.1.0-00c9df?style=flat-square" alt="v0.1.0 preview"></a>
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.4.2-101827?style=flat-square&amp;logo=bun&amp;logoColor=white" alt="Bun 1.4.2"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-7.0.2-3178c6?style=flat-square&amp;logo=typescript&amp;logoColor=white" alt="TypeScript 7.0.2"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-00c9df?style=flat-square" alt="MIT license"></a>
-  <a href="package.json"><img src="https://img.shields.io/badge/runtime_dependencies-0-101827?style=flat-square" alt="Zero external runtime package dependencies"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/dependencias_de_runtime-0-101827?style=flat-square" alt="Cero dependencias externas de paquetes de runtime"></a>
 </p>
 
 <p align="center">
@@ -63,7 +63,7 @@ usados por shell/MCP se configuran aparte.
 > **Disponibilidad de descarga:** las URLs públicas de los instaladores y la
 > release todavía no están disponibles. Los comandos de descarga funcionarán
 > cuando se publiquen el repositorio y los assets de **v0.1.0**. Mientras tanto,
-> usá la instalación local que aparece abajo. [Preparar la release](docs/PUBLISHING.md).
+> usá la instalación local que aparece abajo. [Preparar la release](docs/PUBLISHING.es.md).
 
 ### Linux · un comando
 
@@ -190,7 +190,7 @@ Bun genera los seis ejecutables en `dist/`, checksums `SHASUMS256.txt`,
 metadatos, instaladores y el paquete conjunto
 `s42-agent-0.1.0-all-platforms.tar.gz`. Cross-compilar no prueba la ejecución
 en el SO de destino. Los archivos generados quedan fuera de Git y se suben
-a una release por separado. [Preparación de la release](docs/PUBLISHING.md).
+a una release por separado. [Preparación de la release](docs/PUBLISHING.es.md).
 
 `bun run build` compila solo para el host; `bun run build:targets` genera los
 seis ejecutables y el manifiesto sin el paquete de entrega.
@@ -254,7 +254,7 @@ sin bundler ni backend de aplicación.
 
 <a href="screenshots/32-spanish-gruvbox.jpg"><img src="screenshots/32-spanish-gruvbox.jpg" alt="S42 Agent ejecutándose: pestañas de proyecto y archivo, TypeScript con números de línea, sintaxis coloreada y prompt fijo" width="960"></a>
 
-Un recorrido por el agente en ejecución. Cada imagen abre el original; las **35 capturas** están en la [galería completa](screenshots/README.md).
+Un recorrido por el agente en ejecución. Cada imagen abre el original; las **35 capturas** están en la [galería completa](screenshots/README.es.md).
 
 <table>
   <tr>
@@ -295,18 +295,45 @@ Las plantillas y Web Playground son ejemplos para las capturas. El chat usa un m
 
 ## Herramientas
 
-`read`, `write`, `edit`, `list`, `find`, `search`, `fetch`, `shell`,
-`internal_skill`, `markdown_html`, `websocket` y `scrape`.
+| Capacidad | Tools nativas |
+| --- | --- |
+| Leer, escribir, editar y listar archivos | `read`, `write`, `edit`, `list` |
+| Buscar archivos y contenido | `find`, `search` |
+| HTTP y comandos del sistema | `fetch`, `shell` |
+| Instrucciones internas y Markdown → HTML | `internal_skill`, `markdown_html` |
+| WebSocket y scraping de páginas renderizadas | `websocket`, `scrape` |
 
 Usan APIs de Bun: Shell, Markdown, WebSocket y WebView, entre otras. Las
 herramientas tienen los permisos de tu usuario y efectos reales; no hay sandbox.
 El agente lee las instrucciones AGENTS.md del proyecto.
 
-**Tools → MCP** administra servidores de herramientas. **Tools → Skills**
-administra guías y busca en [skills.sh](https://skills.sh). Scraping requiere
+**Tools → MCP** administra servidores de herramientas stdio/HTTP. **Tools → Skills**
+administra guías y busca en [skills.sh](https://skills.sh). Las guías internas
+incluidas cubren estructura de proyectos, debugging/verificación y flujos PDF. Scraping requiere
 un navegador instalado en Linux/Windows; crear PDF requiere un renderizador.
 MCP implementa tools; resources/prompts, OAuth, sampling y elicitation no están
-implementados. [Contratos y límites](docs/TOOLS.md).
+implementados. [Contratos y límites](docs/TOOLS.es.md).
+
+## Teclado, idioma y paletas
+
+| Acción | Atajo |
+| --- | --- |
+| Enviar / nueva línea | Enter / Shift+Enter |
+| Cancelar proyecto activo / salir | Ctrl+C / Ctrl+Q |
+| Explorador / selector de proyecto | Ctrl+E / Ctrl+P |
+| Pestaña anterior / siguiente | Alt+← / Alt+→ |
+| Cerrar pestaña o auxiliar | Ctrl+W |
+| Promptings / MCP / skills | Alt+T / Alt+C / Alt+S |
+| Cambiar panel / foco | Ctrl+N / Tab |
+
+Vim inicia en INSERT; Esc pasa a NORMAL. F1–F12 no tienen acciones asignadas.
+Si el terminal no distingue Shift+Enter, usá Ctrl+J.
+
+**Vista** (en inglés: **View**) cambia español/inglés y las seis paletas:
+**QBasic, Graphite, Forest, Nord, Dracula y Gruvbox**. También controla visibilidad
+del razonamiento e indicadores CPU/RAM/disco/VRAM. Tokens de entrada/salida y
+promedio tok/s siguen visibles; contadores de proveedor/dispositivo no disponibles
+muestran N/D.
 
 ## Estado y desarrollo
 
@@ -318,15 +345,16 @@ de ejecución en Windows/macOS/ARM64 y cobertura física de mouse/drop.
 ```bash
 bun run typecheck
 bun test
-bun run index.ts --demo
+bun run index.ts --demo   # Laboratorio de componentes, sin persistencia de proyectos.
 ```
 
 El build del host es opcional: `bun run build`. El binario contiene Bun,
 pero el servidor LLM y los comandos externos siguen siendo independientes.
 
-[Manual completo](docs/USAGE.es.md) · [Contribuir](CONTRIBUTING.es.md) ·
-[Preparar releases](docs/PUBLISHING.md) · [Notas v0.1.0](docs/releases/v0.1.0.md) ·
-[CHANGELOG](CHANGELOG.md).
+- [Manual completo](docs/USAGE.es.md)
+- [Contratos de tools](docs/TOOLS.es.md)
+- [Contribuir](CONTRIBUTING.es.md) y [changelog](CHANGELOG.md)
+- [Preparar releases](docs/PUBLISHING.es.md) y [notas v0.1.0](docs/releases/v0.1.0.es.md)
 
 ## Autoría
 

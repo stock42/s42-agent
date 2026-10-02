@@ -1,6 +1,6 @@
 # Contributing to S42 Agent
 
-[Español](CONTRIBUTING.es.md)
+**English** · [Español](CONTRIBUTING.es.md)
 
 Keep the harness small, fast and stable: TypeScript/Bun, a QBasic-style TUI and
 local-model support. Read [AGENTS.md](AGENTS.md) before changing code.
@@ -33,7 +33,7 @@ tests use an installed supported browser and skip that scenario if unavailable.
    Do not bind function keys F1–F12.
 4. Use temporary config and project folders. Streams, tools and sessions must
    retain their originating project when tabs change.
-5. Update relevant documentation and CHANGELOG before committing.
+5. Update both language versions of relevant documentation and CHANGELOG before committing.
 6. Submit a PR describing the problem, resulting behavior and actual validation.
 
 Use Bun's APIs where they fit. Avoid adding runtime dependencies without a concrete
