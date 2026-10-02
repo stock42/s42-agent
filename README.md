@@ -1,19 +1,34 @@
-# S42 Agent
+<h1 align="center">S42 Agent</h1>
 
-**A coding agent with the soul of QBasic.**
+<p align="center">
+  <strong>A coding agent with the soul of QBasic.</strong><br>
+  TypeScript + Bun · Local LLMs · MCP &amp; skills · TUI + headless CLI
+</p>
 
-Built with TypeScript and Bun. A terminal workspace with windows, mouse support,
-project tabs and local LLMs — under the [MIT license](LICENSE).
+<p align="center">
+  <a href="docs/releases/v0.1.0.md"><img src="https://img.shields.io/badge/preview-v0.1.0-00c9df?style=flat-square" alt="v0.1.0 preview"></a>
+  <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.4.2-101827?style=flat-square&amp;logo=bun&amp;logoColor=white" alt="Bun 1.4.2"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-7.0.2-3178c6?style=flat-square&amp;logo=typescript&amp;logoColor=white" alt="TypeScript 7.0.2"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-00c9df?style=flat-square" alt="MIT license"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/runtime_dependencies-0-101827?style=flat-square" alt="Zero external runtime package dependencies"></a>
+</p>
 
-**English** · **[Leer en español](README.es.md)**
+<p align="center">
+  <img src="assets/github/social-preview.jpg" alt="S42 Agent — coding with the soul of QBasic, Bun, local LLMs, MCP and skills" width="960">
+</p>
 
-[Installation](#installation) · [User guide · Español](docs/USAGE.es.md) ·
-[Tools](docs/TOOLS.md) · [Contributing](CONTRIBUTING.md)
+<p align="center"><sub>Commercial cover illustration. See the real running TUI in the screenshots below.</sub></p>
 
-<img src="screenshots/16-qbasic-typescript.jpg" alt="S42 Agent running: project and file tabs, numbered TypeScript source, syntax colors and a permanent prompt" width="960">
+<p align="center">
+  <strong>English</strong> · <a href="README.es.md">Español</a><br>
+  <a href="#installation">Install</a> ·
+  <a href="#run-from-source">Run from source</a> ·
+  <a href="#screenshots">Real screenshots</a> ·
+  <a href="docs/USAGE.es.md">User guide</a> ·
+  <a href="CONTRIBUTING.md">Contribute</a>
+</p>
 
-*Real `index.ts` execution in a Bun PTY, displayed by xterm.js in Chrome.
-[Screenshot gallery and capture details](screenshots/README.md).*
+---
 
 ## Why S42 Agent?
 
@@ -37,47 +52,6 @@ together.
 The harness has **no external runtime package dependencies**. Your LLM server,
 models and programs invoked by shell/MCP are separate.
 
-## Screenshots
-
-A tour of the running agent. Click any image to open the original; see all **35 screenshots** in the [full gallery](screenshots/README.md).
-
-<table>
-  <tr>
-    <td><a href="screenshots/10-live-tool-chat.jpg"><img src="screenshots/10-live-tool-chat.jpg" alt="Live model, tool calls and token metrics" width="440"></a><br><strong>Live model, tool calls and token metrics</strong></td>
-    <td><a href="screenshots/14-project-explorer.jpg"><img src="screenshots/14-project-explorer.jpg" alt="Browse and search project files" width="440"></a><br><strong>Browse and search project files</strong></td>
-  </tr>
-  <tr>
-    <td><a href="screenshots/12-prompting-variables.jpg"><img src="screenshots/12-prompting-variables.jpg" alt="Reusable prompts with {{variables}}" width="440"></a><br><strong>Reusable prompts with {{variables}}</strong></td>
-    <td><a href="screenshots/09-provider-presets.jpg"><img src="screenshots/09-provider-presets.jpg" alt="llama.cpp and DeepSeek presets" width="440"></a><br><strong>llama.cpp and DeepSeek presets</strong></td>
-  </tr>
-  <tr>
-    <td><a href="screenshots/06-webserver.jpg"><img src="screenshots/06-webserver.jpg" alt="Start a project WebServer" width="440"></a><br><strong>Start a project WebServer</strong></td>
-    <td><a href="screenshots/27-skills-search-results.jpg"><img src="screenshots/27-skills-search-results.jpg" alt="Search the live skills.sh catalog" width="440"></a><br><strong>Search the live skills.sh catalog</strong></td>
-  </tr>
-</table>
-
-The prompt templates and Web Playground are tour examples. The chat uses a real local model; the WebServer images come from its recorded browser QA.
-
-<details>
-<summary>See all six themes</summary>
-
-<table>
-  <tr>
-    <td><a href="screenshots/16-qbasic-typescript.jpg"><img src="screenshots/16-qbasic-typescript.jpg" alt="QBasic" width="440"></a><br><strong>QBasic</strong></td>
-    <td><a href="screenshots/17-graphite-typescript.jpg"><img src="screenshots/17-graphite-typescript.jpg" alt="Graphite" width="440"></a><br><strong>Graphite</strong></td>
-  </tr>
-  <tr>
-    <td><a href="screenshots/18-forest-typescript.jpg"><img src="screenshots/18-forest-typescript.jpg" alt="Forest" width="440"></a><br><strong>Forest</strong></td>
-    <td><a href="screenshots/19-nord-typescript.jpg"><img src="screenshots/19-nord-typescript.jpg" alt="Nord" width="440"></a><br><strong>Nord</strong></td>
-  </tr>
-  <tr>
-    <td><a href="screenshots/20-dracula-typescript.jpg"><img src="screenshots/20-dracula-typescript.jpg" alt="Dracula" width="440"></a><br><strong>Dracula</strong></td>
-    <td><a href="screenshots/21-gruvbox-typescript.jpg"><img src="screenshots/21-gruvbox-typescript.jpg" alt="Gruvbox" width="440"></a><br><strong>Gruvbox</strong></td>
-  </tr>
-</table>
-
-</details>
-
 ## Installation
 
 Use an ANSI terminal, at least **60×16** cells (80×24 or larger recommended).
@@ -85,10 +59,10 @@ The compiled agent includes the Bun runtime: you can install and run it without
 installing Bun separately. Your LLM server/model and external shell/MCP programs
 remain separate. [How Bun standalone executables work](https://bun.com/docs/bundler/executables).
 
-**Publication status:** the installers and six binaries are prepared locally.
-The public URL commands below become available when this commit and the
-**v0.1.0** GitHub release assets are published. You can install the local builds
-now with the commands below the platform table.
+> **Download availability:** the public installer and release URLs are currently
+> unavailable. The one-command downloads below become usable after the repository
+> and **v0.1.0** release assets are published. For now, use the local installation
+> commands below. [Release preparation](docs/PUBLISHING.md).
 
 ### Linux · one command
 
@@ -105,10 +79,11 @@ curl -fsSL https://raw.githubusercontent.com/stock42/s42-agent/main/install.sh |
 ### Windows · one command in PowerShell
 
 ```powershell
-irm https://raw.githubusercontent.com/stock42/s42-agent/main/install.ps1 | iex
+powershell -c "irm https://raw.githubusercontent.com/stock42/s42-agent/main/install.ps1|iex"
 ```
 
-The installer detects x64/ARM64, checks SHA-256 and installs for your user,
+The [Bash installer](install.sh) and [PowerShell installer](install.ps1) detect
+x64/ARM64, check SHA-256 and install for your user,
 without administrator access. Linux/macOS use `~/.local/bin`; Windows uses
 `%LOCALAPPDATA%\S42Agent\bin`. It adds that directory to your shell profile or
 Windows user PATH. Open a new terminal and run:
@@ -155,33 +130,44 @@ not remove your configuration or session history.
 ## Run from source
 
 **Git and Bun 1.4.2 are required to clone and run the source or generate binaries.**
-Node.js and npm are not required. Install the project's Bun version:
+Node.js and npm are not required. Install [Bun](https://bun.sh/) with its
+official one-command installer:
 
-### Install Bun on Linux
+### Install Bun on Linux or macOS
 
-You need `curl` and `unzip` (Debian/Ubuntu: `sudo apt install curl unzip`).
-
-```bash
-curl -fsSL https://bun.com/install | bash -s -- bun-v1.4.2
-```
-
-### Install Bun on macOS
+Linux needs `curl` and `unzip` (Debian/Ubuntu: `sudo apt install curl unzip`).
 
 ```bash
-curl -fsSL https://bun.com/install | bash -s -- bun-v1.4.2
+curl -fsSL https://bun.sh/install | bash
 ```
 
 ### Install Bun on Windows
 
-Run in PowerShell:
-
 ```powershell
-iex "& {$(irm https://bun.com/install.ps1)} -Version 1.4.2"
+powershell -c "irm bun.sh/install.ps1|iex"
 ```
 
-Open a new terminal and check `bun --version`. If it is not found, add
-`~/.bun/bin` (Linux/macOS) or `%USERPROFILE%\.bun\bin` (Windows) to PATH.
-[Official Bun installation guide](https://bun.com/docs/installation).
+Open a new terminal and run `bun --version`. The project uses **Bun 1.4.2**.
+If Bun is not found, add `~/.bun/bin` (Linux/macOS) or
+`%USERPROFILE%\.bun\bin` (Windows) to PATH.
+[Official installation guide](https://bun.sh/docs/installation).
+
+<details>
+<summary>Install the exact project version: Bun 1.4.2</summary>
+
+Linux or macOS:
+
+```bash
+curl -fsSL https://bun.sh/install | bash -s -- bun-v1.4.2
+```
+
+Windows PowerShell:
+
+```powershell
+iex "& {$(irm https://bun.sh/install.ps1)} -Version 1.4.2"
+```
+
+</details>
 
 ### Clone and start
 
@@ -266,6 +252,49 @@ Use **Stop** or **Open browser** in the same menu. Each project can run a server
 on a different port. Closing the dialog leaves it running; closing the project
 tab or exiting the agent stops it. This is a static preview, without a bundler
 or application backend.
+
+## Screenshots
+
+<a href="screenshots/16-qbasic-typescript.jpg"><img src="screenshots/16-qbasic-typescript.jpg" alt="S42 Agent running: project and file tabs, numbered TypeScript source, syntax colors and a permanent prompt" width="960"></a>
+
+A tour of the running agent. Click any image to open the original; see all **35 screenshots** in the [full gallery](screenshots/README.md).
+
+<table>
+  <tr>
+    <td><a href="screenshots/10-live-tool-chat.jpg"><img src="screenshots/10-live-tool-chat.jpg" alt="Live model, tool calls and token metrics" width="440"></a><br><strong>Live model, tool calls and token metrics</strong></td>
+    <td><a href="screenshots/14-project-explorer.jpg"><img src="screenshots/14-project-explorer.jpg" alt="Browse and search project files" width="440"></a><br><strong>Browse and search project files</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/12-prompting-variables.jpg"><img src="screenshots/12-prompting-variables.jpg" alt="Reusable prompts with {{variables}}" width="440"></a><br><strong>Reusable prompts with {{variables}}</strong></td>
+    <td><a href="screenshots/09-provider-presets.jpg"><img src="screenshots/09-provider-presets.jpg" alt="llama.cpp and DeepSeek presets" width="440"></a><br><strong>llama.cpp and DeepSeek presets</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/06-webserver.jpg"><img src="screenshots/06-webserver.jpg" alt="Start a project WebServer" width="440"></a><br><strong>Start a project WebServer</strong></td>
+    <td><a href="screenshots/27-skills-search-results.jpg"><img src="screenshots/27-skills-search-results.jpg" alt="Search the live skills.sh catalog" width="440"></a><br><strong>Search the live skills.sh catalog</strong></td>
+  </tr>
+</table>
+
+The prompt templates and Web Playground are tour examples. The chat uses a real local model; the WebServer images come from its recorded browser QA.
+
+<details>
+<summary>See all six themes</summary>
+
+<table>
+  <tr>
+    <td><a href="screenshots/16-qbasic-typescript.jpg"><img src="screenshots/16-qbasic-typescript.jpg" alt="QBasic" width="440"></a><br><strong>QBasic</strong></td>
+    <td><a href="screenshots/17-graphite-typescript.jpg"><img src="screenshots/17-graphite-typescript.jpg" alt="Graphite" width="440"></a><br><strong>Graphite</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/18-forest-typescript.jpg"><img src="screenshots/18-forest-typescript.jpg" alt="Forest" width="440"></a><br><strong>Forest</strong></td>
+    <td><a href="screenshots/19-nord-typescript.jpg"><img src="screenshots/19-nord-typescript.jpg" alt="Nord" width="440"></a><br><strong>Nord</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/20-dracula-typescript.jpg"><img src="screenshots/20-dracula-typescript.jpg" alt="Dracula" width="440"></a><br><strong>Dracula</strong></td>
+    <td><a href="screenshots/21-gruvbox-typescript.jpg"><img src="screenshots/21-gruvbox-typescript.jpg" alt="Gruvbox" width="440"></a><br><strong>Gruvbox</strong></td>
+  </tr>
+</table>
+
+</details>
 
 ## Tools and extensions
 

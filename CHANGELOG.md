@@ -5,6 +5,21 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Mejorado — Portada e instalación en README
+
+- README inglés/español con título y navegación centrados, cinco badges y
+  portada de assets/github/social-preview.jpg. La ilustración está identificada;
+  las capturas reales y la galería quedan después de instalación y primer uso.
+- Instalación oficial de Bun con curl/Bash y PowerShell, más opción desplegable
+  para fijar Bun 1.4.2. Comandos simples de los instaladores Bash/PowerShell
+  existentes, enlaces a sus archivos y alternativa local desde dist/.
+- URLs públicas de instaladores/release comprobadas: todavía devuelven 404.
+  README indica que las descargas requieren publicar el repositorio y v0.1.0.
+- Validación: cinco tests de instaladores correctos, typecheck, sintaxis Bash,
+  enlaces locales y presentación en navegador EN/ES. Binario Linux x64 instalado
+  en carpeta temporal desde dist/ y versión 0.1.0 verificada sin Bun/Node en PATH.
+  Pull correcto; sin recompilar, publicar ni validar runtime Windows/macOS.
+
 ### Eliminado — Campaña española anterior
 
 - Confirmada `s42-agent-real-tui-2026-10-01` como campaña final: cinco PNG en

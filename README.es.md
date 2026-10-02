@@ -1,19 +1,34 @@
-# S42 Agent
+<h1 align="center">S42 Agent</h1>
 
-**Un agente de coding con alma de QBasic.**
+<p align="center">
+  <strong>Un agente de coding con alma de QBasic.</strong><br>
+  TypeScript + Bun · Modelos locales · MCP y skills · TUI + CLI
+</p>
 
-Desarrollado con TypeScript y Bun. Una terminal con ventanas, mouse, proyectos
-en pestañas y soporte para modelos locales. Open source bajo [licencia MIT](LICENSE).
+<p align="center">
+  <a href="docs/releases/v0.1.0.md"><img src="https://img.shields.io/badge/preview-v0.1.0-00c9df?style=flat-square" alt="v0.1.0 preview"></a>
+  <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.4.2-101827?style=flat-square&amp;logo=bun&amp;logoColor=white" alt="Bun 1.4.2"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-7.0.2-3178c6?style=flat-square&amp;logo=typescript&amp;logoColor=white" alt="TypeScript 7.0.2"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-00c9df?style=flat-square" alt="MIT license"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/runtime_dependencies-0-101827?style=flat-square" alt="Zero external runtime package dependencies"></a>
+</p>
 
-**[English](README.md)** · **Español**
+<p align="center">
+  <img src="assets/github/social-preview.jpg" alt="S42 Agent — coding con alma de QBasic, Bun, modelos locales, MCP y skills" width="960">
+</p>
 
-[Instalación](#instalación) · [Manual de uso](docs/USAGE.es.md) ·
-[Tools](docs/TOOLS.md) · [Contribuir](CONTRIBUTING.es.md)
+<p align="center"><sub>Portada comercial ilustrada. Las capturas de la TUI en ejecución están más abajo.</sub></p>
 
-<img src="screenshots/32-spanish-gruvbox.jpg" alt="S42 Agent ejecutándose: pestañas de proyecto y archivo, TypeScript con números de línea, sintaxis coloreada y prompt fijo" width="960">
+<p align="center">
+  <a href="README.md">English</a> · <strong>Español</strong><br>
+  <a href="#instalación">Instalar</a> ·
+  <a href="#ejecutar-desde-código-fuente">Ejecutar desde fuente</a> ·
+  <a href="#capturas-reales">Capturas reales</a> ·
+  <a href="docs/USAGE.es.md">Manual de uso</a> ·
+  <a href="CONTRIBUTING.es.md">Contribuir</a>
+</p>
 
-*Ejecución real de `index.ts` en una PTY de Bun, mostrada por xterm.js en Chrome.
-[Galería y detalles de captura](screenshots/README.md).*
+---
 
 ## Qué tiene de especial
 
@@ -37,47 +52,6 @@ trabaja. Cada proyecto conserva su conversación, archivos, modelo y herramienta
 El harness no tiene dependencias externas de paquetes de runtime. El servidor
 LLM, sus modelos y los programas usados por shell/MCP se configuran aparte.
 
-## Capturas reales
-
-Un recorrido por el agente en ejecución. Cada imagen abre el original; las **35 capturas** están en la [galería completa](screenshots/README.md).
-
-<table>
-  <tr>
-    <td><a href="screenshots/10-live-tool-chat.jpg"><img src="screenshots/10-live-tool-chat.jpg" alt="Modelo real, tools y métricas de tokens" width="440"></a><br><strong>Modelo real, tools y métricas de tokens</strong></td>
-    <td><a href="screenshots/14-project-explorer.jpg"><img src="screenshots/14-project-explorer.jpg" alt="Explorador y búsqueda de archivos" width="440"></a><br><strong>Explorador y búsqueda de archivos</strong></td>
-  </tr>
-  <tr>
-    <td><a href="screenshots/12-prompting-variables.jpg"><img src="screenshots/12-prompting-variables.jpg" alt="Promptings con {{metavariables}}" width="440"></a><br><strong>Promptings con {{metavariables}}</strong></td>
-    <td><a href="screenshots/09-provider-presets.jpg"><img src="screenshots/09-provider-presets.jpg" alt="llama.cpp y DeepSeek precargados" width="440"></a><br><strong>llama.cpp y DeepSeek precargados</strong></td>
-  </tr>
-  <tr>
-    <td><a href="screenshots/06-webserver.jpg"><img src="screenshots/06-webserver.jpg" alt="WebServer del proyecto" width="440"></a><br><strong>WebServer del proyecto</strong></td>
-    <td><a href="screenshots/27-skills-search-results.jpg"><img src="screenshots/27-skills-search-results.jpg" alt="Resultados reales de skills.sh" width="440"></a><br><strong>Resultados reales de skills.sh</strong></td>
-  </tr>
-</table>
-
-Las plantillas y Web Playground son ejemplos para las capturas. El chat usa un modelo local real; las imágenes del WebServer provienen de su QA en navegador.
-
-<details>
-<summary>Ver las seis paletas</summary>
-
-<table>
-  <tr>
-    <td><a href="screenshots/16-qbasic-typescript.jpg"><img src="screenshots/16-qbasic-typescript.jpg" alt="QBasic" width="440"></a><br><strong>QBasic</strong></td>
-    <td><a href="screenshots/17-graphite-typescript.jpg"><img src="screenshots/17-graphite-typescript.jpg" alt="Graphite" width="440"></a><br><strong>Graphite</strong></td>
-  </tr>
-  <tr>
-    <td><a href="screenshots/18-forest-typescript.jpg"><img src="screenshots/18-forest-typescript.jpg" alt="Forest" width="440"></a><br><strong>Forest</strong></td>
-    <td><a href="screenshots/19-nord-typescript.jpg"><img src="screenshots/19-nord-typescript.jpg" alt="Nord" width="440"></a><br><strong>Nord</strong></td>
-  </tr>
-  <tr>
-    <td><a href="screenshots/20-dracula-typescript.jpg"><img src="screenshots/20-dracula-typescript.jpg" alt="Dracula" width="440"></a><br><strong>Dracula</strong></td>
-    <td><a href="screenshots/21-gruvbox-typescript.jpg"><img src="screenshots/21-gruvbox-typescript.jpg" alt="Gruvbox" width="440"></a><br><strong>Gruvbox</strong></td>
-  </tr>
-</table>
-
-</details>
-
 ## Instalación
 
 Usá un terminal ANSI de al menos **60×16** celdas; se recomienda 80×24 o más.
@@ -86,10 +60,10 @@ sin instalar Bun por separado. El servidor/modelo LLM y los programas externos
 usados por shell/MCP se configuran aparte.
 [Ejecutables independientes de Bun](https://bun.com/docs/bundler/executables).
 
-**Estado de publicación:** los instaladores y seis binarios están preparados
-localmente. Los comandos con URLs públicas funcionarán cuando se publique este
-commit y los assets de la release **v0.1.0** en GitHub. Ya podés instalar los
-compilados locales con los comandos que aparecen debajo de la tabla.
+> **Disponibilidad de descarga:** las URLs públicas de los instaladores y la
+> release todavía no están disponibles. Los comandos de descarga funcionarán
+> cuando se publiquen el repositorio y los assets de **v0.1.0**. Mientras tanto,
+> usá la instalación local que aparece abajo. [Preparar la release](docs/PUBLISHING.md).
 
 ### Linux · un comando
 
@@ -106,10 +80,11 @@ curl -fsSL https://raw.githubusercontent.com/stock42/s42-agent/main/install.sh |
 ### Windows · un comando en PowerShell
 
 ```powershell
-irm https://raw.githubusercontent.com/stock42/s42-agent/main/install.ps1 | iex
+powershell -c "irm https://raw.githubusercontent.com/stock42/s42-agent/main/install.ps1|iex"
 ```
 
-El instalador detecta x64/ARM64, comprueba SHA-256 e instala para tu usuario,
+Los instaladores [Bash](install.sh) y [PowerShell](install.ps1) detectan
+x64/ARM64, comprueban SHA-256 e instalan para tu usuario,
 sin permisos de administrador. Linux/macOS usan `~/.local/bin`; Windows usa
 `%LOCALAPPDATA%\S42Agent\bin`. Agrega la carpeta al perfil de tu shell o al
 PATH del usuario en Windows. Abrí otro terminal y ejecutá:
@@ -156,33 +131,43 @@ mismo instalador. Borrar el ejecutable no elimina la configuración ni el histor
 ## Ejecutar desde código fuente
 
 **Necesitás Git y Bun 1.4.2 para clonar, ejecutar la fuente o generar binarios.**
-No hace falta Node.js ni npm. Instalá la versión de Bun usada por el proyecto:
+No hace falta Node.js ni npm. Instalá [Bun](https://bun.sh/) con su comando oficial:
 
-### Instalar Bun en Linux
+### Instalar Bun en Linux o macOS
 
-Requiere `curl` y `unzip` (Debian/Ubuntu: `sudo apt install curl unzip`).
-
-```bash
-curl -fsSL https://bun.com/install | bash -s -- bun-v1.4.2
-```
-
-### Instalar Bun en macOS
+Linux requiere `curl` y `unzip` (Debian/Ubuntu: `sudo apt install curl unzip`).
 
 ```bash
-curl -fsSL https://bun.com/install | bash -s -- bun-v1.4.2
+curl -fsSL https://bun.sh/install | bash
 ```
 
 ### Instalar Bun en Windows
 
-En PowerShell:
-
 ```powershell
-iex "& {$(irm https://bun.com/install.ps1)} -Version 1.4.2"
+powershell -c "irm bun.sh/install.ps1|iex"
 ```
 
-Abrí otro terminal y comprobá `bun --version`. Si no encuentra el comando,
-agregá `~/.bun/bin` (Linux/macOS) o `%USERPROFILE%\.bun\bin` (Windows) al PATH.
-[Guía oficial de instalación](https://bun.com/docs/installation).
+Abrí otro terminal y ejecutá `bun --version`. El proyecto usa **Bun 1.4.2**.
+Si no encuentra el comando, agregá `~/.bun/bin` (Linux/macOS) o
+`%USERPROFILE%\.bun\bin` (Windows) al PATH.
+[Guía oficial de instalación](https://bun.sh/docs/installation).
+
+<details>
+<summary>Instalar la versión exacta del proyecto: Bun 1.4.2</summary>
+
+Linux o macOS:
+
+```bash
+curl -fsSL https://bun.sh/install | bash -s -- bun-v1.4.2
+```
+
+Windows PowerShell:
+
+```powershell
+iex "& {$(irm https://bun.sh/install.ps1)} -Version 1.4.2"
+```
+
+</details>
 
 ### Clonar e iniciar
 
@@ -264,6 +249,49 @@ El mismo menú permite **Detener** y **Abrir navegador**. Podés tener un servid
 por proyecto en distintos puertos. Cerrar el diálogo lo deja funcionando; cerrar
 la pestaña del proyecto o salir del agente lo detiene. Es una preview estática,
 sin bundler ni backend de aplicación.
+
+## Capturas reales
+
+<a href="screenshots/32-spanish-gruvbox.jpg"><img src="screenshots/32-spanish-gruvbox.jpg" alt="S42 Agent ejecutándose: pestañas de proyecto y archivo, TypeScript con números de línea, sintaxis coloreada y prompt fijo" width="960"></a>
+
+Un recorrido por el agente en ejecución. Cada imagen abre el original; las **35 capturas** están en la [galería completa](screenshots/README.md).
+
+<table>
+  <tr>
+    <td><a href="screenshots/10-live-tool-chat.jpg"><img src="screenshots/10-live-tool-chat.jpg" alt="Modelo real, tools y métricas de tokens" width="440"></a><br><strong>Modelo real, tools y métricas de tokens</strong></td>
+    <td><a href="screenshots/14-project-explorer.jpg"><img src="screenshots/14-project-explorer.jpg" alt="Explorador y búsqueda de archivos" width="440"></a><br><strong>Explorador y búsqueda de archivos</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/12-prompting-variables.jpg"><img src="screenshots/12-prompting-variables.jpg" alt="Promptings con {{metavariables}}" width="440"></a><br><strong>Promptings con {{metavariables}}</strong></td>
+    <td><a href="screenshots/09-provider-presets.jpg"><img src="screenshots/09-provider-presets.jpg" alt="llama.cpp y DeepSeek precargados" width="440"></a><br><strong>llama.cpp y DeepSeek precargados</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/06-webserver.jpg"><img src="screenshots/06-webserver.jpg" alt="WebServer del proyecto" width="440"></a><br><strong>WebServer del proyecto</strong></td>
+    <td><a href="screenshots/27-skills-search-results.jpg"><img src="screenshots/27-skills-search-results.jpg" alt="Resultados reales de skills.sh" width="440"></a><br><strong>Resultados reales de skills.sh</strong></td>
+  </tr>
+</table>
+
+Las plantillas y Web Playground son ejemplos para las capturas. El chat usa un modelo local real; las imágenes del WebServer provienen de su QA en navegador.
+
+<details>
+<summary>Ver las seis paletas</summary>
+
+<table>
+  <tr>
+    <td><a href="screenshots/16-qbasic-typescript.jpg"><img src="screenshots/16-qbasic-typescript.jpg" alt="QBasic" width="440"></a><br><strong>QBasic</strong></td>
+    <td><a href="screenshots/17-graphite-typescript.jpg"><img src="screenshots/17-graphite-typescript.jpg" alt="Graphite" width="440"></a><br><strong>Graphite</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/18-forest-typescript.jpg"><img src="screenshots/18-forest-typescript.jpg" alt="Forest" width="440"></a><br><strong>Forest</strong></td>
+    <td><a href="screenshots/19-nord-typescript.jpg"><img src="screenshots/19-nord-typescript.jpg" alt="Nord" width="440"></a><br><strong>Nord</strong></td>
+  </tr>
+  <tr>
+    <td><a href="screenshots/20-dracula-typescript.jpg"><img src="screenshots/20-dracula-typescript.jpg" alt="Dracula" width="440"></a><br><strong>Dracula</strong></td>
+    <td><a href="screenshots/21-gruvbox-typescript.jpg"><img src="screenshots/21-gruvbox-typescript.jpg" alt="Gruvbox" width="440"></a><br><strong>Gruvbox</strong></td>
+  </tr>
+</table>
+
+</details>
 
 ## Herramientas
 
