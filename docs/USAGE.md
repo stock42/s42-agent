@@ -452,7 +452,13 @@ Context is estimated without a tokenizer; the server's limit takes precedence.
 llama.cpp detects context/tools/vision through `/props` during discovery and
 requests. It repairs older “no tools” catalogs when the server template supports
 tools. Automatic output budget is up to 8,192 tokens, bounded by a quarter of
-context. Editing a model in Models fixes its manual values. `write` supports
+context. Remote catalogs with output metadata use up to 32,768 tokens, bounded
+by the provider's advertised limit and a quarter of context; without metadata
+the fallback remains 2,048. DeepSeek refreshes automatic catalog values when a turn starts,
+including older catalogs limited to 2,048; startup does not query the network.
+Reasoning-only partials remain in the session and are sent with empty text so
+DeepSeek can accept the next request. Provider HTTP errors include the returned
+error detail. Editing a model in Models fixes its manual values. `write` supports
 `append: true` to build files in parts; the agent prompt instructs it to complete
 functionality on disk before finishing.
 

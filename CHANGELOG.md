@@ -5,6 +5,27 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Corregido — Recuperación y presupuesto de salida de DeepSeek
+
+- Reproducido con DeepSeek real el HTTP 400 tras un parcial de solo razonamiento:
+  `Invalid assistant message: content or tool_calls must be set`. Esos mensajes
+  se envían con texto vacío, conservando íntegro el razonamiento y el historial
+  persistido. Recuperación por length y reapertura de sesiones cubiertas.
+- El catálogo deja de limitar toda salida a 2.048 tokens: con metadata admite
+  hasta 32.768, limitado por el máximo del proveedor y un cuarto del contexto.
+  Sin metadata conserva el fallback. DeepSeek actualiza su catálogo automático
+  al enviar el turno; se respetan modelos manuales y el inicio sigue sin red.
+- Los errores HTTP incluyen el detalle devuelto por el proveedor; prefijos e
+  indicaciones ES/EN conservan el texto externo original. Manuales actualizados.
+- Typecheck correcto; suite completa inicial: 185 pass/0 fail. Validación final
+  de cliente/proveedores/recuperación: 17 pass/0 fail, incluida una regresión para
+  catálogos con contexto pequeño. PTY desde la fuente incluido en ambas suites.
+- El historial que fallaba es aceptado por DeepSeek con la corrección. Pedido
+  Tetris aislado ejecutó escrituras/ediciones sin HTTP 400 ni recuperaciones por
+  length; QA detenida por su timeout de 240 s durante verificaciones del juego.
+  No se afirma juego terminado/jugable. Evidencia local en `private/`, sin
+  modificar configuración personal, sesión original ni publicar nuevos binarios.
+
 ### Configurado — Sponsor con PayPal
 
 - Añadido `.github/FUNDING.yml` con el enlace PayPal proporcionado por el usuario

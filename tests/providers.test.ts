@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { App } from "../src/app.ts";
-import { credential, discoverModels } from "../src/llm/client.ts";
+import { credential, discoverModels, runtimeModel } from "../src/llm/client.ts";
 import { defaultConfig, defaultProviders } from "../src/storage/config.ts";
 import { Button } from "../src/ui/components/button.ts";
 import { Input } from "../src/ui/components/input.ts";
@@ -63,7 +63,7 @@ test("catálogo usa Bearer, metadata y modelos únicos; IDs simples siguen siend
   try {
     const discovered = await discoverModels(provider, "fixture-secret");
     expect(requests).toEqual(["/models:Bearer fixture-secret"]); expect(discovered.map(m => m.id)).toEqual(["remote-alpha", "remote-beta", "legacy"]);
-    expect(discovered[0]).toMatchObject({ name: "Alpha disponible", contextWindow: 1048576, maxOutputTokens: 2048, capabilities: { tools: true, images: true } });
+    expect(discovered[0]).toMatchObject({ name: "Alpha disponible", contextWindow: 1048576, maxOutputTokens: 32768, capabilities: { tools: true, images: true } });
     expect(discovered[1]).toMatchObject({ maxOutputTokens: 1024, capabilities: { tools: true, images: false } });
     provider.id = "llama.cpp"; provider.kind = "llama.cpp"; provider.apiKeyEnv = undefined; provider.baseUrl += "/v1/";
     expect((await discoverModels(provider))[2]).toMatchObject({ contextWindow: 8192, maxOutputTokens: 2048, capabilities: { tools: true, images: false } });
@@ -71,6 +71,33 @@ test("catálogo usa Bearer, metadata y modelos únicos; IDs simples siguen siend
     provider.apiKeyEnv = `S42_MISSING_${crypto.randomUUID().replaceAll("-", "")}`;
     expect(await credential(provider, "explicit-session-key")).toBe("explicit-session-key"); await expect(credential(provider)).rejects.toThrow("Falta la variable");
   } finally { server.stop(true); }
+});
+
+test("DeepSeek actualiza el catálogo antiguo al enviar, respeta manual y conserva fallback", async () => {
+  let requests = 0, unavailable = false;
+  const server = Bun.serve({ port: 0, fetch() {
+    requests++; return unavailable ? new Response("", { status: 503 }) : Response.json(catalog);
+  } });
+  const provider = defaultProviders()[1]!; provider.baseUrl = `http://127.0.0.1:${server.port}`;
+  const old = { id: "remote-alpha", name: "Alpha anterior", contextWindow: 1048576, maxOutputTokens: 2048, capabilities: { tools: true, images: false } };
+  try {
+    expect(await runtimeModel(provider, old)).toMatchObject({ maxOutputTokens: 32768, capabilities: { images: true } });
+    expect(requests).toBe(1);
+    expect(await runtimeModel(provider, { ...old, manual: true })).toEqual({ ...old, manual: true }); expect(requests).toBe(1);
+    expect(await runtimeModel(provider, { ...old, id: "missing" })).toEqual({ ...old, id: "missing" });
+    unavailable = true; expect(await runtimeModel(provider, old)).toEqual(old);
+    const controller = new AbortController(); controller.abort(new Error("Cancelado"));
+    await expect(runtimeModel(provider, old, undefined, controller.signal)).rejects.toThrow("Cancelado");
+  } finally { server.stop(true); }
+});
+
+test("catálogo con salida grande conserva espacio de entrada cuando el contexto es pequeño o falta", async () => {
+  const server = Bun.serve({ port: 0, fetch: () => Response.json({ data: [
+    { id: "small", context_window: 8192, max_output_tokens: 393216 }, { id: "unknown-context", max_output_tokens: 393216 },
+  ] }) });
+  const provider = defaultProviders()[1]!; provider.baseUrl = `http://127.0.0.1:${server.port}`;
+  try { expect((await discoverModels(provider)).map(m => m.maxOutputTokens)).toEqual([2048, 2048]); }
+  finally { server.stop(true); }
 });
 
 test("DeepSeek corrige 401, guarda key en llavero y recupera modelo/clave tras reinicio", async () => {

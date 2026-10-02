@@ -22,10 +22,19 @@ export class SSEParser {
   end(): void { this.buffer += this.decoder.decode(); this.drain(); if (this.buffer.trim() || this.lines.length) throw new Error("SSE incompleto al desconectarse"); }
 }
 
-// llama.cpp publishes the actual template capabilities and context in /props.
+// llama.cpp publishes template capabilities/context in /props; DeepSeek uses /models.
 // Old catalogs used conservative guesses; explicitly edited models keep their settings.
 export async function runtimeModel(provider: Provider, model: Model, key?: string, signal?: AbortSignal, timeoutMs = 5000): Promise<Model> {
-  if (provider.kind !== "llama.cpp" || model.manual) return model;
+  if (model.manual) return model;
+  if (provider.kind !== "llama.cpp") {
+    if (provider.id !== "deepseek") return model;
+    // Refresh catalogs saved with the old 2048-token ceiling when a turn starts.
+    // Startup remains offline and explicitly edited models keep their budget.
+    try {
+      const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs);
+      return (await discoverModels(provider, key, requestSignal)).find(m => m.id === model.id) ?? model;
+    } catch (error) { if (signal?.aborted) throw error; return model; }
+  }
   const url = new URL(provider.baseUrl); url.pathname = url.pathname.replace(/\/v1\/?$/, "").replace(/\/$/, "") + "/props";
   url.searchParams.set("model", model.id);
   try {
@@ -55,10 +64,10 @@ export async function discoverModels(provider: Provider, key?: string, signal?: 
     const contextWindow = Number.isSafeInteger(m.context_window) && m.context_window! > 1 ? m.context_window! : 8192;
     const outputLimit = Number.isSafeInteger(m.max_output_tokens) && m.max_output_tokens! > 0 ? m.max_output_tokens! : 2048;
     models.set(m.id, { id: m.id, name: typeof m.name === "string" && m.name.trim() ? m.name : m.id,
-      contextWindow, maxOutputTokens: Math.min(2048, outputLimit, contextWindow - 1),
+      contextWindow, maxOutputTokens: Math.min(32768, outputLimit, Math.max(1, Math.floor(contextWindow / 4))),
       capabilities: { tools: true, images: Array.isArray(m.input_modalities) && m.input_modalities.includes("image") } });
   }
-  return Promise.all([...models.values()].map(model => runtimeModel(provider, model, key, signal)));
+  return provider.kind === "llama.cpp" ? Promise.all([...models.values()].map(model => runtimeModel(provider, model, key, signal))) : [...models.values()];
 }
 
 export async function complete(options: { provider: Provider; model: Model; messages: Message[]; tools?: ToolDefinition[]; key?: string; signal: AbortSignal;
@@ -72,12 +81,20 @@ export async function complete(options: { provider: Provider; model: Model; mess
   const partial = (): Message => ({ role: "assistant", content: text || null, ...(reasoning ? {[reasoningField]:reasoning} : {}), ...(calls.size ? { tool_calls: [...calls.entries()].sort(([a], [b]) => a - b).map(([, c]) => c) } : {}) });
   try {
     arm(options.firstEventMs, "Timeout esperando el primer evento del modelo");
+    // DeepSeek rejects reasoning-only partials with null content. An empty
+    // string preserves their reasoning in context without changing the session.
+    const messages = options.messages.map(message => message.role === "assistant" && message.content === null && !message.tool_calls?.length ? { ...message, content: "" } : message);
     const response = await fetch(`${options.provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST", signal: controller.signal, headers: { "Content-Type": "application/json", ...(options.key ? { Authorization: `Bearer ${options.key}` } : {}) },
-      body: JSON.stringify({ model: options.model.id, messages: options.messages, stream: true, stream_options: { include_usage: true }, max_tokens: options.model.maxOutputTokens,
+      body: JSON.stringify({ model: options.model.id, messages, stream: true, stream_options: { include_usage: true }, max_tokens: options.model.maxOutputTokens,
         ...(options.tools?.length ? { tools: options.tools } : {}), ...(options.provider.kind === "llama.cpp" ? { timings_per_token: true } : {}) }),
     });
-    if (!response.ok) throw new Error(`Proveedor: HTTP ${response.status}${response.status === 401 ? " · revisar API key" : response.status === 404 ? " · revisar endpoint/modelo" : response.status === 429 ? " · límite del proveedor" : ""}`);
+    if (!response.ok) {
+      const body = await response.text(); let detail = body.trim();
+      try { const error = JSON.parse(body)?.error; if (typeof error?.message === "string") detail = error.message; } catch {}
+      const hint = response.status === 401 ? " · revisar API key" : response.status === 404 ? " · revisar endpoint/modelo" : response.status === 429 ? " · límite del proveedor" : "";
+      throw new Error(`Proveedor: HTTP ${response.status}${hint}${detail ? `: ${detail.slice(0, 2000)}` : ""}`);
+    }
     if (!response.body) throw new Error("El proveedor no devolvió un stream");
     const parser = new SSEParser(data => {
       if (done) return;

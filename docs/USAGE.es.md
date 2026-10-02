@@ -453,7 +453,14 @@ El contexto se estima sin tokenizador; prevalece el límite del servidor.
 llama.cpp detecta contexto/tools/visión mediante `/props` al descubrir modelos y
 al enviar. Repara catálogos antiguos “sin tools” cuando la plantilla del servidor
 sí las soporta. El presupuesto automático de salida es hasta 8.192 tokens,
-limitado a un cuarto del contexto. Editar un modelo en Models fija sus valores
+limitado a un cuarto del contexto. Los catálogos remotos con metadata de salida
+usan hasta 32.768 tokens, limitados por el máximo informado y un cuarto del
+contexto; sin metadata se conserva el fallback de 2.048. DeepSeek actualiza los valores
+automáticos al enviar un turno, incluidos los catálogos antiguos limitados a
+2.048; el inicio no consulta la red. Los parciales de solo razonamiento se
+conservan en la sesión y se envían con texto vacío para que DeepSeek acepte el
+siguiente pedido. Los errores HTTP incluyen el detalle devuelto por el proveedor.
+Editar un modelo en Models fija sus valores
 manuales. `write` permite `append: true` para construir archivos por partes; el
 prompt del agente indica completar la funcionalidad en disco antes de terminar.
 

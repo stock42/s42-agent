@@ -74,7 +74,7 @@ test("length es tipado; HTTP, timeout y cancelación no disparan etapas ni nuevo
     let requests = 0;
     const server = Bun.serve({ port: 0, fetch() {
       requests++;
-      return mode === "http" ? new Response("", { status: 503 }) : new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"parcial de fallo"}}]}\n\n')); } }));
+      return mode === "http" ? Response.json({ error: { message: "Invalid assistant message: content or tool_calls must be set" } }, { status: 400 }) : new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"parcial de fallo"}}]}\n\n')); } }));
     } });
     const { root, path } = await fixture(server.port!), app = await App.open({ config: path, cwd: root });
     try {
@@ -82,7 +82,42 @@ test("length es tipado; HTTP, timeout y cancelación no disparan etapas ni nuevo
       if (mode === "cancel") { await until(() => app.view.response.value.includes("parcial de fallo")); app.cancel(); }
       await until(() => !app.busy); expect(requests).toBe(1);
       expect(app.session!.state.notices.some(n => n.includes("dividiendo"))).toBe(false);
+      if (mode === "http") {
+        expect(app.status).toContain("HTTP 400: Invalid assistant message");
+        expect(app.view.response.value).toContain("content or tool_calls must be set");
+      }
       if (mode !== "http") expect(app.view.response.value).toContain("parcial de fallo");
+    } finally { await app.desktop.onBeforeExit!(); server.stop(true); await rm(root, { recursive: true, force: true }); }
+  }
+});
+
+test("reasoning sin texto recupera tools y una sesión reabierta sin HTTP 400", async () => {
+  for (const resume of [false, true]) {
+    const requests: any[] = [];
+    const server = Bun.serve({ port: 0, async fetch(req) {
+      const body = await req.json() as any; requests.push(body);
+      if (body.messages.some((m: any) => m.role === "assistant" && m.content === null && !m.tool_calls?.length))
+        return Response.json({ error: { message: "Invalid assistant message: content or tool_calls must be set" } }, { status: 400 });
+      if (!resume && requests.length === 1) return new Response(packet({ reasoning_content: "Razonamiento truncado á文🙂" }, "length"));
+      if (!body.messages.some((m: any) => m.role === "tool")) return new Response(packet({ reasoning_content: "Escribo el archivo", tool_calls: [
+        { index: 0, id: "complete-write", function: { name: "write", arguments: JSON.stringify({ path: "tetris.html", content: "<!doctype html><title>Tetris</title>" }) } },
+      ] }, "tool_calls"));
+      return new Response(packet({ reasoning_content: "Archivo escrito", content: "Archivo creado" }));
+    } });
+    const { root, path } = await fixture(server.port!); let app = await App.open({ config: path, cwd: root });
+    try {
+      if (resume) {
+        const partial = { role: "assistant" as const, content: null, reasoning_content: "Razonamiento truncado á文🙂" };
+        await app.session!.append({ type: "message", message: partial });
+        const id = app.session!.state.id; await app.desktop.onBeforeExit!(); app = await App.open({ config: path, session: id });
+      }
+      app.view.prompt.setValue("Crea el Tetris"); await app.submit(); await until(() => !app.busy);
+      expect(app.status).toStartWith("Listo"); expect(requests).toHaveLength(resume ? 2 : 3);
+      expect(await Bun.file(join(root, "tetris.html")).text()).toContain("Tetris");
+      expect(app.session!.state.messages.find(m => m.reasoning_content === "Razonamiento truncado á文🙂")?.content).toBeNull();
+      expect(requests.at(-1).messages.find((m: any) => m.reasoning_content === "Razonamiento truncado á文🙂")?.content).toBe("");
+      expect(app.session!.state.events.filter(e => e.type === "tool-start")).toHaveLength(1);
+      expect(app.view.response.value).toContain("Razonamiento truncado á文🙂");
     } finally { await app.desktop.onBeforeExit!(); server.stop(true); await rm(root, { recursive: true, force: true }); }
   }
 });

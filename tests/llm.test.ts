@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import { complete, CompletionError, SSEParser } from "../src/llm/client.ts";
 import type { Model, Provider } from "../src/storage/config.ts";
+import type { Message } from "../src/agent/messages.ts";
+import { translate } from "../src/ui/i18n.ts";
 const model: Model = { id: "fixture", name: "fixture", contextWindow: 8192, maxOutputTokens: 1024, capabilities: { tools: true, images: false } };
 test("SSE fragmentado UTF-8/CRLF, datos multilínea y múltiples eventos", () => {
   const events: string[] = [], parser = new SSEParser(data => events.push(data));
@@ -24,6 +26,36 @@ test("stream truncado preserva parcial y errores HTTP no inventan respuesta", as
   try { await complete({provider,model,messages:[],signal:new AbortController().signal,firstEventMs:1000,idleMs:1000,onDelta:()=>{}}); throw new Error('debe fallar'); }
   catch(e) { expect(e).toBeInstanceOf(CompletionError); expect((e as CompletionError).partial.content).toBe('parcial'); expect((e as Error).message).toContain('sin completar'); }
   finally {server.stop(true);}
+});
+test("parciales de solo reasoning se envían con content vacío sin mutar el historial", async () => {
+  let request: any;
+  const server = Bun.serve({ port: 0, async fetch(req) {
+    request = await req.json();
+    if (request.messages.some((m: Message) => m.role === "assistant" && m.content === null && !m.tool_calls?.length))
+      return Response.json({ error: { message: "Invalid assistant message: content or tool_calls must be set" } }, { status: 400 });
+    return new Response('data: {"choices":[{"delta":{"content":"Recuperado"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n');
+  } });
+  const messages: Message[] = [{ role: "user", content: "Tetris" }, { role: "assistant", content: null, reasoning_content: "Parcial á文🙂" },
+    { role: "assistant", content: null, reasoning: "Segundo parcial" }, { role: "user", content: "Continuá" }];
+  const before = structuredClone(messages);
+  try {
+    const result = await complete({ provider: { id: "deepseek", name: "DeepSeek", kind: "openai-compatible", baseUrl: `http://127.0.0.1:${server.port}`, models: [model] },
+      model, messages, signal: new AbortController().signal, firstEventMs: 1000, idleMs: 1000, onDelta: () => {} });
+    expect(result.message.content).toBe("Recuperado"); expect(messages).toEqual(before);
+    expect(request.messages[1]).toEqual({ ...before[1], content: "" }); expect(request.messages[2]).toEqual({ ...before[2], content: "" });
+  } finally { server.stop(true); }
+});
+
+test("errores HTTP muestran el detalle del proveedor y el prefijo se traduce", async () => {
+  let requests = 0;
+  const detail = "Invalid assistant message: content or tool_calls must be set";
+  const server = Bun.serve({ port: 0, fetch() { requests++; return Response.json({ error: { message: detail, type: "invalid_request_error" } }, { status: 400 }); } });
+  try {
+    await expect(complete({ provider: { id: "fixture", name: "Fixture", kind: "openai-compatible", baseUrl: `http://127.0.0.1:${server.port}`, models: [model] },
+      model, messages: [], signal: new AbortController().signal, firstEventMs: 1000, idleMs: 1000, onDelta: () => {} })).rejects.toThrow(`Proveedor: HTTP 400: ${detail}`);
+    expect(requests).toBe(1); expect(translate(`Proveedor: HTTP 400: ${detail}`, "en")).toBe(`Provider: HTTP 400: ${detail}`);
+    expect(translate("Proveedor: HTTP 401 · revisar API key: Authentication Fails", "en")).toBe("Provider: HTTP 401 · check API key: Authentication Fails");
+  } finally { server.stop(true); }
 });
 test('dos endpoints con mismo modelo conservan keys; errores HTTP e idle/cancel parcial',async()=>{
   const seen:string[]=[];const fixtures=['A','B'].map(name=>Bun.serve({port:0,fetch(req){seen.push(`${name}:${req.headers.get('authorization')}`);return new Response(`data: {"choices":[{"delta":{"content":"${name}"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n`);}}));
