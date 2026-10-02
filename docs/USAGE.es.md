@@ -316,6 +316,10 @@ o `reasoning` y **Vista → Ver razonamiento** está en **on** (predeterminado).
 **off** lo oculta en el historial y durante el streaming; volver a **on** permite
 leer lo recibido. La sesión conserva ese contenido y las tools siguen visibles. Muestra argumentos parciales de tool calls, ejecución y resultados;
 solo ejecuta llamadas completas. Selección, scroll y lectura permanecen disponibles.
+stdout/stderr de shell aparece al llegar, incluso si el comando sigue ejecutándose.
+La tool devuelve el resultado completo cuando el proceso sale o lo cancelás con
+Ctrl+C. Avisos, turnos fallidos/cancelados y reasoning de compactación conservan
+su posición original en el chat, también al reabrir la sesión.
 
 Si el modelo alcanza el límite de salida, el agente conserva la respuesta parcial
 y le pide dividir el pedido en etapas pequeñas. Cada etapa aparece en el chat;

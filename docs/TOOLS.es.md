@@ -14,9 +14,9 @@ el contrato para integraciones existentes. Catálogo visible en **Tools → Nati
 | `edit` / edit.ts | `path`, `oldText`, `newText` | Reemplazo literal único en el archivo completo. Cero/múltiples coincidencias o oldText vacío: error sin escribir. |
 | `list` / list.ts | `path="."`; `glob` opcional | Todas las entradas; `/` para carpetas. Un glob recorre los archivos. |
 | `find` / find.ts | `pattern`; `path="."`, `limit` opcional, `includeIgnored=false` | Todas las coincidencias por nombre o glob Bun, con rutas absolutas y conteos. limit solo selecciona la cantidad pedida explícitamente, sin techo agregado. |
-| `search` / search.ts | `pattern`; `path="."`, `glob="**/*"` | Contenido literal sensible a mayúsculas en archivos completos. Todas las coincidencias `archivo:línea:texto`; omite binarios/UTF-8 inválido. |
+| `search` / search.ts | `pattern`; `path="."`, `glob="**/*"` | Contenido literal sensible a mayúsculas en un archivo o recursivamente en una carpeta; pattern no es regex. Todas las coincidencias `archivo:línea:texto` o resultado explícito sin coincidencias; omite binarios/UTF-8 inválido. glob filtra el nombre cuando path es un archivo. |
 | `fetch` / fetch.ts | `url`; `method="GET"`, `headers`, `body`, `bodyType="json"` | HTTP/S con fetch nativo; URL final, status/statusText, headers y body texto completo, sin timeout del harness. |
-| `shell` / shell.ts | `command` | Bun Shell ($) en subproceso Bun propio con cwd del proyecto. stdout/stderr completos, exitCode y cancelled. Espera finalización o cancelación, sin timeout. |
+| `shell` / shell.ts | `command` | Bun Shell ($) en subproceso Bun propio con cwd del proyecto. Muestra stdout/stderr en vivo en el chat del proyecto; devuelve salida completa, exitCode y cancelled al salir. Espera finalización o cancelación, sin timeout. |
 | `internal_skill` / internal_skill.ts | `name` opcional | Sin nombre, catálogo de internas; con nombre, instrucciones software-project/debug-and-verify/create-pdf. Sin ejecución de scripts. |
 | `markdown_html` / markdown_html.ts | Exactamente uno: `markdown` o `path`; `outputPath`, `standalone=false`, `title="S42 Agent"` opcionales | Bun.markdown.html sobre el input completo. Guarda el HTML o lo devuelve íntegro como JSON. |
 | `websocket` / websocket.ts | `url`; `headers`, `protocols`, `messages` opcionales; `receiveCount=1` | ws/wss, una conexión por call. Recibe la cantidad pedida sin techo agregado, con textos/binarios base64 completos. Espera respuestas, cierre remoto o cancelación. |
@@ -41,6 +41,11 @@ Argv internos se escapan; el texto command de la tool es un programa Shell.
 Bun Shell admite pipes/redirecciones/builtins, pero no toda la sintaxis Bash/cmd:
 redirigir stderr con `1>&2`; background `&` no está soportado. Para sintaxis de
 un shell externo, invocarlo explícitamente si está instalado.
+Los verificadores deben cerrar timers, sockets y otros recursos al terminar sus
+comprobaciones; los mocks de código de navegador deben reemplazar o limpiar los
+timers de animación/audio. Imprimir un resultado no finaliza un comando cuyo
+proceso sigue vivo. La TUI muestra la salida recibida inmediatamente; Ctrl+C
+cancela y conserva la salida parcial.
 
 El harness no impone cuotas de pasos, tiempo, tamaño de archivo, cantidad de
 adjuntos o payloads. Ctrl+C cancela el trabajo. Se conservan validación de

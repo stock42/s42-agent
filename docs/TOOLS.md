@@ -14,9 +14,9 @@ for existing integrations. The catalog is visible in **Tools → Native tools**.
 | `edit` / edit.ts | `path`, `oldText`, `newText` | One unique literal replacement in the complete file. Zero/multiple matches or empty oldText: error without writing. |
 | `list` / list.ts | `path="."`; optional `glob` | All entries, with `/` for folders. A glob traverses files. |
 | `find` / find.ts | `pattern`; `path="."`, optional `limit`, `includeIgnored=false` | All matches by name or Bun glob, absolute paths and counts. limit only selects an explicitly requested count, with no added ceiling. |
-| `search` / search.ts | `pattern`; `path="."`, `glob="**/*"` | Case-sensitive literal content in complete files. All `file:line:text` matches; skips binary/invalid UTF-8. |
+| `search` / search.ts | `pattern`; `path="."`, `glob="**/*"` | Case-sensitive literal content in a file or recursively in a directory; pattern is not a regex. All `file:line:text` matches or an explicit no-match result; skips binary/invalid UTF-8. glob filters the file name when path is a file. |
 | `fetch` / fetch.ts | `url`; `method="GET"`, `headers`, `body`, `bodyType="json"` | HTTP/S through native fetch; final URL, status/statusText, headers and complete text body, with no harness timeout. |
-| `shell` / shell.ts | `command` | Bun Shell ($) in its own Bun subprocess with project cwd. Complete stdout/stderr, exitCode and cancelled. Waits for completion or cancellation, without a timeout. |
+| `shell` / shell.ts | `command` | Bun Shell ($) in its own Bun subprocess with project cwd. Streams stdout/stderr to the project's chat; returns complete output, exitCode and cancelled at exit. Waits for completion or cancellation, without a timeout. |
 | `internal_skill` / internal_skill.ts | Optional `name` | Without a name, the internal catalog; with a name, software-project/debug-and-verify/create-pdf instructions. No script execution. |
 | `markdown_html` / markdown_html.ts | Exactly one of `markdown` or `path`; optional `outputPath`, `standalone=false`, `title="S42 Agent"` | Bun.markdown.html on complete input. Saves HTML or returns it in full as JSON. |
 | `websocket` / websocket.ts | `url`; optional `headers`, `protocols`, `messages`; `receiveCount=1` | ws/wss, one connection per call. Receives the requested count without an added ceiling, with complete text/base64 binary. Waits for replies, remote closure or cancellation. |
@@ -41,6 +41,10 @@ capture, without timeouts or clipping. Internal argv is escaped; the tool's
 command text is a Shell program. Bun Shell supports pipes/redirects/builtins but
 not all Bash/cmd syntax: redirect stderr with `1>&2`; background `&` is unsupported.
 For external-shell syntax, invoke that shell explicitly if installed.
+Verification scripts must close timers, sockets and other handles after their
+checks; browser-code mocks must stub or clean up animation/audio timers. Printing
+a result does not complete a command while its process remains alive. The TUI
+shows the received output immediately; Ctrl+C cancels and retains partial output.
 
 The harness imposes no step, time, file-size, attachment-count or payload quotas.
 Ctrl+C cancels work. Argument/format validation and actual provider, operating

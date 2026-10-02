@@ -1,13 +1,18 @@
 import { resolve } from "node:path";
 import { killTree } from "../agent/process.ts";
 
-async function capture(stream: ReadableStream<Uint8Array>) {
+export type CommandOutput = (stream: "stdout" | "stderr", text: string) => void;
+
+async function capture(stream: ReadableStream<Uint8Array>, onOutput?: (text: string) => void) {
   const reader = stream.getReader(), chunks: Uint8Array[] = [];
+  const decoder = new TextDecoder();
   try {
     while (true) {
       const { done, value } = await reader.read(); if (done) break;
       chunks.push(value);
+      if (onOutput) { const text = decoder.decode(value, { stream: true }); if (text) onOutput(text); }
     }
+    if (onOutput) { const tail = decoder.decode(); if (tail) onOutput(tail); }
   } finally { reader.releaseLock(); }
   return Buffer.concat(chunks).toString();
 }
@@ -15,7 +20,7 @@ async function capture(stream: ReadableStream<Uint8Array>) {
 // ShellPromise has no cancellation API. Run Bun Shell in our own subprocess so
 // Ctrl+C can terminate the interpreter and its descendants, also in a binary.
 export async function runCommand(command: string | string[], options: {
-  cwd?: string; signal: AbortSignal; env?: NodeJS.ProcessEnv;
+  cwd?: string; signal: AbortSignal; env?: NodeJS.ProcessEnv; onOutput?: CommandOutput;
 }) {
   options.signal.throwIfAborted();
   const entry = Bun.isStandaloneExecutable ? [] : [resolve(import.meta.dir, "../../index.ts")];
@@ -29,7 +34,10 @@ export async function runCommand(command: string | string[], options: {
   options.signal.addEventListener("abort", abort, { once: true });
   if (options.signal.aborted) abort();
   try {
-    const [out, err, exitCode] = await Promise.all([capture(child.stdout), capture(child.stderr), child.exited]);
+    const [out, err, exitCode] = await Promise.all([
+      capture(child.stdout, options.onOutput && (text => options.onOutput!("stdout", text))),
+      capture(child.stderr, options.onOutput && (text => options.onOutput!("stderr", text))), child.exited,
+    ]);
     return { stdout: out, stderr: err, exitCode, timedOut: false, cancelled: options.signal.aborted,
       truncated: false, failed: exitCode !== 0 || options.signal.aborted };
   } finally { options.signal.removeEventListener("abort", abort); await kill(); }

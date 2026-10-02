@@ -5,6 +5,33 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Corregido — Salida de shell en vivo y cronología del chat
+
+- stdout/stderr llega al chat del proyecto mientras el comando sigue activo,
+  sin esperar su salida. Decodifica UTF-8 fragmentado y conserva la salida
+  completa al terminar o cancelar; el resultado se persiste una sola vez.
+  No agrega timeouts, cuotas ni cortes. Las instrucciones del agente y shell
+  indican cerrar timers/sockets/handles de verificadores y mocks de navegador.
+- Avisos, turnos fallidos/cancelados y reasoning de compactación se muestran
+  en el orden de los eventos, también al reabrir y cambiar idioma. Los fallos
+  históricos ya no aparecen después de herramientas del turno actual; se
+  conservan mensajes y avisos de recuperación sin duplicar los persistidos.
+- search acepta una ruta de archivo además de carpetas, evitando ENOTDIR.
+  Mantiene glob, UTF-8, líneas y AGENTS aplicables. Distingue un resultado sin
+  coincidencias de una exclusión y aclara que pattern es texto literal.
+  Catálogo y manuales ES/EN actualizados.
+- Typecheck correcto; 214 pass/0 fail, 3.397 assertions, 42 archivos. Regresiones
+  cubren shell aún vivo tras imprimir su resultado, stdout/stderr y Unicode,
+  cancelación, proyectos, persistencia, cronología y búsqueda por archivo.
+  `bun run dev` en PTY muestra salida antes del cierre, soporta resize y
+  restaura terminal con Ctrl+C/Ctrl+Q. No prueba mouse físico del emulador.
+- DeepSeek real aceptó 89 mensajes del historial copiado, con 83.530 tokens
+  de entrada y sin HTTP 400. En una copia aislada corrigió el verificador real
+  que dejaba un intervalo abierto; recuperó un error de sintaxis de Bun Shell
+  y completó el turno. Reejecución independiente termina en 15 ms, exit 0,
+  sin timeout ni cierre forzado. Prueba DOM simulada, no juego visual en browser.
+  Configuración, sesión y archivos personales intactos; evidencia en private/qa.
+
 ### Agregado — Copia automática de la selección del chat
 
 - Seleccionar texto de respuestas copia automáticamente al soltar el mouse;

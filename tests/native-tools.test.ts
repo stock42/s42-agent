@@ -4,6 +4,32 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execute, toolDefinitions } from "../src/agent/tools/index.ts";
 
+test("search acepta una ruta de archivo HTML, glob, UTF-8 y cancelación sin ENOTDIR", async () => {
+  const root = await mkdtemp(join(tmpdir(), "s42-search-file-")), signal = new AbortController().signal;
+  const run = (args: object, cancellation = signal) => execute("search", JSON.stringify(args), root, cancellation);
+  try {
+    await Bun.write(join(root, "sub/AGENTS.md"), "Instrucciones del archivo");
+    const path = join(root, "sub/tetris á.html");
+    await Bun.write(path, "<html>\n<script> // á文🙂\n</script>\n</html>\n");
+    const result = await run({ path, pattern: "script" });
+    expect(result.failed).toBe(false);
+    expect(result.output).toContain("sub/tetris á.html:2: <script> // á文🙂");
+    expect(result.output).toContain("sub/tetris á.html:3: </script>");
+    expect(result.output).toContain("Instrucciones del archivo");
+    expect((await run({ path: "sub/tetris á.html", pattern: "script", glob: "*.html" })).output).toContain(":2:");
+    expect((await run({ path, pattern: "script", glob: "*.ts" })).output).not.toContain(":2:");
+    expect((await run({ path: "sub", pattern: "script", glob: "**/*.html" })).output).toContain(":3:");
+    const literal = await run({ path, pattern: "script|html" });
+    expect(literal.failed).toBe(false); expect(literal.output).toContain("Sin coincidencias literales");
+    expect(literal.output).toContain("pattern no admite expresiones regulares");
+    await Bun.write(join(root, "binary.html"), new Uint8Array([0, 115, 99, 114, 105, 112, 116, 255]));
+    expect((await run({ path: "binary.html", pattern: "script" })).output).not.toContain("binary.html:");
+    expect((await run({ path: "missing.html", pattern: "script" })).failed).toBe(true);
+    const abort = new AbortController(); abort.abort(new Error("Cancelado por usuario"));
+    expect((await run({ path, pattern: "script" }, abort.signal)).output).toBe("Cancelado por usuario");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test("find busca nombre/glob fuera del proyecto, respeta límites, omisiones y cancelación", async () => {
   const root=await mkdtemp(join(tmpdir(),"s42-native-find-")), project=join(root,"proyecto"), outside=join(root,"otro");
   await mkdir(project);await mkdir(join(outside,"sub"),{recursive:true});await mkdir(join(outside,"node_modules"));

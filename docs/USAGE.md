@@ -313,6 +313,10 @@ and during streaming; turning it back **on** reveals the received content. Sessi
 retain it and tools stay visible. Chat displays partial tool-call arguments,
 execution and results, and executes only complete calls. Selection, scrolling
 and reading remain available.
+Shell stdout/stderr appears as it arrives, even while a command keeps running.
+The tool returns its complete result when the process exits or you cancel with
+Ctrl+C. Notices, failed/cancelled turns and compaction reasoning remain in their
+original position in the chat, including after reopening the session.
 
 If the model reaches its output limit, the agent preserves the partial response
 and asks it to split the request into smaller stages. Each stage appears in

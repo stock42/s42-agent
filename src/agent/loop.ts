@@ -13,7 +13,9 @@ import { activeHistory, compactContext, contextWeight, estimateContext, nearCont
 
 export async function runTurn(options: { project: Project; session: Session; provider: Provider; model: Model; key?: string; signal: AbortSignal;
   mcpServers?:McpServer[]; skills?:Skill[]; onNotice?:(text:string)=>void; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
-  onModel?: (model: Model) => Promise<void>; onContext?: (usage: ContextUsage) => void; onToolStart?: (call: ToolCall) => void; onUsage?: (usage: TokenUsage) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number; tokens: TokenUsage }> {
+  onModel?: (model: Model) => Promise<void>; onContext?: (usage: ContextUsage) => void; onToolStart?: (call: ToolCall) => void;
+  onToolOutput?: (call: ToolCall, stream: "stdout" | "stderr", text: string) => void;
+  onUsage?: (usage: TokenUsage) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number; tokens: TokenUsage }> {
   const { session, project, signal } = options;
   const model = await runtimeModel(options.provider, options.model, options.key, signal);
   const previousContext = session.state.contextUsage;
@@ -141,7 +143,8 @@ export async function runTurn(options: { project: Project; session: Session; pro
         await session.append({ type: "tool-start", callId: call.id, name: call.function.name, arguments: call.function.arguments });
         options.onState(`Ejecutando ${call.function.name}…`);
         options.onToolStart?.(call);
-        const tool = call.function.name==="skill" ? await skills.execute(call.function.arguments,signal) : mcp.has(call.function.name) ? await mcp.execute(call.function.name,call.function.arguments,signal) : await execute(call.function.name, call.function.arguments, project.path, signal);
+        const tool = call.function.name==="skill" ? await skills.execute(call.function.arguments,signal) : mcp.has(call.function.name) ? await mcp.execute(call.function.name,call.function.arguments,signal) : await execute(call.function.name, call.function.arguments, project.path, signal,
+          options.onToolOutput && ((stream, text) => options.onToolOutput!(call, stream, text)));
         failed = tool.failed; output = JSON.stringify(tool);
         if (signal.aborted) aborted = new Error("Turno cancelado; los efectos ya realizados se conservan");
       }

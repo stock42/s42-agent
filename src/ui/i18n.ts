@@ -183,6 +183,10 @@ const english: Readonly<Record<string, string>> = {
   "Agente": "Agent",
   "Herramienta · {0}": "Tool · {0}",
   "Herramienta · {0} · ejecutando…": "Tool · {0} · running…",
+  "stdout · {0}:": "stdout · {0}:",
+  "stderr · {0}:": "stderr · {0}:",
+  "Turno fallido:": "Turn failed:",
+  "Turno cancelado:": "Turn cancelled:",
   "resultado": "result",
   "recibiendo…": "receiving…",
   " · continuación": " · continued",
@@ -487,9 +491,9 @@ const spanish: Readonly<Record<string, string>> = {
   "Replace one exact unique oldText occurrence with newText. Fails without changes if not unique.": "Reemplazar una coincidencia exacta y única de oldText con newText. Si no es única, falla sin cambios.",
   "List directory entries or files matching a recursive glob. Omits .git, node_modules, dist and out.": "Listar entradas del directorio o archivos de un glob recursivo. Omite .git, node_modules, dist y out.",
   "Find files recursively by case-insensitive name substring or Bun glob. path can be any directory on disk. Does not follow symlinks; skips .git/node_modules/dist/out unless includeIgnored=true.": "Buscar archivos por parte del nombre sin distinguir mayúsculas o por glob de Bun. path puede ser cualquier directorio del disco. No sigue enlaces; omite .git/node_modules/dist/out salvo includeIgnored=true.",
-  "Search literal text in files recursively. Returns paths and line numbers; omits .git, node_modules, dist and out.": "Buscar texto literal en archivos de forma recursiva. Devuelve rutas y números de línea; omite .git, node_modules, dist y out.",
+  "Search case-sensitive literal text in a file or recursively in a directory. pattern is not a regular expression; use separate calls for alternatives. path accepts a file or directory; glob filters file names. Returns paths and line numbers; directory traversal omits .git, node_modules, dist and out.": "Buscar texto literal sensible a mayúsculas en un archivo o recursivamente en una carpeta. pattern no es una expresión regular; usar llamadas separadas para alternativas. path acepta archivo o carpeta; glob filtra nombres. Devuelve rutas y líneas; al recorrer carpetas omite .git, node_modules, dist y out.",
   "HTTP request to any http/https URL with method, headers and optional JSON, URL-encoded form, multipart form or text body. Returns status, headers and complete text body; HTTP errors fail the tool.": "Request HTTP a cualquier URL http/https con método, headers y body opcional JSON, formulario URL-encoded, multipart o texto. Devuelve status, headers y body de texto completo; los errores HTTP hacen fallar la tool.",
-  "Run a non-interactive command with Bun Shell in the project directory. Supports pipes, redirects and builtins; not all Bash/cmd syntax. Return complete stdout/stderr, exit code and duration. Runs until completion or cancellation.": "Ejecutar comandos con Bun Shell en el proyecto. Admite pipes, redirecciones y comandos internos; no toda la sintaxis Bash/cmd. Devuelve stdout/stderr completos, código de salida y duración. Espera finalización o cancelación.",
+  "Run a non-interactive command with Bun Shell in the project directory. Supports pipes, redirects and builtins; not all Bash/cmd syntax. Streams stdout/stderr to the UI and returns their complete contents, exit code and duration when the process exits. Runs until completion or cancellation; verification scripts must close timers and other open resources to exit.": "Ejecutar comandos con Bun Shell en el proyecto. Admite pipes, redirecciones y comandos internos; no toda la sintaxis Bash/cmd. Muestra stdout/stderr en vivo y devuelve salida completa, código y duración al salir. Espera finalización o cancelación; los verificadores deben cerrar timers y otros recursos para terminar.",
   "Scrape a rendered HTTP(S) page with Bun.WebView, including JavaScript content. Return title, URL, text or HTML and links. Optional CSS selector waits for an element; requires an installed Chrome-family browser on Linux/Windows.": "Extraer una página HTTP(S) renderizada con Bun.WebView, incluido contenido JavaScript. Devuelve título, URL, texto o HTML y enlaces. Espera el selector CSS opcional; requiere Chrome, Chromium, Edge o Brave instalado en Linux/Windows."
 };
 

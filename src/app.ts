@@ -522,7 +522,7 @@ export class App {
   showHistory(reset = true, tab = this.activeTab): void {
     const messages = tab.session?.state.messages ?? [];
     const names = new Map(messages.flatMap(m => m.tool_calls?.map(call => [call.id, call.function.name] as const) ?? []));
-    const rendered = messages.map(m => {
+    const renderMessage = (m: Message): string => {
       let cached = tab.rendered.get(m); if (cached !== undefined) return cached;
       let content = typeof m.content === "string" ? m.content : m.content?.map(part => part.type === "text" ? part.text : this.desktop.t("[Imagen adjunta guardada en la sesión]")).join("\n");
       if(m.role==="tool" && typeof content==="string") try {
@@ -537,21 +537,44 @@ export class App {
         m.tool_calls?.map(c => `Tool call · ${c.function.name}\n${c.function.arguments}`).join("\n\n") ?? ""].filter(Boolean);
       cached = sections.length ? `${label}:\n${sections.join("\n\n")}` : "";
       tab.rendered.set(m, cached); return cached;
-    });
+    };
     const fragments: TextFragment[] = [];
-    for (const [index, text] of rendered.entries()) {
-      if (!text) continue;
+    const appendText = (text: string) => {
+      if (!text) return;
       if (fragments.length) fragments.push({ text: "\n\n" });
-      const role = messages[index]!.role, end = text.indexOf("\n");
+      fragments.push({ text });
+    };
+    const appendMessage = (message: Message) => {
+      const text = renderMessage(message);
+      if (!text) return;
+      if (fragments.length) fragments.push({ text: "\n\n" });
+      const role = message.role, end = text.indexOf("\n");
       if (role === "user" || role === "assistant") {
         fragments.push({ text: text.slice(0, end), style: role === "user" ? theme.chatUser : theme.chatAgent }, { text: text.slice(end) });
       } else fragments.push({ text });
+    };
+    const represented = new Set<Message>(), notices = new Map<string, number>();
+    const recordNotice = (text: string) => notices.set(text, (notices.get(text) ?? 0) + 1);
+    for (const event of tab.session?.state.events ?? []) {
+      if (event.type === "message") { appendMessage(event.message); represented.add(event.message); }
+      if (event.type === "notice") { appendText(this.desktop.t(event.text)); recordNotice(event.text); }
+      if (event.type === "turn" && event.state !== "completed") {
+        appendText(`${this.desktop.t(event.state === "failed" ? "Turno fallido:" : "Turno cancelado:")}\n${this.desktop.t(event.detail)}`);
+        recordNotice(event.detail);
+      }
+      if (event.type === "compaction-part" && this.store.value.ui.showReasoning) {
+        const reasoning = event.message.reasoning_content ?? event.message.reasoning;
+        if (reasoning) {
+          if (fragments.length) fragments.push({ text: "\n\n" });
+          fragments.push({ text: `${this.desktop.t("Razonamiento · compactación:")}\n${reasoning}`, style: theme.chatAgent });
+        }
+      }
     }
-    if (tab.session?.state.notices.length) fragments.push({ text: "\n\n" + tab.session.state.notices.map(this.desktop.t).join("\n") });
-    if (this.store.value.ui.showReasoning) for (const event of tab.session?.state.events ?? []) {
-      if (event.type !== "compaction-part") continue;
-      const reasoning = event.message.reasoning_content ?? event.message.reasoning;
-      if (reasoning) fragments.push({ text: `\n\n${this.desktop.t("Razonamiento · compactación:")}\n${reasoning}`, style: theme.chatAgent });
+    // Keep in-memory messages and recovery notices that have no persisted event.
+    for (const message of messages) if (!represented.has(message)) appendMessage(message);
+    for (const text of tab.session?.state.notices ?? []) {
+      const count = notices.get(text) ?? 0;
+      if (count) notices.set(text, count - 1); else appendText(this.desktop.t(text));
     }
     for (const chunk of tab.live.filter(chunk => !chunk.reasoning || this.store.value.ui.showReasoning)) {
       fragments.push({ text: `\n\n${this.desktop.t(chunk.label)}\n`, style: chunk.id === "answer" || chunk.reasoning ? theme.chatAgent : undefined }, { text: chunk.text });
@@ -823,6 +846,7 @@ export class App {
               call.function.arguments.slice(previous?.function.arguments.length ?? 0));
           },
           onToolStart: call => { appendLive(`running-${call.id}`,`Herramienta · ${call.function.name} · ejecutando…`,""); },
+          onToolOutput: (call, stream, text) => { appendLive(`output-${call.id}-${stream}`,`${stream} · ${call.function.name}:`,text); },
           onDelta: delta => { tab.status = tab.agentState = "Respondiendo…";appendLive("answer","Agente:",delta); } });
         tab.status = result.tokens.reported ? `Listo · E/S ${result.tokens.input ?? "N/D"}/${result.tokens.output ?? "N/D"}${result.tokens.partial ? " · parcial" : ""}` : "Listo · uso no reportado";
         await session.append({ type: "turn", state: "completed", detail: tab.status, tokens: tab.tokens });
