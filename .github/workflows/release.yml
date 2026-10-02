@@ -22,6 +22,10 @@ jobs:
           bun-version: "1.4.2"
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
+      - name: Read release version
+        run: |
+          S42_RELEASE_VERSION="$(bun -e 'import { version } from "./package.json"; console.log(version)')"
+          echo "S42_RELEASE_VERSION=$S42_RELEASE_VERSION" >> "$GITHUB_ENV"
       - name: Install Linux keyring test dependencies
         run: |
           sudo apt-get update
@@ -40,10 +44,15 @@ jobs:
       - name: Compile all six platforms
         run: bun run build:targets
       - name: Exercise Linux x64 outside the checkout
-        run: bun run smoke:binary dist/s42-agent-0.1.0-linux-x64
+        run: bun run smoke:binary "dist/s42-agent-${S42_RELEASE_VERSION}-linux-x64"
       - name: Package the checked executables
         run: bun run scripts/build-release.ts --package-only
       - name: Verify assets and create a draft prerelease
         env:
           GH_TOKEN: ${{ github.token }}
         run: bun run scripts/release-draft.ts --create
+      - name: Upload the combined package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "v${S42_RELEASE_VERSION}" "dist/s42-agent-${S42_RELEASE_VERSION}-all-platforms.tar.gz" --repo "$GITHUB_REPOSITORY"

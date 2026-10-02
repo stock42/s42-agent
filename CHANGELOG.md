@@ -5,6 +5,18 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Preparado — Administración GitHub y prerelease privada
+
+- Acceso GitHub configurado verificado con permisos de administración sobre
+  stock42/s42-agent. El usuario autorizó gestionar packages/releases y eligió
+  publicar v0.1.0 como prerelease dentro del repositorio privado.
+- Workflow de distribución toma la versión de package.json y sube el tar.gz
+  conjunto además de los once assets existentes. Guías EN/ES, notas e
+  instrucciones de instalación privada actualizadas; sin cambiar visibilidad.
+- CI remoto del commit 96e32f8: primer intento agotó 15 s en WebView; segundo
+  intento completado correctamente sin modificar código. Prueba WebView local:
+  dos pass, cero fail. Publicación se ejecuta después de validar los assets.
+
 ### Actualizado — Push al terminar cada tarea
 
 - Regla Git actualizada por pedido del usuario: pull antes de empezar;

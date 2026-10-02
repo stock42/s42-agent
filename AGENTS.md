@@ -70,6 +70,18 @@ de esa carpeta para runtime, tests, CI o releases. Builds, manifiestos y smoke
 de distribución se generan en `dist/`.
 No usar `git add -f` para publicar material privado por inferencia.
 
+## GitHub y distribución
+
+El usuario autorizó administrar packages y releases de `stock42/s42-agent`.
+Preferencia actual: prereleases publicadas dentro del repositorio privado.
+Para tareas de distribución, generar los seis binarios y el paquete conjunto,
+validar CI, checksums y smoke Linux, subir los assets y publicar la prerelease
+sin pedir otra confirmación. Usar el acceso configurado sin mostrar ni guardar
+credenciales. Conservar la visibilidad del repositorio.
+El workflow de release genera primero un borrador para verificar sus assets;
+publicarlo como prerelease después de la verificación. Los paquetes son binarios
+y tar.gz; `package.json` sigue con `private: true`.
+
 ## Preferencias globales del usuario
 
 - Nunca crear archivos `.env.local`. Respetar el mecanismo de configuración

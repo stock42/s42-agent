@@ -60,10 +60,11 @@ sin instalar Bun por separado. El servidor/modelo LLM y los programas externos
 usados por shell/MCP se configuran aparte.
 [Ejecutables independientes de Bun](https://bun.com/docs/bundler/executables).
 
-> **Disponibilidad de descarga:** las URLs públicas de los instaladores y la
-> release todavía no están disponibles. Los comandos de descarga funcionarán
-> cuando se publiquen el repositorio y los assets de **v0.1.0**. Mientras tanto,
-> usá la instalación local que aparece abajo. [Preparar la release](docs/PUBLISHING.es.md).
+> **Repositorio privado:** descargar releases requiere acceso GitHub autorizado.
+> Los comandos de descarga de un paso usan URLs públicas y requieren acceso
+> público al repositorio y sus assets. Para instalar desde el repo privado,
+> descargá el paquete conjunto desde Releases, extraelo y usá el instalador local.
+> [Preparar la release](docs/PUBLISHING.es.md).
 
 ### Linux · un comando
 
@@ -110,6 +111,18 @@ una vez publicados. Los ejecutables se acompañan de `SHASUMS256.txt`.
 Windows requiere Windows 10 1809 o posterior; macOS requiere 13 o posterior.
 Los binarios Linux usan glibc; Alpine/musl requiere otro target.
 [Requisitos de Bun por plataforma](https://bun.com/docs/installation).
+
+Después de extraer el paquete conjunto de la release, instalá desde su carpeta:
+
+```bash
+# Linux o macOS
+bash install.sh --from-dir .
+```
+
+```powershell
+# Windows PowerShell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -FromDirectory .
+```
 
 Desde un clon que tenga los archivos generados en `dist/`, la instalación local
 también es un comando:

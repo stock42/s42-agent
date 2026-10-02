@@ -59,10 +59,11 @@ The compiled agent includes the Bun runtime: you can install and run it without
 installing Bun separately. Your LLM server/model and external shell/MCP programs
 remain separate. [How Bun standalone executables work](https://bun.com/docs/bundler/executables).
 
-> **Download availability:** the public installer and release URLs are currently
-> unavailable. The one-command downloads below become usable after the repository
-> and **v0.1.0** release assets are published. For now, use the local installation
-> commands below. [Release preparation](docs/PUBLISHING.md).
+> **Private repository:** release downloads require authorized GitHub access.
+> The one-command downloads below use public URLs and require public access to
+> the repository and release assets. For private installation, download the
+> combined package from Releases, extract it and use the local installer below.
+> [Release preparation](docs/PUBLISHING.md).
 
 ### Linux · one command
 
@@ -109,6 +110,18 @@ after publication. `SHASUMS256.txt` accompanies the raw executables.
 Windows requires Windows 10 1809 or later; macOS requires 13 or later.
 Linux binaries target glibc, rather than Alpine/musl.
 [Bun platform requirements](https://bun.com/docs/installation).
+
+After extracting the combined release package, install from its folder:
+
+```bash
+# Linux or macOS
+bash install.sh --from-dir .
+```
+
+```powershell
+# Windows PowerShell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -FromDirectory .
+```
 
 From a clone containing generated `dist/` files, install locally in one command:
 

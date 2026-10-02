@@ -41,14 +41,21 @@ These commands do not need `private/`.
 
 ## Manual workflow
 
+The user has authorized the assistant to manage this project's packages and
+releases. The current delivery preference is a published prerelease in the
+private repository. Use configured GitHub access; do not store credentials in
+the source or change repository visibility.
+
 After pushing the completed task's commit and checking its CI:
 
 1. Open **Actions → Prepare draft release → Run workflow**, selecting main.
 2. The [workflow](../.github/workflows/release.yml) checks types/tests with a
    temporary keychain, builds six targets, runs Linux smoke and packages.
-3. It creates a **draft prerelease** with eleven assets and the run's SHA as
-   target. Review the draft before publishing.
-4. After publishing, check download URLs and both installers.
+3. It creates a **draft prerelease** with eleven distribution assets and uploads
+   the combined tar.gz package as a twelfth asset. The target is the run's SHA.
+4. Verify names, sizes, SHA-256 and the Linux runtime evidence in the build
+   manifest, then publish the checked draft as a prerelease.
+5. Check the published release and downloads with authorized GitHub access.
 
 Only `workflow_dispatch` starts this flow. It uses GITHUB_TOKEN with contents: write;
 pushes/PRs do not create releases. An existing release is not replaced.
@@ -59,9 +66,11 @@ A draft can also be created with authenticated GitHub CLI:
 bun run scripts/release-draft.ts --create
 ```
 
-This command requires explicit authorization to upload the draft and HEAD must
-already exist on the remote. It does not push or publish the draft. The
-all-platforms.tar.gz package can be attached as an additional asset.
+The user's authorization covers this draft upload; HEAD must already exist on
+the remote. This command does not push or publish the draft. Attach the generated
+all-platforms.tar.gz package too, then verify and publish the prerelease. The
+workflow handles that additional upload automatically. An authenticated GitHub
+API client can dispatch the workflow and publish its verified draft.
 
 ## Public files
 
@@ -75,7 +84,7 @@ GitHub cover. Campaigns, announcements, image prompts, plans and local reports
 stay in ignored `private/`.
 
 Finish each task with its CHANGELOG update, commit and push to the configured
-remote branch, as instructed by the user. Changing visibility, running the
-release workflow, uploading a release or publishing announcements still requires
-an explicit request. `package.json` retains `private: true` because no npm package
-is published.
+remote branch, as instructed by the user. Distribution tasks include running
+the release workflow and publishing verified prereleases in this private repo.
+Visibility changes and external announcements still require an explicit request.
+`package.json` retains `private: true` because no npm package is published.

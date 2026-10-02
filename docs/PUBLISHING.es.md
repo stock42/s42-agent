@@ -42,14 +42,21 @@ contrato de los instaladores. Los comandos anteriores no necesitan `private/`.
 
 ## Workflow manual
 
+El usuario autorizó al asistente a administrar packages y releases del proyecto.
+La preferencia actual es publicar prereleases en el repositorio privado. Usar
+el acceso GitHub configurado, sin guardar credenciales en la fuente ni cambiar
+la visibilidad del repositorio.
+
 Después de subir el commit de la tarea terminada y comprobar su CI:
 
 1. Abrir **Actions → Prepare draft release → Run workflow**, seleccionando main.
 2. El [workflow](../.github/workflows/release.yml) verifica tipos y tests con
    llavero temporal, genera seis destinos, ejecuta el smoke Linux y empaqueta.
-3. Crea una **draft prerelease** con once assets, usando el SHA del run como
-   target. Revisar el borrador antes de publicarlo.
-4. Después de publicar, comprobar las URLs de descarga y ambos instaladores.
+3. Crea una **draft prerelease** con once assets de distribución y sube el paquete
+   tar.gz conjunto como duodécimo asset. El target es el SHA del run.
+4. Verificar nombres, tamaños, SHA-256 y evidencia de runtime Linux en el
+   manifiesto de builds; después publicar el borrador comprobado como prerelease.
+5. Comprobar la release publicada y las descargas con acceso GitHub autorizado.
 
 Solo `workflow_dispatch` inicia este flujo. Usa GITHUB_TOKEN con contents: write;
 los pushes/PR no crean releases. Una release existente no se reemplaza.
@@ -60,9 +67,11 @@ También puede crearse el borrador con GitHub CLI autenticado:
 bun run scripts/release-draft.ts --create
 ```
 
-Este comando requiere autorización explícita para subir el borrador y que HEAD
-ya esté en el remoto. No hace push ni publica el borrador. El paquete
-all-platforms.tar.gz puede adjuntarse como asset adicional.
+La autorización del usuario cubre subir este borrador; HEAD debe estar en el
+remoto. El comando no hace push ni publica el borrador. Adjuntar también el
+all-platforms.tar.gz generado, verificar y publicar la prerelease. El workflow
+hace esa subida adicional automáticamente. Un cliente autenticado de la API
+GitHub puede iniciar el workflow y publicar su borrador verificado.
 
 ## Archivos públicos
 
@@ -76,7 +85,7 @@ portada para GitHub. Campañas, anuncios, prompts de imágenes, planes e informe
 locales permanecen en `private/`, ignorado por Git.
 
 Terminar cada tarea con su actualización de CHANGELOG, commit y push a la rama
-remota configurada, por pedido del usuario. Cambiar visibilidad, ejecutar el
-workflow de release, subir una release o publicar anuncios sigue requiriendo un
-pedido explícito. `package.json` conserva `private: true` porque no se publica un
-paquete npm.
+remota configurada, por pedido del usuario. Las tareas de distribución incluyen
+ejecutar el workflow y publicar prereleases verificadas en este repo privado.
+Cambios de visibilidad y anuncios externos siguen requiriendo pedido explícito.
+`package.json` conserva `private: true` porque no se publica un paquete npm.
