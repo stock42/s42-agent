@@ -7,7 +7,7 @@ project tabs and local LLMs — under the [MIT license](LICENSE).
 
 **English** · **[Leer en español](README.es.md)**
 
-[Installation](#installation) · [Launch images](#launch-artwork) · [User guide · Español](docs/USAGE.es.md) ·
+[Installation](#installation) · [User guide · Español](docs/USAGE.es.md) ·
 [Tools](docs/TOOLS.md) · [Contributing](CONTRIBUTING.md)
 
 <img src="screenshots/16-qbasic-typescript.jpg" alt="S42 Agent running: project and file tabs, numbered TypeScript source, syntax colors and a permanent prompt" width="960">
@@ -308,30 +308,12 @@ If your terminal cannot distinguish Shift+Enter, use Ctrl+J.
 visibility and CPU/RAM/disk/VRAM indicators. Input/output tokens and average tok/s
 remain visible; unavailable provider or device counters show N/A.
 
-## Recorded benchmark
-
-The [v0.1.0 Linux x64 benchmark](docs/qa/benchmark-s42-agent-0.1.0-linux-x64.json)
-records:
-
-| Measurement | Result |
-| --- | --- |
-| Startup p95 | 24.43 ms |
-| Input p95 | 35.95 ms |
-| SSE delta to frame p95 | 4.07 ms |
-| Idle RSS | 46.64 MiB |
-| Resume 1,000 session messages | 42.07 ms |
-
-Historical binary measurement: hot OS cache, received PTY bytes, no graphical
-emulator painting and no LLM inference. These figures are not a fresh benchmark
-of the current source. See [methodology](docs/qa/final-validation.md).
-
 ## Status and development
 
 **v0.1.0 is a preview.** Linux x64 has local source, PTY and real-model validation;
 the current compiled binary also passes a smoke test outside the checkout.
 Six current binaries are prepared for release. Execution on Windows, macOS and
 ARM64, and physical terminal mouse/drop coverage, remain pending.
-[Build and installer validation](docs/qa/distribution.md).
 
 ```bash
 bun run typecheck
@@ -343,32 +325,9 @@ An optional `bun run build` creates a host binary. The compiled harness includes
 Bun; the LLM and external commands remain separate.
 
 - [Detailed user guide · Español](docs/USAGE.es.md)
-- [Tool contracts](docs/TOOLS.md) and [agent design](docs/AGENT-INTELLIGENCE.md)
-- [Latest coding/SQLite QA](docs/qa/reliable-coding-and-sqlite.md)
-- [Publication validation](docs/qa/publication-readiness.md)
-- [Development phases](docs/phases/README.md) and [changelog](CHANGELOG.md)
-- [Release notes](docs/releases/v0.1.0.md) and [launch materials](docs/launch/ANNOUNCEMENTS.md)
-
-## Launch artwork
-
-Five new commercial compositions generated from the final real screenshot
-references, with matching Spanish and English editions. Original captures remain
-in the screenshot gallery above. The benchmark uses the historical v0.1.0 Linux
-x64 results and excludes LLM inference and emulator painting.
-[English campaign and captions](assets/banners/s42-agent-real-tui-2026-10-01/en/README.md) ·
-[Both editions and sources](assets/banners/s42-agent-real-tui-2026-10-01/README.md).
-
-<table>
-  <tr>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/en/01-qbasic-soul.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/en/01-qbasic-soul.png" alt="QBasic soul" width="260"></a><br><strong>QBasic soul</strong></td>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/en/02-projects-and-web.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/en/02-projects-and-web.png" alt="Projects and web preview" width="260"></a><br><strong>Projects and web preview</strong></td>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/en/03-languages-and-themes.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/en/03-languages-and-themes.png" alt="Languages and themes" width="260"></a><br><strong>Languages and themes</strong></td>
-  </tr>
-  <tr>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/en/04-models-and-tools.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/en/04-models-and-tools.png" alt="Models and tools" width="260"></a><br><strong>Models and tools</strong></td>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/en/05-benchmark.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/en/05-benchmark.png" alt="Recorded v0.1.0 benchmark" width="260"></a><br><strong>Recorded v0.1.0 benchmark</strong></td>
-  </tr>
-</table>
+- [Tool contracts](docs/TOOLS.md)
+- [Contributing](CONTRIBUTING.md) and [changelog](CHANGELOG.md)
+- [Release preparation](docs/PUBLISHING.md) and [release notes](docs/releases/v0.1.0.md)
 
 ## Credits
 

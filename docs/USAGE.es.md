@@ -81,7 +81,6 @@ Para reabrir una ejecución con endpoint temporal, repetí sus flags.
 Código de salida: **0** completado, **1** error, **130** cancelado con Ctrl+C
 (SIGINT), **143** SIGTERM. Cancelar libera la sesión y conserva los efectos ya
 realizados. Sin `--prompting` se mantiene el arranque habitual de la TUI.
-[Validación CLI y modelo real](qa/cli.md).
 
 ## Menús
 
@@ -283,7 +282,7 @@ CPU/RAM/disco usan APIs incluidas en Bun, con muestras cada 2 segundos. Disco
 corresponde al volumen del proyecto. VRAM usa contadores Linux DRM o, cuando
 está instalado, `nvidia-smi` vía Bun Shell. Si el SO/driver no informa VRAM,
 muestra N/D; no instala drivers ni programas. En GPU integrada puede no existir
-un contador de memoria dedicada. [Validación](qa/persistent-indicators.md).
+un contador de memoria dedicada.
 
 El chat muestra razonamiento cuando el proveedor envía `reasoning_content`
 o `reasoning` y **Vista → Ver razonamiento** está en **on** (predeterminado).
@@ -310,7 +309,7 @@ resultados y errores aparecen en el chat del proyecto correspondiente.
 
 MCP stdio requiere el comando del servidor instalado. Se soportan tools y
 negociación de protocolo; sampling, elicitation, OAuth y resources/prompts no están
-implementados. [Contrato y QA](qa/mcp-and-skills.md).
+implementados.
 
 ### Skills
 
@@ -319,7 +318,7 @@ El agente incluye `software-project`, `debug-and-verify` y `create-pdf` en
 el modelo usa `internal_skill` para cargar una cuando resulta relevante.
 No ejecutan scripts al cargar. PDF combina HTML nativo de Bun con un
 renderizador instalado (por ejemplo Chrome/Chromium); Bun no imprime PDF por sí
-solo. [Papers, decisiones y mejoras propuestas](AGENT-INTELLIGENCE.md).
+solo.
 
 Estas guías internas conviven con las skills externas configurables:
 
@@ -456,7 +455,7 @@ prompt del agente indica completar la funcionalidad en disco antes de terminar.
 
 Bun hereda el entorno y puede cargar archivos existentes; `--cwd` fija la carpeta
 de las tools, sin cambiar el directorio global del proceso. Para usar solo variables
-exportadas: `bun run --no-env-file index.ts`. [Specs](SPECS.md).
+exportadas: `bun run --no-env-file index.ts`.
 
 ## Desarrollo y distribución
 
@@ -472,10 +471,10 @@ cross-compilar no demuestra que corran en destino. La TUI y las pestañas se val
 desde la fuente en Linux con PTY y fixtures. Hay evidencia previa de GLM real;
 mouse/drop físicos y runtime macOS/Windows/arm64 siguen pendientes.
 
-[QA de pestañas/menús](qa/project-tabs.md), [QA integral](qa/final-validation.md),
-[recuperación/About/skills.sh](qa/staged-recovery.md),
-[skills internas/Markdown/WebSocket](qa/internal-skills.md),
-[fases](phases/README.md), [CHANGELOG](../CHANGELOG.md).
+[CHANGELOG](../CHANGELOG.md) registra los cambios realizados. Los tests y el
+smoke de distribución permanecen versionados. Informes locales y scripts de QA
+de tareas puntuales se archivan en `private/`; los resultados de distribución
+se generan en `dist/`. Ambos directorios están ignorados por Git.
 
 Para contribuir: [CONTRIBUTING.es.md](../CONTRIBUTING.es.md). Preparación de publicación:
 [PUBLISHING.md](PUBLISHING.md). Licencia: [MIT](../LICENSE).

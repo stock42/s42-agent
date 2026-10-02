@@ -26,7 +26,6 @@ const release = {
   downloadBase: `https://github.com/stock42/s42-agent/releases/download/v${version}`,
 };
 await Bun.write(join(directory, "release-files.json"), JSON.stringify(release, null, 2) + "\n");
-await Bun.write(join(root, "docs/qa/release-files.json"), JSON.stringify(release, null, 2) + "\n");
 
 // One local handoff bundle; no GitHub upload or signing is performed here.
 const archiveFiles: Record<string, Uint8Array> = {};

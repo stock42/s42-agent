@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 /** Check the exact upload list; the default command only prints a local plan. */
 export async function releasePlan(root = resolve(import.meta.dir, "..")) {
   const { version } = await Bun.file(join(root, "package.json")).json();
-  const metadata = await Bun.file(join(root, "docs/launch/github-metadata.json")).json();
+  const metadata = await Bun.file(join(root, "docs/releases/metadata.json")).json();
   const release = await Bun.file(join(root, "dist/release-files.json")).json();
   const builds = await Bun.file(join(root, "dist/build-targets.json")).json() as {
     version: string;

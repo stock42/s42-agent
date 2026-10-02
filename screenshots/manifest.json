@@ -493,5 +493,6 @@
       "language": "es",
       "palette": "qbasic"
     }
-  ]
+  ],
+  "historicalSourcePaths": "provenance and copiedFrom record original capture-time locations; duplicate image directories and supporting QA reports are now archived locally outside Git."
 }

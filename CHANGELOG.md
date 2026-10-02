@@ -3,6 +3,29 @@
 Registrar aquí los cambios realizados en s42-agent. Actualizar el archivo al
 cierre de cada tarea e incluirlo en su commit.
 
+## 2026-10-02
+
+### Limpieza — Contenido público y archivo privado
+
+- 152 archivos (aproximadamente 31 MiB) archivados en `private/`: informes y
+  capturas de QA, planes/fases, investigación interna, campañas/anuncios,
+  prompts de imágenes, PNG maestro y capturas duplicadas. Seis scripts de
+  QA/benchmark de tareas puntuales conservados como referencia; cinco comandos
+  correspondientes retirados de package.json. El fixture histórico de stress
+  falla al recibir GET /props y termina con código 1 en la fuente actual.
+- `private/` ignorado por Git y excluido del typecheck. Contenido original
+  verificado por SHA-256, incluida la edición local previa de final-validation.md.
+  Conservar fuente, tests, CI, instaladores, scripts de build/release/smoke,
+  manuales públicos, JPEG social y las 35 capturas finales del README.
+- README EN/ES, manual, contratos, galería, AGENTS y guía de release depurados
+  de enlaces a material interno. Los enlaces históricos de QA en este changelog
+  conservan sus rutas como texto. Metadata mínima de release en docs/releases;
+  builds y smoke escriben resultados solo en dist/, sin duplicarlos en docs/qa.
+- Validación: typecheck y suite con llavero aislado (181 pass, 0 fail); hashes
+  de las 35 capturas y enlaces locales comprobados. Plan local de release con
+  seis binarios y once assets verificado desde una copia pública sin private/.
+  Pull correcto; sin cambios de runtime, recompilación, push ni publicación.
+
 ## 2026-10-01
 
 ### Preparado — Flujo final de publicación de v0.1.0
@@ -220,7 +243,7 @@ cierre de cada tarea e incluirlo en su commit.
 - Typecheck, suite completa 142 tests / 30 archivos y pruebas CLI/TUI finales
   correctas. GLM-4.7-Flash real leyó/editó/verificó una suma: read/read/edit/shell/
   read, test independiente correcto, 12158 entrada/450 salida y 36,5 tok/s.
-  [QA](docs/qa/cli.md), README/specs/AGENTS/fase16 actualizados.
+  QA histórica (`docs/qa/cli.md`), README/specs/AGENTS/fase16 actualizados.
   Sin builds ni push; pull falló por main sin upstream. Cambios ajenos preservados.
 
 ### Mejorado — Promedio tok/s identificado en Prompt
@@ -230,7 +253,7 @@ cierre de cada tarea e incluirlo en su commit.
 - Typecheck y 23 tests relevantes / 499 assertions correctos: promedio ponderado
   entre requests con tasas distintas, contadores grandes/parcial a 60 columnas,
   ES/EN, recursos ocultos y borrador sin superposición. Seis capturas tmux desde
-  index.ts con fixture SSE; [QA](docs/qa/persistent-indicators.md).
+  index.ts con fixture SSE; QA histórica (`docs/qa/persistent-indicators.md`).
   Sin builds ni push; pull falló por main sin upstream. Cambios ajenos preservados.
 
 ### Agregado — Archivos en pestañas y resaltado de sintaxis
@@ -247,7 +270,7 @@ cierre de cada tarea e incluirlo en su commit.
 - Typecheck y suite completa 136 tests / 29 archivos correctos; pruebas finales
   de archivos/sintaxis también correctas. index.ts real en PTY, archivo >64 KiB,
   Unicode, ES/EN, selección, resize, cierre, errores y contexto LLM aislado.
-  [QA y capturas](docs/qa/file-tabs.md), README/specs/AGENTS/fase15 actualizados.
+  QA y capturas histórica (`docs/qa/file-tabs.md`), README/specs/AGENTS/fase15 actualizados.
   Sin builds ni push; pull falló por main sin upstream. Cambios ajenos preservados.
 
 
@@ -261,7 +284,7 @@ cierre de cada tarea e incluirlo en su commit.
   mantienen la identificación de autores.
 - Typecheck y 131 tests / 27 archivos / 2260 assertions correctos; index.ts real
   en PTY, seis paletas, selección, resize y ocultar/mostrar reasoning.
-  [QA](docs/qa/chat-colors.md). Sin builds ni push; pull falló por main sin upstream.
+  QA histórica (`docs/qa/chat-colors.md`). Sin builds ni push; pull falló por main sin upstream.
 
 
 ### Agregado — Actividad animada en el proyecto y estado en el chat

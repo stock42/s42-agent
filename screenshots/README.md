@@ -121,11 +121,10 @@ MCP server or an installed external skill.
 
 ## Preserved earlier captures
 
-Files 01–05 are byte-identical copies from the
-[original line-number gallery](../assets/screenshots/2026-10-01/README.md).
-Files 06–07 preserve the [WebServer QA](../docs/qa/webserver.md) captures.
-Their original locations remain intact so historical QA links keep working.
-Older images may show an earlier menu or tab presentation.
+Files 01–05 preserve the original line-number captures; files 06–07 preserve
+an earlier WebServer/browser run. The JPEGs here remain byte-identical to those
+captures. Duplicate image directories and internal QA reports are archived
+locally outside Git. Older images may show an earlier menu or tab presentation.
 
 <table>
   <tr>
@@ -141,14 +140,6 @@ Older images may show an earlier menu or tab presentation.
   </tr>
 </table>
 
-## Promotional illustrations
-
-The launch artwork has its own galleries: [English campaign](../assets/banners/s42-agent-launch-2026-10-01-en/README.md)
-and [Spanish campaign](../assets/banners/s42-agent-launch-2026-10-01/README.md).
-Those images are illustrations, separate from the real screenshots above.
-The benchmark artwork reproduces the historical v0.1.0 Linux x64 measurements,
-which exclude LLM inference and graphical emulator painting.
-
 ## Capture details
 
 - JPEG viewport sizes: 1680×841 for new captures; original images retain their dimensions.
@@ -157,6 +148,5 @@ which exclude LLM inference and graphical emulator painting.
 - All six palettes and both UI languages were selected through the TUI.
 - The agent closed normally with exit code 0; the temporary capture server was stopped.
 - [manifest.json](manifest.json) records every file's dimensions, bytes, SHA-256 and source batch.
-- [QA record](../docs/qa/screenshot-gallery.md) distinguishes current captures from earlier evidence.
 
 No binary builds, new benchmarks or Windows/macOS runtime validation were performed.

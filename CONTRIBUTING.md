@@ -39,6 +39,14 @@ tests use an installed supported browser and skip that scenario if unavailable.
 Use Bun's APIs where they fit. Avoid adding runtime dependencies without a concrete
 need. Binary tests apply to distribution changes; they do not replace TUI review.
 
+## Repository contents
+
+Keep source tests, CI and reusable build/release tooling versioned. Binary smoke
+reports and build manifests go to ignored `dist/`. Internal plans, local QA
+reports, one-off validation scripts, campaigns and image-generation prompts
+belong in ignored `private/`; source, tests, CI and release commands must work
+without those local files.
+
 ## Report a problem
 
 Reports in English or Spanish are welcome. Include OS, terminal, dimensions,

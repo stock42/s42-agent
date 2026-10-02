@@ -11,9 +11,9 @@ async function fixture() {
   const root = await mkdtemp(join(tmpdir(), "s42-release-plan-"));
   roots.push(root);
   await mkdir(join(root, "dist"));
-  await mkdir(join(root, "docs/launch"), { recursive: true });
+  await mkdir(join(root, "docs/releases"), { recursive: true });
   await Bun.write(join(root, "package.json"), JSON.stringify({ version: "0.1.0" }));
-  await Bun.write(join(root, "docs/launch/github-metadata.json"), JSON.stringify({ repository: "stock42/s42-agent",
+  await Bun.write(join(root, "docs/releases/metadata.json"), JSON.stringify({ repository: "stock42/s42-agent",
     release: { tag: "v0.1.0", title: "Preview", notes: "notes.md" } }));
   await Bun.write(join(root, "notes.md"), "[Readme](https://github.com/stock42/s42-agent/blob/v0.1.0/README.md)");
   const entries = [];

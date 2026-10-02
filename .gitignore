@@ -6,6 +6,9 @@ out
 dist
 *.tgz
 
+# local material: QA reports, plans, campaigns and image prompts
+/private/
+
 # code coverage
 coverage
 *.lcov

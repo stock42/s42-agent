@@ -7,7 +7,7 @@ en pestañas y soporte para modelos locales. Open source bajo [licencia MIT](LIC
 
 **[English](README.md)** · **Español**
 
-[Instalación](#instalación) · [Imágenes comerciales](#imágenes-promocionales) · [Manual de uso](docs/USAGE.es.md) ·
+[Instalación](#instalación) · [Manual de uso](docs/USAGE.es.md) ·
 [Tools](docs/TOOLS.md) · [Contribuir](CONTRIBUTING.es.md)
 
 <img src="screenshots/32-spanish-gruvbox.jpg" alt="S42 Agent ejecutándose: pestañas de proyecto y archivo, TypeScript con números de línea, sintaxis coloreada y prompt fijo" width="960">
@@ -280,29 +280,12 @@ un navegador instalado en Linux/Windows; crear PDF requiere un renderizador.
 MCP implementa tools; resources/prompts, OAuth, sampling y elicitation no están
 implementados. [Contratos y límites](docs/TOOLS.md).
 
-## Benchmark registrado
-
-Resultados históricos del binario v0.1.0 en Linux x64:
-
-| Medición | Resultado |
-| --- | --- |
-| Arranque p95 | 24,43 ms |
-| Input p95 | 35,95 ms |
-| Delta SSE a frame p95 | 4,07 ms |
-| RSS en reposo | 46,64 MiB |
-| Reanudar 1.000 mensajes | 42,07 ms |
-
-Caché del SO caliente y recepción de bytes en PTY; excluye pintura del emulador
-e inferencia LLM. No es un benchmark nuevo de la fuente actual.
-[Método](docs/qa/final-validation.md) · [Registro](docs/qa/benchmark-s42-agent-0.1.0-linux-x64.json).
-
 ## Estado y desarrollo
 
 **v0.1.0 es una preview.** Linux x64 cuenta con validación local, PTY y modelo
 real; el compilado actual también pasa el smoke fuera del checkout.
 Los seis binarios actuales están preparados para la release. Faltan pruebas
 de ejecución en Windows/macOS/ARM64 y cobertura física de mouse/drop.
-[Validación de compilados e instaladores](docs/qa/distribution.md).
 
 ```bash
 bun run typecheck
@@ -313,31 +296,9 @@ bun run index.ts --demo
 El build del host es opcional: `bun run build`. El binario contiene Bun,
 pero el servidor LLM y los comandos externos siguen siendo independientes.
 
-[Manual completo](docs/USAGE.es.md) · [QA actual](docs/qa/reliable-coding-and-sqlite.md) ·
-[Validación de publicación](docs/qa/publication-readiness.md) ·
-[Notas v0.1.0](docs/releases/v0.1.0.md) · [Material del anuncio](docs/launch/ANNOUNCEMENTS.md) ·
+[Manual completo](docs/USAGE.es.md) · [Contribuir](CONTRIBUTING.es.md) ·
+[Preparar releases](docs/PUBLISHING.md) · [Notas v0.1.0](docs/releases/v0.1.0.md) ·
 [CHANGELOG](CHANGELOG.md).
-
-## Imágenes promocionales
-
-Cinco nuevas composiciones comerciales generadas a partir de las capturas finales,
-con versiones en español e inglés. Los originales siguen en la galería de capturas
-anterior. El benchmark muestra resultados históricos de v0.1.0 Linux x64;
-excluye inferencia LLM y pintura del emulador.
-[Campaña en español y captions](assets/banners/s42-agent-real-tui-2026-10-01/es/README.md) ·
-[Ambos idiomas y fuentes](assets/banners/s42-agent-real-tui-2026-10-01/README.md).
-
-<table>
-  <tr>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/01-alma-qbasic.png" alt="Alma de QBasic" width="260"></a><br><strong>Alma de QBasic</strong></td>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/02-proyectos-y-web.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/02-proyectos-y-web.png" alt="Proyectos y preview web" width="260"></a><br><strong>Proyectos y preview web</strong></td>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/03-idiomas-y-temas.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/03-idiomas-y-temas.png" alt="Idiomas y temas" width="260"></a><br><strong>Idiomas y temas</strong></td>
-  </tr>
-  <tr>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/04-modelos-y-herramientas.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/04-modelos-y-herramientas.png" alt="Modelos y herramientas" width="260"></a><br><strong>Modelos y herramientas</strong></td>
-    <td><a href="assets/banners/s42-agent-real-tui-2026-10-01/es/05-benchmark.png"><img src="assets/banners/s42-agent-real-tui-2026-10-01/es/05-benchmark.png" alt="Benchmark histórico v0.1.0" width="260"></a><br><strong>Benchmark histórico v0.1.0</strong></td>
-  </tr>
-</table>
 
 ## Autoría
 

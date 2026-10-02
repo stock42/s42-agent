@@ -82,7 +82,7 @@ Las internas residen en `src/agent/skills/*/SKILL.md`, incluidas por imports de
 texto. `internal_skill` no requiere config ni carpeta externa. El modelo ve
 nombres/descripciones en el system prompt, y carga el cuerpo bajo demanda.
 `skill` sigue reservada para skills externas habilitadas; `/skill` invoca las
-externas registradas. [Investigación y decisiones](AGENT-INTELLIGENCE.md).
+externas registradas.
 
 ```json
 {"name":"software-project"}
@@ -139,8 +139,8 @@ Las llamadas de un turno son secuenciales; los proyectos pueden ejecutar turnos
 distintos. Cancelar detiene búsqueda/HTTP y el árbol de shell, impide nuevas
 llamadas y conserva efectos ya realizados. No hay sandbox ni undo implícito.
 
-Pruebas: `tests/native-tools.test.ts`, `tests/internal-tools.test.ts`, `tests/agent.test.ts` y
-[QA con GLM real y TUI](qa/native-tools.md).
+Pruebas: [native-tools](../tests/native-tools.test.ts),
+[internal-tools](../tests/internal-tools.test.ts) y [agent](../tests/agent.test.ts).
 
 ## Scraping renderizado
 

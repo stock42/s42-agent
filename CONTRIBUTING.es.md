@@ -36,6 +36,14 @@ Los tests de fuente no requieren modelos ni API keys. Indicá por separado si
 usaste un fixture, un proveedor real, mouse inyectado o mouse físico. Las pruebas
 de binarios se hacen para cambios de distribución; no sustituyen la revisión TUI.
 
+## Contenido del repositorio
+
+Versionar tests, CI y herramientas reutilizables de build/release. Los informes
+de smoke y manifiestos de build quedan en `dist/`, ignorado por Git. Planes,
+informes locales, scripts de validación de tareas puntuales, campañas y prompts
+de imágenes van en `private/`, también ignorado. Fuente, tests, CI y releases
+deben funcionar sin esos archivos locales.
+
 ## Reportar un problema
 
 Incluí SO, terminal, versión Bun, tamaño de ventana, pasos y comportamiento
