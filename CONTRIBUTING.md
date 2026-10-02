@@ -34,7 +34,8 @@ tests use an installed supported browser and skip that scenario if unavailable.
 4. Use temporary config and project folders. Streams, tools and sessions must
    retain their originating project when tabs change.
 5. Update both language versions of relevant documentation and CHANGELOG before committing.
-6. Submit a PR describing the problem, resulting behavior and actual validation.
+6. Push the task's commit to the configured remote branch, without force-push.
+7. Submit a PR describing the problem, resulting behavior and actual validation.
 
 Use Bun's APIs where they fit. Avoid adding runtime dependencies without a concrete
 need. Binary tests apply to distribution changes; they do not replace TUI review.

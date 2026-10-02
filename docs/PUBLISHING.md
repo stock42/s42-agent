@@ -41,7 +41,7 @@ These commands do not need `private/`.
 
 ## Manual workflow
 
-After pushing the authorized commit and checking its CI:
+After pushing the completed task's commit and checking its CI:
 
 1. Open **Actions → Prepare draft release → Run workflow**, selecting main.
 2. The [workflow](../.github/workflows/release.yml) checks types/tests with a
@@ -74,6 +74,8 @@ real TUI execution; the [social JPEG](../assets/github/social-preview.jpg) is th
 GitHub cover. Campaigns, announcements, image prompts, plans and local reports
 stay in ignored `private/`.
 
-Do not push, change visibility, run the workflow, upload a release or publish
-announcements without an explicit request. `package.json` retains `private: true`
-because no npm package is published.
+Finish each task with its CHANGELOG update, commit and push to the configured
+remote branch, as instructed by the user. Changing visibility, running the
+release workflow, uploading a release or publishing announcements still requires
+an explicit request. `package.json` retains `private: true` because no npm package
+is published.

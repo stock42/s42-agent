@@ -33,7 +33,8 @@ navegador usan uno compatible instalado y omiten ese escenario si no está dispo
 4. Probá con configuración y proyectos temporales. Streaming, tools y sesiones
    deben conservar el proyecto que originó cada turno, aunque cambie la pestaña.
 5. Actualizá ambas versiones de idioma de la documentación relevante y CHANGELOG antes del commit.
-6. Abrí un PR con problema, comportamiento resultante y validación ejecutada.
+6. Hacé push del commit de la tarea a la rama remota configurada, sin force.
+7. Abrí un PR con problema, comportamiento resultante y validación ejecutada.
 
 Usá las APIs de Bun cuando correspondan. Evitá agregar dependencias de runtime
 sin una necesidad concreta. Las pruebas de binarios se hacen para cambios de

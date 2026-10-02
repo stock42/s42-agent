@@ -5,6 +5,15 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Actualizado — Push al terminar cada tarea
+
+- Regla Git actualizada por pedido del usuario: pull antes de empezar;
+  CHANGELOG, commit y push al terminar, sin solicitar otra confirmación.
+  Comprobar que el remoto recibe el commit e informar fallas concretas, sin force.
+- Guías de contribución y publicación EN/ES alineadas con el nuevo flujo.
+  Publicar releases, cambiar visibilidad y anunciar conserva su autorización
+  explícita. Pull correcto; revisión documental y de los commits pendientes.
+
 ### Corregido — Documentación pública bilingüe
 
 - Completadas las versiones faltantes: manual detallado inglés, contratos de

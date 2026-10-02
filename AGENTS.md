@@ -110,7 +110,7 @@ No usar `git add -f` para publicar material privado por inferencia.
 
 ## Regla Git obligatoria
 
-> siempre hacer git pull antes de cada tarea. luego de cada tareas, hacer el commit y actualizar CHANGELOG.md
+> siempre hacer git pull antes de cada tarea. al terminar, actualizar CHANGELOG.md, hacer el commit y hacer push.
 
 Aplicación práctica:
 
@@ -127,8 +127,12 @@ Aplicación práctica:
    del commit**, para incluir el registro y los cambios en el mismo commit.
 6. Revisar el diff y agregar únicamente archivos de esa tarea. No usar `git add .`
    para incluir incidentalmente archivos existentes del usuario.
-7. Hacer el commit y comprobar el estado final. Si no puede hacerse, informar la
-   causa y no presentar la tarea como cerrada en Git. No hacer push por inferencia.
+7. Hacer el commit y hacer push de la rama actual a su remoto configurado, sin
+   force. El pedido del usuario autoriza este push al terminar cada tarea; no
+   volver a pedir confirmación.
+8. Comprobar el estado final y que el remoto recibió el commit. Si el commit o
+   push falla, informar la causa concreta y no presentar la tarea como subida.
+   No inventar remotos/upstreams ni descartar trabajo para resolver el error.
 
 La regla gobierna el desarrollo de este repositorio. El harness debe respetar
 las instrucciones de cada proyecto registrado, sin transferir automáticamente

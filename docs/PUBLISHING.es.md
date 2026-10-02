@@ -42,7 +42,7 @@ contrato de los instaladores. Los comandos anteriores no necesitan `private/`.
 
 ## Workflow manual
 
-Después de subir el commit autorizado y comprobar su CI:
+Después de subir el commit de la tarea terminada y comprobar su CI:
 
 1. Abrir **Actions → Prepare draft release → Run workflow**, seleccionando main.
 2. El [workflow](../.github/workflows/release.yml) verifica tipos y tests con
@@ -75,6 +75,8 @@ la TUI real; el [JPEG social](../assets/github/social-preview.jpg) sirve como
 portada para GitHub. Campañas, anuncios, prompts de imágenes, planes e informes
 locales permanecen en `private/`, ignorado por Git.
 
-No hacer push, cambiar visibilidad, ejecutar el workflow, subir una release o
-publicar anuncios sin pedido explícito. `package.json` conserva `private: true`
-porque no se publica un paquete npm.
+Terminar cada tarea con su actualización de CHANGELOG, commit y push a la rama
+remota configurada, por pedido del usuario. Cambiar visibilidad, ejecutar el
+workflow de release, subir una release o publicar anuncios sigue requiriendo un
+pedido explícito. `package.json` conserva `private: true` porque no se publica un
+paquete npm.
