@@ -5,6 +5,13 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Configurado — Sponsor con PayPal
+
+- Añadido `.github/FUNDING.yml` con el enlace PayPal proporcionado por el usuario
+  como destino del botón Sponsor. Sin SDK ni scripts de pagos en el repositorio.
+- Enlace comprobado en navegador: formulario `s42-agent`, Donation en USD e
+  importe elegido por quien aporta. Validación del YAML y del destino HTTPS.
+
 ### Configurado — Bienvenida en GitHub Discussions
 
 - Discussions ya estaba habilitado con seis categorías. Publicada y fijada en
