@@ -5,6 +5,13 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-02
 
+### Documentado — Borrador para el blog de César Casas
+
+- Redactado un artículo en español sobre S42 Agent, con voz de autor, decisiones
+  de diseño y alcance de la preview v0.1.1. Contrasta las capacidades con la
+  documentación actual y delimita el benchmark histórico v0.1.0 Linux x64.
+  El borrador queda en `private/docs/blog/`, fuera de Git y sin publicar en el blog.
+
 ### Publicado — Prerelease v0.1.1
 
 - Versión, metadata, instaladores, README y guía de distribución alineados con
