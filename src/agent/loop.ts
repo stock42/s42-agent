@@ -135,6 +135,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
       stage++; stageStart = activeHistory(session.state).length; await notice(`Etapa ${stage} · continuando el pedido`); continue;
     }
     let aborted: Error | undefined;
+    const toolHistory = session.state.messages.slice(0, -1);
     for (const call of calls) {
       const stopped = signal.aborted || !model.capabilities.tools;
       let output: string, failed: boolean;
@@ -144,7 +145,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
         options.onState(`Ejecutando ${call.function.name}…`);
         options.onToolStart?.(call);
         const tool = call.function.name==="skill" ? await skills.execute(call.function.arguments,signal) : mcp.has(call.function.name) ? await mcp.execute(call.function.name,call.function.arguments,signal) : await execute(call.function.name, call.function.arguments, project.path, signal,
-          options.onToolOutput && ((stream, text) => options.onToolOutput!(call, stream, text)));
+          options.onToolOutput && ((stream, text) => options.onToolOutput!(call, stream, text)), toolHistory);
         failed = tool.failed; output = JSON.stringify(tool);
         if (signal.aborted) aborted = new Error("Turno cancelado; los efectos ya realizados se conservan");
       }

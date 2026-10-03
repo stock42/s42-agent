@@ -2,7 +2,7 @@ import { definition, string, type NativeTool } from "./shared.ts";
 
 const stringMap = { type: "object", additionalProperties: { type: "string" } };
 export const httpFetch: NativeTool = {
-  definition: definition("fetch", "HTTP request to any http/https URL with method, headers and optional JSON, URL-encoded form, multipart form or text body. Returns status, headers and complete text body; HTTP errors fail the tool.",
+  definition: definition("fetch", "Native Bun HTTP request to any http/https URL with method, headers and optional JSON, URL-encoded form, multipart form or text body. Returns status, headers and complete text body; HTTP errors fail the tool. Does not render JavaScript: use scrape for rendered website content and summaries. Use this instead of curl/wget for HTTP requests.",
     { url: string, method: string, headers: stringMap, body: {}, bodyType: { type: "string", enum: ["json", "form", "multipart", "text"] } }, ["url"]),
   async run(args, { signal }) {
     const url = new URL(String(args.url));

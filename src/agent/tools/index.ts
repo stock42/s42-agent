@@ -11,14 +11,15 @@ import { internalSkill } from "./internal_skill.ts";
 import { markdownHtml } from "./markdown_html.ts";
 import { websocket } from "./websocket.ts";
 import { scrape } from "./scrape.ts";
+import { sessionHistory } from "./session_history.ts";
 import { instructions, validate, type ToolContext, type ToolResult } from "./shared.ts";
 
 export { instructions } from "./shared.ts";
 export type { ToolResult } from "./shared.ts";
-export const nativeTools = [read, write, edit, list, find, search, httpFetch, shell, internalSkill, markdownHtml, websocket, scrape];
+export const nativeTools = [read, write, edit, list, find, search, httpFetch, shell, internalSkill, markdownHtml, websocket, scrape, sessionHistory];
 export const toolDefinitions = nativeTools.map(tool => tool.definition);
 
-export async function execute(name: string, raw: string, cwd: string, signal: AbortSignal, onOutput?: ToolContext["onOutput"]): Promise<ToolResult> {
+export async function execute(name: string, raw: string, cwd: string, signal: AbortSignal, onOutput?: ToolContext["onOutput"], history?: ToolContext["history"]): Promise<ToolResult> {
   const started = performance.now();
   try {
     signal.throwIfAborted();
@@ -26,7 +27,7 @@ export async function execute(name: string, raw: string, cwd: string, signal: Ab
     if (!tool) throw new Error(`Herramienta desconocida: ${name}`);
     const args = validate(tool, raw);
     const guidance = tool.fileInstructions ? await instructions(cwd, resolve(cwd, String(args.path ?? "."))) : "";
-    signal.throwIfAborted(); const result = await tool.run(args, { cwd, signal, onOutput });
+    signal.throwIfAborted(); const result = await tool.run(args, { cwd, signal, onOutput, history });
     if (name !== "shell" && name !== "websocket") signal.throwIfAborted();
     const output = (guidance ? `Instrucciones aplicables:\n${guidance}\n\n` : "") + result.output;
     return { ...result, output, durationMs: Math.round(performance.now() - started) };

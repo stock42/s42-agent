@@ -2,7 +2,7 @@
 
 **English** · [Español](TOOLS.es.md) · [User guide](USAGE.md)
 
-Current contract, 2026-10-02. One module per tool in `src/agent/tools/`.
+Current contract, 2026-10-03. One module per tool in `src/agent/tools/`.
 `index.ts` registers schemas/handlers; `shared.ts` holds only types, validation,
 traversal and common instructions. `src/agent/tools.ts` reexports the contract
 for existing integrations. The catalog is visible in **Tools → Native tools**.
@@ -21,6 +21,7 @@ for existing integrations. The catalog is visible in **Tools → Native tools**.
 | `markdown_html` / markdown_html.ts | Exactly one of `markdown` or `path`; optional `outputPath`, `standalone=false`, `title="S42 Agent"` | Bun.markdown.html on complete input. Saves HTML or returns it in full as JSON. |
 | `websocket` / websocket.ts | `url`; optional `headers`, `protocols`, `messages`; `receiveCount=1` | ws/wss, one connection per call. Receives the requested count without an added ceiling, with complete text/base64 binary. Waits for replies, remote closure or cancellation. |
 | `scrape` / scrape.ts | `url`; `selector="body"`, `format="text"` or `"html"` | Bun.WebView: final URL, title, complete first matching CSS element and all its links, without clipping text/hrefs. Waits for the selector or cancellation. |
+| `session_history` / session_history.ts | Optional: `query`, `role`, `offset=1`, `limit` | Original messages from the turn's session, including compacted history. Case-insensitive literal search over the full JSON, user/assistant/tool role filter and matching messages starting at offset. Returns complete messages and original 1-based indexes; without limit returns all matches. |
 
 Tools receive a JSON object; unknown names/fields, invalid types and nonpositive
 integers return errors. Relative paths use the turn's project; absolute paths
@@ -148,6 +149,20 @@ Tests: [native-tools](../tests/native-tools.test.ts),
 [internal-tools](../tests/internal-tools.test.ts) and [agent](../tests/agent.test.ts).
 
 ## Rendered scraping
+
+For website summaries, the agent should use `scrape`; `fetch` handles APIs, HTTP
+responses, status and headers. The prompt and tool descriptions direct the model
+to use these tools instead of `curl`/`wget`, except for an evidenced need or an
+explicit request. Shell remains available; this is model guidance, not command
+blocking.
+
+Saving or converting an answer reuses its content and sources. Building HTML from
+a CSV requires reading that CSV. If compaction omitted details, the agent can
+recover them with `session_history`, for example
+`{"query":"infobae.com","role":"tool"}`, before requesting the website again.
+The tool receives only the original history of the turn's session, preceding the
+current call group; it does not open other sessions or change history.
+Regression coverage: [session history and follow-up conversions](../tests/session-history.test.ts).
 
 `fetch` returns the HTTP response; `scrape` loads the DOM with JavaScript through
 [Bun.WebView](https://bun.com/docs/runtime/webview). HTTP(S) only, text or HTML;

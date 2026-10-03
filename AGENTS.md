@@ -79,6 +79,10 @@ No usar `git add -f` para publicar material privado por inferencia.
 
 ## GitHub y distribución
 
+No generar ni publicar nuevas releases hasta que el usuario lo solicite
+explícitamente. Los arreglos y nuevas funcionalidades se validan, commitean y
+pushean sin cambiar la versión ni iniciar el workflow de release.
+
 El usuario autorizó administrar packages y releases de `stock42/s42-agent`.
 Preferencia actual: prereleases publicadas dentro del repositorio privado.
 Para tareas de distribución, generar los seis binarios y el paquete conjunto,

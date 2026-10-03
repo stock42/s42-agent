@@ -5,6 +5,31 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Corregido — Herramientas web y continuidad después de compactar
+
+- El prompt y las descripciones indican usar `scrape`/Bun.WebView para resumir
+  páginas renderizadas y `fetch` nativo para HTTP/APIs, en lugar de curl/wget.
+  Guardar o convertir una respuesta reutiliza su contenido; crear HTML desde
+  un CSV usa ese archivo. Shell sigue disponible, sin bloqueo de comandos.
+- Nueva tool `session_history`: recupera mensajes originales de la sesión del
+  turno aunque hayan quedado fuera del contexto compactado. Incluye búsqueda
+  literal, filtro por rol y selección explícita de coincidencias, sin recortes
+  automáticos ni acceso a otras sesiones. Catálogo y documentación ES/EN.
+- La compactación prioriza los últimos pedidos/respuestas y conserva relaciones
+  entre datos, fuentes y archivos; indica recuperar detalles omitidos del
+  historial antes de repetir descargas. El historial original se conserva.
+- Typecheck y 61 pruebas relevantes correctas (902 assertions), incluidos
+  resumen → CSV → HTML con compactación y reapertura en JSONL/SQLite, lectura
+  del CSV modificado, aislamiento de proyectos, CLI, TUI en PTY y WebView real
+  con contenido JavaScript. Sin builds ni smoke de binarios.
+- Prueba adicional con DeepSeek `deepseek-flash` real y una página local cuyo
+  contenido se genera con JavaScript: eligió `scrape`, recuperó fuentes con
+  `session_history` tras un checkpoint simulado y creó CSV/HTML. Cero requests
+  al sitio durante ambas conversiones y sin curl/wget. Evidencia privada en
+  `private/qa/`; no equivale a verificar todos los modelos ni el sitio Infobae.
+- Registrada la instrucción de no generar ni publicar nuevas releases hasta
+  pedido explícito del usuario. Se conserva la versión 0.1.1.
+
 ### Agregado — Website de S42 Agent
 
 - Creada la landing de `s42agent.dev` en `wensite/`: diseño oscuro responsive,

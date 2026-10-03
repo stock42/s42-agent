@@ -1,7 +1,7 @@
 import { definition, string, type NativeTool } from "./shared.ts";
 
 export const scrape: NativeTool = {
-  definition: definition("scrape", "Scrape a rendered HTTP(S) page with Bun.WebView, including JavaScript content. Return title, URL, text or HTML and links. Optional CSS selector waits for an element; requires an installed Chrome-family browser on Linux/Windows.", {
+  definition: definition("scrape", "Read a rendered HTTP(S) page with Bun.WebView, including JavaScript content. Preferred tool for website summaries; use instead of shell/curl. Return title, URL, text or HTML and links. Optional CSS selector waits for an element that appears asynchronously; requires an installed Chrome-family browser on Linux/Windows. Reuse previous results or session_history for follow-up conversions instead of downloading again.", {
     url: string, selector: string, format: { type: "string", enum: ["text", "html"] },
   }, ["url"]),
   async run(args, { signal }) {
