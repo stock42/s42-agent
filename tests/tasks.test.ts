@@ -92,7 +92,11 @@ for (const sqlite of [false, true]) test(`sesión ${sqlite ? "SQLite" : "JSONL"}
     expect(continued.request?.requestId).toBe(tasks.request!.requestId); expect((await continued.store.read()).tasks[0]?.status).toBe("pending");
     expect(verificationRuns(resumed.state.events)[0]?.state).toBe("cancelled");
     await resumed.append({ type: "task-verification", run: { ...result, id: "interrupted", state: "running" } });
-    expect(verificationRuns(resumed.state.events).at(-1)?.state).toBe("interrupted");
+    await resumed.append({ type: "task-verification-output", runId: "interrupted", stream: "stdout", text: "SALIDA PARCIAL" });
+    expect(verificationRuns(resumed.state.events).at(-1)?.state).toBe("running");
+    await resumed.close();
+    const reopened = await Session.open(path, "project", resumed.state.id);
+    try { expect(verificationRuns(reopened.state.events).at(-1)).toMatchObject({ state: "interrupted", stdout: "OK\nSALIDA PARCIAL" }); } finally { await reopened.close(); }
   } finally { await resumed.close(); }
 }), 10000);
 

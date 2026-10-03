@@ -17,6 +17,7 @@ export type TaskEvent =
   | { type: "task-record"; requestId: string; taskIds: string[]; phase: "intent" | "confirmed"; revision: string }
   | { type: "task-file"; requestId: string; callId: string; path: string; before: string | null; after: string | null; phase: "intent" | "confirmed" }
   | { type: "task-verification"; run: VerificationRun }
+  | { type: "task-verification-output"; runId: string; stream: "stdout" | "stderr"; text: string }
   | { type: "task-closeout"; requestId: string; state: "pending" | "failed" | "committed" | "pushed" | "unavailable"; sha?: string; detail: string };
 export interface PlannedTask {
   id?: string; title: string; description?: string; criterion: string; dependencies?: string[];
@@ -30,8 +31,11 @@ export async function fingerprints(cwd: string, paths: string[]): Promise<Record
 }
 export function verificationRuns(events: SessionEvent[], taskId?: string): VerificationRun[] {
   const runs = new Map<string, VerificationRun>();
-  for (const event of events) if (event.type === "task-verification" && (!taskId || event.run.taskId === taskId)) runs.set(event.run.id, event.run);
-  return [...runs.values()].map(run => run.state === "running" ? { ...run, state: "interrupted" } : run);
+  for (const event of events) {
+    if (event.type === "task-verification" && (!taskId || event.run.taskId === taskId)) runs.set(event.run.id, structuredClone(event.run));
+    if (event.type === "task-verification-output") { const run = runs.get(event.runId); if (run?.state === "running") run[event.stream] += event.text; }
+  }
+  return [...runs.values()];
 }
 export function taskPolicy(instructions: string): TaskPolicy {
   // Recognize the literal rules produced by AGENTS generation and common
@@ -120,12 +124,16 @@ export class TurnTasks {
     const run: VerificationRun = { id: `V-run-${crypto.randomUUID()}`, taskId, specId, state: "running", command: spec.command,
       cwd: this.store.root, started: new Date().toISOString(), stdout: "", stderr: "", files: await fingerprints(this.store.root, spec.paths), origin: "harness" };
     await this.session.append({ type: "task-verification", run: structuredClone(run) });
+    const pendingOutput: Promise<void>[] = [];
     try {
-      const result = await runCommand(spec.command, { cwd: this.store.root, signal: this.signal, onOutput: (stream, text) => { run[stream] += text; onOutput?.(stream, text); } });
+      const result = await runCommand(spec.command, { cwd: this.store.root, signal: this.signal, onOutput: (stream, text) => {
+        run[stream] += text; onOutput?.(stream, text);
+        const pending = this.session.append({ type: "task-verification-output", runId: run.id, stream, text }); pendingOutput.push(pending); void pending.catch(() => {});
+      } });
       run.stdout = result.stdout; run.stderr = result.stderr; run.exitCode = result.exitCode;
       run.state = result.cancelled ? "cancelled" : result.failed ? "failed" : "passed";
     } catch (error) { run.state = this.signal.aborted ? "cancelled" : "failed"; run.stderr += (error as Error).message; }
-    run.ended = new Date().toISOString(); await this.session.append({ type: "task-verification", run }); return run;
+    await Promise.all(pendingOutput); run.ended = new Date().toISOString(); await this.session.append({ type: "task-verification", run }); return run;
   }
   async review(taskId: string, specId: string, evidence: string[]): Promise<VerificationRun> {
     const card = (await this.store.read()).tasks.find(t => t.id === taskId && t.requestId === this.request?.requestId), spec = card?.verification.find(v => v.id === specId);

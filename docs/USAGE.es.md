@@ -570,3 +570,20 @@ Cada proyecto puede tener un servidor en un puerto distinto. Cambiar de pestaña
 o cerrar el diálogo no lo detiene; cerrar la pestaña del proyecto, cambiar su
 carpeta o salir del agente sí. Cerrar solamente una pestaña de archivo conserva
 el servidor del proyecto. Sin proyecto activo se abre el formulario Name/Folder.
+
+## Tareas y verificaciones
+
+Vista → Tareas muestra TODO.md en Pendientes, En progreso y Terminadas. ←/→ cambia
+columna; Shift+←/→ mueve la tarjeta; Ctrl+↑/↓ cambia su orden; Enter abre acciones.
+También se pueden arrastrar tarjetas con mouse. En terminal estrecho se muestra
+una columna y el botón Columna permite cambiarla. Nueva tarea/Editar abre campos
+por páginas. El formato ajeno requiere preview y adaptación explícita; las
+ediciones externas se refrescan y los conflictos muestran ambas versiones.
+
+Mover a Terminadas es una edición manual: no fabrica pruebas ni aceptación.
+Vista → Verificación muestra criterio, estado, pruebas, salida real, vigencia y
+cierre Git por separado. Ejecutar prueba espera el proceso; Cancelar conserva
+salida parcial. Confirmar revisión registra una observación del usuario. Cambios
+de tarea muestra snapshots nativos y diffs observados con autoría identificada.
+Continuar tarea recupera su sesión original y prosigue el pedido; abrir el
+programa no reejecuta pruebas. Un proceso interrumpido se registra al reabrir.

@@ -113,6 +113,21 @@ export class TaskStore {
   private constructor(readonly root: string, readonly path: string) {}
   static async open(root: string): Promise<TaskStore> { const canonical = await realpath(root); return new TaskStore(canonical, join(canonical, "TODO.md")); }
   async read(): Promise<TaskDocument> { const file = Bun.file(this.path); return parseTasks(await file.exists() ? await file.text() : ""); }
+  async reorder(id: string, otherId: string, base: TaskDocument, options: { signal?: AbortSignal; record?: (phase: "intent" | "confirmed", revision: string) => Promise<void> } = {}): Promise<void> {
+    const release = await lock(this.path + ".s42-lock", options.signal), temporary = this.path + `.s42-${crypto.randomUUID()}.tmp`;
+    try {
+      const current = await this.read(); if (current.problems.length) throw new Error(current.problems.join("\n"));
+      for (const key of [id, otherId]) if (JSON.stringify(base.tasks.find(t => t.id === key)) !== JSON.stringify(current.tasks.find(t => t.id === key))) throw new TaskConflict(key, base.tasks.find(t => t.id === key), current.tasks.find(t => t.id === key));
+      const task = current.tasks.find(t => t.id === id), other = current.tasks.find(t => t.id === otherId);
+      if (!task || !other || task.status !== other.status || id === otherId) throw new Error("Orden de tarjetas inválido");
+      const [a, b] = current.spans.filter(s => s.id === id || s.id === otherId).sort((a, b) => a.start - b.start);
+      const source = current.source.slice(0, a!.start) + b!.raw + current.source.slice(a!.end, b!.start) + a!.raw + current.source.slice(b!.end);
+      await options.record?.("intent", revision(source));
+      const fd = await open(temporary, "wx"); try { await fd.writeFile(source); await fd.sync(); } finally { await fd.close(); }
+      options.signal?.throwIfAborted(); if ((await this.read()).revision !== current.revision) throw new TaskConflict("document", undefined, undefined);
+      await rename(temporary, this.path); await options.record?.("confirmed", revision(source));
+    } finally { await unlink(temporary).catch(() => {}); await release(); }
+  }
   async save(cards: TaskCard[], base: TaskDocument, options: { signal?: AbortSignal; record?: (phase: "intent" | "confirmed", revision: string) => Promise<void>; adapt?: boolean } = {}): Promise<TaskDocument> {
     const release = await lock(this.path + ".s42-lock", options.signal);
     const temporary = this.path + `.s42-${crypto.randomUUID()}.tmp`;

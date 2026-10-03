@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -114,4 +115,3 @@ for (const storage of ["sessions", "agent.sqlite"]) test(`resumen → CSV → HT
     expect(session.state.messages.some(m => m.content === answer)).toBe(true);
   } finally { await session.close(); source.stop(true); server.stop(true); await rm(root, { recursive: true, force: true }); }
 });
-import { taskWorkflow } from "./task-provider-fixture.ts";

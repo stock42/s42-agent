@@ -5,6 +5,17 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Agregado — Plan v1.0.5, E3: tablero y ficha por proyecto
+
+- Tablero TODO.md con columnas, edición por páginas, teclado, drag y orden;
+  watcher para cambios externos, preview de adaptación y conflictos visibles.
+  Movimientos manuales conservan pruebas y no crean aceptación ficticia.
+- Ficha de verificación con salida/proceso/cancelación, vigencia y origen;
+  recuperación de interrupciones, snapshots/diffs/commits y continuación desde
+  la sesión original. Recursos y resultados pertenecen al proyecto de origen.
+- Typecheck y 32 tests relevantes correctos; fuente Bun en PTY, Unicode, narrow,
+  paletas e idiomas. Mouse físico pendiente; sin build ni release.
+
 ### Agregado — Plan v1.0.5, E2: tareas persistentes y verificación
 
 - TODO.md como fuente de tarjetas UUID, con reemplazo atómico, lock entre

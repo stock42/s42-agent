@@ -5,12 +5,15 @@ import type { Session } from "./storage/sessions.ts";
 import { TextArea } from "./ui/components/text-area.ts";
 import type { ContextUsage, TokenUsage } from "./agent/usage.ts";
 import type { GitPanel } from "./ui/git.ts";
+import type { TaskBoard } from "./ui/tasks.ts";
+import type { VerificationPanel } from "./ui/verification.ts";
 
 export interface ProjectTab {
   id: string; project?: Project; session?: Session;
   selection: Selection; status: string; busy: boolean; attachments: Attachment[];
   mode: "INSERT" | "NORMAL"; pending: string; pasting: boolean;
   turn?: Promise<void>; controller?: AbortController;
+  operation?: Promise<unknown>;
   rendered: WeakMap<Message, string>;
   response: TextArea; prompt: TextArea;
   panel: "editor" | "prompt"; focusedId?: string;
@@ -18,8 +21,10 @@ export interface ProjectTab {
   contextUsage?: ContextUsage;
   agentState?: string;
   live: { id: string; label: string; text: string; reasoning: boolean }[];
-  contentView?: "git";
+  contentView?: "git" | "tasks" | "verification";
   git?: GitPanel;
+  taskBoard?: TaskBoard;
+  verification?: VerificationPanel;
 }
 
 export function createProjectTab(controls?: Pick<ProjectTab, "response" | "prompt">): ProjectTab {

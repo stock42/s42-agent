@@ -4,7 +4,7 @@ import type { Database } from "bun:sqlite";
 import { isDatabase, openDatabase, insertEvent } from "./database.ts";
 import type { Message, Selection } from "../agent/messages.ts";
 import type { ContextUsage, TokenUsage } from "../agent/usage.ts";
-import type { TaskEvent } from "../agent/tasks.ts";
+import type { TaskEvent, VerificationRun } from "../agent/tasks.ts";
 
 export type EventData =
   | TaskEvent
@@ -33,6 +33,7 @@ function parseEvent(value: unknown, projectId: string): SessionEvent {
     case "task-file": if ([e.requestId, e.callId, e.path].every(v => typeof v === "string") && ["intent", "confirmed"].includes(e.phase) && [e.before, e.after].every(v => v === null || typeof v === "string")) return e; break;
     case "task-verification": if (e.run && [e.run.id, e.run.taskId, e.run.specId, e.run.cwd, e.run.started, e.run.stdout, e.run.stderr].every(v => typeof v === "string")
       && ["running", "passed", "failed", "cancelled", "interrupted"].includes(e.run.state) && ["harness", "browser", "user"].includes(e.run.origin) && e.run.files && typeof e.run.files === "object") return e; break;
+    case "task-verification-output": if (typeof e.runId === "string" && ["stdout", "stderr"].includes(e.stream) && typeof e.text === "string") return e; break;
     case "task-closeout": if (typeof e.requestId === "string" && typeof e.detail === "string" && ["pending", "failed", "committed", "pushed", "unavailable"].includes(e.state) && (e.sha === undefined || /^[a-f0-9]{40,64}$/.test(e.sha))) return e; break;
     case "context-usage": if (e.usage && typeof e.usage.providerId === "string" && typeof e.usage.modelId === "string" && typeof e.usage.estimated === "boolean"
       && [e.usage.window, e.usage.used, e.usage.inputWeight, e.usage.inputTokens].every(v => v === undefined || Number.isSafeInteger(v) && v >= 0)) return e; break;
@@ -92,7 +93,10 @@ export class Session {
         validBytes += Buffer.byteLength(line + "\n");
       }
       const pending = new Map<string, string>();
+      const pendingVerifications = new Map<string, VerificationRun>();
       for (const e of state.events) {
+        if (e.type === "task-verification") { if (e.run.state === "running") pendingVerifications.set(e.run.id, structuredClone(e.run)); else pendingVerifications.delete(e.run.id); }
+        if (e.type === "task-verification-output") { const run = pendingVerifications.get(e.runId); if (run) run[e.stream] += e.text; }
         if (e.type === "context-usage") state.contextUsage = e.usage;
         if (e.type === "compaction") {
           if (e.through > state.messages.length) throw new Error("Compactación inválida: historial incompleto");
@@ -130,6 +134,7 @@ export class Session {
       const fd = db ? undefined : await open(path, "a");
       if (state.notices.some(n => n.startsWith("Último"))) await fd?.truncate(validBytes);
       const session = new Session(path, lock, token, fd, state, db);
+      for (const run of pendingVerifications.values()) await session.append({ type: "task-verification", run: { ...run, state: "interrupted", ended: new Date().toISOString() } });
       for (const message of repairs) await session.append({ type: "message", message });
       return session;
     } catch (error) { db?.close(true); await unlink(lock); throw error; }
@@ -162,6 +167,20 @@ export async function listSessions(root: string, projectId: string): Promise<{ i
     catch { result.push({ id: name.slice(0, -6), title: `${name.slice(0, 8)} (revisar)` }); }
   }
   return result;
+}
+
+// Read-only task history lookup; unlike Session.open, it does not acquire a
+// writer lock, repair messages, migrate storage or execute interrupted work.
+export async function readSessionEvents(root: string, projectId: string, id: string): Promise<SessionEvent[]> {
+  if (!/^[A-Za-z0-9._-]+$/.test(id) || id === "." || id === ".." || !/^[A-Za-z0-9._-]+$/.test(projectId)) throw new Error("ID de sesión/proyecto inválido");
+  if (isDatabase(root)) {
+    const { Database } = await import("bun:sqlite"), db = new Database(root, { readonly: true });
+    try { return db.query<{ data: string }, [string, string]>("SELECT data FROM events WHERE project_id=? AND session_id=? ORDER BY seq").all(projectId, id).map(row => parseEvent(JSON.parse(row.data), projectId)); }
+    finally { db.close(true); }
+  }
+  const file = Bun.file(join(root, projectId, `${id}.jsonl`));
+  if (!await file.exists()) return [];
+  return (await file.text()).split("\n").slice(0, -1).filter(Boolean).map(line => parseEvent(JSON.parse(line), projectId));
 }
 
 // Read and validate old logs before committing the migration. Originals remain untouched.

@@ -563,3 +563,20 @@ Each project can have a server on a different port. Switching tabs or closing
 the dialog does not stop it; closing the project tab, changing its folder or
 exiting the agent does. Closing only a file tab preserves the project's server.
 Without an active project, the Name/Folder form opens.
+
+## Tasks and verification
+
+View → Tasks displays TODO.md as Pending, In progress and Done. Left/Right selects
+a column; Shift+Left/Right moves a card; Ctrl+Up/Down reorders it; Enter opens
+actions. Mouse dragging is also supported. Narrow terminals display one column
+with a Column button. New task/Edit opens paged fields. An incompatible TODO.md
+requires an explicit adaptation preview; external edits refresh and conflicts
+show both versions.
+
+Moving to Done is a manual edit and does not create acceptance or test evidence.
+View → Verification separates criteria, execution, actual output, validity and
+Git closeout. Run test waits for process exit; Cancel preserves partial output.
+Confirm review attributes the observation to the user. Task changes displays
+native file snapshots and observed diffs with attribution. Continue task restores
+the original session and resumes that request. Startup never reruns tests; an
+interrupted test is recorded when its session reopens.
