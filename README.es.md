@@ -357,7 +357,7 @@ muestran N/D.
 
 **v0.1.2 es una preview.** Linux x64 cuenta con validación local, PTY y modelo
 real; el compilado actual también pasa el smoke fuera del checkout.
-Los seis binarios actuales están preparados para la release. Faltan pruebas
+Los seis binarios actuales están disponibles en la release. Faltan pruebas
 de ejecución en Windows/macOS/ARM64 y cobertura física de mouse/drop.
 
 ```bash

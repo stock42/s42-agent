@@ -359,7 +359,7 @@ remain visible; unavailable provider or device counters show N/A.
 
 **v0.1.2 is a preview.** Linux x64 has local source, PTY and real-model validation;
 the current compiled binary also passes a smoke test outside the checkout.
-Six current binaries are prepared for release. Execution on Windows, macOS and
+Six current binaries are available in the release. Execution on Windows, macOS and
 ARM64, and physical terminal mouse/drop coverage, remain pending.
 
 ```bash

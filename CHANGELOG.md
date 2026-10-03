@@ -5,7 +5,7 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
-### Preparado — Release v0.1.2 y website ES/EN
+### Publicado — Prerelease v0.1.2 y website ES/EN en Git
 
 - Versión, instaladores, metadatos, notas bilingües y enlaces de distribución
   preparados para v0.1.2; incluye planificación/Kanban, verificación, cierre Git,
@@ -19,8 +19,15 @@ cierre de cada tarea e incluirlo en su commit.
 - Typecheck y suite completa: 267 pass, 0 fail, 4002 assertions. Binario Linux
   x64 v0.1.2 ejecutado fuera del checkout. Diez comprobaciones responsive ES/EN
   entre 320 y 1440 px sin desbordes; contenido visible y FAQPage coinciden.
-- Publicación GitHub y despliegue del dominio pendientes de su verificación;
-  esta entrada registra preparación y validación local.
+- Preparación `ebe14dd`, CI `37162090999` y workflow de release `37162146195`
+  correctos. Prerelease pública v0.1.2 con 12 assets: seis binarios, checksums,
+  manifiesto, instaladores, licencia y tar.gz; todos descargados y contrastados
+  con hashes/tamaños de GitHub y las 12 entradas del paquete.
+- Linux descargado e instalado desde URL pública sin autenticación pasa el
+  smoke CLI/TUI/SQLite fuera del checkout. Linux x64 es la única ejecución
+  nativa; otros sistemas/arquitecturas conservan evidencia de cross-build.
+- Website subido y verificado localmente; s42agent.dev todavía devuelve v0.1.1
+  sin FAQ. Despliegue pendiente del acceso/configuración del servidor.
 
 ### Corregido — API keys LLM en SQLite para servidores
 
