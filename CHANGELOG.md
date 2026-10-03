@@ -3,6 +3,31 @@
 Registrar aquí los cambios realizados en s42-agent. Actualizar el archivo al
 cierre de cada tarea e incluirlo en su commit.
 
+## 2026-10-03
+
+### Agregado — Website de S42 Agent
+
+- Creada la landing de `s42agent.dev` en `wensite/`: diseño oscuro responsive,
+  presentación del producto, cuatro capturas reales copiadas sin modificar,
+  comandos para Linux/macOS/Windows y ejecución desde fuente. Incluye primer
+  inicio, links a GitHub y atribución a César Casas con X y LinkedIn.
+- Servidor independiente con Bun 1.4.2, sin dependencias de runtime ni build.
+  Lee `WEBSERVER_PORT` del `.env` del directorio; `.env.example` usa 4317.
+  Sirve `public/` con GET/HEAD y tipos MIME; configuración y fuentes quedan
+  fuera del directorio público. El entrypoint y la TUI del agente se conservan.
+- SEO con contenido HTML, canonical, descripción, sitemap, robots, JSON-LD de
+  sitio/software/autor, Open Graph y Twitter Cards. Portada ilustrada original
+  generada y exportada como JPEG de 1200×630, separada de las capturas reales.
+- Typecheck correcto; cinco pruebas HTTP/configuración, 37 assertions y cero
+  fallos. Verificados ocho recursos locales, cuatro anclas, JSON-LD, contraste
+  de la paleta y copia exacta de capturas. Revisión en navegador de 320 a 1920 px
+  sin overflow horizontal, apertura de imágenes completas, desplegables por
+  mouse/teclado y feedback de copiado; sin errores ni warnings de consola.
+  La lectura del portapapeles del IAB no confirmó el contenido copiado.
+- Instrucciones de arranque y publicación en `wensite/README.md`. QA y capturas
+  de la web quedan en `private/qa/website/`. DNS, HTTPS y despliegue público no
+  se configuraron en esta tarea.
+
 ## 2026-10-02
 
 ### Documentado — Borrador para el blog de César Casas

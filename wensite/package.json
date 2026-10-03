@@ -1,0 +1,11 @@
+{
+  "name": "s42-agent-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run server.ts",
+    "dev": "bun --watch server.ts",
+    "test": "bun test server.test.ts"
+  },
+  "engines": { "bun": "1.4.2" }
+}

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://s42agent.dev/sitemap.xml
