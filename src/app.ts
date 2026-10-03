@@ -29,7 +29,12 @@ import { openFileTab, type FileTab } from "./file-tab.ts";
 import type { TabItem } from "./ui/components/tab-bar.ts";
 import { ProjectWebServers } from "./system/webserver.ts";
 import { showWebServer } from "./ui/webserver.ts";
+import { inspectProject, instructionsDraft, generateInstructions, previewInstructions } from "./ui/project-instructions.ts";
+import { gitInitialize } from "./system/git.ts";
 import { GitPanel } from "./ui/git.ts";
+import { TurnTasks } from "./agent/tasks.ts";
+import { closeout } from "./agent/closeout.ts";
+import { instructions } from "./agent/tools.ts";
 import { TaskBoard, type TaskPanelContext } from "./ui/tasks.ts";
 import { VerificationPanel } from "./ui/verification.ts";
 import { TaskStore, type TaskCard } from "./storage/tasks.ts";
@@ -140,6 +145,8 @@ export class App {
         { label: "Abrir proyecto", shortcut: "Ctrl+P", run: () => this.projects() },
         { label: "Agregar proyecto", run: () => this.projectForm() },
         { label: "Editar proyecto", run: () => this.projectForm(this.project) },
+        { label: "Generar AGENTS.md", run: () => this.run(() => this.projectInstructions()) },
+        { label: "Inicializar repositorio Git", run: () => this.initializeGit() },
         { label: "Quitar del registro", run: () => this.removeProject() },
         { label: "Nueva sesión", run: () => this.run(() => this.newSession()) },
         { label: "Sesiones", shortcut: "Ctrl+R", run: () => this.sessions() },
@@ -478,12 +485,31 @@ export class App {
     const tab = this.activeTab;
     if (!tab.project) { this.projectForm(); return; }
     this.centralPanel(tab)?.hide();
-    tab.git ??= new GitPanel(tab.project.path, this.desktop);
+    tab.git ??= new GitPanel(tab.project.path, this.desktop, () => this.initializeGit());
     tab.contentView = "git"; tab.panel = "editor"; tab.focusedId = "git-list";
     this.displayTab(tab);
     this.desktop.focus(this.view.editorWindow);
   }
   private centralPanel(tab: ProjectTab) { return tab.contentView === "git" ? tab.git : tab.contentView === "tasks" ? tab.taskBoard : tab.contentView === "verification" ? tab.verification : undefined; }
+  async projectInstructions(): Promise<void> {
+    const tab = this.activeTab; if (!tab.project) { this.projectForm(); return; }
+    if (tab.instructionsPreview) { const p = tab.instructionsPreview; previewInstructions(this.desktop, p.inspection, p.draft, p.error, () => { tab.instructionsPreview = undefined; }); return; }
+    const cwd = tab.project.path, { provider, model } = this.current(tab), key = await credential(provider, this.keys.get(provider.id));
+    let draft = "", error = "";
+    const inspection = await this.task("Inspeccionando proyecto…", signal => inspectProject(cwd, signal), tab);
+    try { await this.task("Generando AGENTS.md…", async signal => { draft = await generateInstructions(inspection, provider, model, key, signal, text => { draft += text; tab.status = `AGENTS.md · ${draft.length}`; this.desktop.invalidate(); }); }, tab); }
+    catch (e) { error = (e as Error).message; if (e instanceof CompletionError && typeof e.partial.content === "string") draft = e.partial.content; }
+    tab.instructionsPreview = { inspection, draft: draft ? instructionsDraft(inspection.previous, draft) : inspection.previous, error };
+    if (this.activeTab === tab) previewInstructions(this.desktop, inspection, tab.instructionsPreview.draft, error, () => { tab.instructionsPreview = undefined; });
+    else await tab.session?.append({ type: "notice", text: `AGENTS.md preview · ${cwd}\n${error}\n${tab.instructionsPreview.draft}` });
+  }
+  initializeGit(): void {
+    const tab = this.activeTab; if (!tab.project) return;
+    choose(this.desktop, `Git · ${tab.project.path}`, ["Inicializar repositorio Git", "Continuar sin Git"].map(value => ({ label: this.desktop.t(value), value })), action => {
+      if (action === "Continuar sin Git") { tab.gitDismissed = true; return; }
+      this.run(async () => { if (this.activeTab !== tab) throw new Error("Elegí el proyecto propietario"); const repo = await this.task("Inicializando Git…", signal => gitInitialize(tab.project!.path, signal)); if (repo.state !== "ready") throw new Error(repo.message); await tab.git?.refresh(); });
+    });
+  }
   private taskPanelContext(tab: ProjectTab): TaskPanelContext {
     return { cwd: tab.project!.path, desktop: this.desktop, events: () => tab.session?.state.events ?? [],
       record: event => { if (!tab.session) throw new Error("Sesión de tarea no disponible"); return tab.session.append(event); },
@@ -503,7 +529,8 @@ export class App {
     this.centralPanel(tab)?.hide();
     tab.verification ??= new VerificationPanel({ ...this.taskPanelContext(tab),
       task: async (label, work) => { if (this.activeTab !== tab) throw new Error("Elegí el proyecto propietario"); return this.task(label, work); },
-      cancel: () => tab.controller?.abort(new Error("Verificación cancelada")) });
+      cancel: () => tab.controller?.abort(new Error("Verificación cancelada")),
+      closeout: async (card, files, message, summary) => { await this.task("Cerrando tarea…", async signal => { const request = tab.session!.state.events.findLast(e => e.type === "task-request" && e.request.requestId === card.requestId); if (request?.type !== "task-request") throw new Error("Continuá la tarea para recuperar su sesión original antes del cierre"); const tasks = await TurnTasks.open(tab.project!.path, tab.session!, signal, await instructions(tab.project!.path)); tasks.request = request.request; const result = await closeout(tasks, { files, message, summary }); if (["failed", "unavailable"].includes(result.state)) throw new Error(result.detail); }, tab); } });
     if (taskId) tab.verification.taskId = taskId;
     tab.contentView = "verification"; tab.panel = "editor"; tab.focusedId = "verification-list";
     this.displayTab(tab); this.desktop.focus(this.view.editorWindow);
@@ -828,8 +855,8 @@ export class App {
   detach(): void { choose(this.desktop, this.desktop.t("Quitar adjunto"),this.attachments.map(value=>({label:`${value.path} · ${value.size} B`,value})),a=>this.run(async()=>{
     this.attachments=this.attachments.filter(item=>item!==a); this.desktop.resize(this.desktop.width,this.desktop.height); await this.saveDraft(); this.status="Adjunto quitado"; this.desktop.invalidate();
   })); }
-  async task<T>(label:string,operation:(signal:AbortSignal)=>Promise<T>):Promise<T>{
-    this.requireIdle(); const tab = this.activeTab, controller = new AbortController();
+  async task<T>(label:string,operation:(signal:AbortSignal)=>Promise<T>,tab = this.activeTab):Promise<T>{
+    this.requireIdle(tab); const controller = new AbortController();
     tab.controller=controller;tab.busy=true;tab.status=label;this.desktop.invalidate();
     const pending = (async () => { try { const result = await operation(controller.signal); tab.status = "Listo"; return result; }
       catch (error) { tab.status = (error as Error).message; throw error; }

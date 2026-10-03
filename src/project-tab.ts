@@ -1,3 +1,4 @@
+import type { ProjectInspection } from "./ui/project-instructions.ts";
 import type { Message, Selection } from "./agent/messages.ts";
 import type { Attachment } from "./agent/attachments.ts";
 import type { Project } from "./storage/config.ts";
@@ -22,7 +23,8 @@ export interface ProjectTab {
   agentState?: string;
   live: { id: string; label: string; text: string; reasoning: boolean }[];
   contentView?: "git" | "tasks" | "verification";
-  git?: GitPanel;
+  instructionsPreview?: { inspection: ProjectInspection; draft: string; error: string };
+  git?: GitPanel; gitDismissed?: boolean;
   taskBoard?: TaskBoard;
   verification?: VerificationPanel;
 }

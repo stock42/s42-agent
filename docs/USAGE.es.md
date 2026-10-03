@@ -587,3 +587,23 @@ salida parcial. Confirmar revisión registra una observación del usuario. Cambi
 de tarea muestra snapshots nativos y diffs observados con autoría identificada.
 Continuar tarea recupera su sesión original y prosigue el pedido; abrir el
 programa no reejecuta pruebas. Un proceso interrumpido se registra al reabrir.
+
+## Instrucciones y cierre Git
+
+Projects → Generar AGENTS.md inspecciona carpetas, archivos de instrucciones y
+comandos declarados sin ejecutarlos. El modelo propone una sección; las reglas
+existentes se conservan y se destacan contradicciones con el cierre solicitado.
+El preview admite edición y Diff / editar. Aplicar guarda; cerrar conserva el
+archivo anterior. Repetir reemplaza la sección generada, sin duplicarla.
+
+Projects → Inicializar repositorio Git y el botón Inicializar Git del panel
+ofrecen iniciar en la carpeta indicada o continuar sin Git. No crean remoto
+ni commit. La detección respeta repositorios padre y worktrees.
+
+En la ficha, Cerrar tarea / commit solicita archivos, mensaje y resultado.
+También está disponible task_closeout para el modelo y CLI. Requiere pruebas
+y aceptación vigentes. El cierre usa un índice separado y conserva staging
+ajeno; un archivo con trabajo previo mezclado requiere separar hunks primero.
+El historial registra diff, intención, error real y SHA. Un reintento recupera
+el commit creado antes de la interrupción. Push requiere la política del
+proyecto y confirmación del remoto; commit local y cierre fallido se distinguen.

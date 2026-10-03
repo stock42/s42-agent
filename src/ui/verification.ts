@@ -1,3 +1,4 @@
+import { form } from "./dialogs.ts";
 import { join } from "node:path";
 import { fingerprints, verificationRuns, type TaskEvent, type VerificationRun } from "../agent/tasks.ts";
 import { TaskStore, type TaskCard, type VerificationSpec } from "../storage/tasks.ts";
@@ -16,6 +17,7 @@ import { theme } from "./theme.ts";
 export interface VerificationContext extends TaskPanelContext {
   task: <T>(label: string, work: (signal: AbortSignal) => Promise<T>) => Promise<T>;
   cancel: () => void;
+  closeout: (card: TaskCard, files: string[], message: string, summary: string) => Promise<void>;
 }
 export class VerificationPanel {
   readonly list = new SelectList("verification-list", { x: 0, y: 3, width: 22, height: 7 }, [], () => { void this.detail(); });
@@ -36,6 +38,7 @@ export class VerificationPanel {
     this.buttons = [
       ["run", "Ejecutar prueba", () => this.act(() => this.run())], ["cancel", "Cancelar", () => ctx.cancel()],
       ["manual", "Confirmar revisión", () => this.act(() => this.confirm())], ["refresh", "Refrescar", () => { void this.refresh(); }],
+      ["closeout", "Cerrar tarea / commit", () => { if (this.card) { const card = this.card; form(ctx.desktop, ctx.desktop.t("Cerrar tarea / commit"), [{ label: "Archivos (JSON)", value: JSON.stringify([...new Set(card.verification.flatMap(v => v.paths))]) }, { label: "Mensaje commit", value: card.title }, { label: "Resultado", value: card.result }], async ([files, message, summary]) => { const paths: unknown = JSON.parse(files!); if (!Array.isArray(paths) || paths.some(p => typeof p !== "string")) throw new Error("Archivos debe ser un array JSON"); await ctx.closeout(card, paths, message!, summary!); await this.refresh(); }); } }],
       ["changes", "Cambios de tarea", () => this.act(() => this.changes())], ["resume", "Continuar tarea", () => { if (this.card) ctx.continue(this.card); }],
     ].map(([id, label, action]) => new Button(`verification-${id}`, { x: 0, y: 0, width: 12, height: 1 }, label as string, action as () => void));
     for (const button of this.buttons) button.translate = ctx.desktop.t;
@@ -62,14 +65,14 @@ export class VerificationPanel {
     const buttonWidth = Math.max(1, Math.floor(client.width / 3));
     this.buttons.forEach((button, i) => Object.assign(button.bounds, { x: (i % 3) * buttonWidth, y: Math.floor(i / 3), width: buttonWidth }));
     const width = Math.max(12, Math.floor(client.width / 3)), rows = Math.max(1, client.height - 3);
-    Object.assign(this.list.bounds, { x: 0, y: 3, width, height: rows });
-    Object.assign(this.text.bounds, { x: width, y: 3, width: Math.max(1, client.width - width), height: rows });
+    Object.assign(this.list.bounds, { x: 0, y: 4, width, height: Math.max(1, rows - 1) });
+    Object.assign(this.text.bounds, { x: width, y: 4, width: Math.max(1, client.width - width), height: Math.max(1, rows - 1) });
     this.buttons[0]!.disabled = !this.card || this.card.verification[this.list.selected]?.kind !== "command";
     this.buttons[2]!.disabled = !this.card || this.card.verification[this.list.selected]?.kind !== "review";
-    this.buttons[4]!.disabled = this.buttons[5]!.disabled = !this.card;
+    this.buttons[4]!.disabled = this.buttons[5]!.disabled = this.buttons[6]!.disabled = !this.card;
   }
   draw(canvas: Canvas, client: Rect): void {
-    canvas.text(client.x, client.y + 2, this.notice || this.card?.title || this.ctx.desktop.t("Sin tareas"), theme.window, client.width);
+    canvas.text(client.x, client.y + 3, this.notice || this.card?.title || this.ctx.desktop.t("Sin tareas"), theme.window, client.width);
   }
   private act(work: () => Promise<void>): void {
     void work().catch(error => { this.notice = (error as Error).message; }).finally(() => this.ctx.desktop.invalidate());

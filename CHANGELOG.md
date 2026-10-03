@@ -5,6 +5,19 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Agregado — Plan v1.0.5, E4: instrucciones y cierre Git
+
+- Generación AGENTS.md a partir de inspección/modelo, sección reemplazable,
+  preview editable/diff y aplicación explícita; conserva reglas y alcance
+  anidado, muestra contradicciones y borrador/error del proveedor por proyecto.
+- Git init explícito en Projects/panel, sin remoto ni commit automático.
+  task_closeout y acción en ficha: CHANGELOG real, archivos seleccionados,
+  índice separado, SHA e intención recuperable; preserva staging ajeno y
+  bloquea mezclas, hooks y publicación no confirmada sin force/reset.
+- Typecheck y 41 tests relevantes correctos, 394 assertions; Git y remoto
+  locales reales, recuperación sin commit duplicado y TUI/CLI desde fuente.
+  Sin build ni release.
+
 ### Agregado — Plan v1.0.5, E3: tablero y ficha por proyecto
 
 - Tablero TODO.md con columnas, edición por páginas, teclado, drag y orden;

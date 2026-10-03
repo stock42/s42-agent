@@ -34,6 +34,7 @@ function parseEvent(value: unknown, projectId: string): SessionEvent {
     case "task-verification": if (e.run && [e.run.id, e.run.taskId, e.run.specId, e.run.cwd, e.run.started, e.run.stdout, e.run.stderr].every(v => typeof v === "string")
       && ["running", "passed", "failed", "cancelled", "interrupted"].includes(e.run.state) && ["harness", "browser", "user"].includes(e.run.origin) && e.run.files && typeof e.run.files === "object") return e; break;
     case "task-verification-output": if (typeof e.runId === "string" && ["stdout", "stderr"].includes(e.stream) && typeof e.text === "string") return e; break;
+    case "task-closeout-intent": if (typeof e.requestId === "string" && /^[a-f0-9]{40,64}$/.test(e.tree) && Array.isArray(e.paths) && e.paths.every(p => typeof p === "string") && typeof e.message === "string" && (e.parent === undefined || /^[a-f0-9]{40,64}$/.test(e.parent))) return e; break;
     case "task-closeout": if (typeof e.requestId === "string" && typeof e.detail === "string" && ["pending", "failed", "committed", "pushed", "unavailable"].includes(e.state) && (e.sha === undefined || /^[a-f0-9]{40,64}$/.test(e.sha))) return e; break;
     case "context-usage": if (e.usage && typeof e.usage.providerId === "string" && typeof e.usage.modelId === "string" && typeof e.usage.estimated === "boolean"
       && [e.usage.window, e.usage.used, e.usage.inputWeight, e.usage.inputTokens].every(v => v === undefined || Number.isSafeInteger(v) && v >= 0)) return e; break;

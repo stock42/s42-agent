@@ -580,3 +580,23 @@ Confirm review attributes the observation to the user. Task changes displays
 native file snapshots and observed diffs with attribution. Continue task restores
 the original session and resumes that request. Startup never reruns tests; an
 interrupted test is recorded when its session reopens.
+
+## Project instructions and Git closeout
+
+Projects → Generate AGENTS.md inspects folders, existing instructions and
+declared commands without executing scripts. The model drafts a managed
+section; existing rules are preserved and conflicting closeout rules are
+flagged. The preview supports editing and Diff / edit. Apply saves it; closing
+preserves the original file. Regeneration replaces the generated section.
+
+Projects → Initialize Git repository and the Git panel button offer explicit
+initialization in the displayed folder or continuation without Git. They create
+no remote or commit, and respect parent repositories and worktrees.
+
+The verification panel Close task / commit asks for files, message and result.
+The model and CLI can use task_closeout. Checks and acceptance must be current.
+A separate index preserves unrelated staging; mixed pre-existing files require
+hunk separation before closing. History records the selected diff, intent,
+actual errors and SHA. Retrying recovers a commit created before interruption.
+Push requires project policy and remote confirmation; local commit and failed
+closeout remain distinct.

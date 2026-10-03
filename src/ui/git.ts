@@ -28,13 +28,13 @@ export class GitPanel {
   private staged = false;
   private notice = "";
   private visible = false;
-  constructor(readonly cwd: string, private desktop: Desktop) {
+  constructor(readonly cwd: string, private desktop: Desktop, initialize?: () => void) {
     this.text.readOnly = true; this.text.lineNumbers = true;
     this.text.onSelect = text => desktop.copyToClipboard(text);
     this.buttons = (Object.entries(views) as [GitView, string][]).map(([view, label]) => new Button(`git-${view}`, { x: 0, y: 0, width: 12, height: 1 }, label,
       () => { if (this.view !== view) { this.view = view; this.list.setItems([]); this.text.setValue(""); } void this.refresh(); }));
     this.buttons.push(new Button("git-refresh", { x: 0, y: 0, width: 13, height: 1 }, "Refrescar", () => { void this.refresh(); }),
-      new Button("git-index", { x: 0, y: 0, width: 16, height: 1 }, "Índice / archivo", () => { this.staged = !this.staged; void this.detail(); }));
+      new Button("git-index", { x: 0, y: 0, width: 16, height: 1 }, "Índice / archivo", () => { if (this.repository?.state === "missing" && initialize) { initialize(); return; } this.staged = !this.staged; void this.detail(); }));
     for (const button of this.buttons) button.translate = desktop.t;
     this.controls = [...this.buttons, this.list, this.text];
     const handle = this.list.handle.bind(this.list);
@@ -51,7 +51,8 @@ export class GitPanel {
   layout(client: Rect): void {
     const rowWidth = Math.max(1, Math.floor(client.width / 3));
     this.buttons.forEach((button, i) => Object.assign(button.bounds, { x: (i % 3) * rowWidth, y: Math.floor(i / 3), width: rowWidth }));
-    this.buttons[5]!.disabled = this.view !== "changes";
+    this.buttons[5]!.label = this.repository?.state === "missing" ? "Inicializar Git" : "Índice / archivo";
+    this.buttons[5]!.disabled = this.view !== "changes" && this.repository?.state !== "missing";
     const top = 4, rows = Math.max(1, client.height - top);
     const listWidth = this.view === "changes" || this.view === "history" ? Math.max(10, Math.floor(client.width / 3)) : 0;
     this.list.disabled = !listWidth;

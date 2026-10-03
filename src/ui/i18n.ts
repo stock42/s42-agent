@@ -3,6 +3,18 @@ export type Language = "es" | "en";
 // Only pass harness UI text here. Project names, files, prompts, model output,
 // tool arguments/results and external error details remain verbatim.
 const english: Readonly<Record<string, string>> = {
+  "Cerrando tarea…": "Closing task…",
+  "Mensaje commit": "Commit message",
+  "Cerrar tarea / commit": "Close task / commit",
+  "Inicializando Git…": "Initializing Git…",
+  "Generando AGENTS.md…": "Generating AGENTS.md…",
+  "Inspeccionando proyecto…": "Inspecting project…",
+  "Diff / editar": "Diff / edit",
+  "AGENTS.md · preview": "AGENTS.md · preview",
+  "Continuar sin Git": "Continue without Git",
+  "Inicializar repositorio Git": "Initialize Git repository",
+  "Inicializar Git": "Initialize Git",
+  "Generar AGENTS.md": "Generate AGENTS.md",
   "Tareas": "Tasks",
   "Verificación": "Verification",
   "Pendientes": "Pending",

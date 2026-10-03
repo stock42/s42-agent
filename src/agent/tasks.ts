@@ -18,6 +18,7 @@ export type TaskEvent =
   | { type: "task-file"; requestId: string; callId: string; path: string; before: string | null; after: string | null; phase: "intent" | "confirmed" }
   | { type: "task-verification"; run: VerificationRun }
   | { type: "task-verification-output"; runId: string; stream: "stdout" | "stderr"; text: string }
+  | { type: "task-closeout-intent"; requestId: string; parent?: string; tree: string; paths: string[]; message: string; indexEntries?: Record<string, string> }
   | { type: "task-closeout"; requestId: string; state: "pending" | "failed" | "committed" | "pushed" | "unavailable"; sha?: string; detail: string };
 export interface PlannedTask {
   id?: string; title: string; description?: string; criterion: string; dependencies?: string[];
@@ -160,9 +161,10 @@ export class TurnTasks {
     if (!cards.length) pending.push("El plan no tiene tarjetas reconocidas en TODO.md");
     const policy = this.request.policy;
     const closeout = this.session.state.events.findLast(e => e.type === "task-closeout" && e.requestId === this.request!.requestId);
-    if ((policy.commit || policy.changelog) && this.request.baseline.state === "ready"
+    const repository = await gitRepository(this.store.root, this.signal);
+    if ((policy.commit || policy.changelog) && repository.state === "ready"
       && !(closeout?.type === "task-closeout" && ["committed", "pushed"].includes(closeout.state))) pending.push("Cierre documental/Git requerido por AGENTS.md pendiente");
-    if (policy.push && this.request.baseline.state === "ready" && !(closeout?.type === "task-closeout" && closeout.state === "pushed")) pending.push("Push autorizado por el proyecto pendiente");
+    if (policy.push && repository.state === "ready" && !(closeout?.type === "task-closeout" && closeout.state === "pushed")) pending.push("Push autorizado por el proyecto pendiente");
     return { state: !pending.length ? "completed" : cards.some(t => t.status !== "done" && t.blocked?.trim()) ? "blocked" : "incomplete", pending };
   }
   async context(): Promise<string> {

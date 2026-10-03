@@ -15,9 +15,9 @@ export interface GitBranch { name: string; sha: string; current: boolean; upstre
 
 // argv stays an array through the shared Bun Shell worker. Local queries never
 // refresh remote refs or run configured diff/colour helpers.
-export function gitCommand(cwd: string, args: string[], signal = new AbortController().signal) {
+export function gitCommand(cwd: string, args: string[], signal = new AbortController().signal, env?: NodeJS.ProcessEnv) {
   return runCommand(["git", "--no-pager", "--literal-pathspecs", "-c", "color.ui=false", ...args], {
-    cwd, signal, env: { ...process.env, GIT_OPTIONAL_LOCKS: "0", LC_ALL: "C" },
+    cwd, signal, env: { ...process.env, GIT_OPTIONAL_LOCKS: "0", LC_ALL: "C", ...env },
   });
 }
 async function query(cwd: string, args: string[], signal?: AbortSignal): Promise<string> {
@@ -94,4 +94,9 @@ export function gitCommitDetail(root: string, sha: string, signal?: AbortSignal)
 export async function gitChangelog(root: string): Promise<string | undefined> {
   const file = Bun.file(join(root, "CHANGELOG.md"));
   return await file.exists() ? await file.text() : undefined;
+}
+
+export async function gitInitialize(cwd: string, signal: AbortSignal): Promise<GitRepository> {
+  const existing = await gitRepository(cwd, signal); if (existing.state !== "missing") return existing;
+  await query(cwd, ["init", "--", cwd], signal); return gitRepository(cwd, signal);
 }

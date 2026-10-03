@@ -14,12 +14,13 @@ import { scrape } from "./scrape.ts";
 import { sessionHistory } from "./session_history.ts";
 import { taskPlan } from "./task_plan.ts";
 import { taskUpdate } from "./task_update.ts";
+import { taskCloseout } from "./task_closeout.ts";
 import { taskVerify } from "./task_verify.ts";
 import { instructions, validate, type ToolContext, type ToolResult } from "./shared.ts";
 
 export { instructions } from "./shared.ts";
 export type { ToolResult } from "./shared.ts";
-export const nativeTools = [read, write, edit, list, find, search, httpFetch, shell, internalSkill, markdownHtml, websocket, scrape, sessionHistory, taskPlan, taskUpdate, taskVerify];
+export const nativeTools = [read, write, edit, list, find, search, httpFetch, shell, internalSkill, markdownHtml, websocket, scrape, sessionHistory, taskPlan, taskUpdate, taskVerify, taskCloseout];
 export const toolDefinitions = nativeTools.map(tool => tool.definition);
 
 export async function execute(name: string, raw: string, cwd: string, signal: AbortSignal, onOutput?: ToolContext["onOutput"], history?: ToolContext["history"], taskContext?: Pick<ToolContext, "tasks" | "callId">): Promise<ToolResult> {
