@@ -5,6 +5,14 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Corregido — Nombre del directorio de la web
+
+- Renombrado el directorio a `website/` y actualizadas las referencias y el
+  comando de arranque. Se trasladan también `.env` y todos los recursos.
+- Typecheck y ocho pruebas de la web correctas, 80 assertions y cero fallos.
+  Servidor reiniciado desde la nueva ruta; inglés, español y recursos públicos
+  siguen disponibles en el puerto configurado.
+
 ### Mejorado — Website bilingüe y presentación animada
 
 - Inglés predeterminado en `/` y español completo en `/es/`, con selector EN/ES
@@ -65,7 +73,7 @@ cierre de cada tarea e incluirlo en su commit.
 
 ### Agregado — Website de S42 Agent
 
-- Creada la landing de `s42agent.dev` en `wensite/`: diseño oscuro responsive,
+- Creada la landing de `s42agent.dev` en `website/`: diseño oscuro responsive,
   presentación del producto, cuatro capturas reales copiadas sin modificar,
   comandos para Linux/macOS/Windows y ejecución desde fuente. Incluye primer
   inicio, links a GitHub y atribución a César Casas con X y LinkedIn.
@@ -82,7 +90,7 @@ cierre de cada tarea e incluirlo en su commit.
   sin overflow horizontal, apertura de imágenes completas, desplegables por
   mouse/teclado y feedback de copiado; sin errores ni warnings de consola.
   La lectura del portapapeles del IAB no confirmó el contenido copiado.
-- Instrucciones de arranque y publicación en `wensite/README.md`. QA y capturas
+- Instrucciones de arranque y publicación en `website/README.md`. QA y capturas
   de la web quedan en `private/qa/website/`. DNS, HTTPS y despliegue público no
   se configuraron en esta tarea.
 

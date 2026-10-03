@@ -1,15 +1,15 @@
 # s42agent.dev
 
 Landing page bilingüe de S42 Agent. HTML, CSS y JavaScript estáticos, servidos por Bun
-1.4.2, sin dependencias externas ni paso de build. Se conserva `wensite` como
-nombre de directorio solicitado.
+1.4.2, sin dependencias externas ni paso de build. El código de la web está en
+`website/`.
 
 ## Ejecutar
 
 Desde la raíz del repositorio:
 
 ```bash
-cd wensite
+cd website
 cp .env.example .env
 bun run start
 ```
