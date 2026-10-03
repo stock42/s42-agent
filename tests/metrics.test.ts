@@ -94,12 +94,12 @@ test("Vista cambia recursos con teclado y mouse sin modal, tokens fijos y prompt
       expect(canvas.lines().join("\n")).toContain("BORRADOR"); expect(canvas.lines().join("\n")).not.toContain("< Enviar >");
       for (const line of footer) expect(Bun.stringWidth(line)).toBeLessThanOrEqual(width - 2);
     }
-    key("alt+v"); for (let i = 0; i < 3; i++) key("down"); key("enter"); await until(() => !app.store.value.ui.resources.cpu);
+    key("alt+v"); for (let i = 0; i < 6; i++) key("down"); key("enter"); await until(() => !app.store.value.ui.resources.cpu);
     expect(app.desktop.modal).toBeUndefined(); expect(app.desktop.statusLines!().join(" ")).not.toContain("CPU:");
     await app.setLanguage("en"); const x = app.desktop.draw().lines()[0]!.indexOf("View") + 1;
     for (const action of ["press", "release"] as const) app.desktop.handle({ type: "mouse", action, button: 0, delta: 0, x, y: 0 });
     expect(app.desktop.draw().lines().join("\n")).toContain("Disk: on");
-    for (const action of ["press", "release"] as const) app.desktop.handle({ type: "mouse", action, button: 0, delta: 0, x: x + 2, y: 7 });
+    for (const action of ["press", "release"] as const) app.desktop.handle({ type: "mouse", action, button: 0, delta: 0, x: x + 2, y: 10 });
     await until(() => !app.store.value.ui.resources.disk);
     for (const resource of ["ram", "gpu"] as const) await app.toggleResource(resource);
     expect(app.desktop.statusLines!()).toEqual([]); expect(app.desktop.draw().lines().join("\n")).toContain("Tokens I/O 100/20 · Avg. 20.0 tok/s");

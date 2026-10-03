@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -38,8 +39,8 @@ test("stream cortado conserva razonamiento y calls parciales sin inventar texto"
 });
 
 test("chat muestra reasoning, argumentos parciales, ejecución y resultado antes del fin; persiste cancelación/reapertura",async()=>{
-  const root=await mkdtemp(join(tmpdir(),"s42-visible-stream-")),config=join(root,"config.json");let controller:ReadableStreamDefaultController<Uint8Array>|undefined,requests:any[]=[];
-  const server=Bun.serve({port:0,async fetch(req){const body=await req.json() as any;requests.push(body);
+  const root=await mkdtemp(join(tmpdir(),"s42-visible-stream-")),config=join(root,"config.json");const workflow=taskWorkflow(1);let controller:ReadableStreamDefaultController<Uint8Array>|undefined,requests:any[]=[];
+  const server=Bun.serve({port:0,async fetch(req){const body=await req.json() as any;const flow=workflow(body);if(flow)return flow;requests.push(body);
     if(body.messages.findLast((m:any)=>m.role==="user")?.content==="cancelar")return new Response(new ReadableStream({start(c){c.enqueue(encoder.encode(event({reasoning_content:"Razonamiento parcial guardado",tool_calls:[{index:0,id:"cancelled",function:{name:"write",arguments:'{"path":'}}]})));}}));
     if(requests.length===1)return new Response(new ReadableStream({start(c){controller=c;}}));
     return new Response(event({reasoning:"Ya tengo el resultado"})+event({content:"Terminé y verifiqué"},"stop")+"data: [DONE]\n\n");
@@ -49,18 +50,18 @@ test("chat muestra reasoning, argumentos parciales, ejecución y resultado antes
     const next=structuredClone(app.store.value);next.providers=[provider(server.port!)];await app.store.save(next);await app.selectModel({providerId:"fixture",modelId:"fixture"});
     app.view.prompt.setValue("mostrar proceso");await app.submit();await until(()=>Boolean(controller));
     controller!.enqueue(encoder.encode(event({reasoning_content:"Primero verifico á文🙂"})));await until(()=>app.view.response.value.includes("Primero verifico á文🙂"));expect(app.busy).toBe(true);expect(app.view.response.value).toContain("Razonamiento:");
-    controller!.enqueue(encoder.encode(event({tool_calls:[{index:0,id:"call-1",function:{name:"shell",arguments:'{"command":'}}]})));await until(()=>app.view.response.value.includes('{"command":'));expect(app.view.response.value).toContain("Tool call · shell");expect(app.session!.state.events.some(e=>e.type==="tool-start")).toBe(false);
-    const args=JSON.stringify({command:"sleep 0.15; printf 'salida visible'"});controller!.enqueue(encoder.encode(event({tool_calls:[{index:0,function:{arguments:args.slice('{"command":'.length)}}]})));await until(()=>app.view.response.value.includes("salida visible"));expect(app.session!.state.events.some(e=>e.type==="tool-start")).toBe(false);
+    controller!.enqueue(encoder.encode(event({tool_calls:[{index:0,id:"call-1",function:{name:"shell",arguments:'{"command":'}}]})));await until(()=>app.view.response.value.includes('{"command":'));expect(app.view.response.value).toContain("Tool call · shell");expect(app.session!.state.events.some(e=>e.type==="tool-start" && e.name==="shell")).toBe(false);
+    const args=JSON.stringify({command:"sleep 0.15; printf 'salida visible'"});controller!.enqueue(encoder.encode(event({tool_calls:[{index:0,function:{arguments:args.slice('{"command":'.length)}}]})));await until(()=>app.view.response.value.includes("salida visible"));expect(app.session!.state.events.some(e=>e.type==="tool-start" && e.name==="shell")).toBe(false);
     controller!.enqueue(encoder.encode(event({},"tool_calls")+"data: [DONE]\n\n"));controller!.close();await until(()=>app.view.response.value.includes("Herramienta · shell · ejecutando…"));expect(app.busy).toBe(true);
     const lines=app.desktop.draw().lines(),editor=app.view.editorWindow,prompt=app.view.promptWindow;
     expect(lines[editor.client.y+editor.client.height-1]).toContain("Agente: Ejecutando shell…");
     expect(lines.slice(prompt.bounds.y,prompt.bounds.y+prompt.bounds.height).join("\n")).not.toContain("Ejecutando shell…");
     app.view.prompt.setValue("siguiente borrador");await until(()=>!app.busy);
     expect(app.view.response.value).toContain("Herramienta · shell:\nOK · exit 0");expect(app.view.response.value).toContain("salida visible");expect(app.view.response.value).toContain("Ya tengo el resultado");expect(app.view.response.value).toContain("Terminé y verifiqué");expect(app.view.prompt.value).toBe("siguiente borrador");
-    expect(requests[1].messages.find((m:any)=>m.role==="assistant").reasoning_content).toBe("Primero verifico á文🙂");expect(app.session!.state.messages.filter(m=>m.role==="tool")).toHaveLength(1);
+    expect(requests[1].messages.find((m:any)=>m.role==="assistant" && m.reasoning_content).reasoning_content).toBe("Primero verifico á文🙂");expect(app.session!.state.messages.filter(m=>m.role==="tool" && !m.tool_call_id?.startsWith("fixture-task-"))).toHaveLength(1);
     const original=app.view.response.value;app.desktop.focus(app.view.editorWindow);app.desktop.handle({type:"paste",text:"editar"});app.desktop.handle({type:"key",key:"delete"});expect(app.view.response.value).toBe(original);
     app.view.prompt.setValue("cancelar");await app.submit();await until(()=>app.view.response.value.includes("Razonamiento parcial guardado"));app.cancel();await until(()=>!app.busy);
-    const partial=app.session!.state.messages.at(-1)!;expect(partial.reasoning_content).toBe("Razonamiento parcial guardado");expect(partial.content).toBeNull();expect(partial.tool_calls).toBeUndefined();expect(app.session!.state.events.filter(e=>e.type==="tool-start")).toHaveLength(1);
+    const partial=app.session!.state.messages.at(-1)!;expect(partial.reasoning_content).toBe("Razonamiento parcial guardado");expect(partial.content).toBeNull();expect(partial.tool_calls).toBeUndefined();expect(app.session!.state.events.filter(e=>e.type==="tool-start" && e.name==="shell")).toHaveLength(1);
     await app.desktop.onBeforeExit!();const reopened=await App.open({config});
     try{expect(reopened.view.response.value).toContain("Razonamiento parcial guardado");expect(reopened.view.response.value).toContain("Primero verifico á文🙂");expect(reopened.view.response.value).toContain("Ya tengo el resultado");expect(reopened.view.response.value).toContain("Herramienta · shell:\nOK · exit 0");expect(reopened.view.response.value).toContain("Turno cancelado");}finally{await reopened.desktop.onBeforeExit!();}
   } finally {await app.session?.close();server.stop(true);await rm(root,{recursive:true,force:true});}

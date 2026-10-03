@@ -49,7 +49,7 @@ test("View keyboard/mouse: switch language, translate surfaces, persist and pres
       app.view.prompt.setValue("Guardar\nmi prompt á文🙂");
       await message(app, { role: "user", content: "Ayuda" });
       await message(app, { role: "assistant", content: "Respuesta sin traducir: Enviar", reasoning: "pensamiento íntegro" }); app.showHistory();
-      key(app, "alt+v"); for (let i = 0; i < 7; i++) key(app, "down"); key(app, "enter");
+      key(app, "alt+v"); for (let i = 0; i < 10; i++) key(app, "down"); key(app, "enter");
       expect(app.desktop.modal!.title).toBe("Language");
       expect((app.desktop.modal!.controls[0] as SelectList).items[0]).toContain("(actual)");
       key(app, "down"); key(app, "enter"); await until(() => app.desktop.language === "en");
@@ -66,7 +66,7 @@ test("View keyboard/mouse: switch language, translate surfaces, persist and pres
       const x = app.desktop.draw().lines()[0]!.indexOf("View") + 1;
       const mouse = (action: "press" | "release", y: number) => app.desktop.handle({ type: "mouse", action, button: 0, delta: 0, x, y });
       mouse("press", 0); mouse("release", 0); expect(app.desktop.menu.opened).toBe(5);
-      expect(screen(app)).toContain("Show reasoning: on"); mouse("press", 10); mouse("release", 10);
+      expect(screen(app)).toContain("Show reasoning: on"); mouse("press", 13); mouse("release", 13);
       await until(() => !app.store.value.ui.showReasoning);
       expect(app.view.response.value).not.toContain("pensamiento íntegro"); expect(app.view.response.value).toContain("Respuesta sin traducir");
       app.projectForm(); expect(screen(app)).toContain("Projects · new"); expect(screen(app)).toContain("Folder"); expect(screen(app)).toContain("< Browse >"); expect(screen(app)).toContain("< Save >"); key(app, "escape");

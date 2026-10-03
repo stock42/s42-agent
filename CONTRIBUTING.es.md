@@ -40,6 +40,20 @@ Usá las APIs de Bun cuando correspondan. Evitá agregar dependencias de runtime
 sin una necesidad concreta. Las pruebas de binarios se hacen para cambios de
 distribución; no sustituyen la revisión TUI.
 
+## Validación del flujo de tareas
+
+`tests/workflow-integration.test.ts` recorre aplicación explícita de AGENTS.md, inicialización Git, pedido TUI, pruebas Bun y cierre Git reales, equivalente CLI, recuperación y un segundo proyecto. Su proveedor es un fixture de protocolo; no valida un modelo real. Las suites de tareas/Git/browser cubren conflictos, cierre interrumpido, evidencia vencida y propiedad de recursos.
+
+La aceptación Chrome DevTools MCP es opt-in y usa programas externos ya instalados:
+
+```bash
+S42_CHROME_MCP_ENTRY=/ruta/absoluta/chrome-devtools-mcp/build/src/bin/chrome-devtools-mcp.js \
+S42_BROWSER_NODE=/ruta/absoluta/node \
+bun test tests/browser-real.test.ts
+```
+
+Sin esa variable el escenario Chrome real no se registra. Los tests de protocolo y la suite de fuente no prueban operación de Chrome/modelo. Usá `bun run dev` con configuración temporal para revisar la UI; registrá mouse físico del emulador por separado de eventos PTY inyectados.
+
 ## Contenido del repositorio
 
 Versionar tests, CI y herramientas reutilizables de build/release. Los informes

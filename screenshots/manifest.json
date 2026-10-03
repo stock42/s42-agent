@@ -1,9 +1,9 @@
 {
-  "captureDate": "2026-10-01",
-  "totalCaptures": 35,
-  "newCaptures": 28,
+  "captureDate": "2026-10-03",
+  "totalCaptures": 41,
+  "newCaptures": 34,
   "reusedCaptures": 7,
-  "captureMethod": "Original Computer Use browser viewport JPEG bytes; no cropping, retouching, overlays or generated pixels",
+  "captureMethod": "Original browser viewport JPEG bytes; capture tools and provenance identified per batch; no cropping, retouching, overlays or generated pixels",
   "nativeDesktopCapture": false,
   "benchmark": false,
   "terminal": {
@@ -49,6 +49,35 @@
         "gruvbox"
       ],
       "exitCode": 0
+    },
+    "task-workflow": {
+      "files": "36–41",
+      "captureDate": "2026-10-03",
+      "sourceCommitBeforeChanges": "acc2e27",
+      "sourceIncludes": "E6 new-file snapshot, Chrome JPEG path and browser dialog fixes; no version change",
+      "sourceChanges": true,
+      "configuration": "Temporary JSON config; existing controlled QA project/session; personal config untouched",
+      "captureTool": "Chrome DevTools MCP 1.10.1 take_screenshot",
+      "terminal": {
+        "runtime": "Bun 1.4.2",
+        "entrypoint": "index.ts",
+        "pty": "Bun.Terminal 120x34",
+        "emulator": "@xterm/xterm 6.0.0",
+        "fitAddon": false,
+        "font": "DejaVu Sans Mono",
+        "fontSize": 16,
+        "lineHeight": 1.1,
+        "viewer": "Chrome 154.0.8037.97 Linux x64"
+      },
+      "sessionId": "93aa16f1-3b1c-4193-a765-182a833b9bf0",
+      "content": "Board and verification replay persisted DeepSeek v4 Pro web trial; no new provider turn during capture. Chrome panel opens a real isolated connection to about:blank.",
+      "languages": [
+        "es",
+        "en"
+      ],
+      "palette": "qbasic",
+      "exitCode": 0,
+      "physicalMouseValidated": false
     }
   },
   "liveModelRun": {
@@ -492,6 +521,66 @@
       "sha256": "fad51e97a983362263d82ec1c74edcadf06d929dab5275127f69bd97930ba7cb",
       "language": "es",
       "palette": "qbasic"
+    },
+    {
+      "file": "36-tasks-es.jpg",
+      "title": "Tablero de tareas · Español",
+      "batch": "task-workflow",
+      "mimeType": "image/jpeg",
+      "width": 1280,
+      "height": 740,
+      "bytes": 144213,
+      "sha256": "41d351f8152d2fb9b5df52b2bcdc1b09a15c9c399a23cf40d8aa0077f8be85ac"
+    },
+    {
+      "file": "37-task-evidence-es.jpg",
+      "title": "Verificación real de tarea · Español",
+      "batch": "task-workflow",
+      "mimeType": "image/jpeg",
+      "width": 1280,
+      "height": 740,
+      "bytes": 267446,
+      "sha256": "a84a65476ceac14f2c26c8d306059c8e88ec0f87d259dcba486a86cd4b2e5890"
+    },
+    {
+      "file": "38-chrome-es.jpg",
+      "title": "Conexión Chrome aislada · Español",
+      "batch": "task-workflow",
+      "mimeType": "image/jpeg",
+      "width": 1280,
+      "height": 740,
+      "bytes": 220907,
+      "sha256": "0ae6e3349538d9ccad568e3683ac9da4f82997cce76040d2d87e8699024845a7"
+    },
+    {
+      "file": "39-tasks-en.jpg",
+      "title": "Task board · English",
+      "batch": "task-workflow",
+      "mimeType": "image/jpeg",
+      "width": 1280,
+      "height": 740,
+      "bytes": 140299,
+      "sha256": "07f79f01cef4b35b54a1739fe8fc945fcc45b79d541bd07d11108b6f7b7fd28f"
+    },
+    {
+      "file": "40-task-evidence-en.jpg",
+      "title": "Actual task verification · English",
+      "batch": "task-workflow",
+      "mimeType": "image/jpeg",
+      "width": 1280,
+      "height": 740,
+      "bytes": 264325,
+      "sha256": "3ad799d2356d2298a8344207e1a9b5204365cd14399f2c7f9caaea6da427a3c5"
+    },
+    {
+      "file": "41-chrome-en.jpg",
+      "title": "Isolated Chrome connection · English",
+      "batch": "task-workflow",
+      "mimeType": "image/jpeg",
+      "width": 1280,
+      "height": 740,
+      "bytes": 214412,
+      "sha256": "d6e22cffe4cc272532110d83b96f0253b6aa9a36c44f0fa5b85256329469d8df"
     }
   ],
   "historicalSourcePaths": "provenance and copiedFrom record original capture-time locations; duplicate image directories and supporting QA reports are now archived locally outside Git."

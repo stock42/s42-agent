@@ -187,7 +187,7 @@ export class TurnTasks {
     await this.requirePlan(); const file = Bun.file(path), before = await file.exists() ? Buffer.from(await file.bytes()).toString("base64") : null;
     await this.session.append({ type: "task-file", requestId: this.request!.requestId, callId, path, before, after: null, phase: "intent" });
     const result = await work();
-    const after = await file.exists() ? Buffer.from(await file.bytes()).toString("base64") : null;
+    const written = Bun.file(path), after = await written.exists() ? Buffer.from(await written.bytes()).toString("base64") : null;
     await this.session.append({ type: "task-file", requestId: this.request!.requestId, callId, path, before, after, phase: "confirmed" });
     return result;
   }

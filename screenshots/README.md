@@ -2,7 +2,7 @@
 
 **English** · [Español](README.es.md)
 
-**35 original screenshots: 28 new captures and 7 preserved from earlier QA.**
+**41 original screenshots: 34 new captures and 7 preserved from earlier QA.**
 Click a thumbnail to open the full-size JPEG. [English README](../README.md) ·
 [README en español](../README.es.md) · [Capture manifest](manifest.json).
 
@@ -24,6 +24,25 @@ these screenshots are not a benchmark or evidence of a completed coding task.
 Screenshot 27 shows the actual skills.sh results for `pdf`; no skill was installed.
 MCP and skill registration images show real configuration forms, not a connected
 MCP server or an installed external skill.
+
+## Tasks, evidence and Chrome
+
+Captures 36–41 use E5/E6 source and temporary configuration on 2026-10-03. The board and verification panel reopen the actual DeepSeek v4 Pro session documented in the plan; no new provider turn runs during capture. The Chrome panel shows a real isolated connection to about:blank. These are original Chrome DevTools MCP 1.10.1 JPEGs of xterm.js/Bun.Terminal, inspected without retouching. They do not establish physical emulator mouse behavior.
+
+<table>
+  <tr>
+    <td><a href="36-tasks-es.jpg"><img src="36-tasks-es.jpg" alt="Tablero de tareas · Español" width="440"></a><br><strong>Tablero de tareas · Español</strong></td>
+    <td><a href="39-tasks-en.jpg"><img src="39-tasks-en.jpg" alt="Task board · English" width="440"></a><br><strong>Task board · English</strong></td>
+  </tr>
+  <tr>
+    <td><a href="37-task-evidence-es.jpg"><img src="37-task-evidence-es.jpg" alt="Verificación real de tarea · Español" width="440"></a><br><strong>Verificación real de tarea · Español</strong></td>
+    <td><a href="40-task-evidence-en.jpg"><img src="40-task-evidence-en.jpg" alt="Actual task verification · English" width="440"></a><br><strong>Actual task verification · English</strong></td>
+  </tr>
+  <tr>
+    <td><a href="38-chrome-es.jpg"><img src="38-chrome-es.jpg" alt="Conexión Chrome aislada · Español" width="440"></a><br><strong>Conexión Chrome aislada · Español</strong></td>
+    <td><a href="41-chrome-en.jpg"><img src="41-chrome-en.jpg" alt="Isolated Chrome connection · English" width="440"></a><br><strong>Isolated Chrome connection · English</strong></td>
+  </tr>
+</table>
 
 ## The workspace and agent
 

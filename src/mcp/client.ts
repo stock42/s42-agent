@@ -124,7 +124,11 @@ export class McpClient {
       if(!result || !Array.isArray(result.content))throw new Error("MCP tools/call inválido");
       if(result.inputRequests)throw new Error("MCP requiere una capacidad cliente no habilitada");
       const content = [...result.content];
-      if (tool.name === "take_screenshot" && typeof args.filePath === "string" && !result.isError) content.push({ type: "resource_link", uri: pathToFileURL(resolve(this.cwd, args.filePath)).href, mimeType: `image/${args.format ?? "png"}`, name: "Screenshot" });
+      if (tool.name === "take_screenshot" && typeof args.filePath === "string" && !result.isError) {
+        // Chrome MCP may normalize the extension (e.g. .jpg → .jpeg).
+        const saved = content.flatMap(part => part.type === "text" ? [/^Saved screenshot to (.+)\.\s*$/m.exec(part.text)?.[1]] : []).find(Boolean);
+        content.push({ type: "resource_link", uri: pathToFileURL(resolve(this.cwd, saved ?? args.filePath)).href, mimeType: `image/${args.format ?? "png"}`, name: "Screenshot" });
+      }
       const preserved = await preserveMcpContent(content, this.artifacts);
       const output = preserved.output + (result.structuredContent ? "\n" + JSON.stringify(result.structuredContent) : "");
       return {output,failed:Boolean(result.isError),durationMs:Math.round(performance.now()-started),truncated:false,...(preserved.artifacts.length ? { artifacts: preserved.artifacts } : {})};

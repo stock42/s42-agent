@@ -2,7 +2,7 @@
 
 [English](README.md) · **Español**
 
-**35 capturas originales: 28 nuevas y 7 conservadas de QA anterior.**
+**41 capturas originales: 34 nuevas y 7 conservadas de QA anterior.**
 Hacé clic en una miniatura para abrir el JPEG completo. [README en español](../README.es.md) ·
 [README en inglés](../README.md) · [Manifiesto de capturas](manifest.json).
 
@@ -23,6 +23,25 @@ ejecución; no constituyen un benchmark ni prueban una tarea de coding terminada
 La captura 27 muestra resultados reales de skills.sh para `pdf`; no se instaló
 ninguna skill. Las imágenes de MCP y registro de skills muestran formularios
 reales de configuración; no prueban conexión MCP ni una skill externa instalada.
+
+## Tareas, evidencia y Chrome
+
+Las capturas 36–41 usan la fuente E5/E6 y configuración temporal el 2026-10-03. El tablero y la ficha reabren la sesión real de DeepSeek v4 Pro descrita en el plan; no ejecutan un turno nuevo. El panel Chrome muestra una conexión aislada real a about:blank. Son JPEG originales de Chrome DevTools MCP 1.10.1 sobre xterm.js/Bun.Terminal, revisados sin retoques. No prueban mouse físico del emulador.
+
+<table>
+  <tr>
+    <td><a href="36-tasks-es.jpg"><img src="36-tasks-es.jpg" alt="Tablero de tareas · Español" width="440"></a><br><strong>Tablero de tareas · Español</strong></td>
+    <td><a href="39-tasks-en.jpg"><img src="39-tasks-en.jpg" alt="Task board · English" width="440"></a><br><strong>Task board · English</strong></td>
+  </tr>
+  <tr>
+    <td><a href="37-task-evidence-es.jpg"><img src="37-task-evidence-es.jpg" alt="Verificación real de tarea · Español" width="440"></a><br><strong>Verificación real de tarea · Español</strong></td>
+    <td><a href="40-task-evidence-en.jpg"><img src="40-task-evidence-en.jpg" alt="Actual task verification · English" width="440"></a><br><strong>Actual task verification · English</strong></td>
+  </tr>
+  <tr>
+    <td><a href="38-chrome-es.jpg"><img src="38-chrome-es.jpg" alt="Conexión Chrome aislada · Español" width="440"></a><br><strong>Conexión Chrome aislada · Español</strong></td>
+    <td><a href="41-chrome-en.jpg"><img src="41-chrome-en.jpg" alt="Isolated Chrome connection · English" width="440"></a><br><strong>Isolated Chrome connection · English</strong></td>
+  </tr>
+</table>
 
 ## Espacio de trabajo y agente
 

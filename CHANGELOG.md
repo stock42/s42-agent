@@ -5,6 +5,20 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Agregado — Plan v1.0.5, E6: integración y evidencia
+
+- Circuito TUI de fuente/PTY desde carpeta sin Git, AGENTS aplicado explícitamente,
+  plan, función/test, prueba Bun y commit/changelog reales; equivalente CLI,
+  revisión documental proporcional, recuperación y proyecto ajeno preservado.
+- Snapshot posterior de archivos nuevos y ruta JPEG normalizada por Chrome MCP
+  corregidos; hint del diálogo Chrome sin superposición de botones. Fixtures
+  existentes actualizados a menús y planificación actuales, sin bypass runtime.
+- README/CONTRIBUTING, matriz de evidencia y galería ES/EN actualizados: seis
+  capturas originales nuevas, 41 en total, con hashes y procedencia comprobados.
+- Typecheck y suite completa: 266 tests correctos. Chrome real opt-in: 1 test,
+  21 assertions. Mouse físico del emulador permanece pendiente de resultado
+  humano; no se atribuye esa aceptación a Canvas/SGR/PTY. Sin build ni release.
+
 ### Agregado — Plan v1.0.5, E5: Chrome y evidencia web
 
 - Chrome DevTools MCP opcional desde Tools, selección del registro y perfil

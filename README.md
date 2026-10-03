@@ -40,10 +40,13 @@ together.
 
 - **QBasic-style TUI:** mouse, draggable auxiliary windows, menus and Vim-inspired shortcuts.
 - **Multiple projects:** independent sessions, drafts and models; background activity in each tab.
+- **Tasks and verification:** a TODO.md board, live check results and per-task evidence.
+- **Git and project instructions:** read-only diff/history, explicit Git initialization and an editable AGENTS.md preview. Task closeout records changelog and commit under the project rules.
+- **Chrome tests:** optional project-owned Chrome DevTools MCP connection with DOM, console, network and saved captures. Requires an external server/runtime and Chrome.
 - **Web preview:** Tools → WebServer serves the current project with Bun on a chosen port and opens your browser.
 - **Files at hand:** browse any folder, search filenames/globs, attach files and read HTML/CSS/JS/TS with syntax colors and line numbers. Chats also have a numbered margin.
 - **Local first:** llama.cpp is the default; DeepSeek and other Chat Completions-compatible providers are configurable.
-- **12 native tools:** files, content search, HTTP, commands, Markdown, WebSocket and rendered-page scraping.
+- **17 native tools:** files, HTTP, commands, Markdown, WebSocket, scraping, history and task planning/verification/closeout.
 - **MCP and skills:** manage servers, enable/disable them, load internal or external skills and search skills.sh.
 - **Reusable prompts:** a library with `{{variables}}` and a form to fill their values.
 - **Your workspace:** Spanish/English, six themes, visible tool activity, token usage and average tok/s.
@@ -271,7 +274,7 @@ or application backend.
 
 <a href="screenshots/16-qbasic-typescript.jpg"><img src="screenshots/16-qbasic-typescript.jpg" alt="S42 Agent running: project and file tabs, numbered TypeScript source, syntax colors and a permanent prompt" width="960"></a>
 
-A tour of the running agent. Click any image to open the original; see all **35 screenshots** in the [full gallery](screenshots/README.md).
+A tour of the running agent. Click any image to open the original; see all **41 screenshots** in the [full gallery](screenshots/README.md).
 
 <table>
   <tr>
@@ -319,6 +322,7 @@ The prompt templates and Web Playground are tour examples. The chat uses a real 
 | HTTP and system commands | `fetch`, `shell` |
 | Internal instructions and Markdown → HTML | `internal_skill`, `markdown_html` |
 | WebSocket and rendered-page scraping | `websocket`, `scrape` |
+| Session history and task workflow | `session_history`, `task_plan`, `task_update`, `task_verify`, `task_closeout` |
 
 These tools use Bun's APIs, including Bun Shell, Markdown, WebSocket and WebView.
 The agent follows project AGENTS.md instructions. Tools run with your user's

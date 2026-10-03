@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from "bun:test";
 import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -62,10 +63,15 @@ test("menús de producto, pestañas con estado propio, mouse/teclado, locks y re
 
 test("dos turnos concurrentes aíslan modelos, reasoning, tools/cwd, borradores y cancelación", async () => {
   const { root, config, initial } = await fixture();
+  const workflows = new Map<string, ReturnType<typeof taskWorkflow>>();
   const gates = new Map<string, () => void>(), requests = new Map<string, number>(), payloads: any[] = [];
   const packet = (delta: unknown, finish_reason?: string) => new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta, finish_reason }] })}\n\n`);
   const server = Bun.serve({ port: 0, async fetch(req) {
-    const body = await req.json() as any; payloads.push(body); const model = body.model as string;
+    const body = await req.json() as any; const model = body.model as string;
+    const user = body.messages.findLast((m: any) => m.role === "user").content;
+    const id = `${model}:${user}`; if (!workflows.has(id)) workflows.set(id, taskWorkflow(1));
+    const flow = workflows.get(id)!(body); if (flow) return flow;
+    payloads.push(body);
     requests.set(model, (requests.get(model) ?? 0) + 1);
     const slow = body.messages.findLast((m: any) => m.role === "user").content === "slow";
     const tool = body.messages.at(-1).role === "tool";

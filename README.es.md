@@ -40,9 +40,12 @@ trabaja. Cada proyecto conserva su conversación, archivos, modelo y herramienta
 - **TUI estilo QBasic:** mouse, ventanas auxiliares movibles y atajos inspirados en Vim.
 - **Varios proyectos a la vez:** sesiones y borradores independientes, actividad visible en cada pestaña.
 - **Explorador de archivos:** cualquier carpeta, búsqueda por nombre/glob, adjuntos y colores para HTML/CSS/JS/TS con números de línea. El chat también tiene un margen numerado.
+- **Tareas y verificación:** tablero TODO.md, resultados de pruebas en vivo y evidencia por tarea.
+- **Git e instrucciones:** diff/historial de solo lectura, inicialización Git explícita y preview editable de AGENTS.md. El cierre registra changelog y commit según las reglas del proyecto.
+- **Pruebas Chrome:** conexión opcional Chrome DevTools MCP por proyecto, con DOM, consola, red y capturas conservadas. Requiere servidor/runtime externo y Chrome.
 - **Preview web:** Tools → WebServer sirve el proyecto con Bun, puerto configurable y apertura del navegador.
 - **Modelos locales y remotos:** llama.cpp por defecto, DeepSeek precargado y endpoints compatibles.
-- **12 herramientas nativas:** leer, escribir, editar, buscar, HTTP, comandos, Markdown, WebSocket y scraping.
+- **17 herramientas nativas:** archivos, HTTP, comandos, Markdown, WebSocket, scraping, historial y planificación/verificación/cierre de tareas.
 - **MCP y skills:** servidores stdio/HTTP, enabled/disabled, guías internas, skills externas y búsqueda en skills.sh.
 - **Biblioteca de promptings:** plantillas con `{{metavariables}}` y formulario para completar sus valores.
 - **Español o inglés y seis temas:** QBasic, Grafito, Bosque, Nord, Dracula y Gruvbox.
@@ -268,7 +271,7 @@ sin bundler ni backend de aplicación.
 
 <a href="screenshots/32-spanish-gruvbox.jpg"><img src="screenshots/32-spanish-gruvbox.jpg" alt="S42 Agent ejecutándose: pestañas de proyecto y archivo, TypeScript con números de línea, sintaxis coloreada y prompt fijo" width="960"></a>
 
-Un recorrido por el agente en ejecución. Cada imagen abre el original; las **35 capturas** están en la [galería completa](screenshots/README.es.md).
+Un recorrido por el agente en ejecución. Cada imagen abre el original; las **41 capturas** están en la [galería completa](screenshots/README.es.md).
 
 <table>
   <tr>
@@ -316,6 +319,7 @@ Las plantillas y Web Playground son ejemplos para las capturas. El chat usa un m
 | HTTP y comandos del sistema | `fetch`, `shell` |
 | Instrucciones internas y Markdown → HTML | `internal_skill`, `markdown_html` |
 | WebSocket y scraping de páginas renderizadas | `websocket`, `scrape` |
+| Historial y flujo de tareas | `session_history`, `task_plan`, `task_update`, `task_verify`, `task_closeout` |
 
 Usan APIs de Bun: Shell, Markdown, WebSocket y WebView, entre otras. Las
 herramientas tienen los permisos de tu usuario y efectos reales; no hay sandbox.
