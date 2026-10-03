@@ -5,6 +5,20 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Corregido — Capturas del website en modal
+
+- Capturas de portada y galería ES/EN abren un diálogo con fondo oscurecido y
+  blur, imagen completa, título, descripción y botón de cierre visible.
+- Cierre con botón, Escape o clic en el fondo; clic dentro de la imagen conserva
+  el diálogo. Bloquea scroll del fondo y devuelve el foco al enlace de origen
+  sin cambiar la posición de lectura. Sin JS, conserva acceso al JPG original.
+- Typecheck y ocho tests HTTP del website correctos. Navegador real local:
+  diez aperturas con imagen/textos correctos, Enter, cierre por tres vías,
+  foco/scroll recuperados y seis comprobaciones responsive ES/EN a 320×640,
+  900×390 y 1440×900, sin recortes ni desbordes. Sin errores de consola.
+- Cambio verificado en localhost; despliegue del dominio continúa pendiente
+  del acceso/configuración del servidor.
+
 ### Publicado — Prerelease v0.1.2 y website ES/EN en Git
 
 - Versión, instaladores, metadatos, notas bilingües y enlaces de distribución

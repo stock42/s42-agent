@@ -22,7 +22,7 @@
   <link rel="alternate" hreflang="es" href="https://s42agent.dev/es/">
   <link rel="alternate" hreflang="x-default" href="https://s42agent.dev/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/styles.css?v=4">
+  <link rel="stylesheet" href="/styles.css?v=5">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="S42 Agent">
   <meta property="og:locale" content="en_US">
@@ -181,7 +181,7 @@
   ]
 }
   </script>
-  <script src="/app.js?v=3" defer></script>
+  <script src="/app.js?v=5" defer></script>
 </head>
 <body>
   <div class="page-progress" aria-hidden="true"></div>
@@ -228,7 +228,7 @@
         <div class="screen-chrome" aria-hidden="true"><span><span class="status-dot"></span> s42-agent</span><span>TUI / QBasic</span></div>
         <a class="screenshot-link" href="/assets/screenshots/10-live-tool-chat.jpg" aria-label="Open full screenshot: S42 Agent, a real read tool call and model response">
           <img src="/assets/screenshots/10-live-tool-chat.jpg" alt="S42 Agent running with the QBasic theme: project tabs, a read tool call, a GLM-4.7-Flash response and an always-visible prompt." width="1680" height="841" fetchpriority="high" decoding="async">
-          <span class="image-open" aria-hidden="true">↗</span>
+          <span class="image-open" aria-hidden="true">⤢</span>
         </a>
         <figcaption><span class="capture-label"><span class="status-dot" aria-hidden="true"></span> The agent, in action.</span><span>Real screenshot · llama.cpp + GLM-4.7-Flash</span></figcaption>
       </figure>
@@ -270,19 +270,19 @@
       </div>
       <div class="gallery-grid">
         <figure data-reveal>
-          <a class="screenshot-link" href="/assets/screenshots/17-graphite-typescript.jpg" aria-label="Open full screenshot of the Graphite theme"><img src="/assets/screenshots/17-graphite-typescript.jpg" alt="Dark Graphite theme showing a TypeScript file with syntax colors, line numbers and project tabs." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
+          <a class="screenshot-link" href="/assets/screenshots/17-graphite-typescript.jpg" aria-label="Open full screenshot of the Graphite theme"><img src="/assets/screenshots/17-graphite-typescript.jpg" alt="Dark Graphite theme showing a TypeScript file with syntax colors, line numbers and project tabs." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">⤢</span></a>
           <figcaption><h3>It has a dark side, too.</h3><p>Graphite. The same desktop, a different personality.</p></figcaption>
         </figure>
         <figure data-reveal>
-          <a class="screenshot-link" href="/assets/screenshots/14-project-explorer.jpg" aria-label="Open full screenshot of the file explorer"><img src="/assets/screenshots/14-project-explorer.jpg" alt="S42 Agent’s real file explorer open over the QBasic desktop, with folder and file navigation." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
+          <a class="screenshot-link" href="/assets/screenshots/14-project-explorer.jpg" aria-label="Open full screenshot of the file explorer"><img src="/assets/screenshots/14-project-explorer.jpg" alt="S42 Agent’s real file explorer open over the QBasic desktop, with folder and file navigation." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">⤢</span></a>
           <figcaption><h3>Your project, within reach.</h3><p>Browse folders, find files and attach context.</p></figcaption>
         </figure>
         <figure data-reveal>
-          <a class="screenshot-link" href="/assets/screenshots/25-mcp-stdio-configuration.jpg" aria-label="Open full screenshot of MCP configuration"><img src="/assets/screenshots/25-mcp-stdio-configuration.jpg" alt="S42 Agent’s real form for configuring an MCP stdio server: name, command, arguments and status." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
+          <a class="screenshot-link" href="/assets/screenshots/25-mcp-stdio-configuration.jpg" aria-label="Open full screenshot of MCP configuration"><img src="/assets/screenshots/25-mcp-stdio-configuration.jpg" alt="S42 Agent’s real form for configuring an MCP stdio server: name, command, arguments and status." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">⤢</span></a>
           <figcaption><h3>Connect your tools.</h3><p>Configure MCP servers right from the TUI.</p></figcaption>
         </figure>
         <figure data-reveal>
-          <a class="screenshot-link" href="/assets/screenshots/39-tasks-en.jpg"><img src="/assets/screenshots/39-tasks-en.jpg" alt="S42 Agent task board with pending, in-progress and completed tasks and its fixed prompt." width="1280" height="740" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
+          <a class="screenshot-link" href="/assets/screenshots/39-tasks-en.jpg"><img src="/assets/screenshots/39-tasks-en.jpg" alt="S42 Agent task board with pending, in-progress and completed tasks and its fixed prompt." width="1280" height="740" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">⤢</span></a>
           <figcaption><h3>A plan you can see.</h3><p>The task board, running in the real TUI.</p></figcaption>
         </figure>
       </div>
@@ -352,5 +352,15 @@ bun run dev</code></pre><button class="copy-button" type="button" data-copy="ins
     <nav aria-label="Author and project links"><a href="https://x.com/lortmorris">X / @lortmorris <span aria-hidden="true">↗</span></a><a href="https://cesarcasas.com/">cesarcasas.com <span aria-hidden="true">↗</span></a><a href="https://github.com/stock42/s42-agent">GitHub <span aria-hidden="true">↗</span></a><a href="https://github.com/stock42/s42-agent/blob/main/LICENSE">MIT License</a></nav>
     <p class="footer-bottom">© 2026 César Casas · Stock42 <span>Coding with the soul of QBasic.</span></p>
   </footer>
+  <dialog class="screenshot-modal" id="screenshot-modal" aria-labelledby="screenshot-modal-title" aria-describedby="screenshot-modal-caption">
+    <div class="screenshot-modal-header">
+      <div><p class="screenshot-modal-eyebrow">Real screenshot</p><h2 id="screenshot-modal-title">A closer look</h2></div>
+      <button class="screenshot-modal-close" type="button" data-close-screenshot autofocus aria-label="Close screenshot"><span>Close</span><span aria-hidden="true">×</span></button>
+    </div>
+    <figure>
+      <div class="screenshot-modal-stage"><img alt=""></div>
+      <figcaption id="screenshot-modal-caption"></figcaption>
+    </figure>
+  </dialog>
 </body>
 </html>

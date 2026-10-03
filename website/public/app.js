@@ -4,6 +4,52 @@ const copyText = spanish
   ? { success: "Comando copiado. Pegalo en tu terminal.", done: "Copiado ✓", manual: "Seleccionamos el comando. Copialo con Ctrl+C o ⌘C." }
   : { success: "Command copied. Paste it into your terminal.", done: "Copied ✓", manual: "Command selected. Copy it with Ctrl+C or ⌘C." };
 
+const screenshotModal = document.getElementById("screenshot-modal");
+if (screenshotModal && typeof screenshotModal.showModal === "function") {
+  const image = screenshotModal.querySelector("img");
+  const title = document.getElementById("screenshot-modal-title");
+  const caption = document.getElementById("screenshot-modal-caption");
+  const defaultTitle = title.textContent;
+  let opener;
+  let backdropPressed = false;
+  const outsideModal = event => {
+    const rect = screenshotModal.getBoundingClientRect();
+    return event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+  };
+  for (const link of document.querySelectorAll(".screenshot-link")) {
+    link.setAttribute("aria-haspopup", "dialog");
+    link.setAttribute("aria-controls", screenshotModal.id);
+    link.addEventListener("click", event => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const thumbnail = link.querySelector("img");
+      const figure = link.closest("figure");
+      image.src = link.href;
+      image.alt = thumbnail.alt;
+      image.width = thumbnail.width;
+      image.height = thumbnail.height;
+      title.textContent = figure.querySelector("h3, .capture-label")?.textContent || defaultTitle;
+      caption.textContent = figure.querySelector("figcaption p")?.textContent || thumbnail.alt;
+      opener = link;
+      backdropPressed = false;
+      event.preventDefault();
+      document.documentElement.classList.add("screenshot-modal-open");
+      screenshotModal.showModal();
+    });
+  }
+  screenshotModal.querySelector("[data-close-screenshot]").addEventListener("click", () => screenshotModal.close());
+  screenshotModal.addEventListener("pointerdown", event => {
+    backdropPressed = event.target === screenshotModal && outsideModal(event);
+  });
+  screenshotModal.addEventListener("click", event => {
+    if (backdropPressed && event.target === screenshotModal && outsideModal(event)) screenshotModal.close();
+    backdropPressed = false;
+  });
+  screenshotModal.addEventListener("close", () => {
+    document.documentElement.classList.remove("screenshot-modal-open");
+    opener?.focus({ preventScroll: true });
+  });
+}
+
 for (const button of document.querySelectorAll("[data-copy]")) {
   const originalLabel = button.textContent;
   let resetLabel;

@@ -40,6 +40,9 @@ repositorio no son públicos. Rutas inexistentes responden 404; acepta GET y HEA
   apariciones con IntersectionObserver, profundidad al mover el mouse y progreso
   de lectura. El contenido se mantiene visible si no hay JavaScript o se solicita
   movimiento reducido; la preferencia se puede cambiar durante la sesión.
+- Las capturas abren un modal nativo con imagen completa, título y descripción.
+  Se cierra con el botón, Escape o clic en el fondo; conserva scroll y devuelve
+  el foco a la captura. Sin JavaScript, el enlace abre el JPG original.
 - `public/assets/opengraph.jpg` y `opengraph-es.jpg`: portadas ilustradas generadas
   para compartir en inglés/español, 1200×630. `hero-42.webp` es arte decorativo de
   la cabecera, sin textos incrustados. No se presentan como capturas del producto.
