@@ -103,6 +103,17 @@ with `bun run index.ts --demo`.
 
 ## Projects and tabs
 
+**View → Git** opens the active project's Changes, History, Branches and
+CHANGELOG views in the central editor, keeping the prompt visible. Select a
+file to read its diff; **Index / file** switches between staged and working
+changes. Select a commit for its real patch, author and date. Down/wheel loads
+more history; there is no total commit limit. **Refresh** reads local Git state.
+Remote refs and ahead/behind are the locally known values; opening the panel
+does not fetch, pull or push. Git must be installed separately. Repository roots,
+missing Git/repositories, unborn/detached HEAD and missing CHANGELOG are shown.
+The diff is read-only, selectable and scrollable. **View → Responses** returns
+to chat. Each project keeps its Git view and selection during tab switches.
+
 **Projects → Open project**, **Ctrl+P** or **+** in the tab bar opens another tab.
 Choosing an already open project returns to its tab. There is one tab per project,
 with independent conversation/session, draft, attachments, model, Vim mode and

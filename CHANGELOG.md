@@ -5,6 +5,18 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Agregado — Plan v1.0.5, E1: panel Git
+
+- Vista Git por proyecto: cambios, diff de índice/archivo, historial progresivo,
+  ramas locales/remotas conocidas y CHANGELOG, sin consultas de red. Detección
+  de repositorio padre/worktree, HEAD sin commits/separado, conflictos, binarios
+  y Git ausente; argv escapado y porcelain v2 NUL sobre el runner compartido.
+- Panel central de solo lectura con selección/scroll, refresh y ES/EN; conserva
+  prompt y estado por proyecto y descarta consultas al cambiar de contexto.
+- Bun 1.4.2: typecheck y 19 tests correctos, 342 assertions; TUI desde
+  bun run dev en PTY, Unicode, resize 60×16, sin color y restauración al salir.
+  Mouse físico pendiente de la aceptación transversal. Sin build/release.
+
 ### Corregido — Nombre del directorio de la web
 
 - Renombrado el directorio a `website/` y actualizadas las referencias y el

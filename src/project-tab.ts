@@ -4,6 +4,7 @@ import type { Project } from "./storage/config.ts";
 import type { Session } from "./storage/sessions.ts";
 import { TextArea } from "./ui/components/text-area.ts";
 import type { ContextUsage, TokenUsage } from "./agent/usage.ts";
+import type { GitPanel } from "./ui/git.ts";
 
 export interface ProjectTab {
   id: string; project?: Project; session?: Session;
@@ -17,6 +18,8 @@ export interface ProjectTab {
   contextUsage?: ContextUsage;
   agentState?: string;
   live: { id: string; label: string; text: string; reasoning: boolean }[];
+  contentView?: "git";
+  git?: GitPanel;
 }
 
 export function createProjectTab(controls?: Pick<ProjectTab, "response" | "prompt">): ProjectTab {

@@ -29,6 +29,7 @@ import { openFileTab, type FileTab } from "./file-tab.ts";
 import type { TabItem } from "./ui/components/tab-bar.ts";
 import { ProjectWebServers } from "./system/webserver.ts";
 import { showWebServer } from "./ui/webserver.ts";
+import { GitPanel } from "./ui/git.ts";
 
 export interface AppOptions { config?: string; project?: string; cwd?: string; provider?: string; model?: string; session?: string }
 export class App {
@@ -85,11 +86,13 @@ export class App {
       promptWindow.bounds.height++;promptWindow.bounds.y--;this.view.editorWindow.bounds.height--;this.desktop.floatingArea={...this.view.editorWindow.bounds};
     }};
     this.view.editorWindow.onLayout = client => {
+      if (!this.activeFile && this.activeTab.contentView === "git" && this.activeTab.git) { this.view.editorWindow.titleSuffix = ""; this.activeTab.git.layout(client); return; }
       this.view.editorWindow.titleSuffix = !this.activeFile && this.activeTab.agentState ? ` · ${["|", "/", "-", "\\"][this.activityFrame]}` : "";
       this.view.response.bounds.y = 1; this.view.response.bounds.height = Math.max(1, client.height - 1 - Number(!this.activeFile && Boolean(this.activeTab.agentState)));
       this.view.response.bounds.width = Math.max(1, client.width - 2);
     };
     this.view.editorWindow.onDraw = (canvas, client) => {
+      if (!this.activeFile && this.activeTab.contentView === "git" && this.activeTab.git) { this.activeTab.git.draw(canvas, client); return; }
       if (this.activeFile) {
         const file = this.activeFile;
         canvas.text(client.x + 1, client.y, [this.project?.name, file.language?.toUpperCase() ?? "TXT", this.desktop.t(`${file.size} bytes · solo lectura`), file.path].filter(Boolean).join(" · "), theme.window, client.width - 2);
@@ -167,7 +170,8 @@ export class App {
         { label: "Skills · buscar en skills.sh", run: () => this.extensions.search() },
       ] },
       { label: "Vista", items: [
-        { label: "Respuestas", run: () => { this.displayTab(this.activeTab); this.desktop.focus(this.view.editorWindow); } },
+        { label: "Respuestas", run: () => { this.activeTab.contentView = undefined; this.displayTab(this.activeTab); this.desktop.focus(this.view.editorWindow); } },
+        { label: "Git", run: () => this.gitPanel() },
         { label: "Prompt", run: () => this.desktop.focus(promptWindow) },
         { label: "Paleta de colores", run: () => this.colorPalette() },
         ...(["cpu", "ram", "disk", "gpu"] as const).map(key => ({
@@ -234,6 +238,7 @@ export class App {
     this.desktop.footer=()=>this.mode==="NORMAL" ? "i Insertar  Tab Panel  Espacio Leader  Esc Menú  ^Q Salir"
       : this.desktop.active===promptWindow && this.store.value.ui.vimMode ? `Enter Enviar  Esc NORMAL  ^N Panel  ${this.bindingLabel("attachments").replace("Ctrl+","^")} Adjuntos  ^Q Salir` : "Esc Menú  Tab Foco  ^N Panel  Alt+Y Ayuda  ^Q Salir";
     this.desktop.onBeforeExit = async () => {
+      for (const tab of this.tabs) tab.git?.hide();
       for (const tab of this.tabs) tab.controller?.abort(new Error("Turno cancelado; cerrando s42-agent"));
       for (const window of [...this.desktop.windows].reverse()) if (!window.fixed) this.desktop.close(window);
       await this.metrics.stop();
@@ -341,6 +346,7 @@ export class App {
     const server = this.webservers.get(project.id);
     if (server && server.root !== folder) await this.webservers.stop(project.id);
     const existing = this.tabs.find(tab => tab.project?.id === project.id);
+    if (existing?.git && existing.git.cwd !== folder) { existing.git.hide(); existing.git = undefined; existing.contentView = undefined; }
     if (existing && (id === undefined || existing.session?.state.id === id)) {
       existing.project = project; await this.activateTab(existing.id); return;
     }
@@ -391,10 +397,11 @@ export class App {
     tab.focusedId = tab.panel === "editor" ? this.view.editorWindow.focusedId : this.view.promptWindow.focusedId;
   }
   private displayTab(tab: ProjectTab): void {
+    this.activeTab.git?.hide();
     this.activeFile = undefined;
     this.activeTab = tab;
     this.view.response = tab.response; this.view.prompt = tab.prompt;
-    this.view.editorWindow.controls.splice(0, this.view.editorWindow.controls.length, tab.response);
+    this.view.editorWindow.controls.splice(0, this.view.editorWindow.controls.length, ...(tab.contentView === "git" && tab.git ? tab.git.controls : [tab.response]));
     this.view.promptWindow.controls.splice(0, this.view.promptWindow.controls.length, tab.prompt);
     this.view.editorWindow.title = tab.project?.name ?? "s42-agent";
     if (!this.desktop.modal) for (const window of [...this.desktop.windows]) if (!window.fixed) this.desktop.close(window);
@@ -402,6 +409,7 @@ export class App {
     const panel = tab.panel === "editor" ? this.view.editorWindow : this.view.promptWindow;
     panel.focusedId = tab.focusedId; this.desktop.focus(panel);
     this.showContext(tab); this.desktop.invalidate();
+    if (tab.contentView === "git") tab.git?.show();
   }
   private async saveWorkspace(): Promise<void> {
     if (this.opening) return;
@@ -420,6 +428,7 @@ export class App {
       const owner = this.tabs.find(tab => tab.id === file.ownerId); if (!owner) return;
       if (owner !== this.activeTab) await this.activateTab(owner.id);
       this.rememberPanel(owner);
+      owner.git?.hide();
       this.activeFile = file; this.view.response = file.content;
       this.view.editorWindow.controls.splice(0, this.view.editorWindow.controls.length, file.content);
       this.view.editorWindow.title = file.name; this.view.editorWindow.focusedId = file.content.id;
@@ -447,6 +456,7 @@ export class App {
     }
     const index = this.tabs.findIndex(tab => tab.id === id), tab = this.tabs[index]; if (!tab) return;
     if (tab.busy) throw new Error(`${tab.project?.name ?? "Proyecto"}: cancelá el turno antes de cerrar la pestaña`);
+    tab.git?.hide();
     await this.saveDraft(tab); await tab.session?.close(); this.tabs.splice(index, 1);
     if (tab.project) await this.webservers.stop(tab.project.id);
     for (let i = this.fileTabs.length - 1; i >= 0; i--) if (this.fileTabs[i]!.ownerId === tab.id) this.fileTabs.splice(i, 1);
@@ -455,6 +465,14 @@ export class App {
     await this.saveWorkspace(); this.desktop.invalidate();
   }
   async newSession(): Promise<void> { this.requireIdle(); if (!this.project) { this.projectForm(); return; } await this.switchProject(this.project, crypto.randomUUID()); }
+  gitPanel(): void {
+    const tab = this.activeTab;
+    if (!tab.project) { this.projectForm(); return; }
+    tab.git ??= new GitPanel(tab.project.path, this.desktop);
+    tab.contentView = "git"; tab.panel = "editor"; tab.focusedId = "git-list";
+    this.displayTab(tab);
+    this.desktop.focus(this.view.editorWindow);
+  }
   webServer(): void {
     if (!this.project) { this.projectForm(); return; }
     showWebServer(this.desktop, this.project, this.webservers, work => this.change(work), this.activeFile?.path);

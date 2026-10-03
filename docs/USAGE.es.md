@@ -103,6 +103,18 @@ se ejecuta aparte con `bun run index.ts --demo`.
 
 ## Proyectos y pestañas
 
+**Vista → Git** abre Cambios, Historial, Ramas y CHANGELOG del proyecto activo
+en el editor central, conservando el prompt visible. Elegí un archivo para leer
+su diff; **Índice / archivo** alterna staged y working tree. Elegí un commit
+para consultar su patch real, autor y fecha. Flecha abajo/rueda carga más
+historial, sin máximo total de commits. **Refrescar** consulta el estado local.
+Las referencias remotas y ahead/behind son los valores conocidos localmente;
+abrir el panel no ejecuta fetch, pull ni push. Git requiere instalación externa.
+Se muestran raíz real, Git/repositorio ausente, HEAD sin commits/separado y
+CHANGELOG ausente. El diff es de solo lectura, con selección y scroll.
+**Vista → Respuestas** vuelve al chat. Cada proyecto conserva su vista Git y
+selección al cambiar de pestaña.
+
 **Projects → Abrir proyecto**, **Ctrl+P** o **+** en la barra abre otra pestaña.
 Elegir un proyecto que ya está abierto vuelve a su pestaña. Hay una por proyecto,
 con conversación/sesión, borrador, adjuntos, modelo, modo Vim y posición de lectura
