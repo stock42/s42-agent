@@ -5,6 +5,30 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Mejorado — Website bilingüe y presentación animada
+
+- Inglés predeterminado en `/` y español completo en `/es/`, con selector EN/ES
+  que conserva sección y parámetros. Textos, alt, accesibilidad, instrucciones,
+  enlaces a documentación y mensajes de copiado localizados en ambas versiones.
+  El HTML contiene cada idioma sin depender de traducción por JavaScript.
+- Cabecera con arte metálico original, tipografía de mayor escala, iluminación,
+  órbitas y movimiento suave. Entradas escalonadas, apariciones al desplazarse,
+  profundidad con el mouse, progreso de lectura y transiciones de controles.
+  CSS/JS respetan `prefers-reduced-motion`; sin JavaScript el contenido es visible.
+- Canonical, hreflang recíprocos, x-default, sitemap y datos estructurados para
+  ambas rutas. Open Graph/Twitter Cards con portadas EN/ES de 1200×630; nueva
+  ilustración WebP decorativa separada de las cuatro capturas reales.
+- Bun sirve `/es/` y redirige `/es` conservando parámetros. HTML/CSS/JS revalidan
+  caché para reflejar cambios; se conserva `WEBSERVER_PORT` en `.env`.
+- Typecheck y ocho pruebas correctas, 80 assertions y cero fallos. Verificados
+  diez recursos y cuatro anclas por idioma, JSON-LD, alt/dimensiones y copia
+  exacta de capturas. Navegador: 22 combinaciones de idioma/ancho entre 320 y
+  1920 px sin desbordamiento, cambio de idioma conservando URL, feedback de
+  copiado, movimiento real y ausencia de errores/warnings de consola.
+  Movimiento reducido revisado en fuente; no se cambió la preferencia del SO.
+- Evidencia local en `private/qa/website-bilingual/`. Cambios del sitio y su
+  documentación únicamente; sin despliegue público ni generación de releases.
+
 ### Documentado — Plan v1.0.5
 
 - Creado `docs/v1.0.5.md` con el plan de panel Git e historial, planificación

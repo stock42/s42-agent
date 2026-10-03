@@ -1,49 +1,52 @@
 <!doctype html>
-<html lang="es-AR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#080b10">
-  <title>S42 Agent — Agente de coding con IA y alma de QBasic</title>
-  <meta name="description" content="S42 Agent: un agente de coding con IA, interfaz de terminal estilo QBasic, modelos locales, MCP y skills. Open source, creado por César Casas. Instalalo en Linux, macOS o Windows.">
+  <title>S42 Agent — AI coding agent with the soul of QBasic</title>
+  <meta name="description" content="S42 Agent: an AI coding agent with a QBasic-style terminal UI, local models, MCP and skills. Open source, created by César Casas. Install on Linux, macOS or Windows.">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="author" content="César Casas">
   <link rel="canonical" href="https://s42agent.dev/">
+  <link rel="alternate" hreflang="en" href="https://s42agent.dev/">
+  <link rel="alternate" hreflang="es" href="https://s42agent.dev/es/">
+  <link rel="alternate" hreflang="x-default" href="https://s42agent.dev/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=3">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="S42 Agent">
-  <meta property="og:locale" content="es_AR">
+  <meta property="og:locale" content="en_US">
   <meta property="og:url" content="https://s42agent.dev/">
-  <meta property="og:title" content="S42 Agent — Coding con alma de QBasic">
-  <meta property="og:description" content="Tu código. Tu modelo. Tu terminal. Un agente de coding con IA, TUI estilo QBasic, MCP y skills. Open source, hecho con Bun.">
+  <meta property="og:title" content="S42 Agent — Coding with the soul of QBasic">
+  <meta property="og:description" content="Your code. Your model. Your terminal. An AI coding agent with a QBasic-style TUI, MCP and skills. Open source, built with Bun.">
   <meta property="og:image" content="https://s42agent.dev/assets/opengraph.jpg">
   <meta property="og:image:secure_url" content="https://s42agent.dev/assets/opengraph.jpg">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="S42 Agent. Coding con alma de QBasic. Un 42 de titanio iluminado en azul sobre fondo negro.">
+  <meta property="og:image:alt" content="S42 Agent. Coding with the soul of QBasic. A sculptural titanium 42 lit in electric blue against a black background.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:creator" content="@lortmorris">
-  <meta name="twitter:title" content="S42 Agent — Coding con alma de QBasic">
-  <meta name="twitter:description" content="Un agente de coding con IA que se siente como tu terminal: modelos locales, proyectos, MCP y skills.">
+  <meta name="twitter:title" content="S42 Agent — Coding with the soul of QBasic">
+  <meta name="twitter:description" content="An AI coding agent that feels like your terminal: local models, projects, MCP and skills.">
   <meta name="twitter:image" content="https://s42agent.dev/assets/opengraph.jpg">
-  <meta name="twitter:image:alt" content="S42 Agent, con un 42 metálico iluminado en azul sobre fondo negro.">
+  <meta name="twitter:image:alt" content="S42 Agent, with a blue-lit metallic 42 against a black background.">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebSite", "@id": "https://s42agent.dev/#website",
-        "url": "https://s42agent.dev/", "name": "S42 Agent", "inLanguage": "es-AR",
-        "description": "Agente de coding con IA y una interfaz de terminal estilo QBasic.",
+        "url": "https://s42agent.dev/", "name": "S42 Agent", "inLanguage": "en",
+        "description": "AI coding agent with a QBasic-style terminal interface.",
         "author": { "@id": "https://s42agent.dev/#author" }
       },
       {
         "@type": ["SoftwareApplication", "SoftwareSourceCode"], "@id": "https://s42agent.dev/#software",
         "name": "S42 Agent", "url": "https://s42agent.dev/",
-        "description": "Agente de coding con TUI estilo QBasic, CLI, modelos locales y remotos, herramientas nativas, MCP y skills.",
+        "description": "Coding agent with a QBasic-style TUI, CLI, local and remote models, native tools, MCP and skills.",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Linux, macOS, Windows", "softwareVersion": "0.1.1",
         "license": "https://github.com/stock42/s42-agent/blob/main/LICENSE",
@@ -62,122 +65,147 @@
     ]
   }
   </script>
-  <script src="/app.js" defer></script>
+  <script src="/app.js?v=3" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <div class="page-progress" aria-hidden="true"></div>
+  <a class="skip-link" href="#contenido">Skip to content</a>
   <header class="site-header wrap">
-    <a class="wordmark" href="/" aria-label="S42 Agent, inicio"><span class="terminal-mark" aria-hidden="true">&gt;_</span> s42<span class="wordmark-light">agent</span><span class="brand-dot">.</span></a>
-    <nav aria-label="Navegación principal">
-      <a href="#agente">El agente</a>
-      <a href="#capturas">Capturas</a>
-      <a href="#instalar">Instalar</a>
+    <a class="wordmark" href="/" aria-label="S42 Agent, home"><span class="terminal-mark" aria-hidden="true">&gt;_</span> s42<span class="wordmark-light">agent</span><span class="brand-dot">.</span></a>
+    <nav aria-label="Main navigation">
+      <a href="#agente">The agent</a>
+      <a href="#capturas">Screenshots</a>
+      <a href="#instalar">Install</a>
       <a class="nav-github" href="https://github.com/stock42/s42-agent">GitHub <span aria-hidden="true">↗</span></a>
+    <span class="language-switch" role="group" aria-label="Language">
+        <a href="/" lang="en" hreflang="en" aria-label="English" aria-current="page" data-language>EN</a>
+        <a href="/es/" lang="es" hreflang="es" aria-label="Español" data-language>ES</a>
+      </span>
     </nav>
   </header>
 
   <main id="contenido">
     <section class="hero wrap" aria-labelledby="hero-title">
-      <a class="release" href="https://github.com/stock42/s42-agent/releases/tag/v0.1.1"><span class="status-dot" aria-hidden="true"></span> v0.1.1 preview <span class="release-divider" aria-hidden="true">/</span> Open source <span aria-hidden="true">↗</span></a>
-      <h1 id="hero-title">Coding con IA.<br><span>Alma de QBasic.</span></h1>
-      <p class="hero-description">El encanto de la terminal clásica. La potencia de un agente moderno.<br class="desktop-break"> Tus proyectos, tus modelos y tus herramientas, en un mismo lugar.</p>
-      <div class="hero-actions">
-        <a class="button primary" href="#instalar">Instalar S42 Agent <span aria-hidden="true">↓</span></a>
-        <a class="button secondary" href="https://github.com/stock42/s42-agent">Ver en GitHub <span aria-hidden="true">↗</span></a>
+      <div class="hero-stage">
+        <div class="hero-visual" aria-hidden="true">
+          <span class="hero-aura"></span>
+          <img class="hero-art" src="/assets/hero-42.webp" alt="" width="1920" height="1008" fetchpriority="high" decoding="async">
+          <span class="orbit orbit-one"></span><span class="orbit orbit-two"></span>
+          <span class="hero-signal signal-one"><span class="status-dot"></span> LOCAL MODELS</span>
+          <span class="hero-signal signal-two">MCP + SKILLS <span class="signal-cross">+</span></span>
+        </div>
+        <div class="hero-copy">
+          <a class="release" href="https://github.com/stock42/s42-agent/releases/tag/v0.1.1"><span class="status-dot" aria-hidden="true"></span> v0.1.1 preview <span class="release-divider" aria-hidden="true">/</span> Open source <span aria-hidden="true">↗</span></a>
+          <p class="hero-eyebrow">S42 AGENT <span aria-hidden="true">/</span> YOUR TERMINAL, SUPERCHARGED</p>
+          <h1 id="hero-title">AI coding.<br><span>QBasic soul.</span></h1>
+          <p class="hero-description">The charm of a classic terminal. The power of a modern agent. Your projects, your models and your tools, all in one place.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#instalar">Install S42 Agent <span aria-hidden="true">↓</span></a>
+            <a class="button secondary" href="https://github.com/stock42/s42-agent">View on GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+          <p class="hero-platforms">Linux · macOS · Windows <span aria-hidden="true">/</span> MIT <span aria-hidden="true">/</span> Built with Bun</p>
+          <a class="hero-scroll" href="#capturas"><span class="scroll-line" aria-hidden="true"></span> Explore the agent <span aria-hidden="true">↓</span></a>
+        </div>
       </div>
-      <p class="hero-platforms">Linux · macOS · Windows <span aria-hidden="true">/</span> MIT <span aria-hidden="true">/</span> Hecho con Bun</p>
-      <figure class="hero-screen">
-        <a class="screenshot-link" href="/assets/screenshots/10-live-tool-chat.jpg" aria-label="Abrir captura completa: S42 Agent, llamada real a read y respuesta del modelo">
-          <img src="/assets/screenshots/10-live-tool-chat.jpg" alt="S42 Agent ejecutándose con el tema QBasic: proyectos en pestañas, llamada a read, respuesta de GLM-4.7-Flash y prompt siempre visible." width="1680" height="841" fetchpriority="high" decoding="async">
+      <figure class="hero-screen" data-reveal>
+        <div class="screen-chrome" aria-hidden="true"><span><span class="status-dot"></span> s42-agent</span><span>TUI / QBasic</span></div>
+        <a class="screenshot-link" href="/assets/screenshots/10-live-tool-chat.jpg" aria-label="Open full screenshot: S42 Agent, a real read tool call and model response">
+          <img src="/assets/screenshots/10-live-tool-chat.jpg" alt="S42 Agent running with the QBasic theme: project tabs, a read tool call, a GLM-4.7-Flash response and an always-visible prompt." width="1680" height="841" fetchpriority="high" decoding="async">
           <span class="image-open" aria-hidden="true">↗</span>
         </a>
-        <figcaption><span class="capture-label"><span class="status-dot" aria-hidden="true"></span> El agente, en acción.</span><span>Captura real · llama.cpp + GLM-4.7-Flash</span></figcaption>
+        <figcaption><span class="capture-label"><span class="status-dot" aria-hidden="true"></span> The agent, in action.</span><span>Real screenshot · llama.cpp + GLM-4.7-Flash</span></figcaption>
       </figure>
+      <div class="capability-strip" aria-label="Agent capabilities">
+        <p data-reveal><strong>6</strong><span>themes with personality</span></p>
+        <p data-reveal style="--delay:80ms"><strong>12</strong><span>native tools</span></p>
+        <p data-reveal style="--delay:160ms"><strong>∞</strong><span>possibilities with MCP and skills</span></p>
+        <p data-reveal style="--delay:240ms"><strong>TUI + CLI</strong><span>your way to work</span></p>
+      </div>
     </section>
 
     <section class="features wrap section" id="agente" aria-labelledby="features-title">
-      <div class="section-heading">
-        <p class="eyebrow"><span aria-hidden="true">01 /</span> TU ESPACIO DE TRABAJO</p>
-        <h2 id="features-title">Familiar por fuera.<br>Potente por dentro.</h2>
-        <p>Una interfaz con personalidad, pensada para seguir el trabajo del agente sin perder de vista tu proyecto.</p>
+      <div class="section-heading" data-reveal>
+        <p class="eyebrow"><span aria-hidden="true">01 /</span> YOUR WORKSPACE</p>
+        <h2 id="features-title">A familiar face.<br>A powerful engine.</h2>
+        <p>An interface with character, built to follow the agent’s work while keeping your project in sight.</p>
       </div>
       <div class="feature-grid">
-        <article><span class="feature-symbol" aria-hidden="true">&gt;_</span><h3>Tu terminal, con carácter.</h3><p>Menús, mouse, atajos de teclado y seis temas. El escritorio de QBasic, con respuestas y herramientas en vivo.</p></article>
-        <article><span class="feature-symbol" aria-hidden="true">[ + ]</span><h3>Cada proyecto, en su lugar.</h3><p>Conversaciones, modelos y borradores independientes. Cambiá de pestaña y retomá donde estabas.</p></article>
-        <article><span class="feature-symbol" aria-hidden="true">~/</span><h3>Elegí tu modelo.</h3><p>llama.cpp por defecto, DeepSeek y endpoints compatibles. Trabajá con modelos locales o conectá un proveedor remoto.</p></article>
-        <article><span class="feature-symbol" aria-hidden="true">{ }</span><h3>Herramientas para hacer.</h3><p>12 tools nativas, MCP, skills y promptings reutilizables. También una CLI para usar el agente desde tus scripts.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">&gt;_</span><h3>A terminal with character.</h3><p>Menus, mouse support, keyboard shortcuts and six themes. The QBasic desktop, with live responses and tool activity.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">[ + ]</span><h3>Every project, in its place.</h3><p>Independent conversations, models and drafts. Switch tabs and pick up right where you left off.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">~/</span><h3>Choose your model.</h3><p>llama.cpp by default, DeepSeek and compatible endpoints. Run local models or connect a remote provider.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">{ }</span><h3>Tools to get things done.</h3><p>12 native tools, MCP, skills and reusable prompts. Plus a CLI to run the agent from your scripts.</p></article>
       </div>
-      <div class="feature-footnote"><span>TypeScript + Bun</span><span>0 dependencias externas de paquetes de runtime</span><a href="https://github.com/stock42/s42-agent/blob/main/docs/USAGE.es.md">Explorar el manual <span aria-hidden="true">↗</span></a></div>
+      <div class="feature-footnote"><span>TypeScript + Bun</span><span>0 external runtime package dependencies</span><a href="https://github.com/stock42/s42-agent/blob/main/docs/USAGE.md">Read the user guide <span aria-hidden="true">↗</span></a></div>
     </section>
 
     <section class="gallery wrap section" id="capturas" aria-labelledby="gallery-title">
-      <div class="section-heading gallery-heading">
-        <div><p class="eyebrow"><span aria-hidden="true">02 /</span> MIRALO DE CERCA</p><h2 id="gallery-title">Así se ve. Así se usa.</h2></div>
-        <p>Capturas de la TUI en ejecución.<br>Abrí cualquiera para ver cada detalle.</p>
+      <div class="section-heading gallery-heading" data-reveal>
+        <div><p class="eyebrow"><span aria-hidden="true">02 /</span> TAKE A CLOSER LOOK</p><h2 id="gallery-title">See it. Make it yours.</h2></div>
+        <p>Screenshots of the running TUI.<br>Open any image to see every detail.</p>
       </div>
       <div class="gallery-grid">
-        <figure>
-          <a class="screenshot-link" href="/assets/screenshots/17-graphite-typescript.jpg" aria-label="Abrir captura completa del tema Grafito"><img src="/assets/screenshots/17-graphite-typescript.jpg" alt="Tema oscuro Grafito mostrando un archivo TypeScript con colores de sintaxis, números de línea y pestañas de proyectos." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
-          <figcaption><h3>También tiene su lado oscuro.</h3><p>Grafito. El mismo escritorio, otra personalidad.</p></figcaption>
+        <figure data-reveal>
+          <a class="screenshot-link" href="/assets/screenshots/17-graphite-typescript.jpg" aria-label="Open full screenshot of the Graphite theme"><img src="/assets/screenshots/17-graphite-typescript.jpg" alt="Dark Graphite theme showing a TypeScript file with syntax colors, line numbers and project tabs." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
+          <figcaption><h3>It has a dark side, too.</h3><p>Graphite. The same desktop, a different personality.</p></figcaption>
         </figure>
-        <figure>
-          <a class="screenshot-link" href="/assets/screenshots/14-project-explorer.jpg" aria-label="Abrir captura completa del explorador de archivos"><img src="/assets/screenshots/14-project-explorer.jpg" alt="Explorador de archivos real de S42 Agent abierto sobre el escritorio QBasic, con navegación de carpetas y archivos." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
-          <figcaption><h3>El proyecto, a mano.</h3><p>Explorá carpetas, buscá archivos y adjuntá contexto.</p></figcaption>
+        <figure data-reveal>
+          <a class="screenshot-link" href="/assets/screenshots/14-project-explorer.jpg" aria-label="Open full screenshot of the file explorer"><img src="/assets/screenshots/14-project-explorer.jpg" alt="S42 Agent’s real file explorer open over the QBasic desktop, with folder and file navigation." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
+          <figcaption><h3>Your project, within reach.</h3><p>Browse folders, find files and attach context.</p></figcaption>
         </figure>
-        <figure>
-          <a class="screenshot-link" href="/assets/screenshots/25-mcp-stdio-configuration.jpg" aria-label="Abrir captura completa de la configuración MCP"><img src="/assets/screenshots/25-mcp-stdio-configuration.jpg" alt="Formulario real de S42 Agent para configurar un servidor MCP stdio: nombre, comando, argumentos y estado." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
-          <figcaption><h3>Conectá tus herramientas.</h3><p>Configuración de servidores MCP desde la TUI.</p></figcaption>
+        <figure data-reveal>
+          <a class="screenshot-link" href="/assets/screenshots/25-mcp-stdio-configuration.jpg" aria-label="Open full screenshot of MCP configuration"><img src="/assets/screenshots/25-mcp-stdio-configuration.jpg" alt="S42 Agent’s real form for configuring an MCP stdio server: name, command, arguments and status." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
+          <figcaption><h3>Connect your tools.</h3><p>Configure MCP servers right from the TUI.</p></figcaption>
         </figure>
       </div>
-      <p class="gallery-note">Imágenes originales del agente ejecutado en un emulador de terminal. <a href="https://github.com/stock42/s42-agent/tree/main/screenshots">Ver las 35 capturas y su procedencia <span aria-hidden="true">↗</span></a></p>
+      <p class="gallery-note">Original images of the agent running in a terminal emulator. <a href="https://github.com/stock42/s42-agent/tree/main/screenshots">View all 35 screenshots and their provenance <span aria-hidden="true">↗</span></a></p>
     </section>
 
     <section class="installation section" id="instalar" aria-labelledby="install-title">
       <div class="wrap install-layout">
-        <div class="section-heading">
-          <p class="eyebrow"><span aria-hidden="true">03 /</span> EMPEZÁ A CREAR</p>
-          <h2 id="install-title">Una terminal.<br>Un comando.</h2>
-          <p>El binario incluye el runtime de Bun. Instalá el agente, elegí tu modelo y abrí tu primer proyecto.</p>
-          <a class="text-link" href="https://github.com/stock42/s42-agent/releases/tag/v0.1.1">Descargar la preview v0.1.1 <span aria-hidden="true">↗</span></a>
-          <p class="install-requirements">x64 y ARM64 · Linux con glibc · macOS 13+ · Windows 10 1809+<br>El servidor LLM y los modelos se configuran por separado.</p>
+        <div class="section-heading" data-reveal>
+          <p class="eyebrow"><span aria-hidden="true">03 /</span> START BUILDING</p>
+          <h2 id="install-title">One terminal.<br>One command.</h2>
+          <p>The binary includes the Bun runtime. Install the agent, choose your model and open your first project.</p>
+          <a class="text-link" href="https://github.com/stock42/s42-agent/releases/tag/v0.1.1">Download the v0.1.1 preview <span aria-hidden="true">↗</span></a>
+          <p class="install-requirements">x64 and ARM64 · Linux with glibc · macOS 13+ · Windows 10 1809+<br>The LLM server and models are configured separately.</p>
         </div>
-        <div class="install-commands">
+        <div class="install-commands" data-reveal>
           <details class="command-panel" open>
             <summary><span>Linux / macOS</span><span class="shell-name">Bash</span></summary>
-            <div class="command-body"><pre><code id="install-unix">curl -fsSL https://raw.githubusercontent.com/stock42/s42-agent/main/install.sh | bash</code></pre><button class="copy-button" type="button" data-copy="install-unix" hidden>Copiar comando <span aria-hidden="true">⧉</span></button></div>
+            <div class="command-body"><pre><code id="install-unix">curl -fsSL https://raw.githubusercontent.com/stock42/s42-agent/main/install.sh | bash</code></pre><button class="copy-button" type="button" data-copy="install-unix" hidden>Copy command <span aria-hidden="true">⧉</span></button></div>
           </details>
           <details class="command-panel">
             <summary><span>Windows</span><span class="shell-name">PowerShell</span></summary>
-            <div class="command-body"><pre><code id="install-windows">powershell -c "irm https://raw.githubusercontent.com/stock42/s42-agent/main/install.ps1|iex"</code></pre><button class="copy-button" type="button" data-copy="install-windows" hidden>Copiar comando <span aria-hidden="true">⧉</span></button></div>
+            <div class="command-body"><pre><code id="install-windows">powershell -c "irm https://raw.githubusercontent.com/stock42/s42-agent/main/install.ps1|iex"</code></pre><button class="copy-button" type="button" data-copy="install-windows" hidden>Copy command <span aria-hidden="true">⧉</span></button></div>
           </details>
           <details class="command-panel">
-            <summary><span>Desde el código fuente</span><span class="shell-name">Git + Bun 1.4.2</span></summary>
+            <summary><span>From source</span><span class="shell-name">Git + Bun 1.4.2</span></summary>
             <div class="command-body"><pre><code id="install-source">git clone https://github.com/stock42/s42-agent.git
 cd s42-agent
 bun install --frozen-lockfile
-bun run dev</code></pre><button class="copy-button" type="button" data-copy="install-source" hidden>Copiar comandos <span aria-hidden="true">⧉</span></button></div>
+bun run dev</code></pre><button class="copy-button" type="button" data-copy="install-source" hidden>Copy commands <span aria-hidden="true">⧉</span></button></div>
           </details>
-          <p class="install-note">Los instaladores verifican SHA-256. Después, abrí otra terminal y ejecutá <code>s42-agent</code>. <a href="https://github.com/stock42/s42-agent/blob/main/README.es.md#instalación">Guía completa <span aria-hidden="true">↗</span></a></p>
+          <p class="install-note">The installers verify SHA-256. Then open a new terminal and run <code>s42-agent</code>. <a href="https://github.com/stock42/s42-agent/blob/main/README.md#installation">Full guide <span aria-hidden="true">↗</span></a></p>
           <p id="copy-status" class="copy-status" role="status" aria-live="polite"></p>
         </div>
       </div>
       <div class="wrap first-run">
-        <p class="eyebrow">TU PRIMER PROYECTO</p>
-        <ol><li><span>01</span><p><strong>Abrí tu carpeta.</strong> Projects → Agregar proyecto. Solo nombre y carpeta.</p></li><li><span>02</span><p><strong>Elegí el modelo.</strong> Configurá el proveedor y seleccioná tu modelo en Models.</p></li><li><span>03</span><p><strong>Escribí tu idea.</strong> Enter envía. Shift+Enter agrega una línea. Seguí el trabajo en vivo.</p></li></ol>
+        <p class="eyebrow">YOUR FIRST PROJECT</p>
+        <ol><li><span>01</span><p><strong>Open your folder.</strong> Projects → Add project. Just a name and a folder.</p></li><li><span>02</span><p><strong>Pick your model.</strong> Configure the provider and select your model in Models.</p></li><li><span>03</span><p><strong>Write your idea.</strong> Enter sends. Shift+Enter adds a line. Follow the work live.</p></li></ol>
       </div>
     </section>
 
-    <section class="closing wrap" aria-labelledby="closing-title">
+    <section class="closing wrap" data-reveal aria-labelledby="closing-title">
       <span class="closing-prompt" aria-hidden="true">&gt;_</span>
-      <h2 id="closing-title">Hacé espacio para<br>tu próxima gran idea.</h2>
-      <a class="button primary" href="#instalar">Empezar con S42 Agent <span aria-hidden="true">↗</span></a>
+      <h2 id="closing-title">Make room for<br>your next big idea.</h2>
+      <a class="button primary" href="#instalar">Start with S42 Agent <span aria-hidden="true">↗</span></a>
     </section>
   </main>
 
   <footer class="site-footer wrap">
-    <div><a class="wordmark" href="/">s42<span class="wordmark-light">agent</span><span class="brand-dot">.</span></a><p>Desarrollado por <a href="https://cesarcasas.com/" rel="author">César Casas</a>.</p></div>
-    <nav aria-label="Enlaces del autor y del proyecto"><a href="https://x.com/lortmorris">X / @lortmorris <span aria-hidden="true">↗</span></a><a href="https://www.linkedin.com/in/cesarcasas/">LinkedIn <span aria-hidden="true">↗</span></a><a href="https://github.com/stock42/s42-agent">GitHub <span aria-hidden="true">↗</span></a><a href="https://github.com/stock42/s42-agent/blob/main/LICENSE">MIT License</a></nav>
-    <p class="footer-bottom">© 2026 César Casas · Stock42 <span>Coding con alma de QBasic.</span></p>
+    <div><a class="wordmark" href="/">s42<span class="wordmark-light">agent</span><span class="brand-dot">.</span></a><p>Developed by <a href="https://cesarcasas.com/" rel="author">César Casas</a>.</p></div>
+    <nav aria-label="Author and project links"><a href="https://x.com/lortmorris">X / @lortmorris <span aria-hidden="true">↗</span></a><a href="https://www.linkedin.com/in/cesarcasas/">LinkedIn <span aria-hidden="true">↗</span></a><a href="https://github.com/stock42/s42-agent">GitHub <span aria-hidden="true">↗</span></a><a href="https://github.com/stock42/s42-agent/blob/main/LICENSE">MIT License</a></nav>
+    <p class="footer-bottom">© 2026 César Casas · Stock42 <span>Coding with the soul of QBasic.</span></p>
   </footer>
 </body>
 </html>

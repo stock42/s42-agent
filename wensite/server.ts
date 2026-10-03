@@ -27,8 +27,15 @@ export function startWebsite(options: { port?: number; hostname?: string } = {})
         return new Response("Ruta inválida", { status: 400 });
       }
 
+      if (pathname === "/es") {
+        const destination = new URL(request.url);
+        destination.pathname = "/es/";
+        return Response.redirect(destination.href, 308);
+      }
+
       // Only public files belong to the website; .env and source stay outside it.
-      const target = resolve(publicDirectory, `.${pathname === "/" ? "/index.html" : pathname}`);
+      const page = pathname === "/" ? "/index.html" : pathname === "/es/" ? "/es/index.html" : pathname;
+      const target = resolve(publicDirectory, `.${page}`);
       if (!target.startsWith(publicDirectory + sep)) {
         return new Response("No encontrado", { status: 404 });
       }
@@ -43,7 +50,7 @@ export function startWebsite(options: { port?: number; hostname?: string } = {})
         const headers = new Headers({
           "Content-Type": actualPath.endsWith(".xml") ? "application/xml; charset=utf-8" : file.type,
           "Content-Length": String(file.size),
-          "Cache-Control": actualPath.endsWith(".html") ? "no-cache" : "public, max-age=3600",
+          "Cache-Control": /\.(html|css|js)$/.test(actualPath) ? "no-cache" : "public, max-age=3600",
         });
         return new Response(request.method === "HEAD" ? null : file, { headers });
       } catch {

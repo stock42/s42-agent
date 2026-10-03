@@ -1,6 +1,6 @@
 # s42agent.dev
 
-Landing page de S42 Agent. HTML, CSS y JavaScript estáticos, servidos por Bun
+Landing page bilingüe de S42 Agent. HTML, CSS y JavaScript estáticos, servidos por Bun
 1.4.2, sin dependencias externas ni paso de build. Se conserva `wensite` como
 nombre de directorio solicitado.
 
@@ -26,17 +26,29 @@ repositorio no son públicos. Rutas inexistentes responden 404; acepta GET y HEA
 
 ## Contenido y SEO
 
-- `public/index.html`: contenido accesible sin JavaScript, instrucciones de
-  instalación, autor y enlaces. Canonical, Open Graph y Twitter Cards usan
-  `https://s42agent.dev/`.
-- `public/styles.css`: diseño oscuro y responsive, foco visible y movimiento
-  reducido.
-- `public/app.js`: copia de comandos, con selección manual cuando el navegador
-  no permite acceder al portapapeles.
-- `public/assets/opengraph.jpg`: portada ilustrada generada para compartir,
-  1200×630. No se presenta como captura del producto.
+- `public/index.html`: versión en inglés, idioma predeterminado en `/`.
+- `public/es/index.html`: versión en español en `/es/`; `/es` redirige a `/es/`.
+  Ambas versiones contienen todos los textos, alt, instalación, autor y enlaces
+  en el HTML original. No requieren JavaScript para traducir ni cambian de idioma
+  según el navegador. El selector EN/ES conserva la sección y los query params.
+- Cada idioma tiene canonical, `lang`, hreflang recíprocos, `x-default`, Open
+  Graph, Twitter Cards y datos estructurados localizados.
+- `public/styles.css`: diseño oscuro y responsive con portada metálica, luz y
+  órbitas animadas, entradas escalonadas y estados hover. Desactiva animaciones,
+  transiciones y desplazamiento suave con `prefers-reduced-motion`.
+- `public/app.js`: copia de comandos y mensajes ES/EN, selector de idioma,
+  apariciones con IntersectionObserver, profundidad al mover el mouse y progreso
+  de lectura. El contenido se mantiene visible si no hay JavaScript o se solicita
+  movimiento reducido; la preferencia se puede cambiar durante la sesión.
+- `public/assets/opengraph.jpg` y `opengraph-es.jpg`: portadas ilustradas generadas
+  para compartir en inglés/español, 1200×630. `hero-42.webp` es arte decorativo de
+  la cabecera, sin textos incrustados. No se presentan como capturas del producto.
 - `public/robots.txt`, `public/sitemap.xml`: descubrimiento de la página.
-- JSON-LD: WebSite, SoftwareApplication y Person, sin valoraciones inventadas.
+- JSON-LD: WebSite, SoftwareApplication/SoftwareSourceCode y Person, sin
+  valoraciones inventadas. Sitemap incluye ambas URLs y sus alternates.
+
+HTML, CSS y JavaScript se sirven con `no-cache` para que el navegador revalide
+los cambios. Las imágenes y otros archivos públicos conservan una hora de caché.
 
 Las cuatro capturas en `public/assets/screenshots/` son copias byte por byte de
 `screenshots/` en la raíz. La procedencia está documentada en

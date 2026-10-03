@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://s42agent.dev/</loc></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://s42agent.dev/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://s42agent.dev/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://s42agent.dev/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://s42agent.dev/"/>
+  </url>
+  <url>
+    <loc>https://s42agent.dev/es/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://s42agent.dev/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://s42agent.dev/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://s42agent.dev/"/>
+  </url>
 </urlset>
