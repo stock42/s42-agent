@@ -5,6 +5,15 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Documentado — Plan v1.0.5
+
+- Creado `docs/v1.0.5.md` con el plan de panel Git e historial, planificación
+  persistente, tablero sincronizado con TODO.md, verificación y recuperación,
+  autogeneración de AGENTS.md, inicialización Git y pruebas con Chrome.
+- Definidos contratos, integración con los módulos actuales, seis etapas,
+  dependencias, criterios de aceptación y matriz de validación. Implementación
+  pendiente; sin cambio de versión ni generación/publicación de releases.
+
 ### Corregido — Herramientas web y continuidad después de compactar
 
 - El prompt y las descripciones indican usar `scrape`/Bun.WebView para resumir
