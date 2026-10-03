@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version="${S42_AGENT_VERSION:-0.1.1}"
+version="${S42_AGENT_VERSION:-0.1.2}"
 install_dir="${S42_AGENT_INSTALL_DIR:-$HOME/.local/bin}"
 from_dir=""
 modify_path=true
@@ -9,7 +9,7 @@ modify_path=true
 usage() {
   cat <<'HELP'
 Install S42 Agent on Linux or macOS (x64 / ARM64).
-  --version VERSION       Release version (default: 0.1.1)
+  --version VERSION       Release version (default: 0.1.2)
   --install-dir DIRECTORY Binary destination (default: ~/.local/bin)
   --from-dir DIRECTORY    Install from local release files instead of GitHub
   --no-modify-path        Do not update the shell profile

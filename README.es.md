@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="docs/releases/v0.1.1.es.md"><img src="https://img.shields.io/badge/preview-v0.1.1-00c9df?style=flat-square" alt="v0.1.1 preview"></a>
+  <a href="docs/releases/v0.1.2.es.md"><img src="https://img.shields.io/badge/preview-v0.1.2-00c9df?style=flat-square" alt="v0.1.2 preview"></a>
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.4.2-101827?style=flat-square&amp;logo=bun&amp;logoColor=white" alt="Bun 1.4.2"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-7.0.2-3178c6?style=flat-square&amp;logo=typescript&amp;logoColor=white" alt="TypeScript 7.0.2"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-00c9df?style=flat-square" alt="MIT license"></a>
@@ -64,7 +64,7 @@ sin instalar Bun por separado. El servidor/modelo LLM y los programas externos
 usados por shell/MCP se configuran aparte.
 [Ejecutables independientes de Bun](https://bun.com/docs/bundler/executables).
 
-> **[Prerelease v0.1.1](https://github.com/stock42/s42-agent/releases/tag/v0.1.1):**
+> **[Prerelease v0.1.2](https://github.com/stock42/s42-agent/releases/tag/v0.1.2):**
 > incluye seis binarios y un paquete para todas las plataformas. Los comandos de
 > descarga de un paso requieren assets públicos. Si el repositorio es privado,
 > descargá el paquete con acceso GitHub autorizado, extraelo y usá el instalador local.
@@ -103,14 +103,14 @@ local; los otros cinco destinos cuentan con cross-builds:
 
 | Plataforma | Arquitectura | Binario |
 | --- | --- | --- |
-| Linux (glibc) | x64 | `s42-agent-0.1.1-linux-x64` |
-| Linux (glibc) | ARM64 | `s42-agent-0.1.1-linux-arm64` |
-| macOS | Intel x64 | `s42-agent-0.1.1-darwin-x64` |
-| macOS | Apple Silicon ARM64 | `s42-agent-0.1.1-darwin-arm64` |
-| Windows | x64 | `s42-agent-0.1.1-windows-x64.exe` |
-| Windows | ARM64 | `s42-agent-0.1.1-windows-arm64.exe` |
+| Linux (glibc) | x64 | `s42-agent-0.1.2-linux-x64` |
+| Linux (glibc) | ARM64 | `s42-agent-0.1.2-linux-arm64` |
+| macOS | Intel x64 | `s42-agent-0.1.2-darwin-x64` |
+| macOS | Apple Silicon ARM64 | `s42-agent-0.1.2-darwin-arm64` |
+| Windows | x64 | `s42-agent-0.1.2-windows-x64.exe` |
+| Windows | ARM64 | `s42-agent-0.1.2-windows-arm64.exe` |
 
-Disponibles en [GitHub Releases](https://github.com/stock42/s42-agent/releases/tag/v0.1.1).
+Disponibles en [GitHub Releases](https://github.com/stock42/s42-agent/releases/tag/v0.1.2).
 Los ejecutables se acompañan de `SHASUMS256.txt`.
 Windows requiere Windows 10 1809 o posterior; macOS requiere 13 o posterior.
 Los binarios Linux usan glibc; Alpine/musl requiere otro target.
@@ -205,7 +205,7 @@ bun run build:release
 
 Bun genera los seis ejecutables en `dist/`, checksums `SHASUMS256.txt`,
 metadatos, instaladores y el paquete conjunto
-`s42-agent-0.1.1-all-platforms.tar.gz`. Cross-compilar no prueba la ejecución
+`s42-agent-0.1.2-all-platforms.tar.gz`. Cross-compilar no prueba la ejecución
 en el SO de destino. Los archivos generados quedan fuera de Git y se suben
 a una release por separado. [Preparación de la release](docs/PUBLISHING.es.md).
 
@@ -355,7 +355,7 @@ muestran N/D.
 
 ## Estado y desarrollo
 
-**v0.1.1 es una preview.** Linux x64 cuenta con validación local, PTY y modelo
+**v0.1.2 es una preview.** Linux x64 cuenta con validación local, PTY y modelo
 real; el compilado actual también pasa el smoke fuera del checkout.
 Los seis binarios actuales están preparados para la release. Faltan pruebas
 de ejecución en Windows/macOS/ARM64 y cobertura física de mouse/drop.
@@ -372,7 +372,7 @@ pero el servidor LLM y los comandos externos siguen siendo independientes.
 - [Manual completo](docs/USAGE.es.md)
 - [Contratos de tools](docs/TOOLS.es.md)
 - [Contribuir](CONTRIBUTING.es.md) y [changelog](CHANGELOG.md)
-- [Preparar releases](docs/PUBLISHING.es.md) y [notas v0.1.1](docs/releases/v0.1.1.es.md)
+- [Preparar releases](docs/PUBLISHING.es.md) y [notas v0.1.2](docs/releases/v0.1.2.es.md)
 
 ## Autoría
 

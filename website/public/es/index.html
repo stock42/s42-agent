@@ -22,7 +22,7 @@
   <link rel="alternate" hreflang="es" href="https://s42agent.dev/es/">
   <link rel="alternate" hreflang="x-default" href="https://s42agent.dev/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/styles.css?v=3">
+  <link rel="stylesheet" href="/styles.css?v=4">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="S42 Agent">
   <meta property="og:locale" content="es_AR">
@@ -42,36 +42,144 @@
   <meta name="twitter:image" content="https://s42agent.dev/assets/opengraph-es.jpg">
   <meta name="twitter:image:alt" content="S42 Agent, con un 42 metálico iluminado en azul sobre fondo negro.">
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebSite", "@id": "https://s42agent.dev/#website",
-        "url": "https://s42agent.dev/es/", "name": "S42 Agent", "inLanguage": "es-AR",
-        "description": "Agente de coding con IA y una interfaz de terminal estilo QBasic.",
-        "author": { "@id": "https://s42agent.dev/#author" }
-      },
-      {
-        "@type": ["SoftwareApplication", "SoftwareSourceCode"], "@id": "https://s42agent.dev/#software",
-        "name": "S42 Agent", "url": "https://s42agent.dev/es/",
-        "description": "Agente de coding con TUI estilo QBasic, CLI, modelos locales y remotos, herramientas nativas, MCP y skills.",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Linux, macOS, Windows", "softwareVersion": "0.1.1",
-        "license": "https://github.com/stock42/s42-agent/blob/main/LICENSE",
-        "downloadUrl": "https://github.com/stock42/s42-agent/releases/tag/v0.1.1",
-        "codeRepository": "https://github.com/stock42/s42-agent",
-        "image": "https://s42agent.dev/assets/opengraph-es.jpg",
-        "screenshot": "https://s42agent.dev/assets/screenshots/10-live-tool-chat.jpg",
-        "author": { "@id": "https://s42agent.dev/#author" },
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-      },
-      {
-        "@type": "Person", "@id": "https://s42agent.dev/#author",
-        "name": "César Casas", "url": "https://cesarcasas.com/",
-        "sameAs": ["https://x.com/lortmorris"]
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://s42agent.dev/#website",
+      "url": "https://s42agent.dev/es/",
+      "name": "S42 Agent",
+      "inLanguage": "es-AR",
+      "description": "Agente de coding con IA y una interfaz de terminal estilo QBasic.",
+      "author": {
+        "@id": "https://s42agent.dev/#author"
       }
-    ]
-  }
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://s42agent.dev/#software",
+      "name": "S42 Agent",
+      "url": "https://s42agent.dev/es/",
+      "description": "Agente de coding con TUI estilo QBasic, CLI, modelos locales y remotos, herramientas nativas, MCP y skills.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Linux, macOS, Windows",
+      "softwareVersion": "0.1.2",
+      "license": "https://github.com/stock42/s42-agent/blob/main/LICENSE",
+      "downloadUrl": "https://github.com/stock42/s42-agent/releases/tag/v0.1.2",
+      "codeRepository": "https://github.com/stock42/s42-agent",
+      "image": "https://s42agent.dev/assets/opengraph-es.jpg",
+      "screenshot": "https://s42agent.dev/assets/screenshots/10-live-tool-chat.jpg",
+      "author": {
+        "@id": "https://s42agent.dev/#author"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://s42agent.dev/#author",
+      "name": "César Casas",
+      "url": "https://cesarcasas.com/",
+      "sameAs": [
+        "https://x.com/lortmorris"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://s42agent.dev/es/#faq",
+      "inLanguage": "es-AR",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Qué es S42 Agent?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Un agente de coding open source con una TUI estilo QBasic y una CLI sin interfaz. Trabaja en la carpeta de tu proyecto, usa el LLM que elijas y puede leer, editar y ejecutar herramientas con los permisos de tu usuario."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Es gratuito?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "S42 Agent se distribuye con licencia MIT. El harness no tiene suscripción. Un proveedor LLM remoto puede cobrar por su API; los modelos locales usan tu propio hardware."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Necesito instalar Bun o Node?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "El ejecutable compilado incluye Bun y funciona sin instalarlo aparte. Desarrollar desde fuente requiere Bun 1.4.2. Los comandos externos, servidores LLM y programas MCP se instalan por separado. Chrome DevTools MCP opcional requiere su propia instalación de Node y Chrome."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué modelos puedo usar?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "llama.cpp es el proveedor por defecto. También admite DeepSeek y otros endpoints compatibles con Chat Completions. Configurá endpoint y clave en Models y elegí un ID real de modelo. Tools e imágenes dependen de las capacidades del modelo y de la configuración de su servidor."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Puedo usarlo en un servidor por SSH?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí. Abrí la TUI en una terminal ANSI o ejecutá el mismo agente con --prompting sin iniciar la interfaz. Las claves LLM se guardan en SQLite y no requieren D-Bus ni llavero del escritorio. Las funciones de navegador requieren su configuración externa."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Dónde se guardan las API keys?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "En la tabla credentials de la base SQLite local del agente, sin cifrado adicional. Con configuración JSON legacy se usa config.json.credentials.sqlite junto al archivo. Las claves se separan por configuración, proveedor y endpoint. Los overrides CLI quedan en memoria; también se admiten variables de entorno. Las claves anteriores del llavero deben ingresarse una vez en Models."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Mi código permanece en mi computadora?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Los archivos y el historial se guardan localmente. El LLM elegido recibe el contexto que le envíes. Con un proveedor remoto, ese contexto sale de tu computadora; con un modelo local podés mantener local la inferencia. Los MCP y las herramientas configuradas también pueden acceder a servicios externos."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cómo funcionan el plan, la verificación y Git?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "TODO.md y Kanban conservan el progreso. Las verificaciones registran pruebas y evidencia reales. El panel Git muestra cambios e historial; commits y pushes siguen AGENTS.md y las instrucciones del proyecto activo. Generar AGENTS.md e inicializar un repositorio Git son acciones explícitas."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Puedo retomar una tarea larga o cancelada?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí. SQLite conserva sesiones, respuestas parciales y reasoning recibido. Reabrí la sesión para continuar. La compactación usa la ventana informada por el modelo y conserva el historial original; cancelar no deshace archivos modificados ni comandos ya ejecutados."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué plataformas hay y cómo actualizo?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "La release incluye ejecutables para Linux glibc, macOS y Windows en x64 y ARM64. Linux x64 tiene smoke nativo del binario; los otros destinos son cross-builds. Para actualizar, cerrá el agente y ejecutá nuevamente el instalador de abajo. Se conservan configuración y sesiones."
+          }
+        }
+      ]
+    }
+  ]
+}
   </script>
   <script src="/app.js?v=3" defer></script>
 </head>
@@ -81,9 +189,10 @@
   <header class="site-header wrap">
     <a class="wordmark" href="/es/" aria-label="S42 Agent, inicio"><span class="terminal-mark" aria-hidden="true">&gt;_</span> s42<span class="wordmark-light">agent</span><span class="brand-dot">.</span></a>
     <nav aria-label="Navegación principal">
-      <a href="#agente">El agente</a>
+      <a href="#agente">Funciones</a>
       <a href="#capturas">Capturas</a>
       <a href="#instalar">Instalar</a>
+      <a href="#faq">FAQ</a>
       <a class="nav-github" href="https://github.com/stock42/s42-agent">GitHub <span aria-hidden="true">↗</span></a>
     <span class="language-switch" role="group" aria-label="Idioma">
         <a href="/" lang="en" hreflang="en" aria-label="English" data-language>EN</a>
@@ -103,7 +212,7 @@
           <span class="hero-signal signal-two">MCP + SKILLS <span class="signal-cross">+</span></span>
         </div>
         <div class="hero-copy">
-          <a class="release" href="https://github.com/stock42/s42-agent/releases/tag/v0.1.1"><span class="status-dot" aria-hidden="true"></span> v0.1.1 preview <span class="release-divider" aria-hidden="true">/</span> Open source <span aria-hidden="true">↗</span></a>
+          <a class="release" href="https://github.com/stock42/s42-agent/releases/tag/v0.1.2"><span class="status-dot" aria-hidden="true"></span> v0.1.2 preview <span class="release-divider" aria-hidden="true">/</span> Open source <span aria-hidden="true">↗</span></a>
           <p class="hero-eyebrow">S42 AGENT <span aria-hidden="true">/</span> TU TERMINAL, EVOLUCIONADA</p>
           <h1 id="hero-title">Coding con IA.<br><span>Alma de QBasic.</span></h1>
           <p class="hero-description">El encanto de la terminal clásica. La potencia de un agente moderno. Tus proyectos, tus modelos y tus herramientas, en un mismo lugar.</p>
@@ -125,7 +234,7 @@
       </figure>
       <div class="capability-strip" aria-label="Capacidades del agente">
         <p data-reveal><strong>6</strong><span>temas con personalidad</span></p>
-        <p data-reveal style="--delay:80ms"><strong>12</strong><span>herramientas nativas</span></p>
+        <p data-reveal style="--delay:80ms"><strong>17</strong><span>herramientas nativas</span></p>
         <p data-reveal style="--delay:160ms"><strong>∞</strong><span>posibilidades con MCP y skills</span></p>
         <p data-reveal style="--delay:240ms"><strong>TUI + CLI</strong><span>tu manera de trabajar</span></p>
       </div>
@@ -134,14 +243,22 @@
     <section class="features wrap section" id="agente" aria-labelledby="features-title">
       <div class="section-heading" data-reveal>
         <p class="eyebrow"><span aria-hidden="true">01 /</span> TU ESPACIO DE TRABAJO</p>
-        <h2 id="features-title">Familiar por fuera.<br>Potente por dentro.</h2>
-        <p>Una interfaz con personalidad, pensada para seguir el trabajo del agente sin perder de vista tu proyecto.</p>
+        <h2 id="features-title">Planificá. Construí. Verificá.</h2>
+        <p>Desde la primera idea hasta un resultado comprobado: funcionalidades para seguir el trabajo de coding y retomarlo cuando lo necesites.</p>
       </div>
       <div class="feature-grid">
-        <article data-reveal><span class="feature-symbol" aria-hidden="true">&gt;_</span><h3>Tu terminal, con carácter.</h3><p>Menús, mouse, atajos de teclado y seis temas. El escritorio de QBasic, con respuestas y herramientas en vivo.</p></article>
-        <article data-reveal><span class="feature-symbol" aria-hidden="true">[ + ]</span><h3>Cada proyecto, en su lugar.</h3><p>Conversaciones, modelos y borradores independientes. Cambiá de pestaña y retomá donde estabas.</p></article>
-        <article data-reveal><span class="feature-symbol" aria-hidden="true">~/</span><h3>Elegí tu modelo.</h3><p>llama.cpp por defecto, DeepSeek y endpoints compatibles. Trabajá con modelos locales o conectá un proveedor remoto.</p></article>
-        <article data-reveal><span class="feature-symbol" aria-hidden="true">{ }</span><h3>Herramientas para hacer.</h3><p>12 tools nativas, MCP, skills y promptings reutilizables. También una CLI para usar el agente desde tus scripts.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">&gt;_</span><h3>Un escritorio QBasic, vivo.</h3><p>Menús, atajos, mouse y seis temas. Leé respuestas y salida de tools en vivo, con el prompt siempre a la vista.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">[ + ]</span><h3>Proyectos independientes.</h3><p>Cada pestaña conserva conversación, modelo, borrador, adjuntos y scroll. Ejecutá trabajo en distintos proyectos y cancelá el turno que elijas.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">~/</span><h3>Tu modelo, a tu elección.</h3><p>llama.cpp por defecto, DeepSeek u otro proveedor compatible con Chat Completions. Usá modelos locales o conectá un endpoint remoto.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">[ ✓ ]</span><h3>Un plan que podés seguir.</h3><p>El agente registra etapas y criterios de aceptación en TODO.md. Seguí tareas pendientes, en progreso y terminadas en el tablero Kanban.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">git</span><h3>Cambios que podés revisar.</h3><p>Inspeccioná archivos, diffs e historial Git desde la TUI. El cierre de tarea selecciona sus archivos y sigue las instrucciones Git del proyecto.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">test</span><h3>Verificación con evidencia.</h3><p>Conservá juntas las pruebas previstas, los comandos ejecutados, sus salidas y resultados. La tarea terminada y la verificación aprobada tienen registros separados.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">↗</span><h3>Chrome para pruebas web.</h3><p>Conectá Chrome DevTools MCP opcional por proyecto. Abrí páginas, ejecutá escenarios en el navegador y conservá capturas y resultados junto a la sesión.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">md</span><h3>Instrucciones para tu proyecto.</h3><p>Cargá AGENTS.md y skills. Generá una propuesta de AGENTS.md, revisala y editala antes de aplicarla explícitamente al proyecto.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">{ }</span><h3>17 herramientas para trabajar.</h3><p>Leé, escribí, editá, buscá archivos, ejecutá comandos, consultá APIs y extraé páginas renderizadas. Llamadas, ejecución y resultados aparecen en vivo.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">+</span><h3>MCP, skills y promptings.</h3><p>Agregá servidores MCP stdio o HTTP, habilitá skills y reutilizá prompts con variables. Configurá las extensiones desde la TUI.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">85%</span><h3>Continuidad en tareas largas.</h3><p>Reabrí sesiones y continuá después de cancelar. La compactación automática cerca del 85% conserva el historial original y los efectos previos de las tools.</p></article>
+        <article data-reveal><span class="feature-symbol" aria-hidden="true">SQL</span><h3>Claves y CLI para servidores.</h3><p>Guardá las keys LLM en SQLite local sin llavero del escritorio. Usá el mismo agente por SSH o con --prompting desde scripts.</p></article>
       </div>
       <div class="feature-footnote"><span>TypeScript + Bun</span><span>0 dependencias externas de paquetes de runtime</span><a href="https://github.com/stock42/s42-agent/blob/main/docs/USAGE.es.md">Explorar el manual <span aria-hidden="true">↗</span></a></div>
     </section>
@@ -164,8 +281,12 @@
           <a class="screenshot-link" href="/assets/screenshots/25-mcp-stdio-configuration.jpg" aria-label="Abrir captura completa de la configuración MCP"><img src="/assets/screenshots/25-mcp-stdio-configuration.jpg" alt="Formulario real de S42 Agent para configurar un servidor MCP stdio: nombre, comando, argumentos y estado." width="1680" height="841" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
           <figcaption><h3>Conectá tus herramientas.</h3><p>Configuración de servidores MCP desde la TUI.</p></figcaption>
         </figure>
+        <figure data-reveal>
+          <a class="screenshot-link" href="/assets/screenshots/36-tasks-es.jpg"><img src="/assets/screenshots/36-tasks-es.jpg" alt="Tablero de S42 Agent con tareas pendientes, en progreso y terminadas y el prompt fijo." width="1280" height="740" loading="lazy" decoding="async"><span class="image-open" aria-hidden="true">↗</span></a>
+          <figcaption><h3>Un plan que podés ver.</h3><p>El tablero de tareas en la TUI real.</p></figcaption>
+        </figure>
       </div>
-      <p class="gallery-note">Imágenes originales del agente ejecutado en un emulador de terminal. <a href="https://github.com/stock42/s42-agent/tree/main/screenshots">Ver las 35 capturas y su procedencia <span aria-hidden="true">↗</span></a></p>
+      <p class="gallery-note">Imágenes originales del agente ejecutado en un emulador de terminal. <a href="https://github.com/stock42/s42-agent/tree/main/screenshots">Ver las 41 capturas y su procedencia <span aria-hidden="true">↗</span></a></p>
     </section>
 
     <section class="installation section" id="instalar" aria-labelledby="install-title">
@@ -174,7 +295,7 @@
           <p class="eyebrow"><span aria-hidden="true">03 /</span> EMPEZÁ A CREAR</p>
           <h2 id="install-title">Una terminal.<br>Un comando.</h2>
           <p>El binario incluye el runtime de Bun. Instalá el agente, elegí tu modelo y abrí tu primer proyecto.</p>
-          <a class="text-link" href="https://github.com/stock42/s42-agent/releases/tag/v0.1.1">Descargar la preview v0.1.1 <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="https://github.com/stock42/s42-agent/releases/tag/v0.1.2">Descargar la preview v0.1.2 <span aria-hidden="true">↗</span></a>
           <p class="install-requirements">x64 y ARM64 · Linux con glibc · macOS 13+ · Windows 10 1809+<br>El servidor LLM y los modelos se configuran por separado.</p>
         </div>
         <div class="install-commands" data-reveal>
@@ -200,6 +321,22 @@ bun run dev</code></pre><button class="copy-button" type="button" data-copy="ins
       <div class="wrap first-run">
         <p class="eyebrow">TU PRIMER PROYECTO</p>
         <ol><li><span>01</span><p><strong>Abrí tu carpeta.</strong> Projects → Agregar proyecto. Solo nombre y carpeta.</p></li><li><span>02</span><p><strong>Elegí el modelo.</strong> Configurá el proveedor y seleccioná tu modelo en Models.</p></li><li><span>03</span><p><strong>Escribí tu idea.</strong> Enter envía. Shift+Enter agrega una línea. Seguí el trabajo en vivo.</p></li></ol>
+      </div>
+    </section>
+
+    <section class="faq wrap section" id="faq" aria-labelledby="faq-title">
+      <div class="section-heading" data-reveal><p class="eyebrow"><span aria-hidden="true">04 /</span> FAQ</p><h2 id="faq-title">¿Dudas antes de empezar?</h2><p>Instalación, modelos, credenciales y qué pasa con tu código.</p></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>¿Qué es S42 Agent?</summary><div class="faq-answer"><p>Un agente de coding open source con una TUI estilo QBasic y una CLI sin interfaz. Trabaja en la carpeta de tu proyecto, usa el LLM que elijas y puede leer, editar y ejecutar herramientas con los permisos de tu usuario.</p></div></details>
+        <details class="faq-item"><summary>¿Es gratuito?</summary><div class="faq-answer"><p>S42 Agent se distribuye con licencia MIT. El harness no tiene suscripción. Un proveedor LLM remoto puede cobrar por su API; los modelos locales usan tu propio hardware.</p></div></details>
+        <details class="faq-item"><summary>¿Necesito instalar Bun o Node?</summary><div class="faq-answer"><p>El ejecutable compilado incluye Bun y funciona sin instalarlo aparte. Desarrollar desde fuente requiere Bun 1.4.2. Los comandos externos, servidores LLM y programas MCP se instalan por separado. Chrome DevTools MCP opcional requiere su propia instalación de Node y Chrome.</p></div></details>
+        <details class="faq-item"><summary>¿Qué modelos puedo usar?</summary><div class="faq-answer"><p>llama.cpp es el proveedor por defecto. También admite DeepSeek y otros endpoints compatibles con Chat Completions. Configurá endpoint y clave en Models y elegí un ID real de modelo. Tools e imágenes dependen de las capacidades del modelo y de la configuración de su servidor.</p></div></details>
+        <details class="faq-item"><summary>¿Puedo usarlo en un servidor por SSH?</summary><div class="faq-answer"><p>Sí. Abrí la TUI en una terminal ANSI o ejecutá el mismo agente con --prompting sin iniciar la interfaz. Las claves LLM se guardan en SQLite y no requieren D-Bus ni llavero del escritorio. Las funciones de navegador requieren su configuración externa.</p></div></details>
+        <details class="faq-item"><summary>¿Dónde se guardan las API keys?</summary><div class="faq-answer"><p>En la tabla credentials de la base SQLite local del agente, sin cifrado adicional. Con configuración JSON legacy se usa config.json.credentials.sqlite junto al archivo. Las claves se separan por configuración, proveedor y endpoint. Los overrides CLI quedan en memoria; también se admiten variables de entorno. Las claves anteriores del llavero deben ingresarse una vez en Models.</p></div></details>
+        <details class="faq-item"><summary>¿Mi código permanece en mi computadora?</summary><div class="faq-answer"><p>Los archivos y el historial se guardan localmente. El LLM elegido recibe el contexto que le envíes. Con un proveedor remoto, ese contexto sale de tu computadora; con un modelo local podés mantener local la inferencia. Los MCP y las herramientas configuradas también pueden acceder a servicios externos.</p></div></details>
+        <details class="faq-item"><summary>¿Cómo funcionan el plan, la verificación y Git?</summary><div class="faq-answer"><p>TODO.md y Kanban conservan el progreso. Las verificaciones registran pruebas y evidencia reales. El panel Git muestra cambios e historial; commits y pushes siguen AGENTS.md y las instrucciones del proyecto activo. Generar AGENTS.md e inicializar un repositorio Git son acciones explícitas.</p></div></details>
+        <details class="faq-item"><summary>¿Puedo retomar una tarea larga o cancelada?</summary><div class="faq-answer"><p>Sí. SQLite conserva sesiones, respuestas parciales y reasoning recibido. Reabrí la sesión para continuar. La compactación usa la ventana informada por el modelo y conserva el historial original; cancelar no deshace archivos modificados ni comandos ya ejecutados.</p></div></details>
+        <details class="faq-item"><summary>¿Qué plataformas hay y cómo actualizo?</summary><div class="faq-answer"><p>La release incluye ejecutables para Linux glibc, macOS y Windows en x64 y ARM64. Linux x64 tiene smoke nativo del binario; los otros destinos son cross-builds. Para actualizar, cerrá el agente y ejecutá nuevamente el instalador de abajo. Se conservan configuración y sesiones.</p></div></details>
       </div>
     </section>
 

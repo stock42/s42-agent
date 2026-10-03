@@ -5,6 +5,23 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Preparado — Release v0.1.2 y website ES/EN
+
+- Versión, instaladores, metadatos, notas bilingües y enlaces de distribución
+  preparados para v0.1.2; incluye planificación/Kanban, verificación, cierre Git,
+  Chrome MCP y credenciales SQLite de los cambios ya registrados.
+- Website con 12 funcionalidades destacadas y 10 preguntas frecuentes por
+  idioma, marcado FAQPage, nuevas capturas reales del Kanban y catálogo de 17
+  tools nativas. FAQ desplegable por teclado y mouse, sin dependencia de JS.
+- Smoke de distribución adaptado al protocolo actual de tareas: plan/verificación,
+  edición, skill, MCP, shell y restauración de terminal. Clave SQLite recuperada
+  en TUI y en otro proceso CLI con PATH sin Bun ni programas externos y sin D-Bus.
+- Typecheck y suite completa: 267 pass, 0 fail, 4002 assertions. Binario Linux
+  x64 v0.1.2 ejecutado fuera del checkout. Diez comprobaciones responsive ES/EN
+  entre 320 y 1440 px sin desbordes; contenido visible y FAQPage coinciden.
+- Publicación GitHub y despliegue del dominio pendientes de su verificación;
+  esta entrada registra preparación y validación local.
+
 ### Corregido — API keys LLM en SQLite para servidores
 
 - Claves de llama.cpp, DeepSeek y proveedores manuales en la tabla `credentials`

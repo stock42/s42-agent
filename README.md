@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="docs/releases/v0.1.1.md"><img src="https://img.shields.io/badge/preview-v0.1.1-00c9df?style=flat-square" alt="v0.1.1 preview"></a>
+  <a href="docs/releases/v0.1.2.md"><img src="https://img.shields.io/badge/preview-v0.1.2-00c9df?style=flat-square" alt="v0.1.2 preview"></a>
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.4.2-101827?style=flat-square&amp;logo=bun&amp;logoColor=white" alt="Bun 1.4.2"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-7.0.2-3178c6?style=flat-square&amp;logo=typescript&amp;logoColor=white" alt="TypeScript 7.0.2"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-00c9df?style=flat-square" alt="MIT license"></a>
@@ -63,7 +63,7 @@ The compiled agent includes the Bun runtime: you can install and run it without
 installing Bun separately. Your LLM server/model and external shell/MCP programs
 remain separate. [How Bun standalone executables work](https://bun.com/docs/bundler/executables).
 
-> **[v0.1.1 prerelease](https://github.com/stock42/s42-agent/releases/tag/v0.1.1):**
+> **[v0.1.2 prerelease](https://github.com/stock42/s42-agent/releases/tag/v0.1.2):**
 > includes six binaries and an all-platforms package. The one-command downloads
 > below require publicly accessible release assets. If the repository is private,
 > download the package with authorized GitHub access, extract it and use the local installer below.
@@ -102,14 +102,14 @@ validation, while the other five targets have cross-builds.
 
 | Platform | Architecture | Binary |
 | --- | --- | --- |
-| Linux (glibc) | x64 | `s42-agent-0.1.1-linux-x64` |
-| Linux (glibc) | ARM64 | `s42-agent-0.1.1-linux-arm64` |
-| macOS | Intel x64 | `s42-agent-0.1.1-darwin-x64` |
-| macOS | Apple Silicon ARM64 | `s42-agent-0.1.1-darwin-arm64` |
-| Windows | x64 | `s42-agent-0.1.1-windows-x64.exe` |
-| Windows | ARM64 | `s42-agent-0.1.1-windows-arm64.exe` |
+| Linux (glibc) | x64 | `s42-agent-0.1.2-linux-x64` |
+| Linux (glibc) | ARM64 | `s42-agent-0.1.2-linux-arm64` |
+| macOS | Intel x64 | `s42-agent-0.1.2-darwin-x64` |
+| macOS | Apple Silicon ARM64 | `s42-agent-0.1.2-darwin-arm64` |
+| Windows | x64 | `s42-agent-0.1.2-windows-x64.exe` |
+| Windows | ARM64 | `s42-agent-0.1.2-windows-arm64.exe` |
 
-Download from [GitHub Releases](https://github.com/stock42/s42-agent/releases/tag/v0.1.1).
+Download from [GitHub Releases](https://github.com/stock42/s42-agent/releases/tag/v0.1.2).
 `SHASUMS256.txt` accompanies the raw executables.
 Windows requires Windows 10 1809 or later; macOS requires 13 or later.
 Linux binaries target glibc, rather than Alpine/musl.
@@ -205,7 +205,7 @@ bun run build:release
 
 This uses Bun to compile all six targets and creates `dist/` with executables,
 `SHASUMS256.txt`, build metadata, installers and a combined
-`s42-agent-0.1.1-all-platforms.tar.gz` handoff bundle. Cross-compiling does not
+`s42-agent-0.1.2-all-platforms.tar.gz` handoff bundle. Cross-compiling does not
 test execution on the destination OS. Generated files stay out of Git and are
 uploaded to a GitHub release separately. [Release preparation](docs/PUBLISHING.md).
 
@@ -357,7 +357,7 @@ remain visible; unavailable provider or device counters show N/A.
 
 ## Status and development
 
-**v0.1.1 is a preview.** Linux x64 has local source, PTY and real-model validation;
+**v0.1.2 is a preview.** Linux x64 has local source, PTY and real-model validation;
 the current compiled binary also passes a smoke test outside the checkout.
 Six current binaries are prepared for release. Execution on Windows, macOS and
 ARM64, and physical terminal mouse/drop coverage, remain pending.
@@ -374,7 +374,7 @@ Bun; the LLM and external commands remain separate.
 - [Detailed user guide](docs/USAGE.md)
 - [Tool contracts](docs/TOOLS.md)
 - [Contributing](CONTRIBUTING.md) and [changelog](CHANGELOG.md)
-- [Release preparation](docs/PUBLISHING.md) and [release notes](docs/releases/v0.1.1.md)
+- [Release preparation](docs/PUBLISHING.md) and [release notes](docs/releases/v0.1.2.md)
 
 ## Credits
 

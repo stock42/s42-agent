@@ -44,7 +44,9 @@ repositorio no son públicos. Rutas inexistentes responden 404; acepta GET y HEA
   para compartir en inglés/español, 1200×630. `hero-42.webp` es arte decorativo de
   la cabecera, sin textos incrustados. No se presentan como capturas del producto.
 - `public/robots.txt`, `public/sitemap.xml`: descubrimiento de la página.
-- JSON-LD: WebSite, SoftwareApplication/SoftwareSourceCode y Person, sin
+- Doce funcionalidades destacadas y FAQ con diez preguntas por idioma. El FAQ
+  usa details/summary nativos y funciona por teclado y sin JavaScript.
+- JSON-LD: WebSite, SoftwareApplication/SoftwareSourceCode, Person y FAQPage, sin
   valoraciones inventadas. Sitemap incluye ambas URLs y sus alternates.
 
 HTML, CSS y JavaScript se sirven con `no-cache` para que el navegador revalide
@@ -56,12 +58,13 @@ los botones de copiar instalación registra `copy_install_command`, con
 `es-AR`). El evento mide el clic, también cuando el portapapeles exige copia
 manual; no confirma que el usuario haya ejecutado la instalación.
 
-Las cuatro capturas en `public/assets/screenshots/` son copias byte por byte de
+Las seis capturas en `public/assets/screenshots/` son copias byte por byte de
 `screenshots/` en la raíz. La procedencia está documentada en
 [`screenshots/README.es.md`](../screenshots/README.es.md) y su manifiesto.
-No se modificaron, recortaron ni generaron pantallas del agente.
+No se modificaron, recortaron ni generaron pantallas del agente. El tablero
+Kanban tiene una captura real por idioma.
 Los comandos de instalación corresponden a los instaladores del repositorio;
-no se ofrece un paquete npm. La preview actual es v0.1.1.
+no se ofrece un paquete npm. La preview actual es v0.1.2.
 
 ## Validación
 

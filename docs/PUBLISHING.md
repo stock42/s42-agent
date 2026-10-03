@@ -17,7 +17,7 @@ bun install --frozen-lockfile
 bun run typecheck
 bun test
 bun run build:release
-bun run smoke:binary dist/s42-agent-0.1.1-linux-x64
+bun run smoke:binary dist/s42-agent-0.1.2-linux-x64
 bun run scripts/build-release.ts --package-only
 bun run scripts/release-draft.ts
 ```
@@ -36,7 +36,7 @@ it only prints the eleven-asset plan; it does not create or publish a release.
 
 [Release metadata](releases/metadata.json) contains only the repository, tag,
 title and notes path. Keep it aligned with `package.json` and the
-[notes](releases/v0.1.1.md). Filenames and tag are part of the installer contract.
+[notes](releases/v0.1.2.md). Filenames and tag are part of the installer contract.
 These commands do not need `private/`.
 
 ## Manual workflow
@@ -77,7 +77,7 @@ API client can dispatch the workflow and publish its verified draft.
 Keep the README [EN](../README.md)/[ES](../README.es.md), user guide
 [EN](USAGE.md)/[ES](USAGE.es.md), tool contracts [EN](TOOLS.md)/[ES](TOOLS.es.md),
 contribution guide [EN](../CONTRIBUTING.md)/[ES](../CONTRIBUTING.es.md), LICENSE
-and release notes [EN](releases/v0.1.1.md)/[ES](releases/v0.1.1.es.md).
+and release notes [EN](releases/v0.1.2.md)/[ES](releases/v0.1.2.es.md).
 The gallery [EN](../screenshots/README.md)/[ES](../screenshots/README.es.md) shows
 real TUI execution; the [social JPEG](../assets/github/social-preview.jpg) is the
 GitHub cover. Campaigns, announcements, image prompts, plans and local reports

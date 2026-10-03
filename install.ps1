@@ -1,7 +1,7 @@
 # Install S42 Agent on Windows. No administrator rights or Bun installation needed.
 [CmdletBinding()]
 param(
-    [string]$Version = "0.1.1",
+    [string]$Version = "0.1.2",
     [string]$InstallDir = "",
     [string]$FromDirectory = "",
     [switch]$NoModifyPath

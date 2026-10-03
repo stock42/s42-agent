@@ -38,7 +38,7 @@ h1, h2 { text-wrap: balance; }
 .wordmark-light { font-weight: 400; }
 .terminal-mark { font: 700 18px var(--mono); color: var(--accent); margin-right: 13px; }
 .brand-dot { color: var(--accent); }
-.site-header nav { display: flex; align-items: center; gap: 30px; font-size: 13px; font-weight: 500; }
+.site-header nav { display: flex; align-items: center; gap: 22px; font-size: 13px; font-weight: 500; }
 .site-header nav a { display: inline-flex; min-height: 44px; align-items: center; color: var(--muted); gap: 8px; }
 .site-header nav a:hover, .site-footer a:hover { color: var(--accent); }
 .site-header nav .nav-github { color: var(--text); padding-left: 26px; border-left: 1px solid var(--line); }
@@ -115,7 +115,7 @@ h1 > span { color: var(--accent); }
 .eyebrow > span { color: var(--dim); padding-right: 14px; }
 h2 { font-size: clamp(33px, 4vw, 48px); letter-spacing: -1.8px; line-height: 1.1; font-weight: 600; margin-bottom: 20px; }
 .section-heading > p:not(.eyebrow) { color: var(--muted); font-size: 15px; }
-.feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 27px; margin-top: 44px; }
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; margin-top: 44px; }
 .feature-grid article { border-top: 1px solid var(--line); padding-top: 25px; }
 .feature-grid article { transition: border-color .25s, transform .25s; }
 .feature-grid article:hover { border-color: var(--accent); transform: translateY(-5px); }
@@ -124,10 +124,18 @@ h3 { font-size: 15px; font-weight: 600; line-height: 1.5; letter-spacing: -.1px;
 .feature-grid p { font-size: 13px; color: var(--muted); margin: 0; }
 .feature-footnote { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; border-bottom: 1px solid var(--line); padding: 40px 0 30px; font: 11px var(--mono); color: var(--dim); line-height: 1.6; }
 .feature-footnote a, .text-link { color: var(--accent); }
+.faq-list { margin-top: 36px; border-top: 1px solid var(--line); }
+.faq-item { border-bottom: 1px solid var(--line); }
+.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 64px; padding: 20px 0; font-size: 16px; font-weight: 600; line-height: 1.5; cursor: pointer; list-style: none; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: "+"; flex: 0 0 20px; color: var(--accent); font: 22px var(--mono); }
+.faq-item[open] summary::after { content: "−"; }
+.faq-answer { max-width: 850px; padding: 0 36px 22px 0; color: var(--muted); font-size: 15px; }
+.faq-answer p { margin-bottom: 0; overflow-wrap: anywhere; }
 .gallery-heading { max-width: none; display: flex; justify-content: space-between; align-items: flex-end; gap: 25px; margin-bottom: 30px; }
 .gallery-heading p { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
 .gallery-heading .eyebrow { color: var(--accent); font-size: 11px; }
-.gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 23px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 23px; }
 .gallery-grid .screenshot-link { border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
 .gallery-grid .screenshot-link { transition: border-color .3s, box-shadow .3s, transform .3s; }
 .gallery-grid .screenshot-link:hover { border-color: #75bcff; box-shadow: 0 10px 45px #2359a72b; transform: translateY(-5px); }
@@ -184,7 +192,7 @@ body[data-motion="on"] [data-reveal].is-visible { opacity: 1; transform: none; }
 @keyframes orbit { from { transform: rotateX(66deg) rotateZ(-20deg); } to { transform: rotateX(66deg) rotateZ(340deg); } }
 @keyframes scan { 0%, 100% { transform: scaleX(.15); opacity: .4; } 50% { transform: scaleX(1); opacity: 1; } }
 @media (max-width: 900px) {
-  .site-header nav { gap: 20px; }
+  .site-header nav { gap: 14px; }
   .site-header nav .nav-github { padding-left: 18px; }
   .hero-copy { width: 78%; }
   .hero-copy h1 { font-size: 65px; }
