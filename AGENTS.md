@@ -46,8 +46,9 @@ separa prompt, loop y herramientas; `llm/`, `mcp/`, `skills/`, `storage/` y
   Turnos simultáneos y sus tools/cancelación pertenecen al proyecto de origen.
   Las pestañas de archivos son transitorias y no reemplazan el estado del chat.
 - Configuración global e historial usan `bun:sqlite`, WAL y transacciones.
-  `--config` JSON mantiene el backend legacy explícito. Las API keys TUI usan
-  Bun.secrets; CLI conserva overrides en memoria. No guardar claves en JSON.
+  `--config` JSON mantiene el backend legacy explícito. Las API keys LLM se guardan
+  en SQLite, sin depender del llavero del SO; JSON usa una base de claves junto
+  al archivo. CLI conserva overrides en memoria. No guardar claves en JSON.
   No consultar la red al iniciar ni modificar configuración personal en QA.
 - El loop conserva respuestas/reasoning parciales al cancelar y recupera
   `finish_reason: length` mediante etapas sin tope de pasos y conservando efectos
@@ -182,7 +183,7 @@ esta política Git a los proyectos sobre los que trabaja.
 - Typecheck es independiente de ejecución/build; no decir que Bun verifica tipos.
 - No agregar dependencias o abstracciones sin una necesidad concreta del alcance.
 - No introducir APIs experimentales para reemplazar un camino estable existente
-  sin pedido explícito; Bun.secrets y Bun.WebView están solicitadas por el usuario.
+  sin pedido explícito; Bun.WebView está solicitada por el usuario.
 - Separar TUI, eventos del agente, cliente LLM, tools y persistencia con módulos
   pequeños; no crear frameworks internos ni servicios adicionales. SQLite está solicitado.
 - El servidor `llama.cpp` y los modelos son externos al binario del harness.

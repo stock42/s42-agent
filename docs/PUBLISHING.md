@@ -9,8 +9,8 @@ programs remain separate. Generated files stay in `dist/`, outside Git.
 ## Local preparation
 
 Requires Bun 1.4.2. Use temporary configuration and projects for tests.
-The [contribution guide](../CONTRIBUTING.md) and workflow describe the isolated
-keychain requirements for Linux tests.
+The [contribution guide](../CONTRIBUTING.md) describes credential tests with
+temporary SQLite databases; no Linux keychain services are required.
 
 ```bash
 bun install --frozen-lockfile
@@ -49,8 +49,8 @@ the source or change repository visibility.
 After pushing the completed task's commit and checking its CI:
 
 1. Open **Actions → Prepare draft release → Run workflow**, selecting main.
-2. The [workflow](../.github/workflows/release.yml) checks types/tests with a
-   temporary keychain, builds six targets, runs Linux smoke and packages.
+2. The [workflow](../.github/workflows/release.yml) checks types/tests with
+   temporary SQLite credentials, builds six targets, runs Linux smoke and packages.
 3. It creates a **draft prerelease** with eleven distribution assets and uploads
    the combined tar.gz package as a twelfth asset. The target is the run's SHA.
 4. Verify names, sizes, SHA-256 and the Linux runtime evidence in the build

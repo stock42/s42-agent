@@ -76,8 +76,8 @@ de interacción física en terminal. Cross-compilar no demuestra runtime en dest
 
 [CI](.github/workflows/ci.yml) usa las acciones oficiales checkout/setup-bun y
 ejecuta instalación frozen, typecheck y tests en Linux. No publica releases ni
-paquetes. El test de integración de llavero usa D-Bus/Secret Service aislado con
-credenciales temporales de fixture. El workflow instala las dependencias de
-tests Linux. Verificá CI remoto después de subir el commit revisado.
+paquetes. Los tests de credenciales usan SQLite temporal y verifican autenticación
+tras reiniciar sin D-Bus ni llavero de escritorio. Verificá CI remoto después de
+subir el commit revisado.
 
 Las contribuciones se distribuyen bajo la [licencia MIT](LICENSE).

@@ -10,6 +10,7 @@ export async function openDatabase(path: string): Promise<Database> {
   try {
     db.run("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
     db.run(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS credentials (name TEXT PRIMARY KEY, provider_id TEXT NOT NULL, base_url TEXT NOT NULL, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS sessions (project_id TEXT NOT NULL, id TEXT NOT NULL, title TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(project_id, id));
       CREATE TABLE IF NOT EXISTS events (seq INTEGER PRIMARY KEY, event_id TEXT NOT NULL UNIQUE, project_id TEXT NOT NULL, session_id TEXT NOT NULL, data TEXT NOT NULL,
         FOREIGN KEY(project_id, session_id) REFERENCES sessions(project_id, id));

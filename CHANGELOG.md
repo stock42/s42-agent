@@ -5,6 +5,22 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Corregido — API keys LLM en SQLite para servidores
+
+- Claves de llama.cpp, DeepSeek y proveedores manuales en la tabla `credentials`
+  de SQLite, separadas por configuración/proveedor/endpoint; reemplazo y borrado
+  persistentes sin Bun.secrets, D-Bus ni llavero del escritorio.
+- TUI y CLI recuperan la clave guardada. Se conservan overrides CLI en memoria
+  y alternativa de entorno; JSON legacy usa `config.json.credentials.sqlite`
+  y no contiene claves. Las claves antiguas del llavero requieren ingresarse
+  una vez en Models. Formulario enmascarado y textos ES/EN actualizados.
+- CI y workflow manual eliminan la instalación del llavero; contratos y manuales
+  ES/EN actualizados con ubicación de claves y almacenamiento sin cifrado adicional.
+- Bun 1.4.2: typecheck y suite completa sin D-Bus accesible, 267 pass, 0 fail,
+  4002 assertions. TUI/PTY guarda DeepSeek; seis procesos CLI reabren y autentican
+  los tres tipos de proveedor con SQLite/JSON temporales. Sin cambios a la
+  configuración personal, versión, binarios ni releases.
+
 ### Corregido — Auditoría final del plan v1.0.5
 
 - Tools → Autogenerar AGENTS.md usa el mismo flujo y propietario de Projects;

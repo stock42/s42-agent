@@ -50,7 +50,7 @@ trabaja. Cada proyecto conserva su conversación, archivos, modelo y herramienta
 - **Biblioteca de promptings:** plantillas con `{{metavariables}}` y formulario para completar sus valores.
 - **Español o inglés y seis temas:** QBasic, Grafito, Bosque, Nord, Dracula y Gruvbox.
 - **Actividad visible:** streaming, tools, tokens de entrada/salida y promedio tok/s; indicadores CPU/RAM/disco/VRAM configurables.
-- **SQLite y llavero del SO:** configuración global e historial persistentes; las API keys se guardan aparte.
+- **SQLite:** configuración global, historial y API keys LLM persistentes; funciona en servidores sin llavero del SO.
 - **CLI sin TUI:** el mismo agente para pruebas y automatizaciones desde la command line.
 
 El harness no tiene dependencias externas de paquetes de runtime. El servidor

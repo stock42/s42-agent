@@ -522,7 +522,7 @@ export class App {
   async projectInstructions(): Promise<void> {
     const tab = this.activeTab; if (!tab.project) { this.projectForm(); return; }
     if (tab.instructionsPreview) { const p = tab.instructionsPreview; previewInstructions(this.desktop, p.inspection, p.draft, p.error, () => { tab.instructionsPreview = undefined; }); return; }
-    const cwd = tab.project.path, { provider, model } = this.current(tab), key = await credential(provider, this.keys.get(provider.id));
+    const cwd = tab.project.path, { provider, model } = this.current(tab), key = await credential(provider, this.store.path, this.keys.get(provider.id));
     let draft = "", error = "";
     const inspection = await this.task("Inspeccionando proyecto…", signal => inspectProject(cwd, signal), tab);
     try { await this.task("Generando AGENTS.md…", async signal => { draft = await generateInstructions(inspection, provider, model, key, signal, text => { draft += text; tab.status = `AGENTS.md · ${draft.length}`; this.desktop.invalidate(); }); }, tab); }
@@ -738,7 +738,7 @@ export class App {
     const url=new URL(provider.baseUrl),port=url.port;url.port="";
     const preset = provider.id === "deepseek" || provider.kind === "llama.cpp";
     form(this.desktop, this.desktop.t(`${provider.name} · configurar`),[
-      {label: this.desktop.t("API key · llavero"),value:"",secret:true,placeholder:provider.apiKeySecret ? "Guardada · vacío conserva" : "Opcional · guardar en el SO"}, {label: this.desktop.t("Variable API key"),value:provider.apiKeyEnv??""}, {label: this.desktop.t("Host / URL base"),value:url.href.replace(/\/$/,"")},
+      {label: this.desktop.t("API key · SQLite"),value:"",secret:true,placeholder:provider.apiKeySecret ? "Guardada · vacío conserva" : "Opcional · guardar en SQLite"}, {label: this.desktop.t("Variable API key"),value:provider.apiKeyEnv??""}, {label: this.desktop.t("Host / URL base"),value:url.href.replace(/\/$/,"")},
       {label: this.desktop.t("Puerto"),value:port}, {label: this.desktop.t("Nombre"),value:provider.name},
     ], async ([apiKey,env,host,port,name]) => {
       let ids: string[] | undefined;
@@ -770,7 +770,7 @@ export class App {
     const url = new URL(newProvider ? "http://127.0.0.1:8080/v1" : provider?.baseUrl ?? "http://127.0.0.1:8080/v1"), port = url.port; url.port = "";
     form(this.desktop, this.desktop.t("Models · host, puerto y modelo"), [
       { label: this.desktop.t("ID del modelo"), value: model?.id ?? "" }, { label: this.desktop.t("Nombre"), value: model?.name ?? "" }, { label: this.desktop.t("Host / URL base"), value: url.href.replace(/\/$/, "") },
-      { label: this.desktop.t("Puerto"), value: port }, { label: this.desktop.t("API key · llavero"), value: "", secret: true, placeholder: !newProvider && provider?.apiKeySecret ? "Guardada · vacío conserva" : "Opcional · guardar en el SO" }, { label: this.desktop.t("Variable API key"), value: newProvider ? "" : provider?.apiKeyEnv ?? "" },
+      { label: this.desktop.t("Puerto"), value: port }, { label: this.desktop.t("API key · SQLite"), value: "", secret: true, placeholder: !newProvider && provider?.apiKeySecret ? "Guardada · vacío conserva" : "Opcional · guardar en SQLite" }, { label: this.desktop.t("Variable API key"), value: newProvider ? "" : provider?.apiKeyEnv ?? "" },
       { label: this.desktop.t("Tools / imágenes (sí/no)"), value: `${model?.capabilities.tools ? (this.desktop.language === "en" ? "yes" : "sí") : "no"}/${model?.capabilities.images ? (this.desktop.language === "en" ? "yes" : "sí") : "no"}` },
     ], ([id, name, host, port, apiKey, apiKeyEnv, caps]) => this.change(async () => {
       this.requireIdle(); if (!id?.trim()) throw new Error("Escribí el ID real del modelo");
@@ -798,11 +798,11 @@ export class App {
   async saveDefault(): Promise<void> { this.requireIdle(); this.current(); const next = structuredClone(this.store.value); next.defaults = { ...this.selection, projectId: this.project?.id }; await this.store.save(next); this.status = "Default guardado"; this.desktop.invalidate(); }
   async saveProjectDefault(): Promise<void> { this.requireIdle(); this.current(); if (!this.project) throw new Error("Elegí un proyecto"); const next=structuredClone(this.store.value); next.projects.find(p=>p.id===this.project!.id)!.selection={...this.selection}; await this.store.save(next); this.project.selection={...this.selection}; this.status="Default del proyecto guardado"; }
   removeProvider(): void { choose(this.desktop, this.desktop.t("Quitar proveedor"),this.store.value.providers.map(value=>({label:value.name,value})),p=>this.run(async()=>{
-    this.requireIdle(); const next=structuredClone(this.store.value); next.providers=next.providers.filter(provider=>provider.id!==p.id); await deleteCredential(p); await this.store.save(next); this.keys.delete(p.id); this.showContext();
+    this.requireIdle(); const next=structuredClone(this.store.value); next.providers=next.providers.filter(provider=>provider.id!==p.id); await deleteCredential(p, this.store.path); await this.store.save(next); this.keys.delete(p.id); this.showContext();
   })); }
   private async providerModels(provider: Provider, sessionKey?: string): Promise<Model[]> {
     const tab = this.activeTab; this.requireIdle(tab);
-    const key=await credential(provider,sessionKey ?? this.keys.get(provider.id));
+    const key=await credential(provider,this.store.path,sessionKey ?? this.keys.get(provider.id));
     if (provider.id === "deepseek" && !key) throw new Error("Ingresá una API key de DeepSeek o su variable de entorno");
     this.requireIdle(tab); const controller = new AbortController();
     tab.controller = controller; tab.busy = true;
@@ -933,7 +933,7 @@ export class App {
     if(changed) {this.desktop.invalidate();throw new Error("Un adjunto cambió: vista actualizada. Revisá Ctrl+F y pulsá Enter de nuevo.");}
     const content=contentWithAttachments(text,tab.attachments);
     if (this.activeFile) { this.displayTab(tab); this.desktop.focus(this.view.promptWindow); }
-    const key = await credential(provider, this.keys.get(provider.id));
+    const key = await credential(provider, this.store.path, this.keys.get(provider.id));
     this.requireIdle(tab);
     const controller = new AbortController(), context = structuredClone({ mcpServers: this.store.value.mcpServers, skills: this.store.value.skills });
     tab.busy = true; tab.controller = controller; tab.tokens = emptyUsage();

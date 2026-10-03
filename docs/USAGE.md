@@ -72,7 +72,7 @@ Discovered models enable tools; the server must support tool calling.
 Changing the endpoint through flags queries its catalog and uses the explicit
 key while preserving saved configuration. An explicit model ID does not require
 `/models`. Without overrides, the agent uses llama.cpp or the configured provider
-and its existing keychain/environment credential. Changing the endpoint also
+and its existing SQLite/environment credential. Changing the endpoint also
 discards the previous secret reference; `--llm_apikey` remains an in-memory override.
 
 **stdout** receives the streamed response. **stderr** receives reasoning when
@@ -146,7 +146,7 @@ reading position. The central editor displays the project name.
 | Preset provider | Initial endpoint | Credential |
 | --- | --- | --- |
 | llama.cpp — default | `http://127.0.0.1:8080/v1` | No key initially. |
-| DeepSeek | `https://api.deepseek.com` | OS keychain or `DEEPSEEK_API_KEY`. |
+| DeepSeek | `https://api.deepseek.com` | SQLite or `DEEPSEEK_API_KEY`. |
 
 **Models → Providers** lets you edit the host, port and credential. Saving a preset
 queries `/models` and opens the catalog for model selection. Connection or
@@ -154,13 +154,15 @@ authentication errors stay in the form. The catalog is queried by that action;
 there are no startup requests and model IDs are not invented.
 
 **New provider** offers presets and **Other provider** for Chat Completions-compatible
-endpoints. **API key · keychain** stores the key through
-[Bun.secrets](https://bun.com/docs/runtime/secrets) in the OS credential store;
-**API key variable** keeps the environment alternative. Keys are masked; when
-editing, **Saved · blank keeps it** means an empty field reuses the saved key.
-Configuration stores only its reference; sessions do not store keys.
-On Linux, GNOME Keyring, KWallet or another Secret Service must be available and
-unlocked; the form reports failures. No `.env.local` files are created.
+endpoints. **API key · SQLite** stores the key in the agent database using
+[Bun SQLite](https://bun.com/docs/runtime/sqlite); **API key variable** keeps the
+environment alternative. Keys are masked; when editing, **Saved · blank keeps it**
+means an empty field reuses the saved key. Provider settings store a reference;
+sessions do not store keys. Keys are separated by configuration, provider and
+endpoint. CLI overrides take precedence over SQLite, followed by the environment.
+No OS keychain, D-Bus or desktop session is required. Existing keys saved in the
+OS keychain must be entered once in Models to save them in SQLite.
+No `.env.local` files are created.
 
 **Configure model** accepts ID/name, endpoint/port, credential
 and `Tools / images` capabilities (`yes/no`, `no/no` or `yes/yes`). Enable
@@ -455,19 +457,21 @@ Configuration and history use **Bun-native SQLite**, without a server or depende
 
 First opening automatically imports previous `config.json` and JSONL sessions
 (XDG_STATE_HOME on Linux, LOCALAPPDATA on Windows). It preserves originals, models,
-keychain references, history and drafts. A running legacy instance or corruption
+credential references, history and drafts. A running legacy instance or corruption
 in a complete record reports a problem and prevents migration from committing;
 you can correct it and retry.
 
 `--config /path/to/agent.sqlite` selects another database; `.db` and `.sqlite3`
 work too. `--config /path/to/config.json` keeps the older format with `sessions/`
-beside the JSON. The project folder does not change global storage.
+beside the JSON; LLM keys are stored in `/path/to/config.json.credentials.sqlite`,
+never in JSON. The project folder does not change global storage.
 
 The database stores projects/providers/models, MCP/Skills/Promptings, defaults,
 tabs, preferences and per-session events. WAL allows reading while other projects
 save events; each session keeps its single-writer lock. Not every token is persisted:
-the result of each request and turn is saved. API keys remain in **Bun.secrets**;
-the database stores references only. `--provider`, `--model` and `--session`
+the result of each request and turn is saved. LLM API keys are stored in the
+`credentials` table in the same database, without additional encryption.
+`--provider`, `--model` and `--session`
 allow explicit startup selections.
 
 Optional bindings for known actions, with collisions rejected:

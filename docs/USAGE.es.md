@@ -71,7 +71,7 @@ elegido en la sesión/proyecto o el primero registrado/disponible en `/models`.
 Modelos descubiertos habilitan tools; el servidor debe soportar tool calling.
 Al cambiar el endpoint con flags consulta el catálogo nuevo y usa la clave
 explícita, conservando la configuración guardada. Un ID explícito no requiere
-`/models`. Sin overrides usa llama.cpp o el proveedor configurado y su llavero
+`/models`. Sin overrides usa llama.cpp o el proveedor configurado y su clave SQLite
 o variable de credencial existente. Cambiar el endpoint descarta también la
 referencia al secreto anterior; --llm_apikey sigue siendo un override en memoria.
 
@@ -147,7 +147,7 @@ propios. El editor central muestra el nombre del proyecto.
 | Proveedor precargado | Endpoint inicial | Credencial |
 | --- | --- | --- |
 | llama.cpp — default | `http://127.0.0.1:8080/v1` | Sin clave inicialmente. |
-| DeepSeek | `https://api.deepseek.com` | Llavero del SO o `DEEPSEEK_API_KEY`. |
+| DeepSeek | `https://api.deepseek.com` | SQLite o `DEEPSEEK_API_KEY`. |
 
 **Models → Proveedores** permite editar host, puerto y credencial. Guardar uno de
 estos presets consulta `/models` y abre el catálogo para elegir el modelo. Los
@@ -155,14 +155,16 @@ errores de conexión o autenticación quedan en el formulario. El catálogo se c
 por esa acción, sin requests al iniciar. No se inventan IDs de modelos.
 
 **Nuevo proveedor** ofrece los presets y **Otro proveedor** para endpoints
-compatibles con Chat Completions. **API key · llavero** guarda la clave mediante
-[Bun.secrets](https://bun.com/docs/runtime/secrets) en el almacén de credenciales
-del SO; **Variable API key** conserva la alternativa de entorno. La clave se
-muestra enmascarada y, al editar, **Guardada · vacío conserva** indica que dejar
-el campo vacío reutiliza la guardada. Config guarda solo la referencia; las
-sesiones no guardan claves.
-En Linux debe estar disponible/desbloqueado GNOME Keyring, KWallet u otro Secret
-Service; si falla, el formulario informa el error. No se crean `.env.local`.
+compatibles con Chat Completions. **API key · SQLite** guarda la clave en la base
+del agente mediante [Bun SQLite](https://bun.com/docs/runtime/sqlite);
+**Variable API key** conserva la alternativa de entorno. La clave se muestra
+enmascarada y, al editar, **Guardada · vacío conserva** indica que dejar el campo
+vacío reutiliza la guardada. La configuración del proveedor guarda una referencia;
+las sesiones no guardan claves. Las claves se separan por configuración, proveedor
+y endpoint. El override CLI tiene prioridad sobre SQLite, seguido del entorno.
+Funciona sin llavero del SO, D-Bus ni sesión de escritorio. Las claves guardadas
+anteriormente en el llavero deben ingresarse una vez en Models para guardarlas
+en SQLite. No se crean `.env.local`.
 
 **Configurar modelo** permite indicar ID/nombre, endpoint/puerto, credencial
 y capacidades `Tools / imágenes` (`sí/no`, `no/no` o
@@ -460,19 +462,21 @@ Configuración e historial usan **SQLite nativo de Bun**, sin servidor ni depend
 
 La primera apertura importa automáticamente `config.json` y las sesiones JSONL
 anteriores (XDG_STATE_HOME en Linux, LOCALAPPDATA en Windows). Conserva los
-originales, modelos, referencias al llavero, historial y borradores. Si hay una
+originales, modelos, referencias a credenciales, historial y borradores. Si hay una
 instancia anterior abierta o corrupción en un registro completo, informa el
 problema y no confirma la migración; permite corregirlo y reintentar.
 
 `--config /ruta/agent.sqlite` usa una base alternativa; `.db` y `.sqlite3` también.
 `--config /ruta/config.json` conserva el formato anterior y `sessions/` junto al
-JSON. La carpeta del proyecto no cambia el almacenamiento global.
+JSON; las claves LLM se guardan en `/ruta/config.json.credentials.sqlite`, nunca
+en JSON. La carpeta del proyecto no cambia el almacenamiento global.
 
 La base guarda proyectos/proveedores/modelos, MCP/Skills/Promptings, defaults,
 pestañas, preferencias y eventos por sesión. WAL permite leer mientras otros
 proyectos guardan sus eventos; cada sesión conserva su lock de escritor único.
 No se persiste cada token: se guarda el resultado de cada request y turno.
-Las API keys permanecen en **Bun.secrets**, la base guarda solo referencias.
+Las API keys LLM se guardan en la tabla `credentials` de la misma base, sin
+cifrado adicional.
 `--provider`, `--model` y `--session` permiten selecciones explícitas al iniciar.
 
 Bindings opcionales por acción conocida, con colisiones rechazadas:

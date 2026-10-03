@@ -76,8 +76,8 @@ physical terminal interaction. Cross-compilation is not destination runtime proo
 
 [CI](.github/workflows/ci.yml) uses official checkout/setup-bun actions and runs
 frozen installation, typecheck and tests on Linux. It does not publish releases
-or packages. Its keychain integration test uses an isolated D-Bus/Secret Service
-with temporary fixture credentials. Linux test dependencies are provisioned in
-the workflow. Verify remote CI after pushing the reviewed commit.
+or packages. Credential integration tests use temporary SQLite databases and
+verify authentication after restarting without D-Bus or a desktop keychain.
+Verify remote CI after pushing the reviewed commit.
 
 Contributions are distributed under the [MIT license](LICENSE).

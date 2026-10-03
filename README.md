@@ -50,7 +50,7 @@ together.
 - **MCP and skills:** manage servers, enable/disable them, load internal or external skills and search skills.sh.
 - **Reusable prompts:** a library with `{{variables}}` and a form to fill their values.
 - **Your workspace:** Spanish/English, six themes, visible tool activity, token usage and average tok/s.
-- **Persistence:** OS-specific global configuration and history in native SQLite; API keys in the OS keychain.
+- **Persistence:** OS-specific global configuration, history and LLM API keys in native SQLite; works on servers without an OS keychain.
 - **Headless CLI:** the same agent loop without the TUI.
 
 The harness has **no external runtime package dependencies**. Your LLM server,

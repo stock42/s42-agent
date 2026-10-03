@@ -10,8 +10,8 @@ en `dist/`, fuera de Git.
 ## Preparación local
 
 Requiere Bun 1.4.2. Usar configuración y proyectos temporales para las pruebas.
-La [guía de contribución](../CONTRIBUTING.es.md) y el workflow describen las
-necesidades del llavero aislado para los tests Linux.
+La [guía de contribución](../CONTRIBUTING.es.md) describe las pruebas de
+credenciales con SQLite temporal; no requieren servicios de llavero Linux.
 
 ```bash
 bun install --frozen-lockfile
@@ -51,7 +51,8 @@ Después de subir el commit de la tarea terminada y comprobar su CI:
 
 1. Abrir **Actions → Prepare draft release → Run workflow**, seleccionando main.
 2. El [workflow](../.github/workflows/release.yml) verifica tipos y tests con
-   llavero temporal, genera seis destinos, ejecuta el smoke Linux y empaqueta.
+   credenciales SQLite temporales, genera seis destinos, ejecuta el smoke Linux
+   y empaqueta.
 3. Crea una **draft prerelease** con once assets de distribución y sube el paquete
    tar.gz conjunto como duodécimo asset. El target es el SHA del run.
 4. Verificar nombres, tamaños, SHA-256 y evidencia de runtime Linux en el
