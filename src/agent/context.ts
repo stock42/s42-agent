@@ -16,7 +16,7 @@ export function textWeight(text: string): number {
   return Math.ceil(weight);
 }
 export function contextWeight(messages: Message[], tools?: ToolDefinition[]): number {
-  let images = 0;
+  let images = messages.flatMap(m => m.artifacts ?? []).filter(a => a.mimeType.startsWith("image/")).length;
   const text = JSON.stringify({ messages, ...(tools?.length ? { tools } : {}) }, (key, value) => {
     if (key === "image_url" && value?.url) { images++; return { url: "[image]" }; } return value;
   });

@@ -8,10 +8,10 @@ import { bindings, type Bindings } from "../ui/bindings.ts";
 import { palettes, type PaletteId } from "../ui/theme.ts";
 import type { Language } from "../ui/i18n.ts";
 
-export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string }
+export interface Project { id: string; name: string; path: string; selection?: Selection; lastSessionId?: string; browserServerId?: string; browserMode?: "isolated" | "existing" }
 export interface Model { manual?: boolean; id: string; name: string; contextWindow?: number; maxOutputTokens?: number; capabilities: { tools: boolean; images: boolean } }
 export interface Provider { id: string; name: string; kind: "llama.cpp" | "openai-compatible"; baseUrl: string; apiKeyEnv?: string; apiKeySecret?: string; models: Model[] }
-export interface McpServer { id:string; name:string; enabled:boolean; transport:"stdio"|"http"; command?:string; args?:string[]; cwd?:string; envRefs?:Record<string,string>; url?:string; apiKeyEnv?:string }
+export interface McpServer { id:string; name:string; enabled:boolean; transport:"stdio"|"http"; command?:string; args?:string[]; cwd?:string; envRefs?:Record<string,string>; url?:string; apiKeyEnv?:string; purpose?: "browser" }
 export interface Skill { id:string; name:string; path:string; enabled:boolean; projectId?:string; source?:string }
 export interface Prompting { id: string; name: string; text: string }
 export interface ResourceIndicators { cpu: boolean; ram: boolean; disk: boolean; gpu: boolean }
@@ -74,6 +74,7 @@ export function validateConfig(value: unknown): Config {
   if (!c.ui.resources || typeof c.ui.resources !== "object" || Array.isArray(c.ui.resources)
     || ["cpu", "ram", "disk", "gpu"].some(key => typeof c.ui.resources[key as keyof ResourceIndicators] !== "boolean")) throw new Error("Indicadores de recursos inválidos");
   const unique = (values: string[]) => new Set(values).size === values.length;
+  for (const p of c.projects) { if (p.browserServerId !== undefined && !text(p.browserServerId) || p.browserMode !== undefined && !["isolated", "existing"].includes(p.browserMode)) throw new Error("Configuración Chrome inválida"); }
   for (const p of c.projects) if (!p || !text(p.id) || !text(p.name) || !text(p.path) || !isAbsolute(p.path)
     || (p.selection && (!text(p.selection.providerId) || (p.selection.modelId !== undefined && !text(p.selection.modelId))))) throw new Error("Proyecto inválido en config");
   for (const p of c.providers) {
@@ -92,6 +93,7 @@ export function validateConfig(value: unknown): Config {
   const envName=(v:unknown)=>typeof v==="string" && /^[A-Za-z_][A-Za-z0-9_]*$/.test(v);
   for(const server of c.mcpServers){
     if(!server || !text(server.id)||!text(server.name)||typeof server.enabled!=="boolean"||!["stdio","http"].includes(server.transport))throw new Error("Servidor MCP inválido");
+    if(server.purpose !== undefined && server.purpose !== "browser") throw new Error("Propósito MCP inválido");
     if(server.transport==="stdio" && (!text(server.command)||!Array.isArray(server.args)||!server.args.every(a=>typeof a==="string")))throw new Error("MCP stdio requiere command y args JSON");
     if(server.cwd!==undefined && !isAbsolute(server.cwd))throw new Error("MCP cwd debe ser absoluto");
     if(server.envRefs!==undefined && (!server.envRefs || Array.isArray(server.envRefs)||typeof server.envRefs!=="object"||!Object.entries(server.envRefs).every(([key,value])=>envName(key)&&envName(value))))throw new Error("MCP envRefs debe mapear nombres de variables");

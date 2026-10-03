@@ -1,3 +1,4 @@
+import type { BrowserSession } from "./mcp/browser.ts";
 import type { ProjectInspection } from "./ui/project-instructions.ts";
 import type { Message, Selection } from "./agent/messages.ts";
 import type { Attachment } from "./agent/attachments.ts";
@@ -24,6 +25,7 @@ export interface ProjectTab {
   live: { id: string; label: string; text: string; reasoning: boolean }[];
   contentView?: "git" | "tasks" | "verification";
   instructionsPreview?: { inspection: ProjectInspection; draft: string; error: string };
+  browser?: BrowserSession;
   git?: GitPanel; gitDismissed?: boolean;
   taskBoard?: TaskBoard;
   verification?: VerificationPanel;

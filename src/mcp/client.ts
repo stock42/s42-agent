@@ -1,3 +1,5 @@
+import { join, resolve } from "node:path";
+import { preserveMcpContent } from "./artifacts.ts";
 import { pathToFileURL } from "node:url";
 import type { McpServer } from "../storage/config.ts";
 import type { ToolDefinition } from "../llm/client.ts";
@@ -18,20 +20,21 @@ export class McpClient {
   private protocol=modern;
   private sessionId?:string;
   private closed=false;
-  private fatal?:Error;
+  private fatal?:Error; private stderr = "";
   dirty=false;
   tools:McpTool[]=[];
   private lifetime=new AbortController();
-  constructor(readonly server:McpServer,private cwd:string,private onProgress:(text:string)=>void=()=>{}){}
+  constructor(readonly server:McpServer,private cwd:string,private onProgress:(text:string)=>void=()=>{}, private artifacts=join(cwd,".s42-artifacts")){}
 
+  get alive(): boolean { return !this.closed && !this.fatal; }
   async connect(signal:AbortSignal):Promise<void>{
     signal.throwIfAborted();
     if(this.server.transport==="stdio"){
       const env={...process.env};for(const [name,source] of Object.entries(this.server.envRefs??{})){if(process.env[source]===undefined)throw new Error(`Falta variable MCP ${source}`);env[name]=process.env[source];}
       this.child=Bun.spawn([this.server.command!,...(this.server.args??[])],{cwd:this.server.cwd??this.cwd,env,detached:true,stdin:"pipe",stdout:"pipe",stderr:"pipe"});
       void this.readStdout(this.child.stdout).catch(error=>this.fail(error));
-      void (async()=>{for await(const _bytes of this.child!.stderr){} })().catch(()=>{});
-      void this.child.exited.then(code=>this.fail(new Error(`MCP ${this.server.name} terminó (${code})`)));
+      const errors = (async()=>{const decoder = new TextDecoder(); for await(const bytes of this.child!.stderr) this.stderr += decoder.decode(bytes, { stream: true }); this.stderr += decoder.decode();})(); void errors.catch(()=>{});
+      void this.child.exited.then(async code=>{await errors.catch(()=>{});this.fail(new Error(`MCP ${this.server.name} terminó (${code})${this.stderr.trim() ? " · " + this.stderr.trim() : ""}`));});
     }
     try{
       const discovered=await this.request("server/discover",{},signal);
@@ -56,7 +59,7 @@ export class McpClient {
     const decoder=new TextDecoder();let buffer="";
     for await(const chunk of stream){buffer+=decoder.decode(chunk,{stream:true});let end:number;
       while((end=buffer.indexOf("\n"))>=0){const line=buffer.slice(0,end).trim();buffer=buffer.slice(end+1);if(line)this.receive(JSON.parse(line));}}
-    buffer+=decoder.decode();if(buffer.trim())throw new Error("Mensaje MCP incompleto");if(!this.closed)this.fail(new Error("MCP cerró stdout"));
+    buffer+=decoder.decode();if(buffer.trim())throw new Error("Mensaje MCP incompleto");
   }
   private receive(packet:Rpc):void{
     if(packet.jsonrpc!=="2.0")throw new Error("Respuesta MCP no es JSON-RPC 2.0");
@@ -120,9 +123,11 @@ export class McpClient {
     const started=performance.now();try{const result=await this.request("tools/call",{name:tool.name,arguments:args},signal,tool.inputSchema);
       if(!result || !Array.isArray(result.content))throw new Error("MCP tools/call inválido");
       if(result.inputRequests)throw new Error("MCP requiere una capacidad cliente no habilitada");
-      const text=(result.content??[]).map((part:any)=>part.type==="text"?part.text:part.type==="resource"?part.resource?.text??JSON.stringify(part.resource):`[${part.type??"contenido"} MCP]`).join("\n");
-      const output=text+(result.structuredContent?"\n"+JSON.stringify(result.structuredContent):"");
-      return {output,failed:Boolean(result.isError),durationMs:Math.round(performance.now()-started),truncated:false};
+      const content = [...result.content];
+      if (tool.name === "take_screenshot" && typeof args.filePath === "string" && !result.isError) content.push({ type: "resource_link", uri: pathToFileURL(resolve(this.cwd, args.filePath)).href, mimeType: `image/${args.format ?? "png"}`, name: "Screenshot" });
+      const preserved = await preserveMcpContent(content, this.artifacts);
+      const output = preserved.output + (result.structuredContent ? "\n" + JSON.stringify(result.structuredContent) : "");
+      return {output,failed:Boolean(result.isError),durationMs:Math.round(performance.now()-started),truncated:false,...(preserved.artifacts.length ? { artifacts: preserved.artifacts } : {})};
     }catch(error){return {output:(error as Error).message,failed:true,durationMs:Math.round(performance.now()-started)};}
   }
   async close():Promise<void>{
@@ -137,8 +142,9 @@ function encodeHeader(value:string):string{return /^[\x20-\x7e\t]*$/.test(value)
 export class McpConnections {
   private clients:McpClient[]=[];
   private tools=new Map<string,{client:McpClient;tool:McpTool}>();
-  async open(servers:McpServer[],cwd:string,signal:AbortSignal,progress:(text:string)=>void):Promise<void>{
-    await Promise.all(servers.filter(s=>s.enabled).map(async server=>{const client=new McpClient(server,cwd,progress);this.clients.push(client);
+  get alive(): boolean { return this.clients.length > 0 && this.clients.every(c => c.alive); }
+  async open(servers:McpServer[],cwd:string,signal:AbortSignal,progress:(text:string)=>void, artifacts?:string):Promise<void>{
+    await Promise.all(servers.filter(s=>s.enabled).map(async server=>{const client=new McpClient(server,cwd,progress,artifacts);this.clients.push(client);
       try{await client.connect(signal);progress(`MCP ${server.name}: ${client.tools.length} herramientas disponibles`);}catch(error){await client.close();progress(`MCP ${server.name}: ${(error as Error).message}`);this.clients=this.clients.filter(c=>c!==client);}
     }));signal.throwIfAborted();
   }

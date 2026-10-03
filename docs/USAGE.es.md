@@ -607,3 +607,35 @@ ajeno; un archivo con trabajo previo mezclado requiere separar hunks primero.
 El historial registra diff, intención, error real y SHA. Un reintento recupera
 el commit creado antes de la interrupción. Push requiere la política del
 proyecto y confirmación del remoto; commit local y cierre fallido se distinguen.
+
+## Chrome y pruebas web
+
+Tools → Chrome / pruebas web selecciona un servidor del registro MCP y el
+proyecto propietario. El perfil de pruebas separado es la primera opción. Una
+conexión a Chrome existente requiere elegirla explícitamente. Configurar no
+conecta al arrancar; Abrir pide URL. Pestañas muestra la selección y la URL
+devueltas por Chrome. Desconectar libera el MCP; conserva Chrome externo.
+Cerrar proyecto, cambiar carpeta o salir libera la conexión propia. La
+selección de pestaña no cambia el cwd y WebServer conserva su inicio manual.
+
+Chrome DevTools MCP es externo y opcional: instalar/configurar Node y Chrome
+por separado. S42 no los instala ni incorpora Node al núcleo. Para stdio usar
+el ejecutable ya instalado y su entrypoint, o un launcher preparado por el
+usuario. Perfil separado agrega --isolated y rechaza flags de conexión a
+Chrome existente. Referencias: [proyecto oficial](https://github.com/ChromeDevTools/chrome-devtools-mcp),
+[configuración](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/configuration.md).
+Probado: MCP 1.10.1, Node 24.18.0 y Chrome 154.0.8037.97 en Linux x64.
+
+El agente usa browser_open solo al solicitar una prueba, luego las tools reales
+del servidor. Planificar verificación browser; task_verify registra URL, pasos,
+esperado, observado y llamadas reales, conservando escenarios fallidos y la
+prueba corregida. Un snapshot/captura aislado no demuestra persistencia ni
+ausencia de errores: comprobar el flujo, consola y requests correspondientes.
+
+Las imágenes/blobs MCP se guardan junto a la sesión y los enlaces se conservan
+como referencias. El chat muestra tipo/ruta, sin base64. La ficha ofrece Abrir
+evidencia y reporta archivos ausentes al reabrir. Un modelo con imágenes recibe
+PNG/JPEG/WebP como partes image_url admitidas por el endpoint; uno sin visión
+recibe DOM/texto y referencias para revisión humana. Capacidad declarada y
+aceptación real del proveedor son distintas. La CLI cierra su conexión al salir;
+la TUI conserva solo el navegador del proyecto entre turnos.

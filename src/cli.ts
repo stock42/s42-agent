@@ -1,3 +1,5 @@
+import { BrowserSession } from "./mcp/browser.ts";
+import { artifactDirectory } from "./mcp/artifacts.ts";
 import { basename } from "node:path";
 import type { AppOptions } from "./app.ts";
 import { ConfigStore, normalizeFolder, storagePaths, type Model, type Provider } from "./storage/config.ts";
@@ -32,6 +34,7 @@ function endpoint(provider: Provider, options: CliOptions): string {
 // Same agent loop and persistence as the TUI; no Desktop, raw mode or rendering.
 export async function runCli(options: CliOptions): Promise<number> {
   const controller = new AbortController();
+  let browser: BrowserSession | undefined;
   let interrupted = 0, session: Session | undefined, tokens = emptyUsage(), wroteAnswer = false, answerBoundary = false, reasoningBoundary = false;
   const interrupt = (code: number) => { interrupted ||= code; controller.abort(new Error("Turno cancelado")); };
   const sigint = () => interrupt(130), sigterm = () => interrupt(143);
@@ -80,7 +83,9 @@ export async function runCli(options: CliOptions): Promise<number> {
     for (const notice of session.state.notices) log(notice);
     const showReasoning = options.reasoning ? options.reasoning === "on" : config.ui.showReasoning;
     const toolNames = new Map<string, string>();
-    const result = await runTurn({ project, session, provider, model, key, signal: controller.signal,
+    const browserServer = config.mcpServers.find(s => s.id === project.browserServerId && s.enabled);
+    if (browserServer) browser = new BrowserSession(browserServer, project.path, artifactDirectory(session), project.browserMode ?? "isolated");
+    const result = await runTurn({ project, session, provider, model, key, browser, signal: controller.signal,
       mcpServers: config.mcpServers, skills: config.skills,
       onDelta: text => {
         if (!text) return;
@@ -115,6 +120,7 @@ export async function runCli(options: CliOptions): Promise<number> {
     log(error instanceof Error ? error.message : String(error));
     return interrupted || 1;
   } finally {
+    await browser?.close();
     if (wroteAnswer) process.stdout.write("\n");
     if (reasoningBoundary) process.stderr.write("\n");
     try { await session?.close(); }

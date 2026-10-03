@@ -1,4 +1,6 @@
-import { form } from "./dialogs.ts";
+import { form, choose } from "./dialogs.ts";
+import { pathToFileURL } from "node:url";
+import { openBrowser } from "../system/webserver.ts";
 import { join } from "node:path";
 import { fingerprints, verificationRuns, type TaskEvent, type VerificationRun } from "../agent/tasks.ts";
 import { TaskStore, type TaskCard, type VerificationSpec } from "../storage/tasks.ts";
@@ -39,6 +41,7 @@ export class VerificationPanel {
       ["run", "Ejecutar prueba", () => this.act(() => this.run())], ["cancel", "Cancelar", () => ctx.cancel()],
       ["manual", "Confirmar revisión", () => this.act(() => this.confirm())], ["refresh", "Refrescar", () => { void this.refresh(); }],
       ["closeout", "Cerrar tarea / commit", () => { if (this.card) { const card = this.card; form(ctx.desktop, ctx.desktop.t("Cerrar tarea / commit"), [{ label: "Archivos (JSON)", value: JSON.stringify([...new Set(card.verification.flatMap(v => v.paths))]) }, { label: "Mensaje commit", value: card.title }, { label: "Resultado", value: card.result }], async ([files, message, summary]) => { const paths: unknown = JSON.parse(files!); if (!Array.isArray(paths) || paths.some(p => typeof p !== "string")) throw new Error("Archivos debe ser un array JSON"); await ctx.closeout(card, paths, message!, summary!); await this.refresh(); }); } }],
+      ["artifacts", "Abrir evidencia", () => this.artifacts()],
       ["changes", "Cambios de tarea", () => this.act(() => this.changes())], ["resume", "Continuar tarea", () => { if (this.card) ctx.continue(this.card); }],
     ].map(([id, label, action]) => new Button(`verification-${id}`, { x: 0, y: 0, width: 12, height: 1 }, label as string, action as () => void));
     for (const button of this.buttons) button.translate = ctx.desktop.t;
@@ -69,7 +72,7 @@ export class VerificationPanel {
     Object.assign(this.text.bounds, { x: width, y: 4, width: Math.max(1, client.width - width), height: Math.max(1, rows - 1) });
     this.buttons[0]!.disabled = !this.card || this.card.verification[this.list.selected]?.kind !== "command";
     this.buttons[2]!.disabled = !this.card || this.card.verification[this.list.selected]?.kind !== "review";
-    this.buttons[4]!.disabled = this.buttons[5]!.disabled = this.buttons[6]!.disabled = !this.card;
+    this.buttons[4]!.disabled = this.buttons[5]!.disabled = this.buttons[6]!.disabled = this.buttons[7]!.disabled = !this.card;
   }
   draw(canvas: Canvas, client: Rect): void {
     canvas.text(client.x, client.y + 3, this.notice || this.card?.title || this.ctx.desktop.t("Sin tareas"), theme.window, client.width);
@@ -92,6 +95,9 @@ export class VerificationPanel {
       const runs = this.runs.filter(r => r.specId === spec.id);
       if (!runs.length) lines.push(t("Pendiente"));
       for (const run of runs) {
+        if (run.browser) lines.push(`URL: ${run.browser.url}\n${t("Pasos")}: ${run.browser.steps.join(" → ")}\n${t("Esperado")}: ${run.browser.expected}\n${t("Observado")}: ${run.browser.observed}`);
+        const observations = this.history.filter(e => e.type === "browser-observation" && run.evidence?.includes(e.callId));
+        for (const event of observations) if (event.type === "browser-observation") for (const a of event.artifacts ?? []) lines.push(`${a.mimeType}: ${a.path ?? a.uri} · ${a.path && await Bun.file(a.path).exists() ? t("Disponible") : t("Archivo ausente")}`);
         const stale = JSON.stringify(run.files) !== JSON.stringify(await fingerprints(this.ctx.cwd, spec.paths)) || spec.kind === "command" && spec.command !== run.command;
         lines.push("", run.id, `${t("Estado")}: ${t(run.state === "passed" ? "Aprobada" : run.state === "failed" ? "Fallida" : run.state === "cancelled" ? "Cancelada" : run.state === "interrupted" ? "Interrumpida" : "Ejecutando")}${stale ? ` · ${t("Requiere revalidación")}` : ""}`,
           `${t("Origen")}: ${run.origin}`, `${t("Inicio")}: ${run.started}`, `${t("Fin")}: ${run.ended ?? ""}`, `cwd: ${run.cwd}`, `exit: ${run.exitCode ?? "N/D"}`, run.stdout, run.stderr);
@@ -127,6 +133,12 @@ export class VerificationPanel {
     const now = new Date().toISOString(), run: VerificationRun = { id: `V-run-${crypto.randomUUID()}`, taskId: card.id, specId: spec.id, state: "passed", cwd: this.ctx.cwd,
       started: now, ended: now, stdout: spec.description, stderr: "", files: await fingerprints(this.ctx.cwd, spec.paths), origin: "user" };
     await this.ctx.record({ type: "task-verification", run }); await this.refresh();
+  }
+  private artifacts(): void {
+    const ids = new Set(this.runs.flatMap(r => r.evidence ?? []));
+    const artifacts = this.history.flatMap(e => e.type === "browser-observation" && ids.has(e.callId) ? e.artifacts ?? [] : e.type === "message" && e.message.tool_call_id && ids.has(e.message.tool_call_id) ? e.message.artifacts ?? [] : []);
+    const unique = artifacts.filter((a, i, all) => all.findIndex(b => (b.path ?? b.uri) === (a.path ?? a.uri)) === i);
+    choose(this.ctx.desktop, this.ctx.desktop.t("Abrir evidencia"), unique.map(value => ({ label: `${value.mimeType} · ${value.path ?? value.uri}`, value })), artifact => this.act(async () => { if (artifact.path) { if (!await Bun.file(artifact.path).exists()) throw new Error(this.ctx.desktop.t("Archivo ausente")); await openBrowser(pathToFileURL(artifact.path).href); } else if (artifact.uri?.startsWith("https://") || artifact.uri?.startsWith("http://")) await openBrowser(artifact.uri); else throw new Error("Recurso externo no disponible para apertura"); }));
   }
   async changes(): Promise<void> {
     const card = this.card; if (!card) return;

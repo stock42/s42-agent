@@ -2,10 +2,10 @@ import { readdir } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import type { ToolDefinition } from "../../llm/client.ts";
 import type { CommandOutput } from "../../system/command.ts";
-import type { Message } from "../messages.ts";
+import type { Artifact, Message } from "../messages.ts";
 import type { TurnTasks } from "../tasks.ts";
 
-export interface ToolResult { output: string; failed: boolean; durationMs: number; exitCode?: number; truncated?: boolean }
+export interface ToolResult { callId?: string; output: string; failed: boolean; durationMs: number; exitCode?: number; truncated?: boolean; artifacts?: Artifact[] }
 export interface ToolContext { cwd: string; signal: AbortSignal; onOutput?: CommandOutput; history?: readonly Message[]; tasks?: TurnTasks; callId?: string }
 export interface NativeTool {
   definition: ToolDefinition;

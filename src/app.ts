@@ -32,6 +32,9 @@ import { showWebServer } from "./ui/webserver.ts";
 import { inspectProject, instructionsDraft, generateInstructions, previewInstructions } from "./ui/project-instructions.ts";
 import { gitInitialize } from "./system/git.ts";
 import { GitPanel } from "./ui/git.ts";
+import { BrowserSession } from "./mcp/browser.ts";
+import { artifactDirectory } from "./mcp/artifacts.ts";
+import { showBrowser } from "./ui/browser.ts";
 import { TurnTasks } from "./agent/tasks.ts";
 import { closeout } from "./agent/closeout.ts";
 import { instructions } from "./agent/tools.ts";
@@ -174,6 +177,7 @@ export class App {
       { label: "Tools", hotkey: "o", items: [
         { label: "WebServer", run: () => this.webServer() },
         { label: "Nativas · catálogo", run: () => choose(this.desktop, this.desktop.t("Tools nativas"), nativeTools.map(tool => ({ label: tool.definition.function.name, value: tool })), tool => info(this.desktop, this.desktop.t(`Tool · ${tool.definition.function.name}`), [this.desktop.t(tool.definition.function.description), "", JSON.stringify(tool.definition.function.parameters, null, 2)])) },
+        { label: "Chrome / pruebas web", run: () => this.browserPanel() },
         { label: "MCP · servidores", run: () => this.extensions.servers() },
         { label: "MCP · agregar stdio", run: () => this.extensions.serverForm("stdio") },
         { label: "MCP · agregar HTTP", run: () => this.extensions.serverForm("http") },
@@ -260,7 +264,7 @@ export class App {
       for (const tab of this.tabs) tab.controller?.abort(new Error("Turno cancelado; cerrando s42-agent"));
       await Promise.allSettled(this.tabs.flatMap(tab => [tab.turn, tab.operation]));
       clearInterval(this.activityTimer); this.activityTimer = undefined;
-      await this.webservers.close();
+      await this.webservers.close(); await Promise.all(this.tabs.map(tab => tab.browser?.close()));
       for (const tab of this.tabs) { await this.saveDraft(tab); await tab.session?.close(); }
     };
     this.desktop.resize(this.desktop.width, this.desktop.height);
@@ -360,6 +364,7 @@ export class App {
     const server = this.webservers.get(project.id);
     if (server && server.root !== folder) await this.webservers.stop(project.id);
     const existing = this.tabs.find(tab => tab.project?.id === project.id);
+    if (existing?.browser && existing.browser.cwd !== folder) { await existing.browser.close(); existing.browser = undefined; }
     if (existing?.git && existing.git.cwd !== folder) { existing.git.hide(); existing.git = undefined; existing.contentView = undefined; }
     if (existing?.taskBoard && existing.taskBoard.ctx.cwd !== folder) { existing.taskBoard.hide(); existing.verification?.hide(); existing.taskBoard = undefined; existing.verification = undefined; existing.contentView = undefined; }
     if (existing?.verification && existing.verification.ctx.cwd !== folder) { existing.verification.hide(); existing.verification = undefined; existing.contentView = undefined; }
@@ -473,7 +478,7 @@ export class App {
     const index = this.tabs.findIndex(tab => tab.id === id), tab = this.tabs[index]; if (!tab) return;
     if (tab.busy) throw new Error(`${tab.project?.name ?? "Proyecto"}: cancelá el turno antes de cerrar la pestaña`);
     tab.git?.hide(); tab.taskBoard?.hide(); tab.verification?.hide();
-    await this.saveDraft(tab); await tab.session?.close(); this.tabs.splice(index, 1);
+    await tab.browser?.close(); await this.saveDraft(tab); await tab.session?.close(); this.tabs.splice(index, 1);
     if (tab.project) await this.webservers.stop(tab.project.id);
     for (let i = this.fileTabs.length - 1; i >= 0; i--) if (this.fileTabs[i]!.ownerId === tab.id) this.fileTabs.splice(i, 1);
     if (!this.tabs.length) { const empty = createProjectTab(); this.bindTab(empty); this.tabs.push(empty); }
@@ -491,6 +496,28 @@ export class App {
     this.desktop.focus(this.view.editorWindow);
   }
   private centralPanel(tab: ProjectTab) { return tab.contentView === "git" ? tab.git : tab.contentView === "tasks" ? tab.taskBoard : tab.contentView === "verification" ? tab.verification : undefined; }
+  private projectBrowser(tab = this.activeTab): BrowserSession | undefined {
+    const server = this.store.value.mcpServers.find(s => s.id === tab.project?.browserServerId && s.enabled);
+    if (!tab.project || !tab.session || !server) return;
+    if (tab.browser && (tab.browser.server.id !== server.id || JSON.stringify(tab.browser.server) !== JSON.stringify(server) || tab.browser.mode !== (tab.project.browserMode ?? "isolated"))) { const old = tab.browser; tab.browser = undefined; void old.close(); }
+    return tab.browser ??= new BrowserSession(server, tab.project.path, artifactDirectory(tab.session), tab.project.browserMode ?? "isolated", () => this.desktop.invalidate());
+  }
+  browserPanel(): void {
+    const tab = this.activeTab; if (!tab.project) { this.projectForm(); return; }
+    showBrowser({ desktop: this.desktop, owner: tab.project.name, cwd: tab.project.path, browser: () => this.projectBrowser(tab),
+      task: (label, work) => this.task(label, work, tab), configure: () => {
+        const candidates = this.store.value.mcpServers.filter(s => s.enabled);
+        choose(this.desktop, this.desktop.t("Chrome · seleccionar MCP registrado"), [...candidates.map(value => ({ label: value.name, value })), { label: this.desktop.t("Registrar MCP stdio"), value: undefined }], server => {
+          if (!server) { this.extensions.serverForm("stdio"); return; }
+          choose(this.desktop, this.desktop.t("Chrome · perfil"), ["isolated", "existing"].map(value => ({ label: this.desktop.t(value === "isolated" ? "Perfil de pruebas separado" : "Chrome existente (explícito)"), value })), mode => this.run(async () => {
+            this.requireIdle(tab); await tab.browser?.close(); tab.browser = undefined;
+            const next = structuredClone(this.store.value), owner = next.projects.find(p => p.id === tab.project!.id)!;
+            owner.browserServerId = server.id; owner.browserMode = mode as "isolated" | "existing"; next.mcpServers.find(s => s.id === server.id)!.purpose = "browser";
+            await this.store.save(next); tab.project = owner; if (this.activeTab === tab) this.browserPanel();
+          }));
+        });
+      } });
+  }
   async projectInstructions(): Promise<void> {
     const tab = this.activeTab; if (!tab.project) { this.projectForm(); return; }
     if (tab.instructionsPreview) { const p = tab.instructionsPreview; previewInstructions(this.desktop, p.inspection, p.draft, p.error, () => { tab.instructionsPreview = undefined; }); return; }
@@ -929,7 +956,7 @@ export class App {
           }
           this.desktop.invalidate();
         };
-        const result = await runTurn({ project, session, provider, model, key, signal: controller.signal, ...context,
+        const result = await runTurn({ project, session, provider, model, key, signal: controller.signal, browser: this.projectBrowser(tab), ...context,
           onModel: detected => this.change(async () => {
             const next = structuredClone(this.store.value), configured = next.providers.find(p => p.id === provider.id && p.baseUrl === provider.baseUrl);
             const index = configured?.models.findIndex(m => m.id === model.id) ?? -1;

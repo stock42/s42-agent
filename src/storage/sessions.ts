@@ -2,12 +2,13 @@ import { mkdir, open, readdir, unlink, type FileHandle } from "node:fs/promises"
 import { join } from "node:path";
 import type { Database } from "bun:sqlite";
 import { isDatabase, openDatabase, insertEvent } from "./database.ts";
-import type { Message, Selection } from "../agent/messages.ts";
+import type { Artifact, Message, Selection } from "../agent/messages.ts";
 import type { ContextUsage, TokenUsage } from "../agent/usage.ts";
 import type { TaskEvent, VerificationRun } from "../agent/tasks.ts";
 
 export type EventData =
   | TaskEvent
+  | { type: "browser-observation"; requestId?: string; callId: string; serverId: string; tool: string; arguments: string; output: string; failed: boolean; artifacts?: Artifact[] }
   | { type: "notice"; text: string }
   | { type: "session"; title: string }
   | { type: "selection"; selection: Selection }
@@ -27,6 +28,7 @@ function parseEvent(value: unknown, projectId: string): SessionEvent {
   const e = value as SessionEvent;
   if (!e || e.version !== 1 || typeof e.id !== "string" || e.projectId !== projectId || typeof e.at !== "string") throw new Error("Evento de sesión inválido");
   switch (e.type) {
+    case "browser-observation": if ([e.callId, e.serverId, e.tool, e.arguments, e.output].every(v => typeof v === "string") && typeof e.failed === "boolean") return e; break;
     case "task-request": if (e.request && typeof e.request.requestId === "string" && typeof e.request.objective === "string" && e.request.baseline && e.request.policy) return e; break;
     case "task-focus": if (typeof e.requestId === "string") return e; break;
     case "task-record": if (typeof e.requestId === "string" && Array.isArray(e.taskIds) && e.taskIds.every(t => typeof t === "string") && ["intent", "confirmed"].includes(e.phase) && typeof e.revision === "string") return e; break;

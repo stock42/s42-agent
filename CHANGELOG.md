@@ -5,6 +5,23 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Agregado — Plan v1.0.5, E5: Chrome y evidencia web
+
+- Chrome DevTools MCP opcional desde Tools, selección del registro y perfil
+  explícito, conexión retenida por proyecto, cierre/cancelación y estado real.
+  Los otros MCP conservan su ciclo por turno; CLI libera el navegador al salir.
+- Imágenes/blobs y referencias MCP conservados junto a sesiones, apertura de
+  evidencia/archivo ausente, entrega image_url según capacidad del proveedor
+  respetando grupos de tool_calls. Recibos callId y verificación browser con
+  URL/pasos/esperado/observado, origen y referencias de llamadas reales.
+- MCP 1.10.1, Node 24.18.0 y Chrome 154.0.8037.97 ya instalados: compatibilidad
+  y prueba real de captura/cancelación/tab cerrado/Chrome externo conservado.
+  DeepSeek v4 Pro completó fallo → corrección → prueba de persistencia y
+  reapertura; PNG asociado/reabierto. DeepSeek Flash identificó una captura
+  recibida como imagen. Configuración personal y credenciales preservadas.
+- Typecheck y 46 tests relevantes correctos, incluida prueba Chrome real.
+  Sin dependencias de runtime nuevas, build ni release.
+
 ### Agregado — Plan v1.0.5, E4: instrucciones y cierre Git
 
 - Generación AGENTS.md a partir de inspección/modelo, sección reemplazable,

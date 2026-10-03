@@ -2,6 +2,9 @@ import { dirname } from "node:path";
 import type { Message, ToolCall } from "./messages.ts";
 import type { Model, Project, Provider, McpServer, Skill } from "../storage/config.ts";
 import type { Session } from "../storage/sessions.ts";
+import { BrowserSession, browserOpenDefinition } from "../mcp/browser.ts";
+import { artifactDirectory } from "../mcp/artifacts.ts";
+import type { ToolResult } from "./tools.ts";
 import { McpConnections } from "../mcp/client.ts";
 import { SkillCatalog } from "../skills/index.ts";
 import { complete, CompletionError, runtimeModel, type Completion } from "../llm/client.ts";
@@ -13,7 +16,7 @@ import { activeHistory, compactContext, contextWeight, estimateContext, nearCont
 import { TurnTasks } from "./tasks.ts";
 
 export async function runTurn(options: { project: Project; session: Session; provider: Provider; model: Model; key?: string; signal: AbortSignal;
-  mcpServers?:McpServer[]; skills?:Skill[]; onNotice?:(text:string)=>void; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
+  browser?: BrowserSession; mcpServers?:McpServer[]; skills?:Skill[]; onNotice?:(text:string)=>void; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
   onModel?: (model: Model) => Promise<void>; onContext?: (usage: ContextUsage) => void; onToolStart?: (call: ToolCall) => void;
   onToolOutput?: (call: ToolCall, stream: "stdout" | "stderr", text: string) => void;
   onUsage?: (usage: TokenUsage) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number; tokens: TokenUsage; taskState: "completed" | "blocked" | "guidance" }> {
@@ -29,7 +32,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
   const pendingNotices:Promise<void>[]=[];const progress=(text:string)=>{const pending=notice(text);pendingNotices.push(pending);void pending.catch(()=>{});};
   try {
   await skills.open(options.skills??[],project.id,progress);
-  if(model.capabilities.tools)await mcp.open(options.mcpServers??[],project.path,signal,progress);
+  if(model.capabilities.tools)await mcp.open((options.mcpServers??[]).filter(s => s.purpose !== "browser" && s.id !== options.browser?.server.id),project.path,signal,progress,artifactDirectory(session));
   await Promise.all(pendingNotices);
   const user=session.state.messages.findLast(m=>m.role==="user");const content=typeof user?.content==="string"?user.content:user?.content?.filter(p=>p.type==="text").map(p=>p.text).join("\n")??"";
   const invoked=/^\/skill\s+(\S+)/.exec(content)?.[1];const explicit=invoked?skills.entries.find(s=>s.name===invoked):undefined;
@@ -37,7 +40,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
   if(explicit)await notice(`Skill ${explicit.name}: instrucciones cargadas por pedido`);
   const guidance = await instructions(project.path);
   const tasks = await TurnTasks.open(project.path, session, signal, guidance);
-  const system: Message = { role: "system", content: agentPrompt({ cwd: project.path, tools: model.capabilities.tools, projectInstructions: guidance, externalSkills: skills.guidance,
+  const system: Message = { role: "system", content: agentPrompt({ cwd: project.path, tools: model.capabilities.tools, images: model.capabilities.images, browser: Boolean(options.browser), projectInstructions: guidance, externalSkills: skills.guidance,
     outputTokens: model.maxOutputTokens, invokedSkill: explicit ? `Skill invocada ${explicit.name} (base directory: ${dirname(explicit.path)}):\n${explicit.body}` : undefined }) };
   const baseSystem = system.content;
   let tokens = emptyUsage();
@@ -85,7 +88,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
     const taskContext = await tasks.context();
     system.content = String(baseSystem) + (taskContext ? `\n\n${taskContext}` : "");
     signal.throwIfAborted(); options.onState("Conectando…");
-    const tools = model.capabilities.tools ? [...toolDefinitions,...(skills.entries.length?[skills.definition]:[]),...await mcp.definitions(signal)] : undefined;
+    const tools = model.capabilities.tools ? [...toolDefinitions,...(skills.entries.length?[skills.definition]:[]),...await mcp.definitions(signal), ...(options.browser ? [browserOpenDefinition, ...await options.browser.definitions(signal)] : [])] : undefined;
     let messages = requestMessages();
     publishContext(estimateContext(options.provider.id, model.id, model.contextWindow, messages, tools, session.state.contextUsage));
     if (nearContextWindow(occupancy)) { await compact(tools); messages = requestMessages(); }
@@ -154,19 +157,26 @@ export async function runTurn(options: { project: Project; session: Session; pro
     const toolHistory = session.state.messages.slice(0, -1);
     for (const call of calls) {
       const stopped = signal.aborted || !model.capabilities.tools;
-      let output: string, failed: boolean;
+      let output: string, failed: boolean, artifacts: Message["artifacts"];
       if (stopped) { output = signal.aborted ? "Cancelado: herramienta no ejecutada" : "El modelo no tiene tools habilitadas"; failed = true; aborted = new Error(output); }
       else {
         await session.append({ type: "tool-start", callId: call.id, name: call.function.name, arguments: call.function.arguments });
         options.onState(`Ejecutando ${call.function.name}…`);
         options.onToolStart?.(call);
-        const tool = call.function.name==="skill" ? await skills.execute(call.function.arguments,signal) : mcp.has(call.function.name) ? await mcp.execute(call.function.name,call.function.arguments,signal) : await execute(call.function.name, call.function.arguments, project.path, signal,
+        let tool: ToolResult;
+        if (call.function.name === "browser_open" || options.browser?.has(call.function.name)) {
+          try { await tasks.requirePlan(); if (!options.browser) throw new Error("Chrome no configurado para este proyecto");
+            if (call.function.name === "browser_open") { const args = JSON.parse(call.function.arguments); await options.browser.open(signal, progress); tool = args.url ? await options.browser.action("new_page", { url: args.url }, signal) : { output: "Chrome conectado; herramientas disponibles en la próxima iteración", failed: false, durationMs: 0 }; }
+            else tool = await options.browser.execute(call.function.name, call.function.arguments, signal);
+          } catch (e) { tool = { output: (e as Error).message, failed: true, durationMs: 0 }; }
+          await session.append({ type: "browser-observation", requestId: tasks.request?.requestId, callId: call.id, serverId: options.browser?.server.id ?? "unconfigured", tool: call.function.name, arguments: call.function.arguments, output: tool.output, failed: tool.failed, artifacts: tool.artifacts });
+        } else tool = call.function.name==="skill" ? await skills.execute(call.function.arguments,signal) : mcp.has(call.function.name) ? await mcp.execute(call.function.name,call.function.arguments,signal) : await execute(call.function.name, call.function.arguments, project.path, signal,
           options.onToolOutput && ((stream, text) => options.onToolOutput!(call, stream, text)), toolHistory, { tasks, callId: call.id });
-        failed = tool.failed; output = JSON.stringify(tool);
+        failed = tool.failed; artifacts = tool.artifacts; output = JSON.stringify({ ...tool, callId: call.id });
         if (signal.aborted) aborted = new Error("Turno cancelado; los efectos ya realizados se conservan");
       }
       await session.append({ type: "tool-result", callId: call.id, output, failed });
-      await save({ role: "tool", tool_call_id: call.id, content: output });
+      await save({ role: "tool", tool_call_id: call.id, content: output, ...(artifacts ? { artifacts } : {}) });
     }
     publishContext(estimateContext(options.provider.id, model.id, model.contextWindow, requestMessages(), tools, occupancy)); await persistContext();
     if (aborted) throw aborted;

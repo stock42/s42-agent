@@ -9,6 +9,7 @@ export interface TaskRequest { requestId: string; objective: string; baseline: G
 export interface VerificationRun {
   id: string; taskId: string; specId: string; state: "running" | "passed" | "failed" | "cancelled" | "interrupted";
   command?: string; cwd: string; started: string; ended?: string; exitCode?: number; stdout: string; stderr: string;
+  browser?: { url: string; steps: string[]; expected: string; observed: string };
   files: Record<string, string | null>; origin: "harness" | "browser" | "user"; evidence?: string[];
 }
 export type TaskEvent =
@@ -141,6 +142,15 @@ export class TurnTasks {
     if (!card || spec?.kind !== "review" || !evidence.length || evidence.some(id => !this.evidenceExists(id))) throw new Error("La revisión exige referencias a resultados existentes");
     const now = new Date().toISOString(), run: VerificationRun = { id: `V-run-${crypto.randomUUID()}`, taskId, specId, state: "passed", cwd: this.store.root,
       started: now, ended: now, stdout: spec.description, stderr: "", origin: "harness", evidence, files: await fingerprints(this.store.root, spec.paths) };
+    await this.session.append({ type: "task-verification", run }); return run;
+  }
+  async browserReview(taskId: string, specId: string, evidence: string[], browser: NonNullable<VerificationRun["browser"]>, passed: boolean): Promise<VerificationRun> {
+    const card = (await this.store.read()).tasks.find(t => t.id === taskId && t.requestId === this.request?.requestId), spec = card?.verification.find(v => v.id === specId);
+    if (!card || spec?.kind !== "browser" || !browser.url || !browser.steps.length || !browser.expected || !browser.observed || !evidence.length) throw new Error("Prueba web requiere URL, pasos, esperado, observado y referencias reales");
+    const observations = evidence.map(id => this.session.state.events.findLast(e => e.type === "browser-observation" && e.requestId === card.requestId && e.callId === id));
+    const invalid = evidence.filter((id, i) => { const event = observations[i]; return event?.type === "browser-observation" ? passed && event.failed : !this.evidenceExists(id); });
+    if (!observations.some(e => e?.type === "browser-observation") || invalid.length) throw new Error(`Evidencia web requiere observación del pedido y referencias válidas; IDs inválidos: ${invalid.join(", ")}`);
+    const now = new Date().toISOString(), run: VerificationRun = { id: `V-run-${crypto.randomUUID()}`, taskId, specId, state: passed ? "passed" : "failed", cwd: this.store.root, started: now, ended: now, stdout: browser.observed, stderr: passed ? "" : `Esperado: ${browser.expected}`, files: await fingerprints(this.store.root, spec.paths), origin: "browser", evidence, browser };
     await this.session.append({ type: "task-verification", run }); return run;
   }
   async cardPending(card: TaskCard): Promise<string[]> {

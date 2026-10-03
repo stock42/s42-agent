@@ -600,3 +600,35 @@ hunk separation before closing. History records the selected diff, intent,
 actual errors and SHA. Retrying recovers a commit created before interruption.
 Push requires project policy and remote confirmation; local commit and failed
 closeout remain distinct.
+
+## Chrome and web tests
+
+Tools → Chrome / web tests selects a registered MCP server and its owning
+project. A separate test profile is the first option; attaching to existing
+Chrome requires explicit selection. Configuration never connects at startup.
+Open asks for a URL; Tabs shows Chrome's returned selection and URLs. Disconnect
+releases MCP and preserves externally opened Chrome. Project close, folder
+change and exit release owned connections. Tab selection does not change the
+project cwd, and WebServer still starts manually.
+
+Chrome DevTools MCP is external and optional. Configure installed Node and
+Chrome separately; S42 neither installs them nor adds Node to its core. For
+stdio use the installed executable and entrypoint or a user-prepared launcher.
+Separate profile adds --isolated and rejects flags attaching to existing Chrome.
+See the [official project](https://github.com/ChromeDevTools/chrome-devtools-mcp) and
+[configuration guide](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/configuration.md).
+Tested on Linux x64: MCP 1.10.1, Node 24.18.0, Chrome 154.0.8037.97.
+
+For an authorized web test the agent calls browser_open, then uses actual server
+tools. Plan browser verification and record URL, steps, expected/observed result
+and real call IDs with task_verify. Failed scenarios and repaired checks remain
+in history. A snapshot/capture alone does not prove persistence or a clean
+console/network; check the corresponding flow and requests.
+
+MCP images/blobs are stored beside the session; links retain their references.
+Chat displays type/path without base64. The verification panel Open evidence
+action reports missing files on reopen. Image-capable endpoints receive
+PNG/JPEG/WebP image_url parts; models without vision receive DOM/text and
+references for human review. Declared capability differs from actual endpoint
+acceptance. CLI closes its connection on exit; TUI retains only the owning
+project's browser between turns.

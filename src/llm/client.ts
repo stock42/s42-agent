@@ -70,6 +70,25 @@ export async function discoverModels(provider: Provider, key?: string, signal?: 
   return provider.kind === "llama.cpp" ? Promise.all([...models.values()].map(model => runtimeModel(provider, model, key, signal))) : [...models.values()];
 }
 
+export async function providerMessages(messages: Message[], images: boolean): Promise<Message[]> {
+  const out: Message[] = []; let pending: import("../agent/messages.ts").ContentPart[] = [];
+  const flush = () => { if (pending.length) { out.push({ role: "user", content: pending }); pending = []; } };
+  for (const original of messages) {
+    if (original.role !== "tool") flush();
+    const { artifacts, ...message } = original; out.push(message);
+    if (!artifacts?.length) continue;
+    const content: import("../agent/messages.ts").ContentPart[] = [{ type: "text", text: `Artifacts associated with tool call ${message.tool_call_id ?? ""}. ${images ? "Image input enabled." : "This model has no image input; use text/DOM observations. Pixels were not provided."}` }];
+    for (const artifact of artifacts) {
+      content.push({ type: "text", text: `${artifact.mimeType}: ${artifact.path ?? artifact.uri}` });
+      if (artifact.path && !await Bun.file(artifact.path).exists()) { content.push({ type: "text", text: "Artifact file missing; unavailable for inspection." }); continue; }
+      if (images && artifact.path && ["image/png", "image/jpeg", "image/webp"].includes(artifact.mimeType)) content.push({ type: "image_url", image_url: { url: `data:${artifact.mimeType};base64,${Buffer.from(await Bun.file(artifact.path).bytes()).toString("base64")}` } });
+    }
+    pending.push(...content);
+  }
+  flush();
+  return out;
+}
+
 export async function complete(options: { provider: Provider; model: Model; messages: Message[]; tools?: ToolDefinition[]; key?: string; signal: AbortSignal;
   contextTokens?: number; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void; onProgress?: (usage: ProviderUsage) => void }): Promise<Completion> {
   const controller = new AbortController(), relay = () => controller.abort(options.signal.reason);
@@ -81,7 +100,7 @@ export async function complete(options: { provider: Provider; model: Model; mess
   try {
     // DeepSeek rejects reasoning-only partials with null content. An empty
     // string preserves their reasoning in context without changing the session.
-    const messages = options.messages.map(message => message.role === "assistant" && message.content === null && !message.tool_calls?.length ? { ...message, content: "" } : message);
+    const messages = (await providerMessages(options.messages, options.model.capabilities.images)).map(message => message.role === "assistant" && message.content === null && !message.tool_calls?.length ? { ...message, content: "" } : message);
     const providerMaximum = options.model.manual ? undefined : options.model.maxOutputTokens;
     const remaining = options.model.contextWindow !== undefined && options.contextTokens !== undefined ? Math.max(1, Math.floor(options.model.contextWindow - options.contextTokens)) : undefined;
     // Unknown output metadata is decided by the server. Never send a guessed

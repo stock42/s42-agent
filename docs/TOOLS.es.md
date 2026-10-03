@@ -211,3 +211,26 @@ Bun 1.4.2; runtime Linux comprobado, macOS/Windows pendientes.
 ```json
 {"url":"https://example.com","selector":"main","format":"text"}
 ```
+
+## Chrome opcional y artefactos MCP
+
+browser_open expone la conexión Chrome elegida para el proyecto después del plan,
+sin instalar software ni iniciar WebServer. Las tools siguientes usan nombres
+mcp_* derivados del servidor y su schema real. El navegador permanece por
+proyecto en TUI; los demás MCP conservan el ciclo de vida por turno. CLI libera
+todos sus recursos al salir.
+
+Para verificaciones browser, task_verify requiere taskId, verificationId,
+evidence (IDs de llamadas reales), url, steps, expected, observed y passed.
+Un fallo se conserva como run failed; no completa la tarjeta. Referencias de
+source/tools adicionales pueden acompañar al menos una observación Chrome del
+pedido. No se admiten IDs inexistentes ni pruebas basadas solo en texto inventado.
+
+ToolResult.artifacts y Message.artifacts conservan mimeType y path/uri. Imágenes
+y blobs se guardan en el almacén de artefactos de la sesión; resource_link local
+se copia y enlace externo se referencia sin descargar. Los mensajes MCP de texto
+y structuredContent se conservan. La entrega de imágenes mantiene juntas todas
+las respuestas de tool_calls antes de enviar las partes multimedia al proveedor.
+
+Los resultados serializados del agente incluyen un recibo callId para citar
+evidencia incluso si el template del proveedor omite tool_call_id del transporte.
