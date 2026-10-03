@@ -583,7 +583,8 @@ interrupted test is recorded when its session reopens.
 
 ## Project instructions and Git closeout
 
-Projects → Generate AGENTS.md inspects folders, existing instructions and
+Tools → Autogenerate AGENTS.md (also Projects → Generate AGENTS.md) inspects
+folders, existing instructions and
 declared commands without executing scripts. The model drafts a managed
 section; existing rules are preserved and conflicting closeout rules are
 flagged. The preview supports editing and Diff / edit. Apply saves it; closing

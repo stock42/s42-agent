@@ -35,6 +35,7 @@ const english: Readonly<Record<string, string>> = {
   "Inicializar repositorio Git": "Initialize Git repository",
   "Inicializar Git": "Initialize Git",
   "Generar AGENTS.md": "Generate AGENTS.md",
+  "Autogenerar AGENTS.md": "Autogenerate AGENTS.md",
   "Tareas": "Tasks",
   "Verificación": "Verification",
   "Pendientes": "Pending",

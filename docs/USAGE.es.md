@@ -590,7 +590,8 @@ programa no reejecuta pruebas. Un proceso interrumpido se registra al reabrir.
 
 ## Instrucciones y cierre Git
 
-Projects → Generar AGENTS.md inspecciona carpetas, archivos de instrucciones y
+Tools → Autogenerar AGENTS.md (también Projects → Generar AGENTS.md)
+inspecciona carpetas, archivos de instrucciones y
 comandos declarados sin ejecutarlos. El modelo propone una sección; las reglas
 existentes se conservan y se destacan contradicciones con el cierre solicitado.
 El preview admite edición y Diff / editar. Aplicar guarda; cerrar conserva el

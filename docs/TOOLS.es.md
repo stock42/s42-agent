@@ -23,6 +23,11 @@ el contrato para integraciones existentes. Catálogo visible en **Tools → Nati
 | `scrape` / scrape.ts | `url`; `selector="body"`, `format="text"` o `"html"` | Bun.WebView: URL final, título, contenido completo del primer elemento CSS y todos sus enlaces, sin recortar textos/hrefs. Espera el selector o cancelación. |
 | `session_history` / session_history.ts | Opcionales: `query`, `role`, `offset=1`, `limit` | Mensajes originales de la sesión del turno, incluso después de compactar. Búsqueda literal sin distinguir mayúsculas sobre el JSON completo, filtro por rol user/assistant/tool y selección de coincidencias desde offset. Devuelve índices originales desde 1 y mensajes completos; sin limit devuelve todas las coincidencias. |
 
+| `task_plan` / task_plan.ts | `objective`, `steps`; `mode="execution"` o `"planning"` | Persiste IDs UUID de pedido/tareas/verificaciones en TODO.md; cada etapa declara criterio, dependencias opcionales y verificación proporcional. |
+| `task_update` / task_update.ts | `id`; `status`, `result`, `blocked`, `acceptanceEvidence` opcionales | Actualiza una tarjeta del pedido activo; terminar requiere evidencia existente y verificaciones vigentes. |
+| `task_verify` / task_verify.ts | `taskId`, `verificationId`; `evidence` opcional; campos de escenario browser | Ejecuta el comando previsto o registra revisión/observación browser de resultados existentes. Conserva salida, estado real, cancelación y huellas de archivos. |
+| `task_closeout` / task_closeout.ts | `files`, `message`, `summary`; `push` opcional | Revisa el diff seleccionado, actualiza CHANGELOG si corresponde y crea un commit con índice separado. Preserva staging ajeno, bloquea archivos mezclados y registra SHA, errores e intención recuperable. Push requiere política del proyecto y confirmación remota. |
+
 Las tools reciben un objeto JSON; nombres/campos desconocidos, tipos inválidos
 y enteros no positivos devuelven error. Rutas relativas usan el proyecto del
 turno; rutas absolutas pueden apuntar fuera de él. No cambia el cwd global.
@@ -68,6 +73,12 @@ argumentos/formatos y los errores reales del proveedor, sistema operativo o runt
   Ejecuta el comando previsto con el runner compartido o registra la revisión
   de resultados existentes. Conserva código de salida, stdout/stderr,
   cancelación y huellas de archivos, incluidos los intentos fallidos.
+- `task_closeout`: `files` (array de rutas), `message`, `summary` y `push`
+  opcional. Requiere aceptación y pruebas vigentes; incorpora TODO.md y
+  CHANGELOG.md cuando lo pide la política del proyecto, sin incluir cambios
+  previos mezclados. Registra el diff y SHA del commit, conserva errores de
+  hooks y recupera el commit existente al reintentar. No autoriza push por sí
+  solo; requiere instrucciones del proyecto y comprobar el SHA remoto.
 
 TUI/CLI exigen plan antes de write/edit, shell arbitrario, Markdown guardado,
 HTTP mutante y envíos WebSocket. Las lecturas no crean una tarjeta por llamada.
@@ -77,7 +88,9 @@ por tarea completa u orientación/plan. Eventos y datos sobreviven reapertura
 JSONL/SQLite y compactación. TODO.md es la fuente del contenido; conserva texto
 ajeno y muestra colisiones externas. Ediciones nativas guardan versiones
 anteriores/posteriores; shell/cambios externos tienen atribución desconocida.
-Tablero visual y acciones de cierre Git corresponden a las etapas siguientes.
+El tablero y la ficha usan las mismas tarjetas y resultados. La ficha separa
+aceptación, pruebas y cierre Git; mover manualmente no fabrica una prueba ni
+ejecuta un commit. Ver [el manual](USAGE.es.md#instrucciones-y-cierre-git).
 
 ## HTTP
 

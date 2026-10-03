@@ -184,6 +184,7 @@ export class App {
         { label: "Skills · registradas", run: () => this.extensions.skills() },
         { label: "Skills · registrar SKILL.md", run: () => this.extensions.skillForm() },
         { label: "Skills · buscar en skills.sh", run: () => this.extensions.search() },
+        { label: "Autogenerar AGENTS.md", run: () => this.run(() => this.projectInstructions()) },
       ] },
       { label: "Vista", items: [
         { label: "Respuestas", run: () => { this.centralPanel(this.activeTab)?.hide(); this.activeTab.contentView = undefined; this.displayTab(this.activeTab); this.desktop.focus(this.view.editorWindow); } },

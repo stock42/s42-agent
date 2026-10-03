@@ -59,7 +59,7 @@ test("circuito TUI/CLI: sin Git → AGENTS explícito → plan → prueba → co
     terminal = new Bun.Terminal({ cols: 120, rows: 32, data: (_, bytes) => { output += new TextDecoder().decode(bytes); } });
     child = Bun.spawn([process.execPath, join(import.meta.dir, "../index.ts"), "--config", config, "--no-color"], { cwd, terminal, env: { ...process.env, TERM: "xterm-256color" } });
     await until(() => output.includes("Ciclo TUI")); expect(await Bun.file(join(cwd, ".git/HEAD")).exists()).toBe(false);
-    terminal.write("\x1bp\x1b[B\x1b[B\x1b[B\r"); await until(() => output.includes("AGENTS.md · preview"));
+    terminal.write("\x1bo" + "\x1b[B".repeat(9) + "\r"); await until(() => output.includes("AGENTS.md · preview"));
     expect(await Bun.file(join(cwd, "AGENTS.md")).exists()).toBe(false);
     terminal.write("\t\t\t\r"); await until(async () => Bun.file(join(cwd, "AGENTS.md")).exists());
     expect(await Bun.file(join(cwd, "AGENTS.md")).text()).toContain("Siempre hacer commit al terminar la tarea.");

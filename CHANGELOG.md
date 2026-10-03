@@ -5,6 +5,16 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Corregido — Auditoría final del plan v1.0.5
+
+- Tools → Autogenerar AGENTS.md usa el mismo flujo y propietario de Projects;
+  el circuito TUI verifica ese acceso previsto en el plan.
+- Catálogo español completado con task_closeout y las cuatro tools de tareas;
+  manuales ES/EN y estado del plan actualizados. SHA E6 y CI correcta registrados.
+- Typecheck y 15 tests relevantes correctos (248 assertions), incluido
+  el circuito TUI/PTY completo desde Tools. La aceptación de mouse físico
+  continúa pendiente; no se declara completo el objetivo ni se genera release.
+
 ### Agregado — Plan v1.0.5, E6: integración y evidencia
 
 - Circuito TUI de fuente/PTY desde carpeta sin Git, AGENTS aplicado explícitamente,
