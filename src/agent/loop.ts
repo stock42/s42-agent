@@ -10,12 +10,13 @@ import { execute, instructions, toolDefinitions } from "./tools.ts";
 import { addUsage, emptyUsage, type ContextUsage, type TokenUsage, type ProviderUsage } from "./usage.ts";
 import { agentPrompt } from "./prompt.ts";
 import { activeHistory, compactContext, contextWeight, estimateContext, nearContextWindow, reportedContext } from "./context.ts";
+import { TurnTasks } from "./tasks.ts";
 
 export async function runTurn(options: { project: Project; session: Session; provider: Provider; model: Model; key?: string; signal: AbortSignal;
   mcpServers?:McpServer[]; skills?:Skill[]; onNotice?:(text:string)=>void; onDelta: (text: string) => void; onReasoning?: (text: string) => void; onToolCall?: (index: number, call: ToolCall) => void;
   onModel?: (model: Model) => Promise<void>; onContext?: (usage: ContextUsage) => void; onToolStart?: (call: ToolCall) => void;
   onToolOutput?: (call: ToolCall, stream: "stdout" | "stderr", text: string) => void;
-  onUsage?: (usage: TokenUsage) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number; tokens: TokenUsage }> {
+  onUsage?: (usage: TokenUsage) => void; onState: (state: string) => void; onMessage: () => void }): Promise<{ usage?: number; tokens: TokenUsage; taskState: "completed" | "blocked" | "guidance" }> {
   const { session, project, signal } = options;
   const model = await runtimeModel(options.provider, options.model, options.key, signal);
   const previousContext = session.state.contextUsage;
@@ -35,8 +36,10 @@ export async function runTurn(options: { project: Project; session: Session; pro
   if(invoked && !explicit)throw new Error(`Skill no disponible: ${invoked}`);
   if(explicit)await notice(`Skill ${explicit.name}: instrucciones cargadas por pedido`);
   const guidance = await instructions(project.path);
+  const tasks = await TurnTasks.open(project.path, session, signal, guidance);
   const system: Message = { role: "system", content: agentPrompt({ cwd: project.path, tools: model.capabilities.tools, projectInstructions: guidance, externalSkills: skills.guidance,
     outputTokens: model.maxOutputTokens, invokedSkill: explicit ? `Skill invocada ${explicit.name} (base directory: ${dirname(explicit.path)}):\n${explicit.body}` : undefined }) };
+  const baseSystem = system.content;
   let tokens = emptyUsage();
   const recordUsage = (usage: ProviderUsage | undefined, durationMs: number) => { tokens=addUsage(tokens,usage,durationMs); options.onUsage?.(tokens); };
   let stage = 0;
@@ -79,6 +82,8 @@ export async function runTurn(options: { project: Project; session: Session; pro
     } catch (error) { publishContext(original); await persistContext(); throw new Error(`No se pudo compactar el contexto: ${(error as Error).message}`); }
   };
   for (;;) {
+    const taskContext = await tasks.context();
+    system.content = String(baseSystem) + (taskContext ? `\n\n${taskContext}` : "");
     signal.throwIfAborted(); options.onState("Conectando…");
     const tools = model.capabilities.tools ? [...toolDefinitions,...(skills.entries.length?[skills.definition]:[]),...await mcp.definitions(signal)] : undefined;
     let messages = requestMessages();
@@ -131,7 +136,18 @@ export async function runTurn(options: { project: Project; session: Session; pro
     if (occupancy.estimated) publishContext(estimateContext(options.provider.id, model.id, model.contextWindow, requestMessages(), tools, occupancy));
     await persistContext();
     if (!calls.length) {
-      if (!reply?.more) { if (nearContextWindow(occupancy)) await compact(tools); return { usage: tokens.total, tokens }; }
+      if (!reply?.more) {
+        const close = model.capabilities.tools ? await tasks.finalization() : { state: "guidance" as const, pending: [] };
+        if (close.state === "incomplete") {
+          await save({ role: "user", content: `Harness task check: work remains. Continue the authorized task or register a concrete blocker with task_update. Do not claim completion.\n${close.pending.join("\n")}` });
+          await notice("Tarea abierta: faltan etapas, verificación o cierre");
+          continue;
+        }
+        if (close.state === "blocked") await notice(`Tarea bloqueada; permanece abierta: ${close.pending.join("; ")}`);
+        if (close.state === "completed") await session.append({ type: "task-focus", requestId: "" });
+        if (nearContextWindow(occupancy)) await compact(tools);
+        return { usage: tokens.total, tokens, taskState: close.state };
+      }
       stage++; stageStart = activeHistory(session.state).length; await notice(`Etapa ${stage} · continuando el pedido`); continue;
     }
     let aborted: Error | undefined;
@@ -145,7 +161,7 @@ export async function runTurn(options: { project: Project; session: Session; pro
         options.onState(`Ejecutando ${call.function.name}…`);
         options.onToolStart?.(call);
         const tool = call.function.name==="skill" ? await skills.execute(call.function.arguments,signal) : mcp.has(call.function.name) ? await mcp.execute(call.function.name,call.function.arguments,signal) : await execute(call.function.name, call.function.arguments, project.path, signal,
-          options.onToolOutput && ((stream, text) => options.onToolOutput!(call, stream, text)), toolHistory);
+          options.onToolOutput && ((stream, text) => options.onToolOutput!(call, stream, text)), toolHistory, { tasks, callId: call.id });
         failed = tool.failed; output = JSON.stringify(tool);
         if (signal.aborted) aborted = new Error("Turno cancelado; los efectos ya realizados se conservan");
       }

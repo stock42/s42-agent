@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -97,11 +98,11 @@ test("compacta TODO el contexto por partes, preserva imágenes/razonamiento/efec
 
 test("un resultado grande de herramienta se compacta completo y el loop continúa sin repetir sus efectos", async () => {
   const root = await mkdtemp(join(tmpdir(), "s42-context-tools-")), session = await Session.open(join(root, "sessions"), "project");
-  let ordinary = 0; const fragments: string[] = [];
+  let ordinary = 0; const fragments: string[] = [];const workflow=taskWorkflow(2);
   const server = Bun.serve({ port: 0, async fetch(req) {
     const body: any = await req.json();
     if (isSummary(body)) { fragments.push(inputText(body)); return packet({ content: summary }); }
-    ordinary++;
+    const flow=workflow(body, ordinary >= 2);if(flow)return flow; ordinary++;
     if (ordinary === 1) return packet({ tool_calls: [{ index: 0, id: "read", function: { name: "read", arguments: '{"path":"large.txt"}' } }] });
     if (ordinary === 2) return packet({ tool_calls: [{ index: 0, id: "write", function: { name: "write", arguments: '{"path":"done.txt","content":"hecho"}' } }] });
     return packet({ content: "Finalizado" });
@@ -110,8 +111,8 @@ test("un resultado grande de herramienta se compacta completo y el loop continú
     await Bun.write(join(root, "large.txt"), "a".repeat(90000) + "MARCADOR FINAL COMPLETO"); await save(session, { role: "user", content: "Leé, luego escribí done.txt" });
     await runTurn(options(root, session, server.port!));
     expect(ordinary).toBe(3); expect(fragments.join("")).toContain("MARCADOR FINAL COMPLETO");
-    expect(await Bun.file(join(root, "done.txt")).text()).toBe("hecho"); expect(session.state.events.filter(e => e.type === "tool-start")).toHaveLength(2);
-    expect(session.state.messages.filter(m => m.role === "tool")).toHaveLength(2); expect(activeHistory(session.state).some(m => m.role === "tool" && m.tool_call_id === "write")).toBe(true);
+    expect(await Bun.file(join(root, "done.txt")).text()).toBe("hecho"); expect(session.state.events.filter(e => e.type === "tool-start" && !e.name.startsWith("task_"))).toHaveLength(2);
+    expect(session.state.messages.filter(m => m.role === "tool" && !m.tool_call_id?.startsWith("fixture-task-"))).toHaveLength(2); expect(activeHistory(session.state).some(m => m.role === "tool" && m.tool_call_id === "write")).toBe(true);
   } finally { await session.close(); server.stop(true); await rm(root, { recursive: true, force: true }); }
 });
 

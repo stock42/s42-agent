@@ -4,8 +4,10 @@ import type { Database } from "bun:sqlite";
 import { isDatabase, openDatabase, insertEvent } from "./database.ts";
 import type { Message, Selection } from "../agent/messages.ts";
 import type { ContextUsage, TokenUsage } from "../agent/usage.ts";
+import type { TaskEvent } from "../agent/tasks.ts";
 
 export type EventData =
+  | TaskEvent
   | { type: "notice"; text: string }
   | { type: "session"; title: string }
   | { type: "selection"; selection: Selection }
@@ -25,6 +27,13 @@ function parseEvent(value: unknown, projectId: string): SessionEvent {
   const e = value as SessionEvent;
   if (!e || e.version !== 1 || typeof e.id !== "string" || e.projectId !== projectId || typeof e.at !== "string") throw new Error("Evento de sesión inválido");
   switch (e.type) {
+    case "task-request": if (e.request && typeof e.request.requestId === "string" && typeof e.request.objective === "string" && e.request.baseline && e.request.policy) return e; break;
+    case "task-focus": if (typeof e.requestId === "string") return e; break;
+    case "task-record": if (typeof e.requestId === "string" && Array.isArray(e.taskIds) && e.taskIds.every(t => typeof t === "string") && ["intent", "confirmed"].includes(e.phase) && typeof e.revision === "string") return e; break;
+    case "task-file": if ([e.requestId, e.callId, e.path].every(v => typeof v === "string") && ["intent", "confirmed"].includes(e.phase) && [e.before, e.after].every(v => v === null || typeof v === "string")) return e; break;
+    case "task-verification": if (e.run && [e.run.id, e.run.taskId, e.run.specId, e.run.cwd, e.run.started, e.run.stdout, e.run.stderr].every(v => typeof v === "string")
+      && ["running", "passed", "failed", "cancelled", "interrupted"].includes(e.run.state) && ["harness", "browser", "user"].includes(e.run.origin) && e.run.files && typeof e.run.files === "object") return e; break;
+    case "task-closeout": if (typeof e.requestId === "string" && typeof e.detail === "string" && ["pending", "failed", "committed", "pushed", "unavailable"].includes(e.state) && (e.sha === undefined || /^[a-f0-9]{40,64}$/.test(e.sha))) return e; break;
     case "context-usage": if (e.usage && typeof e.usage.providerId === "string" && typeof e.usage.modelId === "string" && typeof e.usage.estimated === "boolean"
       && [e.usage.window, e.usage.used, e.usage.inputWeight, e.usage.inputTokens].every(v => v === undefined || Number.isSafeInteger(v) && v >= 0)) return e; break;
     case "compaction": if (Number.isSafeInteger(e.through) && e.through >= 0 && typeof e.summary === "string" && e.summary.trim()) return e; break;

@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -47,8 +48,9 @@ test("tools read/search/edit exacto/write y shell con exit code real", async () 
 test("loop fixture lee, edita y verifica archivo; persiste call/result sin reejecutar", async () => {
   const root = await mkdtemp(join(tmpdir(),'s42-loop-')), session = await Session.open(join(root,'sessions'),'project'); let requests=0;
   await Bun.write(join(root,'code.ts'),'console.log(1 + 1);');
+  const workflow = taskWorkflow(3);
   const calls = [{name:'read',args:{path:'code.ts'}},{name:'edit',args:{path:'code.ts',oldText:'1 + 1',newText:'2 + 2'}},{name:'shell',args:{command:'bun code.ts'}}];
-  const server = Bun.serve({port:0,async fetch(req){const body=await req.json() as any; expect(body.messages[0].role).toBe('system');
+  const server = Bun.serve({port:0,async fetch(req){const body=await req.json() as any; const flow=workflow(body);if(flow)return flow; expect(body.messages[0].role).toBe('system');
     const call=calls[requests++]; const delta=call?{tool_calls:[{index:0,id:`call-${requests}`,function:{name:call.name,arguments:JSON.stringify(call.args)}}]}:{content:'Cambio verificado: 4'};
     return new Response(`data: ${JSON.stringify({choices:[{delta,finish_reason:call?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);}});
   const model:Model={id:'fixture',name:'Fixture',manual: true, contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
@@ -56,7 +58,7 @@ test("loop fixture lee, edita y verifica archivo; persiste call/result sin reeje
   try {await session.append({type:'session',title:'Coding'}); session.state.messages.push({role:'user',content:'Cambiar suma'});
     await runTurn({project:{id:'project',name:'Fixture',path:root},session,provider,model,signal:new AbortController().signal,onDelta:()=>{},onState:()=>{},onMessage:()=>{}});
     expect(await Bun.file(join(root,'code.ts')).text()).toBe('console.log(2 + 2);'); expect(requests).toBe(4); expect(session.state.messages.at(-1)?.content).toBe('Cambio verificado: 4');
-    expect(session.state.events.filter(e=>e.type==='tool-start').length).toBe(3); expect(session.state.messages.filter(m=>m.role==='tool').length).toBe(3);
+    expect(session.state.events.filter(e=>e.type==='tool-start' && !e.name.startsWith('task_')).length).toBe(3); expect(session.state.messages.filter(m=>m.role==='tool' && !m.tool_call_id?.startsWith('fixture-task-')).length).toBe(3);
   } finally {server.stop(true);await session.close();await rm(root,{recursive:true,force:true});}
 });
 test("Bun Shell pipes/redirecciones/cwd y argv literal con metacaracteres", async () => {
@@ -97,10 +99,11 @@ test("salida abundante se conserva completa y JSON inválido no tiene efectos", 
 });
 test("loop completa más de 30 pasos y conserva todos los efectos", async () => {
   const root=await mkdtemp(join(tmpdir(),'s42-limit-')), session=await Session.open(join(root,'sessions'),'A'); let requests=0;
-  const server=Bun.serve({port:0,fetch(){requests++;const call=requests<=35;return new Response(`data: ${JSON.stringify({choices:[{delta:call?{tool_calls:[{index:0,id:`id-${requests}`,function:{name:'write',arguments:JSON.stringify({path:'count',content:String(requests)})}}]}:{content:'Completado'},finish_reason:call?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);}});
+  const workflow=taskWorkflow(35);
+  const server=Bun.serve({port:0,async fetch(req){const body=await req.json() as any;const flow=workflow(body);if(flow)return flow;requests++;const call=requests<=35;return new Response(`data: ${JSON.stringify({choices:[{delta:call?{tool_calls:[{index:0,id:`id-${requests}`,function:{name:'write',arguments:JSON.stringify({path:'count',content:String(requests)})}}]}:{content:'Completado'},finish_reason:call?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);}});
   const model:Model={id:'fixture',name:'Fixture',manual: true, contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}};
   try { await runTurn({project:{id:'A',name:'A',path:root},session,provider:{id:'P',name:'P',kind:'llama.cpp',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[model]},model,signal:new AbortController().signal,onDelta:()=>{},onState:()=>{},onMessage:()=>{}});
-    expect(requests).toBe(36); expect(await Bun.file(join(root,'count')).text()).toBe('35'); expect(session.state.messages.filter(m=>m.role==='tool').length).toBe(35);
+    expect(requests).toBe(36); expect(await Bun.file(join(root,'count')).text()).toBe('35'); expect(session.state.messages.filter(m=>m.role==='tool' && !m.tool_call_id?.startsWith('fixture-task-')).length).toBe(35);
     expect(session.state.messages.at(-1)?.content).toBe('Completado');
   } finally {server.stop(true);await session.close();await rm(root,{recursive:true,force:true});}
 });

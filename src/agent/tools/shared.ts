@@ -3,9 +3,10 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import type { ToolDefinition } from "../../llm/client.ts";
 import type { CommandOutput } from "../../system/command.ts";
 import type { Message } from "../messages.ts";
+import type { TurnTasks } from "../tasks.ts";
 
 export interface ToolResult { output: string; failed: boolean; durationMs: number; exitCode?: number; truncated?: boolean }
-export interface ToolContext { cwd: string; signal: AbortSignal; onOutput?: CommandOutput; history?: readonly Message[] }
+export interface ToolContext { cwd: string; signal: AbortSignal; onOutput?: CommandOutput; history?: readonly Message[]; tasks?: TurnTasks; callId?: string }
 export interface NativeTool {
   definition: ToolDefinition;
   run(args: Record<string, unknown>, context: ToolContext): Promise<Omit<ToolResult, "durationMs">>;

@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from "bun:test";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
@@ -138,9 +139,9 @@ test("App integra skills internas, Markdown y WebSocket en chat persistente; cat
     { name: "markdown_html", args: { markdown: "# Proyecto verificado\n", outputPath: "plan.html", standalone: true } },
     { name: "websocket", args: { url: `ws://127.0.0.1:${ws.port}`, messages: ["WS_VERIFIED"] } },
   ];
-  let requests = 0;
+  let requests = 0; const workflow=taskWorkflow(3);
   const llm = Bun.serve({ port: 0, async fetch(req) {
-    const body = await req.json() as any;
+    const body = await req.json() as any; const flow=workflow(body);if(flow)return flow;
     expect(body.messages[0].content).toContain("software-project:");
     expect(body.messages[0].content).not.toContain(internalSkills[0]!.body);
     expect(body.tools.some((tool: any) => tool.function.name === "websocket")).toBe(true);

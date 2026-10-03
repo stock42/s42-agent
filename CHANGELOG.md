@@ -5,6 +5,21 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Agregado — Plan v1.0.5, E2: tareas persistentes y verificación
+
+- TODO.md como fuente de tarjetas UUID, con reemplazo atómico, lock entre
+  procesos/rutas canónicas, preservación de texto ajeno y conflictos explícitos.
+  Eventos de intención/confirmación, tareas, verificaciones, snapshots nativos
+  y cierre compatibles con SQLite y JSONL; el contexto conserva IDs y evidencia.
+- Nuevas tools task_plan/task_update/task_verify y planificación antes de
+  mutaciones/shell. El loop exige aceptación, pruebas vigentes y cierre del
+  proyecto; distingue turno finalizado, tarea bloqueada, tarea completa y plan.
+  Verificaciones por proceso real, salida/cancelación y revalidación por archivos.
+- Typecheck y 76 tests relevantes correctos (1078 assertions); prueba adicional
+  de bloqueo/política y suite de tareas revalidada: 10 tests, 65 assertions.
+  Concurrencia de cinco procesos, reapertura SQLite/JSONL, compactación, TUI/CLI
+  y PTY. Fixtures anteriores recorren el flujo real sin bypass. Sin build/release.
+
 ### Agregado — Google Analytics y eventos de instalación
 
 - Google tag `G-7K9P8SX6TD` en inglés y español. Cada clic en copiar un comando

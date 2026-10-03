@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from "bun:test";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -40,12 +41,13 @@ test("index.ts sin TTY descubre modelo, autentica, lee/escribe/ejecuta y reabre 
   const root = await mkdtemp(join(tmpdir(), "s42-cli-coding-")), cwd = join(root, "proyecto á文"), config = join(root, "config.json");
   await mkdir(cwd); await Bun.write(join(cwd, "AGENTS.md"), "CLI_GUIDANCE: revisar antes de escribir."); await Bun.write(join(cwd, "game.ts"), "console.log('antes');");
   const bodies: any[] = [], auth: (string | null)[] = []; let discoveries = 0;
+  const workflow=taskWorkflow(3);
   const calls = [{ name: "read", args: { path: "game.ts" } }, { name: "write", args: { path: "game.ts", content: "console.log('tetris fixture');\n" } }, { name: "shell", args: { command: "bun game.ts" } }];
   const server = Bun.serve({ port: 0, async fetch(req) {
     if (req.method === "GET" && new URL(req.url).pathname.endsWith("/props")) return new Response("", {status:404});
     auth.push(req.headers.get("authorization"));
     if (req.url.endsWith("/models")) { discoveries++; return Response.json({ data: [{ id: "fixture", context_window: 32000, max_output_tokens: 1000 }] }); }
-    bodies.push(await req.json()); const call = calls[bodies.length - 1];
+    const body=await req.json() as any;const flow=workflow(body);if(flow)return flow;bodies.push(body); const call = calls[bodies.length - 1];
     return new Response(event(call ? { reasoning_content: "pensamiento oculto", tool_calls: [{ index: 0, id: `call-${bodies.length}`, function: { name: call.name, arguments: JSON.stringify(call.args) } }] }
       : { reasoning_content: "pensamiento visible", content: bodies.length === 4 ? "Juego escrito y ejecutado á文🙂." : "Continuación." }, call ? "tool_calls" : "stop"));
   } });
@@ -67,7 +69,7 @@ test("index.ts sin TTY descubre modelo, autentica, lee/escribe/ejecuta y reabre 
     const resumed = await launch([...base, "--model", "fixture", "--session", id, "--prompting", "continuar", "--reasoning", "on"], cwd).done;
     expect(resumed.code).toBe(0); expect(resumed.stdout).toBe("Continuación.\n"); expect(resumed.stderr).toContain("Razonamiento: pensamiento visible");
     expect(discoveries).toBe(1); expect(Object.hasOwn(bodies[4],"max_tokens")).toBe(false); expect(bodies[4].messages.filter((message: any) => message.role === "tool")).toHaveLength(3);
-    expect((await Bun.file(files[0]!).text()).match(/"type":"tool-start"/g)).toHaveLength(3);
+    expect((await Bun.file(files[0]!).text()).match(/"type":"tool-start"/g)).toHaveLength(6);
     expect(await Bun.file(files[0]! + ".lock").exists()).toBe(false);
   } finally { server.stop(true); await rm(root, { recursive: true, force: true }); }
 });

@@ -102,9 +102,9 @@ export async function runCli(options: CliOptions): Promise<number> {
       },
     });
     tokens = result.tokens;
-    await session.append({ type: "turn", state: "completed", detail: "CLI: completado", tokens });
+    await session.append({ type: "turn", state: "completed", detail: result.taskState === "blocked" ? "CLI: turno finalizado; tarea bloqueada y abierta" : result.taskState === "guidance" ? "CLI: orientación/plan entregado" : "CLI: tarea completada", tokens });
     log(tokenLine(tokens, undefined, session.state.contextUsage));
-    return 0;
+    return result.taskState === "blocked" ? 2 : 0;
   } catch (error) {
     if (session) {
       if (error instanceof CompletionError && (error.partial.content || error.partial.reasoning_content || error.partial.reasoning)) {

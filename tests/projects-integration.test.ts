@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import {expect,test} from 'bun:test';
 import {mkdtemp,mkdir,rm} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -7,14 +8,14 @@ async function idle(app:App){for(let i=0;i<300 && app.busy;i++)await Bun.sleep(5
 test('dos proyectos: endpoint/modelo, adjuntos, edit/shell, cancelación y reanudación aislados',async()=>{
   const root=await mkdtemp(join(tmpdir(),'s42-projects-')),folderA=join(root,'Proyecto A'),folderB=join(root,'Proyecto B');await mkdir(folderA);await mkdir(folderB);
   await Bun.write(join(folderA,'code.ts'),'console.log(1 + 1);');await Bun.write(join(folderB,'code.ts'),'console.log(1 + 1);');
-  const calls:string[]=[];const servers=['A','B'].map(name=>Bun.serve({port:0,async fetch(req){const body=await req.json() as any;const user=body.messages.findLast((m:any)=>m.role==='user');calls.push(name);
+  const calls:string[]=[];const servers=['A','B'].map(name=>{const workflow=taskWorkflow(2);return Bun.serve({port:0,async fetch(req){const body=await req.json() as any;const flow=workflow(body);if(flow)return flow;const user=body.messages.findLast((m:any)=>m.role==='user');calls.push(name);
     if(user.content==='cancelar')return new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"parcial B"}}]}\n\n'));}}));
     expect(body.model).toBe('igual');expect(user.content[1].text).toContain(name==='A'?folderA:folderB);
     const tools=body.messages.filter((m:any)=>m.role==='tool').length;
     const call=tools===0?{name:'edit',arguments:JSON.stringify({path:'code.ts',oldText:'1 + 1',newText:name==='A'?'2 + 2':'3 + 3'})}:tools===1?{name:'shell',arguments:'{"command":"bun code.ts"}'}:undefined;
     const delta=call?{tool_calls:[{index:0,id:`${name}-${tools}`,function:call}]}:{content:`Verificado ${name}`};
     return new Response(`data: ${JSON.stringify({choices:[{delta,finish_reason:call?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);
-  }}));
+  }});});
   const config=join(root,'config.json'),app=await App.open({config,cwd:folderA});
   try{const next=structuredClone(app.store.value);next.providers=servers.map((server,i)=>({id:String(i),name:String(i),kind:'llama.cpp',baseUrl:`http://127.0.0.1:${server.port}/v1`,models:[{id:'igual',name:'Igual',manual: true, contextWindow:32000,maxOutputTokens:1000,capabilities:{tools:true,images:false}}]}));await app.store.save(next);
     const a=app.project!,b=await app.store.project('B',folderB,root);

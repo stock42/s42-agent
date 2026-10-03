@@ -52,6 +52,33 @@ El harness no impone cuotas de pasos, tiempo, tamaño de archivo, cantidad de
 adjuntos o payloads. Ctrl+C cancela el trabajo. Se conservan validación de
 argumentos/formatos y los errores reales del proveedor, sistema operativo o runtime.
 
+## Planificación y verificación de tareas
+
+- `task_plan`: `objective`, `steps` y `mode` opcional (`execution`/`planning`).
+  Cada etapa tiene `title`, `criterion`, `verification`, y opcionalmente `id`,
+  `description`, `dependencies` (IDs). Cada comprobación contiene `kind`
+  (`command`/`review`/`browser`), `description`, `required`, `paths` y `command`
+  si es de comando. Devuelve UUID estables de pedido, tareas y verificaciones;
+  persiste en TODO.md. Un plan sin implementación usa `planning`.
+- `task_update`: `id` y los campos opcionales `status` (`pending`/`doing`/`done`),
+  `result`, `blocked`, `acceptanceEvidence` (IDs de resultados existentes).
+  Terminar exige evidencia correcta y pruebas requeridas vigentes. Bloquear
+  conserva la tarjeta abierta; el modelo no puede crear aprobaciones humanas.
+- `task_verify`: `taskId`, `verificationId` y `evidence` opcional para revisión.
+  Ejecuta el comando previsto con el runner compartido o registra la revisión
+  de resultados existentes. Conserva código de salida, stdout/stderr,
+  cancelación y huellas de archivos, incluidos los intentos fallidos.
+
+TUI/CLI exigen plan antes de write/edit, shell arbitrario, Markdown guardado,
+HTTP mutante y envíos WebSocket. Las lecturas no crean una tarjeta por llamada.
+Al intentar cerrar con pendientes, el loop los devuelve al modelo para continuar.
+Una tarea bloqueada permanece abierta; CLI devuelve **2** por bloqueo y **0**
+por tarea completa u orientación/plan. Eventos y datos sobreviven reapertura
+JSONL/SQLite y compactación. TODO.md es la fuente del contenido; conserva texto
+ajeno y muestra colisiones externas. Ediciones nativas guardan versiones
+anteriores/posteriores; shell/cambios externos tienen atribución desconocida.
+Tablero visual y acciones de cierre Git corresponden a las etapas siguientes.
+
 ## HTTP
 
 GET por defecto; POST, PUT, PATCH, DELETE, HEAD, OPTIONS y métodos que fetch

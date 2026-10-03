@@ -38,6 +38,7 @@ test("session_history recupera texto completo, filtra sin mutar y usa solo la se
 for (const storage of ["sessions", "agent.sqlite"]) test(`resumen → CSV → HTML recupera fuentes compactadas y archivo actual tras reabrir ${storage}`, async () => {
   const root = await mkdtemp(join(tmpdir(), "s42-followup-")), path = join(root, storage);
   let session = await Session.open(path, "project"), sourceRequests = 0, step = 0;
+  let workflow: ReturnType<typeof taskWorkflow> | undefined;
   const fragments: string[] = [];
   const article = { title: "Noticia á文🙂", category: "Sociedad", link: "https://example.com/noticia-original", resumen: "Resumen ya entregado" };
   const answer = `${article.title}: ${article.resumen}`;
@@ -52,6 +53,7 @@ for (const storage of ["sessions", "agent.sqlite"]) test(`resumen → CSV → HT
       fragments.push(JSON.stringify(body.messages));
       return packet({ content: "Resumen de noticias entregado. Faltan URLs en este checkpoint; recuperar fuentes con session_history query example.com y role tool." });
     }
+    if (workflow) { const flow = workflow(body, step === 4 || step === 7); if (flow) return flow; }
     const last = body.messages.at(-1)!;
     step++;
     switch (step) {
@@ -63,7 +65,7 @@ for (const storage of ["sessions", "agent.sqlite"]) test(`resumen → CSV → HT
         // The fixture reports occupancy near the window after delivering the answer.
         return packet({ content: answer }, { prompt_tokens: 10400, completion_tokens: 100 });
       case 3:
-        expect(last.content).toBe("Guardá ese resumen en infobae.csv: title, category, link, resumen");
+        expect(body.messages.map(m => JSON.stringify(m)).join("\n")).toContain("Guardá ese resumen en infobae.csv: title, category, link, resumen");
         expect(body.messages.some(m => m.content === answer)).toBe(false);
         return call("session_history", { query: "example.com", role: "tool" });
       case 4: {
@@ -76,9 +78,9 @@ for (const storage of ["sessions", "agent.sqlite"]) test(`resumen → CSV → HT
       }
       case 5: return packet({ content: "Guardado infobae.csv con el resumen anterior." });
       case 6:
-        expect(last.content).toBe("Creá infobae.html con el CSV");
-        expect(body.messages.some(m => m.content === "Guardado infobae.csv con el resumen anterior.")).toBe(true);
-        expect(body.messages.some(m => m.tool_calls?.some(c => c.function.name === "write" && c.function.arguments.includes("infobae.csv")))).toBe(true);
+        expect(body.messages.map(m => JSON.stringify(m)).join("\n")).toContain("Creá infobae.html con el CSV");
+        expect(session.state.messages.some(m => m.content === "Guardado infobae.csv con el resumen anterior.")).toBe(true);
+        expect(session.state.messages.some(m => m.tool_calls?.some(c => c.function.name === "write" && c.function.arguments.includes("infobae.csv")))).toBe(true);
         return call("read", { path: "infobae.csv" });
       case 7: {
         const read = JSON.parse(String(last.content)).output;
@@ -92,6 +94,7 @@ for (const storage of ["sessions", "agent.sqlite"]) test(`resumen → CSV → HT
   const model: Model = { id: "fixture", name: "Fixture", manual: true, contextWindow: 12000, capabilities: { tools: true, images: false } };
   const provider: Provider = { id: "fixture", name: "Fixture", kind: "openai-compatible", baseUrl: server.url.href, models: [model] };
   const turn = async (content: string) => {
+    workflow = content.startsWith("Dame") ? undefined : taskWorkflow(2);
     const message: Message = { role: "user", content };
     await session.append({ type: "message", message }); session.state.messages.push(message);
     await runTurn({ project: { id: "project", name: "Fixture", path: root }, session, provider, model, signal: new AbortController().signal, onDelta: () => {}, onState: () => {}, onMessage: () => {} });
@@ -107,7 +110,8 @@ for (const storage of ["sessions", "agent.sqlite"]) test(`resumen → CSV → HT
     await reopen(); await turn("Creá infobae.html con el CSV");
     expect(await Bun.file(join(root, "infobae.html")).text()).toContain("Título editado en disco á文🙂");
     expect(sourceRequests).toBe(1); expect(step).toBe(8);
-    expect(session.state.events.filter(e => e.type === "tool-start").map(e => e.type === "tool-start" && e.name)).toEqual(["fetch", "session_history", "write", "read", "write"]);
+    expect(session.state.events.filter(e => e.type === "tool-start" && !e.name.startsWith("task_")).map(e => e.type === "tool-start" && e.name)).toEqual(["fetch", "session_history", "write", "read", "write"]);
     expect(session.state.messages.some(m => m.content === answer)).toBe(true);
   } finally { await session.close(); source.stop(true); server.stop(true); await rm(root, { recursive: true, force: true }); }
 });
+import { taskWorkflow } from "./task-provider-fixture.ts";

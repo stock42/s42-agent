@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { afterEach, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -96,8 +97,8 @@ test("index.ts PTY migra rutas XDG por defecto y reabre el modelo/borrador desde
 },10000);
 
 test("CLI SQLite sin TUI ejecuta tools, muestra ID reanudable y conserva configuración", async () => {
-  const root=await fixture(),path=join(root,"agent.sqlite"),store=await ConfigStore.load(path);let requests=0;
-  const server=Bun.serve({port:0,async fetch(req){const body=await req.json() as any;expect(body.tools.some((tool:any)=>tool.function.name==="write")).toBe(true);requests++;
+  const root=await fixture(),path=join(root,"agent.sqlite"),store=await ConfigStore.load(path);let requests=0;const workflow=taskWorkflow(1);
+  const server=Bun.serve({port:0,async fetch(req){const body=await req.json() as any;const flow=workflow(body);if(flow)return flow;expect(body.tools.some((tool:any)=>tool.function.name==="write")).toBe(true);requests++;
     const delta=requests===1?{tool_calls:[{index:0,id:"write",function:{name:"write",arguments:JSON.stringify({path:"game.html",content:"<!doctype html><title>Fixture</title>"})}}]}:{content:"Archivo escrito"};
     return new Response(`data: ${JSON.stringify({choices:[{delta,finish_reason:requests===1?"tool_calls":"stop"}],usage:{prompt_tokens:100,completion_tokens:10,total_tokens:110}})}\n\ndata: [DONE]\n\n`);
   }});
@@ -108,6 +109,6 @@ test("CLI SQLite sin TUI ejecuta tools, muestra ID reanudable y conserva configu
     const [code,stdout,stderr]=await Promise.all([child.exited,new Response(child.stdout).text(),new Response(child.stderr).text()]);
     expect(code).toBe(0);expect(stdout.trim()).toBe("Archivo escrito");expect(stdout+stderr).not.toContain("\x1b");expect(await Bun.file(join(root,"game.html")).exists()).toBe(true);
     expect((await ConfigStore.load(path)).value).toEqual(store.value);const saved=await listSessions(path,"project");expect(saved).toHaveLength(1);expect(stderr).toContain(`Sesión: ${saved[0]!.id}`);
-    const resumed=await Session.open(path,"project",saved[0]!.id);try{expect(resumed.state.events.some(e=>e.type==="turn"&&e.state==="completed")).toBe(true);expect(resumed.state.messages.filter(m=>m.role==="tool")).toHaveLength(1);}finally{await resumed.close();}
+    const resumed=await Session.open(path,"project",saved[0]!.id);try{expect(resumed.state.events.some(e=>e.type==="turn"&&e.state==="completed")).toBe(true);expect(resumed.state.messages.filter(m=>m.role==="tool" && !m.tool_call_id?.startsWith("fixture-task-"))).toHaveLength(1);}finally{await resumed.close();}
   }finally{server.stop(true);}
 });

@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -35,9 +36,9 @@ async function fixture() {
   for (const id of ["alpha", "beta"]) { await mkdir(join(root, id)); initial.projects.push({ id, name: id, path: join(root, id) }); }
   initial.lastProjectId = "alpha";
   await Bun.write(join(root, "alpha/check.ts"), `console.log("RESULTADO: OK á文🙂"); console.error("Timer sigue abierto"); setInterval(() => {}, 1000);`);
-  let requests = 0;
+  let requests = 0; const workflow=taskWorkflow(1);
   const server = Bun.serve({ port: 0, async fetch(req) {
-    await req.json(); requests++;
+    const body=await req.json() as any;const flow=workflow(body);if(flow)return flow; requests++;
     return new Response(`data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, id: "check", function: { name: "shell", arguments: JSON.stringify({ command: "bun check.ts" }) } }] }, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`);
   } });
   initial.providers = [{ id: "fixture", name: "Fixture", kind: "openai-compatible", baseUrl: `http://127.0.0.1:${server.port}/v1`, models: [
@@ -58,7 +59,7 @@ test("TUI muestra salida durante shell, aísla proyectos y conserva un resultado
     expect(alpha.response.value.indexOf("HTTP 400")).toBeLessThan(alpha.response.value.indexOf("Verificar ahora"));
     expect(alpha.response.value).toContain("stdout · shell:\nRESULTADO: OK á文🙂");
     expect(alpha.response.value).toContain("stderr · shell:\nTimer sigue abierto");
-    expect(session.state.messages.filter(message => message.role === "tool")).toHaveLength(0);
+    expect(session.state.messages.filter(message => message.role === "tool" && !message.tool_call_id?.startsWith('fixture-task-'))).toHaveLength(0);
     await app.switchProject(app.store.value.projects[1]!);
     expect(app.view.response.value).not.toContain("RESULTADO:"); expect(alpha.busy).toBe(true);
     await app.activateTab(alpha.id); await app.setLanguage("en");
@@ -68,7 +69,7 @@ test("TUI muestra salida durante shell, aísla proyectos y conserva un resultado
     }
     app.cancel(); await alpha.turn;
     expect(alpha.busy).toBe(false); expect(requests()).toBe(1);
-    const tool = session.state.messages.find(message => message.role === "tool")!;
+    const tool = session.state.messages.find(message => message.role === "tool" && !message.tool_call_id?.startsWith('fixture-task-'))!;
     const result = JSON.parse(tool.content as string); expect(result.failed).toBe(true);
     expect(JSON.parse(result.output)).toMatchObject({ stdout: "RESULTADO: OK á文🙂\n", stderr: "Timer sigue abierto\n", cancelled: true });
     expect(alpha.response.value.split("RESULTADO:")).toHaveLength(2);
@@ -76,7 +77,7 @@ test("TUI muestra salida durante shell, aísla proyectos y conserva un resultado
     const before = alpha.response.value;
     await app.desktop.onBeforeExit!(); app = await App.open({ config });
     expect(app.view.response.value).toBe(before);
-    expect(app.session!.state.messages.filter(message => message.role === "tool")).toHaveLength(1);
+    expect(app.session!.state.messages.filter(message => message.role === "tool" && !message.tool_call_id?.startsWith("fixture-task-"))).toHaveLength(1);
   } finally { await app.desktop.onBeforeExit!(); server.stop(true); await rm(root, { recursive: true, force: true }); }
 });
 

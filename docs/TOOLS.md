@@ -22,6 +22,20 @@ for existing integrations. The catalog is visible in **Tools → Native tools**.
 | `websocket` / websocket.ts | `url`; optional `headers`, `protocols`, `messages`; `receiveCount=1` | ws/wss, one connection per call. Receives the requested count without an added ceiling, with complete text/base64 binary. Waits for replies, remote closure or cancellation. |
 | `scrape` / scrape.ts | `url`; `selector="body"`, `format="text"` or `"html"` | Bun.WebView: final URL, title, complete first matching CSS element and all its links, without clipping text/hrefs. Waits for the selector or cancellation. |
 | `session_history` / session_history.ts | Optional: `query`, `role`, `offset=1`, `limit` | Original messages from the turn's session, including compacted history. Case-insensitive literal search over the full JSON, user/assistant/tool role filter and matching messages starting at offset. Returns complete messages and original 1-based indexes; without limit returns all matches. |
+| `task_plan` / task_plan.ts | `objective`, `steps`; `mode="execution"` or `"planning"` | Persists UUID task/request/verification IDs in TODO.md. Each step has title, criterion, verification; optional id, description and dependency IDs. Each verification has kind (command/review/browser), description, required, paths, and command for a command check. Planning mode does not authorize execution. |
+| `task_update` / task_update.ts | `id`; optional status (pending/doing/done), result, blocked, acceptanceEvidence | Updates the active request's card. Done requires existing successful evidence IDs and current required checks; a blocker leaves it open. Cannot manufacture human approval. |
+| `task_verify` / task_verify.ts | `taskId`, `verificationId`; optional `evidence` call/run IDs for review | Runs the previously planned command through the shared runner or records review of existing results. Stores real exit/output/cancellation and file fingerprints; retains failed runs. Does not complete the card. |
+
+Execution in TUI/CLI requires task_plan before native write/edit, arbitrary shell,
+saved Markdown, HTTP mutations or WebSocket sends. Read tools do not create a
+card per call. Before finalizing, the loop returns concrete incomplete tasks,
+checks or required project closeout to the model. A blocked task stays open;
+CLI returns **2** for a blocked task, **0** for completion or guidance/planning.
+Task data/events survive JSONL/SQLite reopen and context compaction. TODO.md
+remains the content source; its unknown text is preserved and external card
+collisions are explicit. Native file edits retain before/after snapshots; shell
+or external changes have unknown attribution. Git closeout actions and the
+visual board are added in the following implementation stages.
 
 Tools receive a JSON object; unknown names/fields, invalid types and nonpositive
 integers return errors. Relative paths use the turn's project; absolute paths

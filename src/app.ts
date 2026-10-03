@@ -867,6 +867,7 @@ export class App {
           onToolOutput: (call, stream, text) => { appendLive(`output-${call.id}-${stream}`,`${stream} · ${call.function.name}:`,text); },
           onDelta: delta => { tab.status = tab.agentState = "Respondiendo…";appendLive("answer","Agente:",delta); } });
         tab.status = result.tokens.reported ? `Listo · E/S ${result.tokens.input ?? "N/D"}/${result.tokens.output ?? "N/D"}${result.tokens.partial ? " · parcial" : ""}` : "Listo · uso no reportado";
+        if (result.taskState === "blocked") tab.status = "Turno finalizado; tarea bloqueada y abierta";
         await session.append({ type: "turn", state: "completed", detail: tab.status, tokens: tab.tokens });
       } catch (e) {
         if (e instanceof CompletionError && (e.partial.content || e.partial.reasoning_content || e.partial.reasoning)) {
@@ -874,7 +875,7 @@ export class App {
         }
         tab.status = (e as Error).message; session.state.notices.push(tab.status);
         await session.append({ type: "turn", state: controller.signal.aborted ? "cancelled" : "failed", detail: tab.status, tokens: tab.tokens });
-      } finally { tab.busy = false; tab.controller = undefined; tab.agentState = undefined; this.stopActivity(); tab.live=[]; this.showHistory(false, tab); this.desktop.invalidate(); }
+      } finally { tab.busy = false; tab.controller = undefined; tab.agentState = undefined; this.stopActivity(); tab.live=[]; this.showHistory(false, tab); void tab.git?.refresh(); this.desktop.invalidate(); }
     })();
     // Keep configuration/input responsive while the request runs.
     void tab.turn.catch(e => { tab.status = `No se pudo guardar el turno: ${(e as Error).message}`; this.desktop.invalidate(); });

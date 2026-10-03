@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -32,10 +33,10 @@ test('TUI ignora timeouts legacy durante primer evento y pausas SSE, sin recorta
 });
 
 test("length conserva parcial, entrega etapas, oculta control fragmentado y no repite tools previas", async () => {
-  const requests: any[] = [], seen: string[] = [];
+  const requests: any[] = [], seen: string[] = [];const workflow=taskWorkflow(2);
   const call = (id: string, path: string, content: string) => ({ tool_calls: [{ index: 0, id, function: { name: "write", arguments: JSON.stringify({ path, content }) } }] });
   const server = Bun.serve({ port: 0, async fetch(req) {
-    const body = await req.json() as any; requests.push(body);
+    const body = await req.json() as any;const flow=workflow(body);if(flow)return flow; requests.push(body);
     if (requests.length === 1) return new Response(packet(call("first", "first.txt", "realizado una vez"), "tool_calls"));
     if (requests.length === 2) return new Response(packet({ reasoning_content: "Razonamiento parcial", content: "Código á文🙂 incompleto", tool_calls: [{ index: 0, id: "discarded", function: { name: "write", arguments: '{"path":"discarded.txt","content":' } }] }, "length"));
     if (requests.length === 3) return new Response(new ReadableStream({ async start(c) {
@@ -63,7 +64,7 @@ test("length conserva parcial, entrega etapas, oculta control fragmentado y no r
     expect(await Bun.file(join(root, "first.txt")).text()).toBe("realizado una vez");
     expect(await Bun.file(join(root, "second.txt")).text()).toBe("segunda etapa");
     expect(await Bun.file(join(root, "discarded.txt")).exists()).toBe(false);
-    expect(app.session!.state.events.filter(e => e.type === "tool-start")).toHaveLength(2);
+    expect(app.session!.state.events.filter(e => e.type === "tool-start" && !e.name.startsWith("task_"))).toHaveLength(2);
     expect(app.session!.state.messages.filter(m => m.role === "user")).toHaveLength(1);
     for (const text of seen) expect(text).not.toContain("[[S42_");
     expect(app.view.response.value).toContain("Razonamiento parcial"); expect(app.view.response.value).toContain("Etapa 1 · parte pequeña");
@@ -105,9 +106,9 @@ test("length es tipado; HTTP y cancelación no disparan etapas ni nuevos request
 
 test("reasoning sin texto recupera tools y una sesión reabierta sin HTTP 400", async () => {
   for (const resume of [false, true]) {
-    const requests: any[] = [];
+    const requests: any[] = [];const workflow=taskWorkflow(1);
     const server = Bun.serve({ port: 0, async fetch(req) {
-      const body = await req.json() as any; requests.push(body);
+      const body = await req.json() as any;const flow=workflow(body);if(flow)return flow; requests.push(body);
       if (body.messages.some((m: any) => m.role === "assistant" && m.content === null && !m.tool_calls?.length))
         return Response.json({ error: { message: "Invalid assistant message: content or tool_calls must be set" } }, { status: 400 });
       if (!resume && requests.length === 1) return new Response(packet({ reasoning_content: "Razonamiento truncado á文🙂" }, "length"));
@@ -128,7 +129,7 @@ test("reasoning sin texto recupera tools y una sesión reabierta sin HTTP 400", 
       expect(await Bun.file(join(root, "tetris.html")).text()).toContain("Tetris");
       expect(app.session!.state.messages.find(m => m.reasoning_content === "Razonamiento truncado á文🙂")?.content).toBeNull();
       expect(requests.at(-1).messages.find((m: any) => m.reasoning_content === "Razonamiento truncado á文🙂")?.content).toBe("");
-      expect(app.session!.state.events.filter(e => e.type === "tool-start")).toHaveLength(1);
+      expect(app.session!.state.events.filter(e => e.type === "tool-start" && !e.name.startsWith("task_"))).toHaveLength(1);
       expect(app.view.response.value).toContain("Razonamiento truncado á文🙂");
     } finally { await app.desktop.onBeforeExit!(); server.stop(true); await rm(root, { recursive: true, force: true }); }
   }

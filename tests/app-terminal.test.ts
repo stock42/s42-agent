@@ -1,3 +1,4 @@
+import { taskWorkflow } from "./task-provider-fixture.ts";
 import { expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -7,7 +8,8 @@ async function until(check:()=>boolean){for(let i=0;i<600;i++){if(check())return
 test('entrypoint real: Models primer uso, host/puerto/key, coding, cancelación y borrador reabierto',async()=>{
   const root=await mkdtemp(join(tmpdir(),'s42-app-pty-')),config=join(root,'config.json');let text='',requests=0,auth:string|null=null;
   const encode=new TextEncoder();
-  const server=Bun.serve({port:0,async fetch(req){if(req.method==='GET')return new Response('',{status:404});const body=await req.json() as any;auth=req.headers.get('authorization');requests++;
+  const workflow=taskWorkflow(3);
+  const server=Bun.serve({port:0,async fetch(req){if(req.method==='GET')return new Response('',{status:404});const body=await req.json() as any;const flow=workflow(body);if(flow)return flow;auth=req.headers.get('authorization');requests++;
     const user=body.messages.findLast((m:any)=>m.role==='user');
     if(user.content==='lento')return new Response(new ReadableStream({start(c){c.enqueue(encode.encode('data: {"choices":[{"delta":{"content":"parcial cancelable"}}]}\n\n'));}}));
     const steps=[{name:'read',arguments:'{"path":"code.ts"}'},{name:'edit',arguments:'{"path":"code.ts","oldText":"1 + 1","newText":"2 + 2"}'},{name:'shell',arguments:'{"command":"bun code.ts"}'}];
