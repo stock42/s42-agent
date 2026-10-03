@@ -50,6 +50,12 @@ repositorio no son públicos. Rutas inexistentes responden 404; acepta GET y HEA
 HTML, CSS y JavaScript se sirven con `no-cache` para que el navegador revalide
 los cambios. Las imágenes y otros archivos públicos conservan una hora de caché.
 
+Google Analytics usa la propiedad `G-7K9P8SX6TD` en ambos idiomas. Cada clic en
+los botones de copiar instalación registra `copy_install_command`, con
+`installation_method` (`unix`, `windows` o `source`) y `ui_language` (`en` o
+`es-AR`). El evento mide el clic, también cuando el portapapeles exige copia
+manual; no confirma que el usuario haya ejecutado la instalación.
+
 Las cuatro capturas en `public/assets/screenshots/` son copias byte por byte de
 `screenshots/` en la raíz. La procedencia está documentada en
 [`screenshots/README.es.md`](../screenshots/README.es.md) y su manifiesto.

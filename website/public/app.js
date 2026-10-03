@@ -11,6 +11,10 @@ for (const button of document.querySelectorAll("[data-copy]")) {
   button.addEventListener("click", async () => {
     const command = document.getElementById(button.dataset.copy)?.textContent;
     if (!command) return;
+    window.gtag?.("event", "copy_install_command", {
+      installation_method: button.dataset.copy.replace("install-", ""),
+      ui_language: document.documentElement.lang,
+    });
     try {
       await navigator.clipboard.writeText(command);
       if (status) status.textContent = copyText.success;

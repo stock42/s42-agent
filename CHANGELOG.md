@@ -5,6 +5,22 @@ cierre de cada tarea e incluirlo en su commit.
 
 ## 2026-10-03
 
+### Agregado — Google Analytics y eventos de instalación
+
+- Google tag `G-7K9P8SX6TD` en inglés y español. Cada clic en copiar un comando
+  de instalación registra `copy_install_command` con `installation_method`
+  (`unix`, `windows`, `source`) y `ui_language`, antes de acceder al portapapeles.
+  También cuenta el clic cuando el navegador exige selección/copia manual.
+- El enlace LinkedIn del footer se reemplaza por `https://cesarcasas.com/` en
+  ambos idiomas; datos estructurados conservan la web del autor y su cuenta X.
+- Ocho pruebas HTTP correctas, 80 assertions; typecheck global y específico del
+  servidor y pruebas de la web correctos.
+- Ejecutados los scripts reales en un contexto JS de QA: cinco clics y cinco
+  eventos encolados por idioma, tres métodos, clic repetido, fallback manual y
+  copiado sin Analytics disponible. Navegador verifica tag, enlace y feedback
+  EN/ES sin errores de consola. Evidencia local en `private/qa/website-analytics/`.
+  No se verificó recepción en el panel de Google Analytics ni despliegue público.
+
 ### Agregado — Plan v1.0.5, E1: panel Git
 
 - Vista Git por proyecto: cambios, diff de índice/archivo, historial progresivo,
