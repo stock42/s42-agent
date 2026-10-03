@@ -9,7 +9,8 @@ cierre de cada tarea e incluirlo en su commit.
 
 - Tools → Autogenerar AGENTS.md usa el mismo flujo y propietario de Projects;
   el circuito TUI verifica ese acceso previsto en el plan.
-- Catálogo español completado con task_closeout y las cuatro tools de tareas;
+- Catálogo español completado con task_closeout y las cuatro tools de tareas
+  en una tabla continua, comprobada con el renderer Markdown de Bun;
   manuales ES/EN y estado del plan actualizados. SHA E6 y CI correcta registrados.
 - Typecheck y 15 tests relevantes correctos (248 assertions), incluido
   el circuito TUI/PTY completo desde Tools. La aceptación de mouse físico
